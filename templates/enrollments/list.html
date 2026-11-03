@@ -1,0 +1,2165 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- ENROLLMENTS CUSTOM MODERN STYLES -->
+<style>
+  /* Base Container & Typography */
+  .enrollments-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  
+  /* KPI Cards Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+  }
+  .kpi-blue::before { background: #2563eb; }
+  .kpi-purple::before { background: #7c3aed; }
+  .kpi-emerald::before { background: #059669; }
+  .kpi-amber::before { background: #d97706; }
+  .kpi-rose::before { background: #e11d48; }
+
+  .kpi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .kpi-icon {
+    font-size: 18px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .kpi-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
+    margin-bottom: 6px;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+  .kpi-sub {
+    font-size: 11.5px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Filters Toolbar */
+  .filter-panel {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+  }
+  .status-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+  }
+  .status-pill:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #cbd5e1;
+  }
+  .status-pill.active {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
+  }
+  .status-pill .count {
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 10.5px;
+    background: rgba(0, 0, 0, 0.08);
+    font-weight: 800;
+  }
+  .status-pill.active .count {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+  }
+
+  .filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .search-box {
+    position: relative;
+    flex: 1;
+    min-width: 240px;
+    max-width: 420px;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border-radius: 10px;
+    border: 1.5px solid #cbd5e1;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #f8fafc;
+    transition: all 0.2s;
+    box-sizing: border-box;
+  }
+  .search-box input:focus {
+    background: #ffffff;
+    border-color: #2563eb;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+  .search-box .icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #94a3b8;
+    pointer-events: none;
+  }
+
+  .course-select {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1.5px solid #cbd5e1;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #f8fafc;
+    min-width: 180px;
+    max-width: 260px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .course-select:focus {
+    border-color: #2563eb;
+    background: #fff;
+    outline: none;
+  }
+
+  /* Table Card & Modern Table */
+  .table-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+    overflow: visible;
+  }
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 16px;
+  }
+  .modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+  }
+  body.rtl .modern-table {
+    text-align: right;
+  }
+  .modern-table th {
+    background: #f8fafc;
+    padding: 12px 14px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1.5px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  .modern-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    transition: background-color 0.15s ease;
+  }
+  .modern-table tr:hover td {
+    background-color: #f8fbff;
+  }
+  .modern-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Modern Student Badge */
+  .student-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .student-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #1d4ed8;
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #93c5fd;
+  }
+  .student-name {
+    font-weight: 800;
+    color: #0b3d6e;
+    font-size: 13.5px;
+    text-decoration: none;
+    line-height: 1.25;
+    display: block;
+    transition: color 0.15s;
+  }
+  .student-name:hover {
+    color: #2563eb;
+  }
+  .student-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 3px;
+    flex-wrap: wrap;
+  }
+  .code-pill {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 5px;
+  }
+  .wa-pill {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    transition: background 0.15s;
+  }
+  .wa-pill:hover {
+    background: #bbf7d0;
+  }
+
+  /* Course Pill */
+  .course-title {
+    font-weight: 800;
+    color: #1e293b;
+    font-size: 13px;
+    line-height: 1.3;
+  }
+  .course-sub {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .group-tag {
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+  }
+
+  /* Expiry & Dates */
+  .date-range {
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+    white-space: nowrap;
+  }
+  .expiry-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: 6px;
+    font-size: 10.5px;
+    font-weight: 800;
+    margin-top: 3px;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+  .expiry-green {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+  }
+  .expiry-amber {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+  }
+  .expiry-red {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+  .expiry-gray {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+  }
+
+  /* Financial Cell Standardized */
+  .fin-container {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .fin-due {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #0b3d6e;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    line-height: 1.2;
+  }
+  .fin-pills-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .fin-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+  .fin-pill-paid {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+  }
+  .fin-pill-due {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    font-weight: 800;
+  }
+  .fin-pill-credit {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    font-weight: 800;
+  }
+  .fin-pill-settled {
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+  }
+
+  /* Status Badges */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 24px;
+    min-width: 82px;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .st-active {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+  }
+  .st-active .status-dot { background: #10b981; }
+  .st-pending {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+  }
+  .st-pending .status-dot { background: #f59e0b; }
+  .st-paused {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #ffedd5;
+  }
+  .st-paused .status-dot { background: #ea580c; }
+  .st-completed {
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+  }
+  .st-completed .status-dot { background: #94a3b8; }
+  .st-transferred {
+    background: #f0f9ff;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+  }
+  .st-transferred .status-dot { background: #0284c7; }
+  .st-dropped {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+  }
+  .st-dropped .status-dot { background: #ef4444; }
+
+  /* Actions Cluster & Modern Dropdown */
+  .actions-cell {
+    position: relative;
+    white-space: nowrap;
+    text-align: right;
+    width: 155px;
+    min-width: 155px;
+  }
+  body.rtl .actions-cell {
+    text-align: left;
+  }
+  .action-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    position: relative;
+  }
+  .btn-primary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 110px;
+    min-width: 110px;
+    max-width: 110px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 800;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-sizing: border-box;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .btn-act-pay {
+    background: #ef4444;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+  }
+  .btn-act-pay:hover {
+    background: #dc2626;
+    color: #fff;
+  }
+  .btn-act-renew {
+    background: #10b981;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+  }
+  .btn-act-renew:hover {
+    background: #059669;
+    color: #fff;
+  }
+  .btn-act-assign {
+    background: #f59e0b;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25);
+  }
+  .btn-act-assign:hover {
+    background: #d97706;
+    color: #fff;
+  }
+  .btn-act-resume {
+    background: #10b981;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+  }
+  .btn-act-resume:hover {
+    background: #059669;
+    color: #fff;
+  }
+  .btn-act-view {
+    background: #f1f5f9;
+    color: #0b3d6e;
+    border: 1px solid #cbd5e1;
+  }
+  .btn-act-view:hover {
+    background: #e2e8f0;
+    color: #0b3d6e;
+  }
+
+  /* Dropdown Trigger Button */
+  .btn-menu-trigger {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1.5px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    font-size: 16px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+    box-sizing: border-box;
+    flex-shrink: 0;
+  }
+  .btn-menu-trigger:hover, .btn-menu-trigger.active {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+  }
+
+  /* Floating Dropdown Menu */
+  .dropdown-menu-float {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 5px);
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 11px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
+    min-width: 200px;
+    z-index: 1000;
+    padding: 5px;
+    text-align: left;
+  }
+  body.rtl .dropdown-menu-float {
+    right: auto;
+    left: 0;
+    text-align: right;
+  }
+  .dropdown-menu-float.show {
+    display: block;
+    animation: dropdownFadeIn 0.15s ease;
+  }
+  @keyframes dropdownFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 9px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+    text-decoration: none;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: background 0.12s;
+  }
+  .dropdown-item:hover {
+    background: #f1f5f9;
+    color: #0b3d6e;
+  }
+  .dropdown-item.danger {
+    color: #dc2626;
+  }
+  .dropdown-item.danger:hover {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+  .dropdown-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 4px 0;
+  }
+  .dropdown-label {
+    font-size: 10px;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 9px 2px;
+  }
+  .status-select-wrapper {
+    padding: 3px 6px;
+  }
+  .status-select-wrapper select {
+    width: 100%;
+    padding: 4px 6px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    font-size: 11.5px;
+    font-weight: 700;
+    background: #f8fafc;
+    color: #334155;
+    cursor: pointer;
+  }
+
+  /* Mobile labels - hidden on desktop */
+  .mobile-card-label {
+    display: none;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #94a3b8;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 900px) {
+    .kpi-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 600px) {
+    .kpi-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 8px !important;
+    }
+    .kpi-card {
+      padding: 10px 12px !important;
+    }
+    .kpi-value {
+      font-size: 19px !important;
+    }
+    .filter-controls {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .search-box, .course-select {
+      max-width: 100%;
+    }
+  }
+
+  /* Refined Mobile Card Organization for Enrollments */
+  @media (max-width: 768px) {
+    .mobile-card-label {
+      display: block !important;
+    }
+
+    .modern-table tr {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 10px !important;
+      background: #ffffff !important;
+      border-radius: 18px !important;
+      border: 1.5px solid #cbd5e1 !important;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
+      padding: 15px !important;
+      position: relative !important;
+      margin-bottom: 8px !important;
+    }
+
+    /* 1. Header: Student name, avatar, code */
+    .modern-table td.cell-student {
+      grid-column: 1 / -1 !important;
+      display: flex !important;
+      align-items: flex-start !important;
+      padding-bottom: 10px !important;
+      border-bottom: 1px solid #f1f5f9 !important;
+      padding-right: 95px !important;
+    }
+    body.rtl .modern-table td.cell-student {
+      padding-right: 0 !important;
+      padding-left: 95px !important;
+    }
+
+    .modern-table td.cell-student .student-avatar {
+      width: 44px !important;
+      height: 44px !important;
+      font-size: 16px !important;
+      border-radius: 12px !important;
+    }
+
+    .modern-table td.cell-student .student-name {
+      font-size: 15px !important;
+      font-weight: 800 !important;
+      color: #0b3d6e !important;
+    }
+
+    /* 2. Status Badge (Pinned to top right) */
+    .modern-table td.cell-status {
+      position: absolute !important;
+      top: 15px !important;
+      right: 15px !important;
+      padding: 0 !important;
+      border: none !important;
+      background: transparent !important;
+      width: auto !important;
+    }
+    body.rtl .modern-table td.cell-status {
+      right: auto !important;
+      left: 15px !important;
+    }
+
+    /* 3. Course Box (Col 1) */
+    .modern-table td.cell-course {
+      grid-column: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      background: #f8fafc !important;
+      padding: 9px 11px !important;
+      border-radius: 12px !important;
+      border: 1px solid #e2e8f0 !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 4. Financial Status Box (Col 2) */
+    .modern-table td.cell-financial {
+      grid-column: 2 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      background: #f8fafc !important;
+      padding: 9px 11px !important;
+      border-radius: 12px !important;
+      border: 1px solid #e2e8f0 !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 5. Period & End Date Strip */
+    .modern-table td.cell-period {
+      grid-column: 1 / -1 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+      background: #f0f7ff !important;
+      border: 1px solid #bfdbfe !important;
+      border-radius: 12px !important;
+      padding: 9px 12px !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 6. Action Buttons */
+    .modern-table td.cell-actions {
+      grid-column: 1 / -1 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      border-top: 1.5px solid #f1f5f9 !important;
+      padding-top: 10px !important;
+      margin-top: 2px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .modern-table .action-group {
+      width: 100% !important;
+      display: flex !important;
+      gap: 8px !important;
+    }
+
+    .modern-table .btn-primary-action {
+      flex: 1 1 auto !important;
+      height: 42px !important;
+      font-size: 14px !important;
+      font-weight: 800 !important;
+      border-radius: 12px !important;
+      justify-content: center !important;
+    }
+
+    .modern-table .btn-menu-trigger {
+      width: 42px !important;
+      min-width: 42px !important;
+      height: 42px !important;
+      border-radius: 12px !important;
+      font-size: 20px !important;
+    }
+  }
+
+  @media (max-width: 440px) {
+    .modern-table tr {
+      grid-template-columns: 1fr !important;
+    }
+    .modern-table td.cell-course {
+      grid-column: 1 / -1 !important;
+    }
+    .modern-table td.cell-financial {
+      grid-column: 1 / -1 !important;
+    }
+  }
+</style>
+
+<div class="enrollments-container">
+
+  <!-- PAGE HEADER -->
+  <div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+    <div>
+      <div class="muted" style="font-size:12px">
+        <a href="{{ url_for('dashboard') }}" style="text-decoration:none; color:#2563eb; font-weight:700;">← {{ t('dashboard') }}</a>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+        <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800; letter-spacing:-0.4px;">
+          📋 {{ 'سجل الاشتراكات والتسجيل' if lang=='ar' else 'Registre des Inscriptions' }}
+        </h2>
+        <span class="status-pill active" style="padding:2px 8px; font-size:11px;">{{ enrolls|length }} {{ 'مسجل' if lang=='ar' else 'dossier(s)' }}</span>
+      </div>
+      <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">
+        {{ 'تتبع الاشتراكات، تواريخ الانتهاء، المداخيل، وعمليات التجديد والتحويل' if lang=='ar' else 'Gestion des abonnements, échéances, renouvellements, transferts et paiements' }}
+      </p>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="flex wrap" style="gap:8px;">
+      <button type="button" class="btn btn-outline" onclick="checkPendingEnrollmentReminders(true)" style="background:#fff; border-color:#f59e0b; color:#b45309; font-weight:700; font-size:13px; padding:7px 12px; border-radius:9px; display:inline-flex; align-items:center; gap:6px;">
+        <span>🔔</span><span>{{ 'تذكيرات الانتظار' if lang=='ar' else 'Rappels Attente' }}</span>
+        <span id="headerPendingBadgeCount" style="display:none; background:#ef4444; color:#fff; font-size:10px; font-weight:900; padding:1px 6px; border-radius:10px;">0</span>
+      </button>
+      <a class="btn btn-primary" href="{{ url_for('express_enrollment') }}" style="background:#10b981; border-color:#10b981; font-weight:800; font-size:13px; padding:7px 14px; border-radius:9px; box-shadow:0 3px 10px rgba(16,185,129,0.25);">
+        ⚡ {{ 'تسجيل سريع' if lang=='ar' else 'Inscription Express' }}
+      </a>
+      <a class="btn btn-outline" href="{{ url_for('import_page') }}" style="background:#fff; font-weight:700; font-size:13px; padding:7px 12px; border-radius:9px;">
+        📥 {{ 'استيراد Excel' if lang=='ar' else 'Importer Excel' }}
+      </a>
+      <a class="btn btn-outline" href="{{ url_for('enrollment_new') }}" style="background:#fff; font-weight:700; font-size:13px; padding:7px 12px; border-radius:9px;">
+        + {{ 'تسجيل يدوي' if lang=='ar' else 'Inscription Standard' }}
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI SUMMARY CARDS -->
+  <div class="kpi-grid">
+    
+    <!-- 1. Dossiers Count -->
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'إجمالي الملفات' if lang=='ar' else 'Dossiers Inscrits' }}</span>
+        <div class="kpi-icon" style="background:#eff6ff; color:#2563eb;">📋</div>
+      </div>
+      <div class="kpi-value">{{ enrolls|length }}</div>
+      <div class="kpi-sub" style="color:#2563eb;">
+        {% if expiring_count > 0 %}
+          <span style="color:#b45309; font-weight:700;">⚠️ {{ expiring_count }} {{ 'قريب الانتهاء' if lang=='ar' else 'fin sous 5j' }}</span>
+        {% else %}
+          <span style="color:#059669;">🟢 {{ 'جميع الملفات جارية' if lang=='ar' else 'Abonnements à jour' }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 2. Total Invoiced -->
+    <div class="kpi-card kpi-purple">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'إجمالي المستحقات' if lang=='ar' else 'Total Facturé (Dû)' }}</span>
+        <div class="kpi-icon" style="background:#f5f3ff; color:#7c3aed;">💰</div>
+      </div>
+      <div class="kpi-value" style="color:#6d28d9;">
+        {{ '%.0f'|format(total_due_sum) }} <span style="font-size:13px; font-weight:600;">{{ settings.currency }}</span>
+      </div>
+      <div class="kpi-sub" style="color:#7c3aed;">
+        <span>{{ 'الحجم الإجمالي للاشتراكات' if lang=='ar' else 'Volume global facturé' }}</span>
+      </div>
+    </div>
+
+    <!-- 3. Total Collected -->
+    <div class="kpi-card kpi-emerald">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'المدخول المحصل' if lang=='ar' else 'Total Encaissé (Payé)' }}</span>
+        <div class="kpi-icon" style="background:#ecfdf5; color:#059669;">💵</div>
+      </div>
+      <div class="kpi-value" style="color:#047857;">
+        {{ '%.0f'|format(total_paid_sum) }} <span style="font-size:13px; font-weight:600;">{{ settings.currency }}</span>
+      </div>
+      <div class="kpi-sub" style="color:#047857;">
+        {% if total_due_sum > 0 %}
+          {% set rec_rate = (total_paid_sum / total_due_sum * 100)|round(1) %}
+          <span>✓ {{ rec_rate }}% {{ 'نسبة الاستخلاص' if lang=='ar' else 'taux de recouvrement' }}</span>
+        {% else %}
+          <span>✓ {{ 'تحصيل كامل' if lang=='ar' else 'Recouvrement perçu' }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 4. Remaining Balance -->
+    <div class="kpi-card {% if total_balance_sum > 0 %}kpi-rose{% else %}kpi-emerald{% endif %}">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'المتبقي للتحصيل' if lang=='ar' else 'Reste à Percevoir' }}</span>
+        <div class="kpi-icon" style="background:{% if total_balance_sum > 0 %}#fef2f2{% else %}#eff6ff{% endif %}; color:{% if total_balance_sum > 0 %}#dc2626{% else %}#0284c7{% endif %};">
+          {% if total_balance_sum > 0 %}⚠️{% else %}✓{% endif %}
+        </div>
+      </div>
+      <div class="kpi-value" style="color:{% if total_balance_sum > 0 %}#b91c1c{% else %}#0369a1{% endif %};">
+        {{ '%.0f'|format(total_balance_sum) }} <span style="font-size:13px; font-weight:600;">{{ settings.currency }}</span>
+      </div>
+      <div class="kpi-sub" style="color:{% if total_balance_sum > 0 %}#b91c1c{% else %}#0369a1{% endif %}; font-weight:700;">
+        {{ ('⚠️ ' + ('ديون غير مستخلصة' if lang=='ar' else 'Soldes impayés')) if total_balance_sum > 0 else ('✓ ' + ('الحسابات مسواة بالكامل' if lang=='ar' else 'Comptes soldés')) }}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FILTERS & SEARCH PANEL -->
+  <div class="filter-panel">
+    
+    <!-- Segmented Status Tabs -->
+    <div class="status-pills">
+      <a href="{{ url_for('enrollments', status='active', q=q, course_id=course_filter) }}" class="status-pill {{ 'active' if status_filter=='active' else '' }}">
+        <span>🟢</span>
+        <span>{{ 'نشطة' if lang=='ar' else 'Actives' }}</span>
+      </a>
+      <a href="{{ url_for('enrollments', status='pending_assignment', q=q, course_id=course_filter) }}" class="status-pill {{ 'active' if status_filter=='pending_assignment' else '' }}">
+        <span>⏳</span>
+        <span>{{ 'في الانتظار' if lang=='ar' else 'En Attente' }}</span>
+        {% if pending_count > 0 %}
+          <span class="count" style="background:#fef3c7; color:#92400e;">{{ pending_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{{ url_for('enrollments', status='trial', q=q, course_id=course_filter) }}" class="status-pill {{ 'active' if status_filter=='trial' else '' }}">
+        <span>🧪</span>
+        <span>{{ 'حصص تجريبية' if lang=='ar' else 'Séances d\'essai' }}</span>
+        {% if trial_count and trial_count > 0 %}
+          <span class="count" style="background:#fef3c7; color:#92400e;">{{ trial_count }}</span>
+          {% if trial_completed_count and trial_completed_count > 0 %}
+            <span style="background:#ef4444; color:#fff; font-size:10px; font-weight:900; padding:1px 6px; border-radius:10px; margin-left:4px;" title="Séance effectuée - Décision requise">{{ trial_completed_count }} !</span>
+          {% endif %}
+        {% endif %}
+      </a>
+      <a href="{{ url_for('enrollments', status='paused', q=q, course_id=course_filter) }}" class="status-pill {{ 'active' if status_filter=='paused' else '' }}">
+        <span>⏸️</span>
+        <span>{{ 'مجمدة' if lang=='ar' else 'Gelées' }}</span>
+      </a>
+      <a href="{{ url_for('enrollments', status='expired', q=q, course_id=course_filter) }}" class="status-pill {{ 'active' if status_filter=='expired' else '' }}" style="border-color:#fecdd3; color:#be123c;">
+        <span>⏳</span>
+        <span>{{ 'منتهية الصلاحية' if lang=='ar' else 'Expirées' }}</span>
+        {% if expired_count and expired_count > 0 %}
+          <span class="count" style="background:#e11d48; color:#fff;">{{ expired_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{{ url_for('enrollments', status='completed', q=q, course_id=course_filter) }}" class="status-pill {{ 'active' if status_filter=='completed' else '' }}">
+        <span>🏁</span>
+        <span>{{ 'منتهية' if lang=='ar' else 'Terminées' }}</span>
+      </a>
+      <a href="{{ url_for('enrollments', status='transferred', q=q, course_id=course_filter) }}" class="status-pill {{ 'active' if status_filter=='transferred' else '' }}">
+        <span>🔀</span>
+        <span>{{ 'محولة' if lang=='ar' else 'Transférées' }}</span>
+      </a>
+      <a href="{{ url_for('enrollments', status='all', q=q, course_id=course_filter) }}" class="status-pill {{ 'active' if status_filter=='all' else '' }}">
+        <span>📋</span>
+        <span>{{ 'الكل' if lang=='ar' else 'Toutes' }}</span>
+      </a>
+    </div>
+
+    <!-- Inputs & Course Filter -->
+    <form method="get" action="{{ url_for('enrollments') }}" class="filter-controls">
+      <input type="hidden" name="status" value="{{ status_filter }}">
+
+      <!-- Search Input -->
+      <div class="search-box">
+        <span class="icon">🔍</span>
+        <input type="text" name="q" value="{{ q }}" placeholder="{{ 'بحث بالاسم، الكود، الفوج...' if lang=='ar' else 'Rechercher élève, code, cours...' }}">
+      </div>
+
+      <div class="flex wrap" style="gap:8px; align-items:center;">
+        <!-- Course Filter -->
+        <select name="course_id" onchange="this.form.submit()" class="course-select">
+          <option value="">{{ 'جميع الأفواج / المواد' if lang=='ar' else 'Toutes les classes' }}</option>
+          {% for c in all_courses %}
+          <option value="{{ c.id }}" {{ 'selected' if course_filter == c.id else '' }}>{{ c.display_name }}</option>
+          {% endfor %}
+        </select>
+
+        <button type="submit" class="btn btn-primary btn-sm" style="font-weight:700; padding:7px 14px; border-radius:8px;">
+          {{ 'تصفية' if lang=='ar' else 'Filtrer' }}
+        </button>
+
+        {% if q or course_filter or status_filter != 'active' %}
+        <a href="{{ url_for('enrollments') }}" class="btn btn-outline btn-sm" style="padding:7px 10px; border-radius:8px;" title="Réinitialiser les filtres">✕</a>
+        {% endif %}
+      </div>
+    </form>
+
+  </div>
+
+  {% if status_filter == 'trial' and trial_completed_count and trial_completed_count > 0 %}
+  <div style="margin: 0 0 16px 0; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border: 1.5px solid #ea580c; border-radius: 12px; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; box-shadow:0 3px 10px rgba(234,88,12,0.12);">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 24px;">📢</span>
+      <div>
+        <strong style="color: #c2410c; font-size: 14px;">
+          {{ trial_completed_count }} {{ 'تلميذ(ة) أجروا الحصة التجريبية الوحيدة (1/1) · مطلوب اتخاذ قرار (تأكيد أو مغادرة)' if lang=='ar' else 'élève(s) ont déjà effectué leur unique séance d\'essai (1/1) · Action requise' }}
+        </strong>
+        <div style="color: #ea580c; font-size: 12px;">
+          {{ 'الحصة التجريبية مجانية وتنتهي بعد حصة واحدة فقط. يرجى تأكيد التسجيل الرسمي مع الأداء (تأكيد) أو تسجيل عدم المتابعة (مغادرة).' if lang=='ar' else 'La séance d\'essai est gratuite et strictement limitée à 1 séance. Décision requise : Valider l\'inscription avec règlement ou marquer l\'abandon (quitter).' }}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- TABLE CONTAINER (ZERO SCROLL, MODERN SAAS DESIGN) -->
+  <div class="table-card">
+    {% if enrolls %}
+    <div class="table-responsive">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th style="width:25%;">{{ 'التلميذ' if lang=='ar' else 'Élève & Contact' }}</th>
+            <th style="width:23%;">{{ 'المادة / الفوج' if lang=='ar' else 'Matière / Groupe' }}</th>
+            <th style="width:18%;">{{ 'الفترة والانتهاء' if lang=='ar' else 'Période & Fin' }}</th>
+            <th style="width:17%;">{{ 'الواجب المالي' if lang=='ar' else 'Règlement (DH)' }}</th>
+            <th style="width:7%; text-align:center;">{{ 'الحالة' if lang=='ar' else 'Statut' }}</th>
+            <th style="width:10%; text-align:right; min-width:155px;">{{ 'إجراءات' if lang=='ar' else 'Actions' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in enrolls %}
+          {% set has_prom = e.has_active_promise %}
+          {% set is_part = e.is_partial_payment %}
+          {% set is_unp = e.is_totally_unpaid %}
+          <tr {% if has_prom %}style="border-left: 4px solid #6366f1; background:#f8faff;"
+              {% elif is_part %}style="border-left: 4px solid #f59e0b; background:#fffdf5;"
+              {% elif is_unp %}style="border-left: 4px solid #ef4444; background:#fffcfc;"{% endif %}>
+            
+            <!-- 1. Student -->
+            <td class="cell-student">
+              {% if e.student %}
+                <div class="student-cell">
+                  <span class="student-avatar">
+                    {{ e.student.first_name[0]|upper }}
+                  </span>
+                  <div style="min-width:0;">
+                    <a href="{{ url_for('student_view', sid=e.student.id) }}" class="student-name" title="{{ e.student.full_name }}">
+                      {{ e.student.full_name }}
+                    </a>
+                    <div class="student-meta">
+                      <span class="code-pill">{{ e.student.code }}</span>
+                      {% if e.student.parent_phone %}
+                        {% set p_clean = e.student.parent_phone|replace(' ', '')|replace('-', '')|replace('+212', '') %}
+                        {% set wa_num = p_clean[1:] if p_clean.startswith('0') else p_clean %}
+                        <a href="https://wa.me/212{{ wa_num }}" target="_blank" class="wa-pill" title="WhatsApp Parent">
+                          💬 WA
+                        </a>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              {% else %}
+                <span class="muted">—</span>
+              {% endif %}
+            </td>
+
+            <!-- 2. Course -->
+            <td class="cell-course">
+              <div class="mobile-card-label">📚 {{ 'المادة / الفوج' if lang=='ar' else 'Matière / Groupe' }}</div>
+              {% if e.is_pending %}
+                <div style="font-weight:800; color:#b45309; font-size:13px;">
+                  ⏳ {{ e.course_name_display }}
+                </div>
+                <div style="margin-top:2px;">
+                  <span class="chip chip-amber" style="font-size:9.5px; padding:1px 6px; font-weight:800;">{{ 'في انتظار التعيين' if lang=='ar' else 'En attente de groupe' }}</span>
+                </div>
+              {% else %}
+                <div class="course-title" title="{{ e.course.name if e.course and e.course.name else '' }}">
+                  {{ e.course.name if e.course and e.course.name else (e.course.display_name if e.course else '-') }}
+                </div>
+                <div class="course-sub">
+                  {% if e.course and e.course.teacher %}
+                    <span>👨‍🏫 {{ e.course.teacher.full_name }}</span>
+                  {% endif %}
+                  {% if e.course and e.course.group_name and e.course.group_name != e.course.name %}
+                    <span class="group-tag" title="{{ e.course.group_name }}">👥 {{ e.course.group_name }}</span>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </td>
+
+            <!-- 3. Period & End Date -->
+            <td class="cell-period">
+              <div class="mobile-card-label" style="margin-bottom:0;">📅 {{ 'الفترة' if lang=='ar' else 'Période & Fin' }}</div>
+              <div style="display:flex; align-items:center; justify-content:space-between; width:100%; flex-wrap:wrap; gap:6px;">
+                {% if e.is_pack %}
+                  <div class="date-range" style="font-size:12px; font-weight:800; color:#6d28d9;">
+                    📦 Pack ({{ e.total_sessions_month or 1 }} séance{{ 's' if (e.total_sessions_month or 1) > 1 else '' }})
+                  </div>
+                  {% if e.remaining_sessions > 0 %}
+                    <span class="expiry-badge" style="background:#ede9fe; color:#6d28d9; border:1px solid #ddd6fe; font-weight:800;" title="Séances restantes">
+                      📦 {{ e.remaining_sessions }} séance{{ 's' if e.remaining_sessions > 1 else '' }} restante{{ 's' if e.remaining_sessions > 1 else '' }}
+                    </span>
+                  {% else %}
+                    <span class="expiry-badge expiry-gray">✅ Pack Consommé</span>
+                  {% endif %}
+                {% else %}
+                  <div class="date-range" style="font-size:12.5px; font-weight:750;">
+                    {{ e.enroll_date.strftime('%d/%m/%y') if e.enroll_date else '—' }} → {{ e.end_date.strftime('%d/%m/%y') if e.end_date else '—' }}
+                  </div>
+                {% endif %}
+                {% if not e.is_pack %}
+                {% if e.is_pending %}
+                  <span class="expiry-badge expiry-amber">⏳ {{ 'غير محدد' if lang=='ar' else 'À définir' }}</span>
+                {% elif e.status == 'trial' %}
+                  {% if e.trial_completed %}
+                    <span class="expiry-badge" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; font-weight:800; font-size:10px;">🔴 {{ 'أجرى الحصة (1/1) · مطلوب قرار' if lang=='ar' else 'Essai fait (1/1) · Décider' }}</span>
+                  {% else %}
+                    <span class="expiry-badge" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-weight:800; font-size:10px;">⏳ {{ 'حصة واحدة (0/1)' if lang=='ar' else 'Essai en attente (0/1)' }}</span>
+                  {% endif %}
+                {% elif e.end_date %}
+                  {% set rem = e.days_remaining %}
+                  {% if e.status == 'completed' %}
+                    <span class="expiry-badge expiry-gray">🏁 {{ 'منتهي' if lang=='ar' else 'Terminé' }}</span>
+                  {% elif e.status == 'paused' %}
+                    <span class="expiry-badge expiry-amber">⏸️ {{ 'مجمد' if lang=='ar' else 'Gelé' }}</span>
+                  {% elif e.total_paid <= 0 and e.balance > 0 %}
+                    <span class="expiry-badge" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; font-size:10px; font-weight:800;" title="Paiement non réglé">
+                      🔴 {{ 'غير مؤدى' if lang=='ar' else 'Non payé' }}
+                    </span>
+                  {% elif rem is not none and rem > 5 %}
+                    <span class="expiry-badge expiry-green" title="{{ rem }} jours restants">
+                      🟢 {{ rem }}j {{ 'متبقية' if lang=='ar' else 'restants' }}
+                    </span>
+                  {% elif rem is not none and rem >= 0 %}
+                    <span class="expiry-badge expiry-amber" title="Expire très bientôt">
+                      ⚠️ {{ 'ينتهي خلال' if lang=='ar' else 'Expire dans' }} {{ rem }}j
+                    </span>
+                  {% else %}
+                    <span class="expiry-badge expiry-red" title="Abonnement expiré">
+                      🔴 {{ 'منتهي منذ' if lang=='ar' else 'Expiré (' + (rem|abs)|string + 'j)' }}
+                    </span>
+                  {% endif %}
+                {% else %}
+                  <span class="expiry-badge expiry-gray">—</span>
+                {% endif %}
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- 4. Financial Status -->
+            <td class="cell-financial">
+              <div class="mobile-card-label">💰 {{ 'الواجب المالي' if lang=='ar' else 'Règlement' }}</div>
+              <div class="fin-container">
+                <div class="fin-due">
+                  {{ '%.0f'|format(e.due_amount) }} <span style="font-size:11px; font-weight:600; color:#64748b;">DH</span>
+                  {% if e.payment_plan == 'pack' or (e.course and e.course.billing_cycle == 'pack') or (e.course and 'particulier' in (e.course.name or '')|lower) %}
+                    <span style="font-size:9.5px; font-weight:800; color:#7c3aed; background:#ede9fe; padding:1px 5px; border-radius:4px; display:inline-block; margin-top:2px;" title="Forfait Pack / Séance">📦 Forfait Pack</span>
+                  {% elif e.monthly_price and e.monthly_price > 0 and e.monthly_price != e.due_amount %}
+                    <span style="font-size:10px; font-weight:700; color:#0369a1; display:block;" title="Tarif mensuel de base">({{ '%.0f'|format(e.monthly_price) }} DH/mois)</span>
+                  {% endif %}
+                </div>
+                <div class="fin-pills-row">
+                  {% if has_prom %}
+                    <span class="fin-pill" style="background:#e0e7ff; color:#3730a3; border:1px solid #a5b4fc; font-weight:800;" title="{{ e.rest_promise_note or 'Accord de promesse en cours' }}">
+                      🛡️ Promesse: {{ e.rest_promise_date.strftime('%d/%m') }}
+                    </span>
+                  {% endif %}
+                  {% if is_part %}
+                    <span class="fin-pill" style="background:#fef3c7; color:#92400e; border:1px solid #fcd34d; font-weight:800;" title="Avance déjà versée">
+                      🟠 Avance : {{ '%.0f'|format(e.total_paid) }} DH
+                    </span>
+                    <span class="fin-pill fin-pill-due" title="Reste à payer">
+                      ⚠️ Reste : {{ '%.0f'|format(e.balance) }} DH
+                    </span>
+                  {% elif is_unp %}
+                    <span class="fin-pill" style="background:#fee2e2; color:#dc2626; border:1px solid #fecaca; font-weight:800;">
+                      🔴 0 DH
+                    </span>
+                    <span class="fin-pill fin-pill-due" title="Solde impayé">
+                      ⚠️ {{ '%.0f'|format(e.balance) }} DH
+                    </span>
+                  {% elif e.balance <= 0 %}
+                    <span class="fin-pill fin-pill-paid" title="Total payé">✓ {{ '%.0f'|format(e.total_paid) }} DH</span>
+                    <span class="fin-pill fin-pill-settled" title="Compte soldé">✓ {{ 'مسوى' if lang=='ar' else 'Soldé' }}</span>
+                  {% elif e.student and e.student.dynamic_credit_balance > 0 %}
+                    <span class="fin-pill fin-pill-credit" title="Avoir disponible">+{{ '%.0f'|format(e.student.dynamic_credit_balance) }} DH</span>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+
+            <!-- 5. Status Badge -->
+            <td class="cell-status" style="text-align:center;">
+              {% if e.status == 'active' %}
+                <span class="status-badge st-active"><span class="status-dot"></span>{{ 'نشط' if lang=='ar' else 'Actif' }}</span>
+              {% elif e.status == 'trial' %}
+                <span class="status-badge" style="background:#fffbeb; color:#b45309; border:1px solid #fde68a;"><span class="status-dot" style="background:#f59e0b;"></span>{{ 'حصة تجريبية' if lang=='ar' else 'Séance essai' }}</span>
+              {% elif e.status == 'pending_assignment' %}
+                <span class="status-badge st-pending"><span class="status-dot"></span>{{ 'معلق' if lang=='ar' else 'Attente' }}</span>
+                {% if e.is_pending_reminder_due %}
+                  <div style="margin-top:4px;">
+                    <span class="badge" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; font-size:0.75rem; padding:2px 7px; border-radius:999px; font-weight:800; display:inline-flex; align-items:center; gap:3px;">
+                      ⚠️ {{ 'تذكير مستحق' if lang=='ar' else ('Rappel ' ~ e.pending_reminder_stage ~ ' dû') }}
+                    </span>
+                  </div>
+                {% elif e.reminder_count and e.reminder_count > 0 %}
+                  <div style="margin-top:4px;">
+                    <span class="badge" style="background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; font-size:0.75rem; padding:2px 7px; border-radius:999px; font-weight:600; display:inline-flex; align-items:center; gap:3px;">
+                      ✓ {{ 'تم التذكير' if lang=='ar' else ('Rappel ' ~ e.reminder_count ~ ' envoyé') }}
+                    </span>
+                  </div>
+                {% endif %}
+              {% elif e.status == 'paused' %}
+                <span class="status-badge st-paused"><span class="status-dot"></span>{{ 'مجمد' if lang=='ar' else 'Gelé' }}</span>
+              {% elif e.status == 'completed' %}
+                <span class="status-badge st-completed"><span class="status-dot"></span>{{ 'منتهي' if lang=='ar' else 'Fini' }}</span>
+              {% elif e.status == 'transferred' %}
+                <span class="status-badge st-transferred"><span class="status-dot"></span>{{ 'محول' if lang=='ar' else 'Transféré' }}</span>
+              {% else %}
+                <span class="status-badge st-dropped"><span class="status-dot"></span>{{ 'ملغى' if lang=='ar' else 'Abandon' }}</span>
+              {% endif %}
+            </td>
+
+            <!-- 6. Actions Cluster (Primary Button + Dropdown Menu) -->
+            <td class="actions-cell cell-actions">
+              <div class="action-group">
+                
+                <!-- 1. Contextual Primary Action Button -->
+                {% if e.is_pending %}
+                  <div style="display:inline-flex; gap:4px; align-items:center;">
+                    <button type="button" class="btn-primary-action btn-act-assign" onclick="openAssignModal({{ e.id }}, '{{ e.student.full_name|replace('\'', '\\\'') if e.student else '' }}', '{{ e.tariff.name if e.tariff else (e.course_name_display) }}')" title="Affecter à un groupe">
+                      <span>⚡</span><span>{{ 'تعيين' if lang=='ar' else 'Affecter' }}</span>
+                    </button>
+                    <button type="button" class="btn-primary-action" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; padding:6px 9px;" onclick="openSinglePendingReminderModal({{ e.id }})" title="Envoyer Rappel WhatsApp (J+10/20/30)">
+                      <span>📲</span><span>{{ 'تذكير' if lang=='ar' else 'Rappel' }}</span>
+                    </button>
+                  </div>
+                {% elif e.status == 'trial' %}
+                  <div style="display:inline-flex; gap:4px; align-items:center;">
+                    <button type="button" class="btn-primary-action" style="background:#10b981; color:#ffffff; box-shadow:0 2px 6px rgba(16,185,129,0.25);" onclick="openValidateTrialModal({{ e.id }}, '{{ e.student.full_name|replace('\'', '\\\'') if e.student else '' }}', '{{ e.course.display_name|replace('\'', '\\\'') if e.course else '' }}', {{ e.course.price if e.course else 300.0 }}, {{ e.course.registration_fee or 40.0 }})" title="Valider l'inscription">
+                      <span>✅</span><span>{{ 'تأكيد' if lang=='ar' else 'Valider' }}</span>
+                    </button>
+                    <form method="post" action="{{ url_for('enrollment_cancel_trial', eid=e.id) }}" onsubmit="return confirm('{{ 'هل تريد تأكيد مغادرة التلميذ (إلغاء المتابعة)؟' if lang=='ar' else 'Confirmer le départ / abandon de cet élève (quitter) ?' }}');" style="margin:0; display:inline;">
+                      <button type="submit" class="btn-primary-action" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; padding:6px 9px; box-shadow:none;" title="L'élève quitte / ne continue pas">
+                        <span>❌</span><span>{{ 'مغادرة' if lang=='ar' else 'Quitter' }}</span>
+                      </button>
+                    </form>
+                  </div>
+                {% elif e.balance > 0 and e.student %}
+                  <div style="display:inline-flex; gap:4px; align-items:center;">
+                    <button type="button" class="btn-primary-action btn-act-pay" onclick="openMultiPayModal({{ e.student.id }}, '{{ e.student.full_name|replace('\'', '\\\'') }}', {{ e.id }})" title="{{ 'أداء الواجب المالي / تصفية المستحقات' if lang=='ar' else 'Encaisser le règlement / Régler le solde' }}">
+                      <span>💵</span><span>{{ 'أداء' if lang=='ar' else 'Payer' }}</span>
+                    </button>
+                    <button type="button" class="btn-primary-action" style="background:#eef2ff; color:#4f46e5; border:1px solid #c7d2fe; padding:6px 8px; box-shadow:none; font-weight:800;" onclick="openPromiseModal({{ e.id }}, '{{ e.rest_promise_date.strftime('%Y-%m-%d') if e.rest_promise_date else '' }}', '{{ (e.rest_promise_note or '')|replace('\'', '\\\'') }}', '{{ (e.student.full_name or '')|replace('\'', '\\\'') if e.student else '' }}', {{ e.balance }})" title="Fixer ou modifier la date de promesse pour le reste (Date X)">
+                      <span>🤝</span><span>Date X</span>
+                    </button>
+                  </div>
+                {% elif e.status == 'active' %}
+                  <a class="btn-primary-action btn-act-renew" href="{{ url_for('enrollment_renew', eid=e.id) }}" title="Renouveler pour le cycle prochain">
+                    <span>🔄</span><span>{{ 'تجديد' if lang=='ar' else 'Renouveler' }}</span>
+                  </a>
+                {% elif e.status == 'paused' %}
+                  <button type="button" class="btn-primary-action btn-act-resume" onclick="openResumeModal({{ e.id }}, '{{ e.student.full_name|replace('\'', '\\\'') if e.student else '' }}', '{{ e.course.display_name|replace('\'', '\\\'') if e.course else '' }}', '{{ e.pause_date.strftime('%Y-%m-%d') if e.pause_date else '' }}', {{ e.paused_sessions_remaining or 0 }})" title="Reprendre les cours">
+                    <span>▶️</span><span>{{ 'استئناف' if lang=='ar' else 'Reprendre' }}</span>
+                  </button>
+                {% else %}
+                  <a class="btn-primary-action btn-act-view" href="{{ url_for('student_view', sid=e.student.id) if e.student else '#' }}" title="Consulter la fiche">
+                    <span>👁️</span><span>{{ 'ملف' if lang=='ar' else 'Fiche' }}</span>
+                  </a>
+                {% endif %}
+
+                <!-- 2. Actions Dropdown Button (⋮) -->
+                <button type="button" class="btn-menu-trigger" onclick="toggleActionDropdown(event, 'dropdown-{{ e.id }}')" title="Plus d'actions">
+                  ⋮
+                </button>
+
+                <!-- 3. Floating Dropdown Menu -->
+                <div class="dropdown-menu-float" id="dropdown-{{ e.id }}">
+                  
+                  <div class="dropdown-label">{{ 'العمليات السريعة' if lang=='ar' else 'Opérations' }}</div>
+                  
+                  <!-- Student Sheet -->
+                  {% if e.student %}
+                  <a class="dropdown-item" href="{{ url_for('student_view', sid=e.student.id) }}">
+                    <span>👤</span><span>{{ 'ملف التلميذ' if lang=='ar' else 'Dossier élève' }}</span>
+                  </a>
+                  {% endif %}
+
+                  <!-- Pending Assignment Actions -->
+                  {% if e.is_pending %}
+                  <button type="button" class="dropdown-item" style="color:#059669; font-weight:700;" onclick="openSinglePendingReminderModal({{ e.id }})">
+                    <span>📲</span><span>{{ 'إرسال تذكير واتساب (دورة 10 أيام)' if lang=='ar' else 'Rappel WhatsApp (Cycle 10j)' }}</span>
+                  </button>
+                  <button type="button" class="dropdown-item danger" onclick="deletePendingPreInscription({{ e.id }}, '{{ (e.student.full_name|replace('\'', '\\\'')) if e.student else '' }}')">
+                    <span>🗑️</span><span>{{ 'حذف من لائحة الانتظار' if lang=='ar' else 'Supprimer la pré-inscription' }}</span>
+                  </button>
+                  <div class="dropdown-divider"></div>
+                  {% endif %}
+
+                  <!-- Trial Actions -->
+                  {% if e.status == 'trial' %}
+                  <button type="button" class="dropdown-item" style="color:#047857; font-weight:800;" onclick="openValidateTrialModal({{ e.id }}, '{{ e.student.full_name|replace('\'', '\\\'') if e.student else '' }}', '{{ e.course.display_name|replace('\'', '\\\'') if e.course else '' }}', {{ e.course.price if e.course else 300.0 }}, {{ e.course.registration_fee or 40.0 }})">
+                    <span>✅</span><span>{{ 'تأكيد التسجيل النهائي' if lang=='ar' else 'Valider l\'inscription' }}</span>
+                  </button>
+                  <form method="post" action="{{ url_for('enrollment_cancel_trial', eid=e.id) }}" onsubmit="return confirm('{{ 'هل تريد إلغاء هذه الحصة التجريبية؟' if lang=='ar' else 'Annuler cette séance d\'essai ?' }}');" style="margin:0;">
+                    <button type="submit" class="dropdown-item danger">
+                      <span>❌</span><span>{{ 'إلغاء التجربة (لم يتابع)' if lang=='ar' else 'Annuler l\'essai (Abandon)' }}</span>
+                    </button>
+                  </form>
+                  <div class="dropdown-divider"></div>
+                  {% endif %}
+
+                  <!-- Pay or Renew -->
+                  {% if e.student and e.status != 'trial' %}
+                  <button type="button" class="dropdown-item" onclick="openMultiPayModal({{ e.student.id }}, '{{ e.student.full_name|replace('\'', '\\\'') }}', {{ e.id }})">
+                    <span>💵</span><span>{{ 'تسجيل أداء / تصفية الحساب' if lang=='ar' else 'Encaisser un paiement' }}</span>
+                  </button>
+                  {% if e.balance > 0 and cur_user and cur_user.role in ['admin', 'secretary'] %}
+                  <button type="button" class="dropdown-item" style="color:#4f46e5; font-weight:700;" onclick="openPromiseModal({{ e.id }}, '{{ e.rest_promise_date.strftime('%Y-%m-%d') if e.rest_promise_date else '' }}', '{{ (e.rest_promise_note or '')|replace('\'', '\\\'') }}', '{{ (e.student.full_name or '')|replace('\'', '\\\'') if e.student else '' }}', {{ e.balance }})">
+                    <span>🤝</span><span>{{ 'وعد بالأداء (Date X)' if lang=='ar' else 'Accord Promesse (Date X)' }}</span>
+                  </button>
+                  {% endif %}
+                  {% endif %}
+
+                  {% if e.status in ['active', 'completed'] %}
+                  <a class="dropdown-item" href="{{ url_for('enrollment_renew', eid=e.id) }}">
+                    <span>🔄</span><span>{{ 'تجديد الاشتراك' if lang=='ar' else 'Renouveler abonnement' }}</span>
+                  </a>
+                  {% endif %}
+
+                  <!-- Pause / Resume -->
+                  {% if e.status == 'active' %}
+                  <button type="button" class="dropdown-item" onclick="openPauseModal({{ e.id }}, '{{ e.student.full_name|replace('\'', '\\\'') if e.student else '' }}', '{{ e.course.display_name|replace('\'', '\\\'') if e.course else '' }}', '{{ e.enroll_date.strftime('%Y-%m-%d') if e.enroll_date else '' }}')">
+                    <span>⏸️</span><span>{{ 'تجميد الاشتراك (Pause)' if lang=='ar' else 'Geler l\'abonnement' }}</span>
+                  </button>
+                  {% elif e.status == 'paused' %}
+                  <button type="button" class="dropdown-item" onclick="openResumeModal({{ e.id }}, '{{ e.student.full_name|replace('\'', '\\\'') if e.student else '' }}', '{{ e.course.display_name|replace('\'', '\\\'') if e.course else '' }}', '{{ e.pause_date.strftime('%Y-%m-%d') if e.pause_date else '' }}', {{ e.paused_sessions_remaining or 0 }})">
+                    <span>▶️</span><span>{{ 'استئناف الحصص' if lang=='ar' else 'Reprendre les cours' }}</span>
+                  </button>
+                  {% endif %}
+
+                  <!-- Transfer -->
+                  {% if e.status == 'active' and not e.is_pending and e.course %}
+                  <button type="button" class="dropdown-item" onclick="openTransferModal({{ e.id }}, '{{ e.student.full_name|replace('\'', '\\\'') if e.student else '' }}', '{{ e.course.display_name|replace('\'', '\\\'') if e.course else '' }}', {{ e.course_id or 0 }}, {{ e.monthly_price or (e.calculated_price or (e.course.price if e.course else 300.0)) }}, '{{ e.enroll_date.strftime('%Y-%m-%d') if e.enroll_date else '' }}', '{{ e.end_date.strftime('%Y-%m-%d') if e.end_date else '' }}')">
+                    <span>🔀</span><span>{{ 'تحويل لقسم آخر' if lang=='ar' else 'Changer de classe' }}</span>
+                  </button>
+                  {% endif %}
+
+                  <!-- Withdrawal / Avoir -->
+                  <button type="button" class="dropdown-item" onclick="openWithdrawModal({{ e.id }}, '{{ e.student.full_name|replace('\'', '\\\'') if e.student else '' }}', {{ e.balance }})">
+                    <span>🚪</span><span>{{ 'انسحاب وإصدار وصل رصيد' if lang=='ar' else 'Désistement & Avoir' }}</span>
+                  </button>
+
+                  <!-- Edit -->
+                  <a class="dropdown-item" href="{{ url_for('enrollment_edit', eid=e.id) }}">
+                    <span>✏️</span><span>{{ 'تعديل البيانات' if lang=='ar' else 'Modifier inscription' }}</span>
+                  </a>
+
+                  <div class="dropdown-divider"></div>
+
+                  <!-- Quick Status Switcher -->
+                  <div class="dropdown-label">{{ 'تغيير الحالة' if lang=='ar' else 'Changer le statut' }}</div>
+                  <div class="status-select-wrapper">
+                    <form method="post" action="{{ url_for('enrollment_status', eid=e.id) }}" style="margin:0;">
+                      <select name="status" onchange="this.form.submit()">
+                        <option value="active" {{ 'selected' if e.status=='active' }}>🟢 {{ 'نشط' if lang=='ar' else 'Actif' }}</option>
+                        <option value="trial" {{ 'selected' if e.status=='trial' }}>🧪 {{ 'حصة تجريبية' if lang=='ar' else 'Séance d\'essai' }}</option>
+                        <option value="pending_assignment" {{ 'selected' if e.status=='pending_assignment' }}>⏳ {{ 'في الانتظار' if lang=='ar' else 'En attente' }}</option>
+                        <option value="paused" {{ 'selected' if e.status=='paused' }}>⏸️ {{ 'مجمد' if lang=='ar' else 'Gelé' }}</option>
+                        <option value="completed" {{ 'selected' if e.status=='completed' }}>✅ {{ 'منتهي' if lang=='ar' else 'Terminé' }}</option>
+                        <option value="transferred" {{ 'selected' if e.status=='transferred' }}>🔀 {{ 'محول' if lang=='ar' else 'Transféré' }}</option>
+                        <option value="dropped" {{ 'selected' if e.status=='dropped' }}>❌ {{ 'ملغى' if lang=='ar' else 'Abandon' }}</option>
+                      </select>
+                    </form>
+                  </div>
+
+                  <!-- Delete -->
+                  {% if cur_user and cur_user.role == 'admin' %}
+                  <div class="dropdown-divider"></div>
+                  <form method="post" action="{{ url_for('enrollment_delete', eid=e.id) }}" onsubmit="return confirm('{{ 'هل أنت متأكد من حذف هذا التسجيل؟' if lang=='ar' else 'Supprimer définitivement cette inscription ?' }}');" style="margin:0;">
+                    <button class="dropdown-item danger" type="submit">
+                      <span>🗑️</span><span>{{ 'حذف التسجيل' if lang=='ar' else 'Supprimer dossier' }}</span>
+                    </button>
+                  </form>
+                  {% endif %}
+
+                </div>
+
+              </div>
+            </td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:45px 20px; color:#64748b;">
+      <div style="font-size:36px; margin-bottom:10px;">📋</div>
+      <h3 style="margin:0 0 6px 0; color:#0b3d6e; font-size:16px; font-weight:800;">
+        {{ 'لا يوجد أي اشتراك مطابق لشروط البحث' if lang=='ar' else 'Aucune inscription trouvée avec ces critères' }}
+      </h3>
+      <p style="margin:0 0 16px 0; font-size:12.5px;">
+        {{ 'يمكنك توسيع نطاق البحث أو تصفير الفلاتر للعثور على النتائج' if lang=='ar' else 'Essayez de modifier vos filtres de statut ou de réinitialiser la recherche.' }}
+      </p>
+      <div class="flex" style="justify-content:center; gap:8px;">
+        <a class="btn btn-primary btn-sm" href="{{ url_for('express_enrollment') }}" style="background:#10b981; border-color:#10b981; font-weight:700;">
+          ⚡ {{ 'تسجيل جديد' if lang=='ar' else 'Inscription Express' }}
+        </a>
+        <a class="btn btn-outline btn-sm" href="{{ url_for('enrollments') }}">
+          {{ 'تصفير الفلاتر' if lang=='ar' else 'Réinitialiser les filtres' }}
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- 1. SESSION-BASED PAUSE MODAL -->
+<div id="pauseModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); z-index:9999; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
+  <div style="background:#fff; width:90%; max-width:460px; padding:22px; border-radius:14px; box-shadow:0 15px 35px rgba(0,0,0,0.25); border-top:4px solid #f59e0b;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="margin:0; color:#d97706; font-size:16px; font-weight:800; display:flex; align-items:center; gap:6px;">
+        <span>⏸️</span><span>{{ 'تجميد الاشتراك وحفظ الحصص المتبقية' if lang=='ar' else 'Geler l\'Abonnement & Reporter les Séances' }}</span>
+      </h3>
+      <button type="button" onclick="closePauseModal()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#64748b;">✕</button>
+    </div>
+
+    <form id="pauseForm" method="post" action="">
+      <div style="background:#fef3c7; border:1px solid #fde68a; border-radius:8px; padding:10px 12px; margin-bottom:14px;">
+        <div style="font-weight:800; color:#92400e; font-size:13px;" id="pauseStudentTitle">Élève</div>
+        <div style="font-size:11.5px; color:#b45309;" id="pauseCourseTitle">Classe</div>
+      </div>
+
+      <!-- Pause Date (Allows Past Dates) -->
+      <div class="field mb-3">
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+          📅 {{ 'تاريخ بداية التوقف (يمكن اختيار تاريخ سابق)' if lang=='ar' else 'Date d\'effet de la pause (Date passée autorisée) :' }}
+        </label>
+        <input type="date" name="pause_date" id="pauseDateInput" required class="form-control" onchange="fetchPausePreview()" style="font-weight:700; color:#0B3D6E; padding:7px 10px; width:100%; border-radius:8px; border:1.5px solid #cbd5e1; box-sizing:border-box;">
+      </div>
+
+      <!-- Live Calculated Sessions Breakdown -->
+      <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:10px; padding:12px; margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; font-size:11.5px; color:#475569; margin-bottom:6px;">
+          <span>{{ 'إجمالي حصص الدورة :' if lang=='ar' else 'Total séances du cycle :' }}</span>
+          <strong id="pauseTotalSessions" style="color:#0B3D6E;">—</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:11.5px; color:#475569; margin-bottom:6px;">
+          <span>{{ 'الحصص المستهلكة قبل التوقف :' if lang=='ar' else 'Séances consommées avant pause :' }}</span>
+          <strong id="pauseConsumedSessions" style="color:#64748b;">—</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed #cbd5e1; padding-top:8px; margin-top:6px;">
+          <span style="font-weight:800; color:#047857; font-size:12.5px;">{{ 'الحصص المتبقية للترحيل :' if lang=='ar' else 'Séances restantes à reporter :' }}</span>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <input type="number" name="remaining_sessions" id="pauseRemainingSessions" min="0" max="60" required style="width:70px; font-size:14px; font-weight:900; color:#047857; text-align:center; padding:3px 6px; border-radius:6px; border:1.5px solid #10b981;">
+            <span style="font-size:11px; font-weight:700; color:#047857;">{{ 'حصة' if lang=='ar' else 'séances' }}</span>
+          </div>
+        </div>
+        <div style="font-size:10.5px; color:#64748b; margin-top:6px;" id="pauseDaysText"></div>
+      </div>
+
+      <!-- Note / Reason -->
+      <div class="field mb-3">
+        <label style="font-size:11.5px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">{{ 'سبب التوقف (اختياري) :' if lang=='ar' else 'Motif / Remarque (Optionnel) :' }}</label>
+        <input type="text" name="notes" placeholder="{{ 'مثال: سفر، امتحانات، ظروف صحية...' if lang=='ar' else 'Ex: Voyage, examens, raisons personnelles...' }}" style="width:100%; padding:6px 10px; font-size:12px; border-radius:8px; border:1px solid #cbd5e1; box-sizing:border-box;">
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="closePauseModal()">{{ 'إلغاء' if lang=='ar' else 'Annuler' }}</button>
+        <button type="submit" class="btn btn-primary btn-sm" style="background:#d97706; border-color:#d97706; font-weight:800; padding:6px 14px;">
+          ⏸️ {{ 'تأكيد التجميد والترحيل' if lang=='ar' else 'Confirmer la Pause' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 2. SESSION-BASED RESUME MODAL -->
+<div id="resumeModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); z-index:9999; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
+  <div style="background:#fff; width:90%; max-width:460px; padding:22px; border-radius:14px; box-shadow:0 15px 35px rgba(0,0,0,0.25); border-top:4px solid #10b981;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="margin:0; color:#15803d; font-size:16px; font-weight:800; display:flex; align-items:center; gap:6px;">
+        <span>▶️</span><span>{{ 'استئناف الدراسة وإعادة جدولة الحصص' if lang=='ar' else 'Reprendre les Cours & Réactiver' }}</span>
+      </h3>
+      <button type="button" onclick="closeResumeModal()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#64748b;">✕</button>
+    </div>
+
+    <form id="resumeForm" method="post" action="">
+      <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px 12px; margin-bottom:14px;">
+        <div style="font-weight:800; color:#166534; font-size:13px;" id="resumeStudentTitle">Élève</div>
+        <div style="font-size:11.5px; color:#15803d;" id="resumeCourseTitle">Classe</div>
+        <div style="font-size:11px; color:#166534; margin-top:2px;" id="resumePauseDateText"></div>
+      </div>
+
+      <!-- Resume Date -->
+      <div class="field mb-3">
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+          📅 {{ 'تاريخ استئناف الحضور بالمعهد :' if lang=='ar' else 'Date effective de reprise :' }}
+        </label>
+        <input type="date" name="resume_date" id="resumeDateInput" required class="form-control" onchange="fetchResumePreview()" style="font-weight:700; color:#0B3D6E; padding:7px 10px; width:100%; border-radius:8px; border:1.5px solid #cbd5e1; box-sizing:border-box;">
+      </div>
+
+      <!-- Remaining Sessions Input -->
+      <div class="field mb-3">
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+          🔢 {{ 'عدد الحصص المتبقية المعتمدة للجدولة :' if lang=='ar' else 'Nombre de séances restantes à planifier :' }}
+        </label>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <input type="number" name="remaining_sessions" id="resumeRemainingSessionsInput" min="1" max="60" required onchange="fetchResumePreview()" onkeyup="fetchResumePreview()" style="width:90px; font-size:15px; font-weight:900; color:#0B3D6E; text-align:center; padding:5px 8px; border-radius:8px; border:1.5px solid #cbd5e1;">
+          <span style="font-size:12px; font-weight:700; color:#475569;">{{ 'حصة متبقية' if lang=='ar' else 'séance(s) en réserve' }}</span>
+        </div>
+      </div>
+
+      <!-- Live Calculation Result Box -->
+      <div style="background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:10px; padding:12px; margin-bottom:14px;">
+        <div style="font-size:11px; font-weight:800; color:#1e40af; text-transform:uppercase;">
+          📅 {{ 'تاريخ نهاية الاشتراك الجديد المحسوب :' if lang=='ar' else 'Nouvelle date d\'échéance calculée :' }}
+        </div>
+        <div style="font-size:18px; font-weight:900; color:#1e3a8a; margin-top:2px;" id="resumeNewEndDate">
+          Calcul en cours...
+        </div>
+        <div style="font-size:11px; color:#3b82f6; margin-top:4px;" id="resumeScheduleDaysText"></div>
+      </div>
+
+      <!-- Note -->
+      <div class="field mb-3">
+        <label style="font-size:11.5px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">{{ 'ملاحظة (اختياري) :' if lang=='ar' else 'Remarque (Optionnel) :' }}</label>
+        <input type="text" name="notes" placeholder="{{ 'مثال: عودة بعد العطلة الصيفية...' if lang=='ar' else 'Ex: Retour de vacances, reprise normale...' }}" style="width:100%; padding:6px 10px; font-size:12px; border-radius:8px; border:1px solid #cbd5e1; box-sizing:border-box;">
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeResumeModal()">{{ 'إلغاء' if lang=='ar' else 'Annuler' }}</button>
+        <button type="submit" class="btn btn-primary btn-sm" style="background:#16a34a; border-color:#16a34a; font-weight:800; padding:6px 14px;">
+          ▶️ {{ 'تأكيد الاستئناف والتمديد' if lang=='ar' else 'Confirmer la Reprise' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 3. WITHDRAWAL & AVOIR MODAL -->
+<div id="withdrawModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); z-index:9999; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
+  <div style="background:#fff; width:90%; max-width:420px; padding:20px; border-radius:14px; box-shadow:0 15px 35px rgba(0,0,0,0.25); border-top:4px solid #7c3aed;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="margin:0; color:#0B3D6E; font-size:15.5px; font-weight:800;">🚪 {{ 'انسحاب وإصدار وصل رصيد / إرجاع' if lang=='ar' else 'Désistement & Génération d\'Avoir' }}</h3>
+      <button type="button" onclick="closeWithdrawModal()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#64748b;">✕</button>
+    </div>
+
+    <form id="withdrawForm" method="post" action="">
+      <p style="font-size:12.5px; font-weight:700; color:#1e293b; margin-bottom:12px;" id="withdrawStudentName"></p>
+      
+      <div class="field mb-3">
+        <label style="font-size:11.5px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">{{ 'نوع التسوية المالية :' if lang=='ar' else 'Type de compensation :' }}</label>
+        <select name="action" style="padding:6px 8px; font-size:12.5px; font-weight:600; width:100%; border-radius:8px; border:1.5px solid #cbd5e1;">
+          <option value="avoir">{{ 'إنشاء رصيد مؤجل للتلميذ (Avoir)' if lang=='ar' else 'Créer un Avoir (Crédit déductible pour l\'élève)' }}</option>
+          <option value="refund">{{ 'إرجاع نقدي فوري (Cash)' if lang=='ar' else 'Remboursement direct en espèces (Cash rendu)' }}</option>
+        </select>
+      </div>
+
+      <div class="field mb-3">
+        <label style="font-size:11.5px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">{{ 'مبلغ الرصيد / الإرجاع (DH) :' if lang=='ar' else 'Montant de l\'Avoir / Remboursement (DH) :' }}</label>
+        <input type="number" step="0.01" name="refund_amount" id="withdrawRefundAmount" required style="padding:7px 10px; font-size:14px; font-weight:800; color:#0B3D6E; width:100%; border-radius:8px; border:1.5px solid #cbd5e1; box-sizing:border-box;" placeholder="0.00">
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeWithdrawModal()">{{ 'إلغاء' if lang=='ar' else 'Annuler' }}</button>
+        <button type="submit" class="btn btn-primary btn-sm" style="background:#7c3aed; border-color:#7c3aed; font-weight:800; padding:6px 14px;">
+          {{ 'تأكيد العملية' if lang=='ar' else 'Confirmer le Désistement' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 4. ASSIGN COURSE MODAL -->
+{% include 'enrollments/_assign_course_modal.html' %}
+
+<!-- VALIDATE TRIAL MODAL -->
+<div id="validateTrialModal" class="modal-backdrop" onclick="if(event.target===this) closeValidateTrialModal();" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.65); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(3px); padding:16px;">
+  <div class="card" style="width:100%; max-width:520px; padding:22px 24px; border-radius:14px; background:#fff; box-shadow:0 20px 50px rgba(0,0,0,0.25); border-top:4px solid #10b981;">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1.5px solid #f1f5f9; padding-bottom:10px; margin-bottom:14px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:22px;">✅</span>
+        <h3 style="margin:0; font-size:16px; font-weight:800; color:#0B3D6E;">{{ 'تأكيد التسجيل النهائي (بعد الحصة التجريبية)' if lang=='ar' else 'Valider l\'Inscription Officielle (Post-Essai)' }}</h3>
+      </div>
+      <button type="button" onclick="closeValidateTrialModal()" style="border:none; background:none; font-size:18px; cursor:pointer; color:#94a3b8;">✕</button>
+    </div>
+
+    <form method="post" id="validateTrialForm" action="">
+      <div style="background:#ecfdf5; border:1px solid #a7f3d0; padding:10px 14px; border-radius:8px; margin-bottom:14px; font-size:12.5px;">
+        <div>👤 {{ 'التلميذ :' if lang=='ar' else 'Élève :' }} <strong id="valTrialStudentName" style="color:#065f46;">-</strong></div>
+        <div style="margin-top:2px;">📚 {{ 'الفوج / المادة :' if lang=='ar' else 'Classe / Matière :' }} <strong id="valTrialCourseName" style="color:#047857;">-</strong></div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">{{ 'تاريخ البداية الرسمي' if lang=='ar' else 'Date début officielle' }} <span style="color:#ef4444;">*</span></label>
+          <input type="date" name="enroll_date" id="valTrialStartDate" value="{{ today }}" required style="width:100%; padding:7px; font-size:12.5px; font-weight:700; border:1.5px solid #cbd5e1; border-radius:8px; box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">{{ 'المدة (عدد الشهور)' if lang=='ar' else 'Durée (Mois)' }}</label>
+          <select name="months" id="valTrialMonths" onchange="recalcTrialModalTotal()" style="width:100%; padding:7px; font-size:12.5px; font-weight:700; border:1.5px solid #cbd5e1; border-radius:8px; box-sizing:border-box;">
+            <option value="1">1 Mois</option>
+            <option value="2">2 Mois</option>
+            <option value="3">3 Mois (Trimestre)</option>
+            <option value="6">6 Mois</option>
+            <option value="12">12 Mois</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">{{ 'واجب التمدرس (DH)' if lang=='ar' else 'Scolarité (DH)' }} <span style="color:#ef4444;">*</span></label>
+          <input type="number" step="0.01" name="monthly_price" id="valTrialMonthlyPrice" oninput="recalcTrialModalTotal()" required style="width:100%; padding:7px; font-size:13px; font-weight:800; color:#0B3D6E; border:1.5px solid #cbd5e1; border-radius:8px; box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">{{ 'واجب التسجيل (DH)' if lang=='ar' else 'Frais d\'inscription (DH)' }}</label>
+          <input type="number" step="0.01" name="registration_fee" id="valTrialRegFee" oninput="recalcTrialModalTotal()" value="40" style="width:100%; padding:7px; font-size:13px; font-weight:800; color:#7c3aed; border:1.5px solid #cbd5e1; border-radius:8px; box-sizing:border-box;">
+        </div>
+      </div>
+
+      <!-- Total Highlight -->
+      <div style="background:#f0fdf4; border:1.5px solid #bbf7d0; border-radius:8px; padding:8px 12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:11.5px; font-weight:800; color:#15803d; text-transform:uppercase;">{{ 'المبلغ الإجمالي المستحق :' if lang=='ar' else 'TOTAL GLOBAL DÛ :' }}</span>
+        <strong id="valTrialTotalShow" style="font-size:18px; color:#166534;">0.00 DH</strong>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">{{ 'المبلغ المؤدى الآن (DH)' if lang=='ar' else 'Montant payé (DH)' }}</label>
+          <input type="number" step="0.01" name="initial_payment" id="valTrialInitialPay" placeholder="0.00" style="width:100%; padding:7px; font-size:13px; font-weight:800; color:#047857; border:1.5px solid #10b981; border-radius:8px; box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">{{ 'طريقة الأداء' if lang=='ar' else 'Mode de règlement' }}</label>
+          <select name="payment_method" style="width:100%; padding:7px; font-size:12.5px; font-weight:700; border:1.5px solid #cbd5e1; border-radius:8px; box-sizing:border-box;">
+            <option value="cash">💵 Espèces</option>
+            <option value="transfer">🏦 Virement</option>
+            <option value="card">💳 Carte</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field mb-3">
+        <label style="font-size:11.5px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">{{ 'ملاحظات (اختياري)' if lang=='ar' else 'Remarques (Optionnel)' }}</label>
+        <input type="text" name="notes" placeholder="{{ 'ملاحظة إضافية...' if lang=='ar' else 'Ex : Validation suite à séance d\'essai concluante...' }}" style="width:100%; padding:7px; font-size:12px; border:1.5px solid #cbd5e1; border-radius:8px; box-sizing:border-box;">
+      </div>
+
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
+        <button type="button" class="btn btn-light" onclick="closeValidateTrialModal()" style="font-weight:700;">{{ 'إلغاء' if lang=='ar' else 'Annuler' }}</button>
+        <button type="submit" class="btn btn-primary" style="background:#10b981; border-color:#10b981; font-weight:800; padding:8px 18px; box-shadow:0 3px 10px rgba(16,185,129,0.3);">
+          ✓ {{ 'تأكيد التسجيل وإصدار الوصل' if lang=='ar' else 'Valider l\'inscription' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 5. TRANSFER COURSE MODAL -->
+<div id="transferModal" class="modal-backdrop" onclick="if(event.target===this) closeTransferModal();" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.65); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px); padding:16px;">
+  <div class="card" style="width:100%; max-width:860px; max-height:92vh; display:flex; flex-direction:column; padding:0; border-radius:14px; background:#fff; box-shadow:0 20px 50px rgba(0,0,0,0.25); border-top:4px solid #0284c7; overflow:hidden;">
+    
+    <!-- Modal Header -->
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 20px; border-bottom:1.5px solid #f1f5f9; background:#fff; flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:22px; background:#e0f2fe; width:36px; height:36px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center;">🔀</span>
+        <div>
+          <h3 style="margin:0; font-size:15px; font-weight:800; color:#0B3D6E;">{{ 'تحويل إلى قسم آخر مع الحفاظ على الرصيد' if lang=='ar' else 'Changer de Classe / Transférer' }}</h3>
+          <span style="font-size:11px; font-weight:600; color:#64748b;">{{ 'حساب تلقائي للنسبة المئوية بين الأستاذ السابق والجديد' if lang=='ar' else 'Calcul automatique du prorata des enseignants et report des paiements' }}</span>
+        </div>
+      </div>
+      <button type="button" onclick="closeTransferModal()" style="border:none; background:#f1f5f9; width:30px; height:30px; border-radius:6px; font-size:16px; cursor:pointer; color:#64748b; display:flex; align-items:center; justify-content:center;" title="Fermer">✕</button>
+    </div>
+
+    <!-- Modal Form -->
+    <form method="post" id="transferForm" action="" style="display:flex; flex-direction:column; overflow:hidden; margin:0; flex:1;">
+      
+      <!-- Scrollable Body Container -->
+      <div style="overflow-y:auto; padding:14px 20px; max-height:calc(92vh - 120px);">
+        
+        <!-- Summary Ribbon -->
+        <div style="background:linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border:1px solid #bae6fd; border-radius:10px; padding:8px 14px; margin-bottom:12px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; font-size:12px;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="color:#64748b; font-weight:600;">👤 {{ 'التلميذ :' if lang=='ar' else 'Élève :' }}</span>
+            <strong id="transferStudentName" style="color:#0B3D6E; font-size:13px;">-</strong>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="color:#64748b; font-weight:600;">📚 {{ 'القسم الحالي :' if lang=='ar' else 'Classe actuelle :' }}</span>
+            <span id="transferCurrentCourse" style="color:#0284c7; font-weight:800; background:#fff; padding:2px 8px; border-radius:6px; border:1px solid #bfdbfe;">-</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="color:#166534; font-weight:600;">💰 {{ 'السعر المتفق عليه :' if lang=='ar' else 'Tarif convenu :' }}</span>
+            <strong id="transferOriginalPriceBadge" style="background:#dcfce7; color:#15803d; font-weight:800; padding:2px 8px; border-radius:6px; border:1px solid #86efac;">300 DH</strong>
+          </div>
+        </div>
+
+        <!-- 2-Column Grid -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px; align-items:start;">
+          
+          <!-- LEFT COLUMN: Destination & Parameters -->
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            
+            <div>
+              <label style="font-size:11.5px; font-weight:800; color:#334155; margin-bottom:3px; display:flex; align-items:center; gap:4px;">
+                <span>🎯 {{ 'القسم الجديد المستهدف' if lang=='ar' else 'Nouvelle classe de destination' }}</span>
+                <span class="req" style="color:#ef4444;">*</span>
+              </label>
+              <select name="target_course_id" id="transferTargetCourseId" required onchange="updateTransferSplit()" style="padding:7px 10px; font-size:12px; font-weight:700; width:100%; border:1.5px solid #0284c7; border-radius:8px; background:#fff; color:#0B3D6E; box-sizing:border-box;">
+                <option value="">{{ '-- اختر القسم الجديد --' if lang=='ar' else '-- Sélectionner la nouvelle classe --' }}</option>
+                {% set tr_group = namespace(name='') %}
+                {% for c in all_courses %}
+                  {% if c.category_group != tr_group.name %}
+                    {% if tr_group.name != '' %}</optgroup>{% endif %}
+                    {% set tr_group.name = c.category_group %}
+                    <optgroup label="{{ tr_group.name }}">
+                  {% endif %}
+                  <option value="{{ c.id }}">{{ c.assign_dropdown_label }}</option>
+                {% endfor %}
+                {% if tr_group.name != '' %}</optgroup>{% endif %}
+              </select>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-size:10.5px; font-weight:800; color:#475569; text-transform:uppercase;">📅 {{ 'التواريخ والفترة' if lang=='ar' else 'Calendrier & Dates' }}</span>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:6px;">
+                <div>
+                  <label style="font-size:10.5px; font-weight:700; color:#475569; display:block; margin-bottom:2px;">{{ 'بداية الدورة' if lang=='ar' else 'Début de cycle' }}</label>
+                  <input type="date" name="start_date" id="transferStartDate" required onchange="updateTransferSplit()" style="padding:5px 7px; font-size:11.5px; font-weight:700; width:100%; border:1.5px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+                </div>
+                <div>
+                  <label style="font-size:10.5px; font-weight:700; color:#475569; display:block; margin-bottom:2px;">{{ 'نهاية الدورة' if lang=='ar' else 'Fin de cycle' }}</label>
+                  <input type="date" name="end_date" id="transferEndDate" onchange="updateTransferSplit()" style="padding:5px 7px; font-size:11.5px; font-weight:700; width:100%; border:1.5px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+                </div>
+              </div>
+              <div>
+                <label style="font-size:10.5px; font-weight:800; color:#0284c7; display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                  <span>⚡ {{ 'تاريخ التحويل الفعلي' if lang=='ar' else 'Date de transfert effectif' }} <span style="color:#ef4444;">*</span></span>
+                </label>
+                <input type="date" name="transfer_date" id="transferDate" required onchange="updateTransferSplit()" style="padding:5px 7px; font-size:11.5px; font-weight:800; width:100%; border:1.5px solid #38bdf8; border-radius:6px; background:#fff; color:#0B3D6E; box-sizing:border-box;">
+              </div>
+            </div>
+
+            <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:8px 10px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                <label style="font-size:10.5px; font-weight:800; color:#166534; margin:0;">💰 {{ 'السعر الشهري المعتمد (DH)' if lang=='ar' else 'Tarif mensuel convenu (DH)' }} <span style="color:#ef4444;">*</span></label>
+                <span style="font-size:9.5px; color:#15803d; font-weight:700;">🟢 {{ 'محفوظ' if lang=='ar' else 'Conservé' }}</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <input type="number" step="0.01" name="custom_monthly_price" id="transferMonthlyPrice" required oninput="updateTransferSplit()" style="padding:5px 8px; font-size:13px; font-weight:800; color:#166534; width:105px; border:1.5px solid #86efac; border-radius:6px; background:#fff; box-sizing:border-box;">
+                <span style="font-size:10px; color:#15803d; line-height:1.2;">{{ 'يحتفظ التلميذ بالسعر المتفق عليه حتى لو كان القسم الجديد أغلى.' if lang=='ar' else 'L\'élève garde son tarif même si la nouvelle classe est à un prix supérieur.' }}</span>
+              </div>
+            </div>
+
+            <div>
+              <label style="font-size:10.5px; font-weight:700; color:#475569; margin-bottom:2px; display:block;">{{ 'ملاحظة (اختياري)' if lang=='ar' else 'Motif / Remarque (Optionnel)' }}</label>
+              <input type="text" name="reason" placeholder="{{ 'مثال: تغيير التوقيت، رغبة الولي...' if lang=='ar' else 'Ex: Changement d\'horaire, convenance...' }}" style="padding:6px 9px; font-size:11.5px; width:100%; border:1.5px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+            </div>
+
+          </div>
+
+          <!-- RIGHT COLUMN: Prorata Split Live Box -->
+          <div style="display:flex; flex-direction:column; gap:8px;">
+
+            <div id="transferSplitBox" style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:10px; padding:10px 12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #e2e8f0; padding-bottom:5px;">
+                <div style="font-weight:800; font-size:11.5px; color:#0B3D6E; display:flex; align-items:center; gap:5px;">
+                  <span>⚖️</span>
+                  <span>{{ 'تقسيم أجور الأساتذة (Prorata)' if lang=='ar' else 'Répartition Prorata Enseignants' }}</span>
+                </div>
+                <span id="transferSplitBadge" class="chip chip-purple" style="font-size:9.5px; font-weight:800; padding:2px 6px;">Auto</span>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+                <!-- Old Teacher Card -->
+                <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:7px 8px;">
+                  <div style="font-size:9.5px; font-weight:700; color:#64748b; text-transform:uppercase;">👨‍🏫 {{ 'الأستاذ السابق' if lang=='ar' else 'Ancien Prof' }}</div>
+                  <div id="transferOldTeacherName" style="font-size:11px; font-weight:800; color:#0B3D6E; margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="-">-</div>
+                  <div id="transferOldPeriod" style="font-size:9px; color:#64748b; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Période : -</div>
+                  
+                  <label style="font-size:10px; font-weight:700; color:#334155; display:block; margin-bottom:2px;">{{ 'الحصة من الاشتراك' if lang=='ar' else 'Part Cotisation (DH)' }}</label>
+                  <input type="number" step="0.01" min="0" name="old_teacher_share" id="transferOldTeacherShare" required style="width:100%; padding:4px 6px; font-size:12px; font-weight:800; color:#0B3D6E; border:1.5px solid #94a3b8; border-radius:6px; box-sizing:border-box;">
+                  <div id="transferOldEstSalary" style="font-size:9.5px; color:#16a34a; font-weight:700; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Salaire : 0.00 DH</div>
+                </div>
+
+                <!-- New Teacher Card -->
+                <div style="background:#fff; border:1.5px solid #86efac; border-radius:8px; padding:7px 8px;">
+                  <div style="font-size:9.5px; font-weight:700; color:#15803d; text-transform:uppercase;">👨‍🏫 {{ 'الأستاذ الجديد' if lang=='ar' else 'Nouveau Prof' }}</div>
+                  <div id="transferNewTeacherName" style="font-size:11px; font-weight:800; color:#166534; margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="-">-</div>
+                  <div id="transferNewPeriod" style="font-size:9px; color:#64748b; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Période : -</div>
+                  
+                  <label style="font-size:10px; font-weight:700; color:#166534; display:block; margin-bottom:2px;">{{ 'الحصة من الاشتراك' if lang=='ar' else 'Part Cotisation (DH)' }}</label>
+                  <input type="number" step="0.01" min="0" name="new_teacher_share" id="transferNewTeacherShare" required style="width:100%; padding:4px 6px; font-size:12px; font-weight:800; color:#166534; border:1.5px solid #86efac; border-radius:6px; box-sizing:border-box;">
+                  <div id="transferNewEstSalary" style="font-size:9.5px; color:#16a34a; font-weight:700; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Salaire : 0.00 DH</div>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 7px; background:#fff; border:1px dashed #cbd5e1; border-radius:6px; font-size:10.5px;">
+                <div>Total : <strong id="transferSplitTotal" style="color:#0B3D6E;">0.00 DH</strong></div>
+                <div id="transferSplitInfoText" style="color:#0284c7; font-weight:700; font-size:10px;">{{ 'اختر القسم الجديد' if lang=='ar' else 'Sélectionnez une nouvelle classe' }}</div>
+              </div>
+            </div>
+
+            <div style="background:#f0f9ff; border-left:3px solid #0284c7; border-radius:6px; padding:7px 10px; font-size:10.5px; color:#475569; line-height:1.4;">
+              ℹ️ <strong>{{ 'ضمان الدقة :' if lang=='ar' else 'Traçabilité garantie :' }}</strong>
+              {{ 'جميع المبالغ المدفوعة سابقاً يتم ترحيلها تلقائياً بدون تسجيل أي دين إضافي غير مبرر على التلميذ.' if lang=='ar' else 'Tous les paiements déjà effectués sont automatiquement reportés sans créer de dette.' }}
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="display:flex; gap:10px; justify-content:flex-end; align-items:center; padding:10px 20px; border-top:1px solid #e2e8f0; background:#f8fafc; flex-shrink:0;">
+        <button type="button" class="btn btn-light" onclick="closeTransferModal()" style="font-weight:700; padding:7px 16px; border:1.5px solid #cbd5e1; border-radius:8px; color:#475569; background:#fff; cursor:pointer;">
+          {{ 'إلغاء' if lang=='ar' else 'Annuler' }}
+        </button>
+        <button type="submit" class="btn btn-primary" style="background:#0284c7; border:none; font-weight:800; font-size:12.5px; padding:8px 20px; border-radius:8px; color:#fff; box-shadow:0 3px 10px rgba(2,132,199,0.3); display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+          <span>🔀</span>
+          <span>{{ 'تأكيد التحويل' if lang=='ar' else 'Confirmer le Transfert' }}</span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- SCRIPTS & MODAL LOGIC -->
+<script>
+  let currentPauseEid = null;
+  let currentResumeEid = null;
+
+  // --- ACTIONS DROPDOWN LOGIC ---
+  function toggleActionDropdown(event, dropdownId) {
+    event.stopPropagation();
+    if (window.openFloatingDropdown) {
+      window.openFloatingDropdown(event.currentTarget, document.getElementById(dropdownId));
+    }
+  }
+
+  // Close dropdown on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.dropdown-menu-float.show').forEach(el => {
+        el.classList.remove('show');
+      });
+      document.querySelectorAll('.btn-menu-trigger.active').forEach(el => {
+        el.classList.remove('active');
+      });
+      closePauseModal();
+      closeResumeModal();
+      closeWithdrawModal();
+      closeAssignModal();
+      closeTransferModal();
+      closeValidateTrialModal();
+    }
+  });
+
+  // --- TRIAL MODAL HANDLERS ---
+  function openValidateTrialModal(eid, studentName, courseName, price, regFee) {
+    document.getElementById('validateTrialForm').action = '/enrollments/' + eid + '/validate_trial';
+    document.getElementById('valTrialStudentName').innerText = studentName || ('Dossier #' + eid);
+    document.getElementById('valTrialCourseName').innerText = courseName || '-';
+    document.getElementById('valTrialMonthlyPrice').value = price ? parseFloat(price).toFixed(2) : '300.00';
+    document.getElementById('valTrialRegFee').value = (regFee !== undefined && regFee !== null) ? parseFloat(regFee).toFixed(2) : '40.00';
+    document.getElementById('valTrialMonths').value = '1';
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('valTrialStartDate').value = todayStr;
+    document.getElementById('valTrialInitialPay').value = '';
+
+    recalcTrialModalTotal();
+    document.getElementById('validateTrialModal').style.display = 'flex';
+  }
+
+  function closeValidateTrialModal() {
+    const modal = document.getElementById('validateTrialModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function recalcTrialModalTotal() {
+    const p = parseFloat(document.getElementById('valTrialMonthlyPrice').value) || 0;
+    const m = parseInt(document.getElementById('valTrialMonths').value) || 1;
+    const r = parseFloat(document.getElementById('valTrialRegFee').value) || 0;
+    const tot = (p * m) + r;
+    document.getElementById('valTrialTotalShow').innerText = tot.toFixed(2) + ' DH';
+    const initPay = document.getElementById('valTrialInitialPay');
+    if (initPay && !initPay.value) {
+      initPay.placeholder = tot.toFixed(2);
+    }
+  }
+
+  // --- PAUSE MODAL HANDLERS ---
+  function openPauseModal(eid, studentName, courseName, enrollDate) {
+    currentPauseEid = eid;
+    document.getElementById('pauseForm').action = '/enrollments/' + eid + '/pause';
+    document.getElementById('pauseStudentTitle').innerText = '👤 ' + (studentName || 'Élève #' + eid);
+    document.getElementById('pauseCourseTitle').innerText = '📚 ' + (courseName || 'Classe');
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('pauseDateInput').value = todayStr;
+    
+    document.getElementById('pauseModal').style.display = 'flex';
+    fetchPausePreview();
+  }
+
+  function closePauseModal() {
+    document.getElementById('pauseModal').style.display = 'none';
+  }
+
+  function fetchPausePreview() {
+    if (!currentPauseEid) return;
+    const pDate = document.getElementById('pauseDateInput').value;
+    fetch(`/api/enrollments/${currentPauseEid}/preview-pause?pause_date=${pDate}`)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('pauseTotalSessions').innerText = `${data.total_sessions} séances`;
+        document.getElementById('pauseConsumedSessions').innerText = `${data.consumed_sessions} séances`;
+        document.getElementById('pauseRemainingSessions').value = data.remaining_sessions;
+        document.getElementById('pauseDaysText').innerText = `Planning : ${data.scheduled_days_text}`;
+      })
+      .catch(err => console.error('Error fetching pause preview:', err));
+  }
+
+  // --- RESUME MODAL HANDLERS ---
+  function openResumeModal(eid, studentName, courseName, pauseDate, pausedSessions) {
+    currentResumeEid = eid;
+    document.getElementById('resumeForm').action = '/enrollments/' + eid + '/resume';
+    document.getElementById('resumeStudentTitle').innerText = '👤 ' + (studentName || 'Élève #' + eid);
+    document.getElementById('resumeCourseTitle').innerText = '📚 ' + (courseName || 'Classe');
+    document.getElementById('resumePauseDateText').innerText = pauseDate ? `⏸️ En pause depuis le : ${pauseDate}` : '';
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('resumeDateInput').value = todayStr;
+    document.getElementById('resumeRemainingSessionsInput').value = pausedSessions > 0 ? pausedSessions : 5;
+    
+    document.getElementById('resumeModal').style.display = 'flex';
+    fetchResumePreview();
+  }
+
+  function closeResumeModal() {
+    document.getElementById('resumeModal').style.display = 'none';
+  }
+
+  function fetchResumePreview() {
+    if (!currentResumeEid) return;
+    const rDate = document.getElementById('resumeDateInput').value;
+    const remSessions = document.getElementById('resumeRemainingSessionsInput').value || 1;
+    
+    fetch(`/api/enrollments/${currentResumeEid}/preview-resume?resume_date=${rDate}&remaining_sessions=${remSessions}`)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('resumeNewEndDate').innerText = `📅 ${data.new_end_date_formatted}`;
+        document.getElementById('resumeScheduleDaysText').innerText = `Planning : ${data.remaining_sessions} séances sur ${data.scheduled_days_text}`;
+      })
+      .catch(err => console.error('Error fetching resume preview:', err));
+  }
+
+  // --- WITHDRAW MODAL ---
+  function openWithdrawModal(eid, name, balance) {
+    document.getElementById('withdrawForm').action = '/enrollments/' + eid + '/withdraw';
+    document.getElementById('withdrawStudentName').innerText = 'Élève : ' + (name || 'Dossier #' + eid);
+    document.getElementById('withdrawRefundAmount').value = balance > 0 ? balance : 0;
+    document.getElementById('withdrawModal').style.display = 'flex';
+  }
+
+  function closeWithdrawModal() {
+    document.getElementById('withdrawModal').style.display = 'none';
+  }
+
+
+  // --- TRANSFER COURSE MODAL ---
+  let currentTransferEid = null;
+  let transferAjaxTimeout = null;
+
+  function openTransferModal(eid, studentName, currentCourseName, currentCourseId, currentPrice, currentStartDate, currentEndDate) {
+    currentTransferEid = eid;
+    document.getElementById('transferForm').action = '/enrollments/' + eid + '/transfer';
+    document.getElementById('transferStudentName').innerText = studentName || ('Dossier #' + eid);
+    document.getElementById('transferCurrentCourse').innerText = currentCourseName || '-';
+
+    const pVal = currentPrice ? parseFloat(currentPrice).toFixed(2) : '300.00';
+    document.getElementById('transferMonthlyPrice').value = pVal;
+    document.getElementById('transferOriginalPriceBadge').innerText = (currentPrice ? parseFloat(currentPrice).toFixed(0) : '300') + ' DH';
+
+    document.getElementById('transferStartDate').value = currentStartDate || '';
+    document.getElementById('transferEndDate').value = currentEndDate || '';
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('transferDate').value = todayStr;
+
+    const select = document.getElementById('transferTargetCourseId');
+    for (let opt of select.options) {
+      if (opt.value && parseInt(opt.value) === currentCourseId) {
+        opt.disabled = true;
+      } else {
+        opt.disabled = false;
+      }
+    }
+    select.value = '';
+
+    // Reset split fields
+    document.getElementById('transferOldTeacherName').innerText = '-';
+    document.getElementById('transferOldPeriod').innerText = 'Période : -';
+    document.getElementById('transferOldTeacherShare').value = '';
+    document.getElementById('transferOldEstSalary').innerText = 'Salaire estimé : 0.00 DH';
+    document.getElementById('transferNewTeacherName').innerText = '-';
+    document.getElementById('transferNewPeriod').innerText = 'Période : -';
+    document.getElementById('transferNewTeacherShare').value = '';
+    document.getElementById('transferNewEstSalary').innerText = 'Salaire estimé : 0.00 DH';
+    document.getElementById('transferSplitTotal').innerText = pVal + ' DH';
+    document.getElementById('transferSplitInfoText').innerText = "Sélectionnez une nouvelle classe";
+
+    document.getElementById('transferModal').style.display = 'flex';
+  }
+
+  function closeTransferModal() {
+    document.getElementById('transferModal').style.display = 'none';
+  }
+
+  function updateTransferSplit() {
+    const targetCid = document.getElementById('transferTargetCourseId').value;
+    const transferDate = document.getElementById('transferDate').value;
+    const monthlyPrice = document.getElementById('transferMonthlyPrice').value;
+    const startDate = document.getElementById('transferStartDate').value;
+    const endDate = document.getElementById('transferEndDate').value;
+
+    if (!currentTransferEid || !targetCid) {
+      document.getElementById('transferSplitInfoText').innerText = "Sélectionnez une nouvelle classe";
+      return;
+    }
+
+    document.getElementById('transferSplitInfoText').innerText = "⏳ Calcul du prorata en cours...";
+
+    clearTimeout(transferAjaxTimeout);
+    transferAjaxTimeout = setTimeout(() => {
+      fetch(`/api/calculate_transfer_split?enrollment_id=${currentTransferEid}&target_course_id=${targetCid}&transfer_date=${transferDate}&custom_monthly_price=${monthlyPrice}&start_date=${startDate}&end_date=${endDate}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data && !data.error) {
+            document.getElementById('transferOldTeacherName').innerText = data.old_teacher_name + ' (' + data.old_pct + '%)';
+            document.getElementById('transferOldPeriod').innerText = 'Du ' + data.start_date + ' au ' + data.transfer_date + ' (' + data.old_sessions + ' séan. / ' + data.old_days + 'j)';
+            document.getElementById('transferOldTeacherShare').value = data.old_share;
+            document.getElementById('transferOldEstSalary').innerText = 'Salaire estimé : ' + data.old_teacher_est.toFixed(2) + ' DH';
+
+            document.getElementById('transferNewTeacherName').innerText = data.new_teacher_name + ' (' + data.new_pct + '%)';
+            document.getElementById('transferNewPeriod').innerText = 'Du ' + data.transfer_date + ' au ' + data.end_date + ' (' + data.new_sessions + ' séan. / ' + data.new_days + 'j)';
+            document.getElementById('transferNewTeacherShare').value = data.new_share;
+            document.getElementById('transferNewEstSalary').innerText = 'Salaire estimé : ' + data.new_teacher_est.toFixed(2) + ' DH';
+
+            document.getElementById('transferSplitTotal').innerText = data.total_price.toFixed(2) + ' DH';
+            document.getElementById('transferSplitInfoText').innerText = '⚖️ Prorata : ' + data.ratio_old + '% (Ancien prof) / ' + data.ratio_new + '% (Nouveau prof)';
+          }
+        })
+        .catch(err => {
+          console.error("Erreur calcul prorata", err);
+          document.getElementById('transferSplitInfoText').innerText = "";
+        });
+    }, 120);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const oldInput = document.getElementById('transferOldTeacherShare');
+    const newInput = document.getElementById('transferNewTeacherShare');
+    const totInput = document.getElementById('transferMonthlyPrice');
+
+    if (oldInput && newInput && totInput) {
+      oldInput.addEventListener('input', function() {
+        const tot = parseFloat(String(totInput.value).replace(',', '.')) || 0;
+        const oldV = parseFloat(String(this.value).replace(',', '.')) || 0;
+        const newV = Math.max(0, tot - oldV);
+        newInput.value = newV.toFixed(2);
+        document.getElementById('transferSplitTotal').innerText = tot.toFixed(2) + ' DH';
+      });
+
+      newInput.addEventListener('input', function() {
+        const tot = parseFloat(String(totInput.value).replace(',', '.')) || 0;
+        const newV = parseFloat(String(this.value).replace(',', '.')) || 0;
+        const oldV = Math.max(0, tot - newV);
+        oldInput.value = oldV.toFixed(2);
+        document.getElementById('transferSplitTotal').innerText = tot.toFixed(2) + ' DH';
+      });
+    }
+  });
+</script>
+
+{% include 'payments/_multi_pay_modal.html' %}
+{% include 'enrollments/_promise_modal.html' %}
+
+{% endblock %}

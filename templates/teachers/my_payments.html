@@ -1,0 +1,1113 @@
+{% extends 'base.html' %}
+{% set title = ('مستحقاتي الشهرية' if lang == 'ar' else 'Mes Rémunérations') %}
+{% block content %}
+
+<style>
+  /* =====================================================================
+     MOBILE-FIRST RESPONSIVE STYLING FOR TEACHER PAYMENTS
+     ===================================================================== */
+  .my-pay-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 4px 20px 4px;
+  }
+
+  /* Admin Preview Bar */
+  .admin-preview-bar {
+    background: #fef3c7;
+    border: 1.5px solid #f59e0b;
+    border-radius: 14px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 13px;
+  }
+
+  /* Teacher Profile Header Card */
+  .teacher-profile-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(15,23,42,0.03);
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .teacher-profile-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .teacher-avatar-img {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #cbd5e1;
+    flex-shrink: 0;
+  }
+  .teacher-title-main {
+    font-size: 16px;
+    font-weight: 900;
+    color: #0B3D6E;
+    margin: 0 0 2px 0;
+    line-height: 1.2;
+  }
+  .teacher-sub-meta {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  /* Month Navigation Bar */
+  .month-nav-panel {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 14px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .month-quick-select {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 200px;
+  }
+  .month-quick-select select {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1.5px solid #cbd5e1;
+    font-weight: 800;
+    font-size: 13.5px;
+    color: #0B3D6E;
+    background-color: #f8fafc;
+    outline: none;
+    cursor: pointer;
+  }
+
+  /* Month Pills (Horizontal Scroll) */
+  .month-pills-wrap {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 0;
+    scrollbar-width: thin;
+    max-width: 100%;
+  }
+  .month-pills-wrap::-webkit-scrollbar {
+    height: 4px;
+  }
+  .month-pills-wrap::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+  .month-pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+  .month-pill-btn:hover {
+    border-color: #0B3D6E;
+    color: #0B3D6E;
+  }
+  .month-pill-btn.active {
+    background: #0B3D6E;
+    border-color: #0B3D6E;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(11,61,110,0.25);
+  }
+
+  /* =====================================================================
+     HERO WALLET CARD (PRIMARY MOBILE & DESKTOP HIGHLIGHT)
+     ===================================================================== */
+  .hero-wallet-card {
+    background: linear-gradient(135deg, #0B3D6E 0%, #0d4a85 100%);
+    color: #ffffff;
+    border-radius: 18px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 20px rgba(11,61,110,0.18);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-wallet-card::after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 110px;
+    height: 110px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .hero-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .hero-month-title {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: rgba(255, 255, 255, 0.85);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hero-status-pill {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .pill-paid {
+    background: #dcfce7;
+    color: #15803d;
+  }
+  .pill-pending {
+    background: #fef3c7;
+    color: #b45309;
+  }
+
+  .hero-amount-main {
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    color: #a7f3d0;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+  .hero-amount-currency {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+    opacity: 0.9;
+  }
+
+  .hero-substats-row {
+    display: flex;
+    gap: 16px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    flex-wrap: wrap;
+    font-size: 12px;
+  }
+  .hero-substat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .hero-substat-lbl {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    opacity: 0.75;
+    font-weight: 700;
+  }
+  .hero-substat-val {
+    font-weight: 800;
+    font-size: 13.5px;
+  }
+
+  .hero-action-row {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .hero-btn {
+    background: #ffffff;
+    color: #0B3D6E;
+    border: none;
+    border-radius: 10px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: transform 0.15s ease;
+  }
+  .hero-btn:hover {
+    transform: translateY(-1px);
+    color: #0B3D6E;
+  }
+
+  /* =====================================================================
+     2x2 COMPACT KPI GRID (MOBILE-OPTIMIZED)
+     ===================================================================== */
+  .kpi-mobile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  @media (min-width: 640px) {
+    .kpi-mobile-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  .kpi-box {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 1px 4px rgba(15,23,42,0.02);
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 3.5px;
+  }
+  .kpi-blue::before { background: #0B3D6E; }
+  .kpi-red::before { background: #dc2626; }
+  .kpi-purple::before { background: #7c3aed; }
+  .kpi-green::before { background: #059669; }
+
+  .kpi-box-lbl {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 4px;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .kpi-box-val {
+    font-size: 17px;
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 2px;
+  }
+  .kpi-box-sub {
+    font-size: 10.5px;
+    color: #94a3b8;
+    font-weight: 700;
+  }
+
+  /* =====================================================================
+     SECTION CARDS & BREAKDOWNS
+     ===================================================================== */
+  .section-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 10px rgba(15,23,42,0.03);
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1.5px solid #f1f5f9;
+  }
+  .section-title {
+    font-size: 14.5px;
+    font-weight: 900;
+    color: #0B3D6E;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  /* Desktop Table View */
+  .desktop-table-view {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+  .clean-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12.5px;
+  }
+  .clean-table th {
+    background: #f8fafc;
+    padding: 9px 12px;
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 1.5px solid #e2e8f0;
+    text-align: left;
+    white-space: nowrap;
+  }
+  body.rtl .clean-table th {
+    text-align: right;
+  }
+  .clean-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .clean-table tr:hover td {
+    background: #fafcff;
+  }
+
+  /* Mobile List Cards View */
+  .mobile-cards-view {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Individual Course Item Card (Mobile) */
+  .course-mobile-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: background 0.15s ease;
+  }
+  .course-mobile-card:hover {
+    background: #f1f5f9;
+  }
+  .cmc-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .cmc-title {
+    font-size: 13.5px;
+    font-weight: 900;
+    color: #0B3D6E;
+    line-height: 1.2;
+  }
+  .cmc-amount {
+    font-size: 15px;
+    font-weight: 900;
+    color: #0B3D6E;
+    white-space: nowrap;
+  }
+  .cmc-badges-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .cmc-badge {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .cmc-badge-students {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+  }
+  .cmc-badge-calc {
+    background: #f5f3ff;
+    color: #6d28d9;
+    border: 1px solid #ddd6fe;
+  }
+
+  /* Transaction Items (Advances / Expenses on Mobile) */
+  .trans-mobile-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .trans-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+  }
+  .trans-ico {
+    font-size: 18px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .ico-adv {
+    background: #fee2e2;
+  }
+  .ico-exp {
+    background: #ede9fe;
+  }
+  .trans-title {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .trans-meta {
+    font-size: 11px;
+    color: #64748b;
+  }
+  .trans-right {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .trans-amt-adv {
+    font-size: 13.5px;
+    font-weight: 900;
+    color: #dc2626;
+  }
+  .trans-amt-exp {
+    font-size: 13.5px;
+    font-weight: 900;
+    color: #7c3aed;
+  }
+
+  /* Empty state */
+  .empty-state-card {
+    background: #ffffff;
+    border: 2px dashed #cbd5e1;
+    border-radius: 18px;
+    padding: 40px 20px;
+    text-align: center;
+    margin: 20px 0;
+  }
+
+  /* =====================================================================
+     MOBILE SWITCHING BREAKPOINT (< 768px)
+     ===================================================================== */
+  @media (max-width: 768px) {
+    .desktop-table-view {
+      display: none !important;
+    }
+    .mobile-cards-view {
+      display: flex !important;
+    }
+    .my-pay-container {
+      padding: 0 2px 20px 2px;
+    }
+    .hero-amount-main {
+      font-size: 28px;
+    }
+    .hero-wallet-card {
+      padding: 16px;
+      border-radius: 16px;
+    }
+    .section-card {
+      padding: 14px 12px;
+      border-radius: 14px;
+    }
+    .month-nav-panel {
+      padding: 8px 10px;
+    }
+  }
+
+  @media print {
+    .no-print { display: none !important; }
+    .section-card { box-shadow: none; border: 1px solid #ccc; }
+    .hero-wallet-card { background: #fff !important; color: #000 !important; border: 1px solid #000; }
+    .desktop-table-view { display: block !important; }
+    .mobile-cards-view { display: none !important; }
+  }
+</style>
+
+<div class="my-pay-container">
+
+  <!-- =====================================================================
+       ADMIN PREVIEW BAR (When Admin inspects an account)
+       ===================================================================== -->
+  {% if is_admin_preview %}
+    <div class="admin-preview-bar no-print">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:16px;">👑</span>
+        <div>
+          <strong style="color:#92400e;">{{ 'معاينة حساب الأستاذ' if lang=='ar' else 'Aperçu Profil Enseignant' }}:</strong>
+          <span style="color:#78350f;">{{ 'شاشة الهاتف كما تظهر للأستاذ تماماً' if lang=='ar' else 'Vue exacte affichée sur le smartphone de l\'enseignant' }}</span>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:6px; width:100%; max-width:320px; margin-top:4px;">
+        <select onchange="location.href='{{ url_for('teacher_my_payments') }}?teacher_id=' + this.value" class="form-control" style="font-size:12px; font-weight:800; padding:5px 8px; border-radius:8px; border:1px solid #f59e0b; background:#fff; flex:1;">
+          {% for t in all_teachers %}
+            <option value="{{ t.id }}" {{ 'selected' if teacher and t.id == teacher.id else '' }}>{{ t.full_name }}</option>
+          {% endfor %}
+        </select>
+        <a href="{{ url_for('teacher_payment_visibility') }}" class="btn btn-outline" style="padding:4px 8px; font-size:11.5px; font-weight:800; background:#fff; border-color:#f59e0b; color:#92400e; white-space:nowrap;">
+          ⚙️ {{ 'الإدارة' if lang=='ar' else 'Gérer' }}
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- =====================================================================
+       TEACHER PROFILE & TOP HEADER (ORGANIZED & COMPACT ON PHONE)
+       ===================================================================== -->
+  <div class="teacher-profile-card">
+    <div class="teacher-profile-info">
+      {% if teacher %}
+        <img src="{{ teacher.avatar_url }}" alt="Avatar" class="teacher-avatar-img">
+        <div>
+          <h2 class="teacher-title-main">
+            {{ teacher.full_name }}
+          </h2>
+          <div class="teacher-sub-meta">
+            <span class="chip chip-blue" style="font-size:10.5px; padding:1px 6px;">
+              {{ teacher.primary_matiere or teacher.specialty or 'Enseignant' }}
+            </span>
+            <span>&bull;</span>
+            <span>{{ teacher.contract_type|capitalize if teacher.contract_type else 'Vacation' }}</span>
+          </div>
+        </div>
+      {% else %}
+        <div>
+          <h2 class="teacher-title-main">💰 {{ 'كشف المستحقات' if lang=='ar' else 'Mes Rémunérations' }}</h2>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Quick Actions (Print) -->
+    {% if not empty_state %}
+      <div class="no-print">
+        <button type="button" onclick="window.print()" class="btn btn-outline" style="background:#fff; border-color:#cbd5e1; font-weight:800; font-size:12px; padding:6px 12px; border-radius:9px; display:inline-flex; align-items:center; gap:5px;">
+          <span>🖨️</span>
+          <span class="hide-mobile">{{ 'طباعة' if lang=='ar' else 'Imprimer' }}</span>
+        </button>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- =====================================================================
+       EMPTY STATE (WHEN NO MONTH IS UNLOCKED BY ADMIN YET)
+       ===================================================================== -->
+  {% if empty_state %}
+    <div class="empty-state-card">
+      <div style="font-size:46px; margin-bottom:12px;">🔒</div>
+      <h3 style="color:#0B3D6E; font-size:18px; font-weight:900; margin:0 0 8px 0;">
+        {{ 'لا توجد مستحقات مفعلة حالياً' if lang=='ar' else 'Aucun relevé disponible pour le moment' }}
+      </h3>
+      <p style="color:#64748b; font-size:13.5px; max-width:480px; margin:0 auto 16px auto; line-height:1.5;">
+        {{ 'لم تقم إدارة المعهد بنشر أو تفعيل كشوفات الأجور لحسابكم بعد. بمجرد تفعيلها من طرف الإدارة ستتمكن من الاطلاع على كافة التفاصيل وسحب وصل الصرف من هنا.' if lang=='ar' else 'L\'administration n\'a pas encore publié de relevé de paiement pour votre compte. Vos décomptes et fiches de règlement apparaîtront ici dès leur validation.' }}
+      </p>
+      <div style="display:inline-flex; align-items:center; gap:6px; background:#f1f5f9; padding:6px 14px; border-radius:10px; font-size:12px; font-weight:700; color:#475569;">
+        <span>ℹ️</span>
+        <span>{{ 'لأي استفسار يرجى التواصل مع إدارة المعهد' if lang=='ar' else 'Pour toute question, contactez l\'administration.' }}</span>
+      </div>
+    </div>
+
+  {% else %}
+
+    <!-- =====================================================================
+         MONTH NAVIGATION PANEL (TOUCH-FRIENDLY & SWIPEABLE ON PHONE)
+         ===================================================================== -->
+    <div class="month-nav-panel no-print">
+      <!-- Quick Dropdown (Instant jump on phone) -->
+      <div class="month-quick-select">
+        <span style="font-size:14px;">📅</span>
+        <select onchange="location.href=this.value;">
+          {% for m_key in available_months %}
+            {% set p_y = m_key[:4]|int %}
+            {% set p_m = m_key[5:7]|int %}
+            {% set m_names_fr = {1:'Janvier', 2:'Février', 3:'Mars', 4:'Avril', 5:'Mai', 6:'Juin', 7:'Juillet', 8:'Août', 9:'Septembre', 10:'Octobre', 11:'Novembre', 12:'Décembre'} %}
+            {% set m_names_ar = {1:'يناير', 2:'فبراير', 3:'مارس', 4:'أبريل', 5:'ماي', 6:'يونيو', 7:'يوليوز', 8:'غشت', 9:'شتنبر', 10:'أكتوبر', 11:'نونبر', 12:'دجنبر'} %}
+            {% set opt_lbl = (m_names_ar.get(p_m, '') ~ ' ' ~ p_y) if lang=='ar' else (m_names_fr.get(p_m, '') ~ ' ' ~ p_y) %}
+            {% set opt_url = url_for('teacher_my_payments', month=m_key, teacher_id=teacher.id if is_admin_preview else None) %}
+            <option value="{{ opt_url }}" {{ 'selected' if m_key == selected_month else '' }}>
+              {{ opt_lbl }}{% if m_key == selected_month %} ★{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Horizontal Pills (Swipeable on touch) -->
+      <div class="month-pills-wrap">
+        {% for m_key in available_months %}
+          {% set is_active_m = (m_key == selected_month) %}
+          {% set p_y = m_key[:4]|int %}
+          {% set p_m = m_key[5:7]|int %}
+          {% set m_names_fr = {1:'Jan', 2:'Fév', 3:'Mar', 4:'Avr', 5:'Mai', 6:'Juin', 7:'Juil', 8:'Août', 9:'Sept', 10:'Oct', 11:'Nov', 12:'Déc'} %}
+          {% set m_names_ar = {1:'يناير', 2:'فبراير', 3:'مارس', 4:'أبريل', 5:'ماي', 6:'يونيو', 7:'يوليوز', 8:'غشت', 9:'شتنبر', 10:'أكتوبر', 11:'نونبر', 12:'دجنبر'} %}
+          {% set pill_lbl = (m_names_ar.get(p_m, '') ~ ' ' ~ p_y) if lang=='ar' else (m_names_fr.get(p_m, '') ~ ' ' ~ p_y) %}
+          {% set p_url = url_for('teacher_my_payments', month=m_key, teacher_id=teacher.id if is_admin_preview else None) %}
+          <a href="{{ p_url }}" class="month-pill-btn {{ 'active' if is_active_m else '' }}">
+            {{ pill_lbl }}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if payroll %}
+
+      <!-- =====================================================================
+           HERO WALLET CARD (HIGHLIGHTS NET SALARY & OFFICIAL PAYMENT STATUS)
+           ===================================================================== -->
+      <div class="hero-wallet-card">
+        <div class="hero-top-row">
+          <div class="hero-month-title">
+            <span>📆</span>
+            <span>{{ payroll.month_name_ar if lang=='ar' else payroll.month_name_fr }} {{ payroll.year }}</span>
+          </div>
+
+          <!-- Status badge -->
+          {% if payroll.is_paid %}
+            <span class="hero-status-pill pill-paid">
+              <span>✅</span>
+              <span>{{ 'تم الصرف' if lang=='ar' else 'Payé' }}</span>
+            </span>
+          {% else %}
+            <span class="hero-status-pill pill-pending">
+              <span>⏳</span>
+              <span>{{ 'قيد الصرف' if lang=='ar' else 'En cours' }}</span>
+            </span>
+          {% endif %}
+        </div>
+
+        <!-- Big Net Figure -->
+        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; opacity:0.8; font-weight:800; margin-bottom:2px;">
+          {{ 'الصافي للدفع' if lang=='ar' else 'Net à Percevoir' }}
+        </div>
+        <div class="hero-amount-main">
+          {{ "%.2f"|format(payroll.net_payable) }} <span class="hero-amount-currency">DH</span>
+        </div>
+
+        <!-- Sub Breakdown Strip -->
+        <div class="hero-substats-row">
+          <div class="hero-substat-item">
+            <span class="hero-substat-lbl">{{ 'المستحقات الإجمالية' if lang=='ar' else 'Total Brut' }}</span>
+            <span class="hero-substat-val" style="color:#dcfce7;">+ {{ "%.2f"|format(payroll.total_earned) }} DH</span>
+          </div>
+          <div class="hero-substat-item">
+            <span class="hero-substat-lbl">{{ 'الاقتطاعات' if lang=='ar' else 'Total Retenues' }}</span>
+            <span class="hero-substat-val" style="color:#fecaca;">- {{ "%.2f"|format(payroll.total_all_deductions) }} DH</span>
+          </div>
+          {% if payroll.is_paid and payroll.salary_payout %}
+            <div class="hero-substat-item">
+              <span class="hero-substat-lbl">{{ 'تاريخ الأداء' if lang=='ar' else 'Règlement' }}</span>
+              <span class="hero-substat-val">{{ payroll.salary_payout.payment_date.strftime('%d/%m/%Y') }} &bull; {{ payroll.salary_payout.payment_method }}</span>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Receipt Action Button (Inside Hero Card) -->
+        {% if payroll.is_paid and payroll.salary_payout %}
+          <div class="hero-action-row no-print">
+            <a href="{{ url_for('teacher_salary_receipt', pid=payroll.salary_payout.id, format='a5') }}" target="_blank" class="hero-btn">
+              <span>🖨️</span>
+              <span>{{ 'تحميل وصل الأداء الرسمي (A5)' if lang=='ar' else 'Télécharger mon Reçu Officiel (A5)' }}</span>
+            </a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- =====================================================================
+           2x2 COMPACT KPI GRID (CLEAN, PROPORTIONAL ON EVERY MOBILE)
+           ===================================================================== -->
+      <div class="kpi-mobile-grid">
+        <!-- 1. Brut -->
+        <div class="kpi-box kpi-blue">
+          <div>
+            <div class="kpi-box-lbl">
+              <span>📈</span> <span>{{ 'الإجمالي' if lang=='ar' else 'Brut' }}</span>
+            </div>
+            <div class="kpi-box-val" style="color:#0B3D6E;">
+              {{ "%.2f"|format(payroll.total_earned) }} <small style="font-size:11px;">DH</small>
+            </div>
+          </div>
+          <div class="kpi-box-sub">
+            {{ payroll.groups|length }} {{ 'فوج' if lang=='ar' else 'groupe(s)' }}
+          </div>
+        </div>
+
+        <!-- 2. Advances -->
+        <div class="kpi-box kpi-red">
+          <div>
+            <div class="kpi-box-lbl">
+              <span>💸</span> <span>{{ 'التسبيقات' if lang=='ar' else 'Avances' }}</span>
+            </div>
+            <div class="kpi-box-val" style="color:#dc2626;">
+              -{{ "%.2f"|format(payroll.total_advances) }} <small style="font-size:11px;">DH</small>
+            </div>
+          </div>
+          <div class="kpi-box-sub">
+            {{ payroll.advances|length }} {{ 'تسبيق' if lang=='ar' else 'avance(s)' }}
+          </div>
+        </div>
+
+        <!-- 3. Expenses & Copies -->
+        <div class="kpi-box kpi-purple">
+          <div>
+            <div class="kpi-box-lbl">
+              <span>🖨️</span> <span>{{ 'النسخ' if lang=='ar' else 'Copies' }}</span>
+            </div>
+            <div class="kpi-box-val" style="color:#7c3aed;">
+              -{{ "%.2f"|format(payroll.total_expenses) }} <small style="font-size:11px;">DH</small>
+            </div>
+          </div>
+          <div class="kpi-box-sub">
+            {{ payroll.total_copies }} {{ 'ورقة' if lang=='ar' else 'copie(s)' }}
+          </div>
+        </div>
+
+        <!-- 4. Net -->
+        <div class="kpi-box kpi-green" style="background:#f0fdf4; border-color:#bbf7d0;">
+          <div>
+            <div class="kpi-box-lbl" style="color:#047857;">
+              <span>💳</span> <span>{{ 'الصافي' if lang=='ar' else 'Net Dû' }}</span>
+            </div>
+            <div class="kpi-box-val" style="color:#059669;">
+              {{ "%.2f"|format(payroll.net_payable) }} <small style="font-size:11px;">DH</small>
+            </div>
+          </div>
+          <div class="kpi-box-sub" style="color:#059669; font-weight:800;">
+            {{ 'تم الصرف' if payroll.is_paid else 'قيد المعالجة' if lang=='ar' else ('Payé' if payroll.is_paid else 'En attente') }}
+          </div>
+        </div>
+      </div>
+
+      <!-- =====================================================================
+           CLASSES & GROUPS BREAKDOWN
+           - DESKTOP: CLEAN TABLE
+           - MOBILE: SLEEK TOUCH CARDS
+           ===================================================================== -->
+      <div class="section-card">
+        <div class="section-header">
+          <h3 class="section-title">
+            <span>📚</span>
+            <span>{{ 'تفاصيل الأقسام وحساب الحصة' if lang=='ar' else 'Détail des Groupes & Honoraires' }}</span>
+          </h3>
+          <span class="chip chip-blue" style="font-size:11px; font-weight:800; padding:2px 7px;">
+            {{ payroll.groups|length }} {{ 'فوج' if lang=='ar' else 'cours' }}
+          </span>
+        </div>
+
+        {% if payroll.groups %}
+          <!-- DESKTOP TABLE VIEW -->
+          <div class="desktop-table-view">
+            <table class="clean-table">
+              <thead>
+                <tr>
+                  <th>{{ 'القسم / الفوج' if lang=='ar' else 'Classe / Groupe' }}</th>
+                  <th style="text-align:center;">{{ 'التلاميذ' if lang=='ar' else 'Élèves actifs' }}</th>
+                  <th>{{ 'طريقة الحساب' if lang=='ar' else 'Formule / Mode' }}</th>
+                  <th style="text-align:right;">{{ 'المستحقات' if lang=='ar' else 'Honoraires' }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for g in payroll.groups %}
+                  <tr>
+                    <td>
+                      <div style="font-weight:800; color:#0B3D6E; font-size:13px;">{{ g.course.name }}</div>
+                      <div class="muted" style="font-size:11px;">{{ g.course.code or '' }} &bull; {{ g.course.level or '' }}</div>
+                    </td>
+                    <td style="text-align:center;">
+                      <span class="chip" style="font-size:11px; font-weight:800; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe;">
+                        👥 {{ g.enroll_count }}
+                      </span>
+                    </td>
+                    <td>
+                      {% if g.comp_type == 'percentage' %}
+                        <span class="chip chip-blue" style="font-size:11px; font-weight:700;">{{ g.comp_val }}% {{ 'من الواجبات' if lang=='ar' else 'du CA' }}</span>
+                      {% elif g.comp_type == 'per_student' %}
+                        <span class="chip chip-purple" style="font-size:11px; font-weight:700;">{{ g.comp_val }} DH / élève</span>
+                      {% elif g.comp_type == 'fixed' %}
+                        <span class="chip chip-green" style="font-size:11px; font-weight:700;">Forfait: {{ g.comp_val }} DH</span>
+                      {% elif g.comp_type == 'hourly' %}
+                        <span class="chip chip-amber" style="font-size:11px; font-weight:700;">{{ g.comp_val }} DH / heure</span>
+                      {% endif %}
+                    </td>
+                    <td style="text-align:right; font-weight:900; color:#0B3D6E; font-size:13.5px;">
+                      {{ "%.2f"|format(g.teacher_earned) }} DH
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                <tr style="background:#f8fafc; font-weight:900;">
+                  <td colspan="3" style="text-align:right; text-transform:uppercase; font-size:11px; color:#475569;">
+                    {{ 'المجموع الخام' if lang=='ar' else 'Total Brut' }}:
+                  </td>
+                  <td style="text-align:right; font-size:14px; color:#0B3D6E;">
+                    {{ "%.2f"|format(payroll.total_earned) }} DH
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- MOBILE CARDS VIEW (CLEAN, MODERN, TOUCH-FRIENDLY) -->
+          <div class="mobile-cards-view">
+            {% for g in payroll.groups %}
+              <div class="course-mobile-card">
+                <div class="cmc-top">
+                  <div>
+                    <div class="cmc-title">{{ g.course.name }}</div>
+                    <div class="muted" style="font-size:11px; margin-top:1px;">
+                      {{ g.course.code or '' }}{% if g.course.level %} &bull; {{ g.course.level }}{% endif %}
+                    </div>
+                  </div>
+                  <div class="cmc-amount">
+                    +{{ "%.2f"|format(g.teacher_earned) }} <small style="font-size:10px;">DH</small>
+                  </div>
+                </div>
+
+                <div class="cmc-badges-row">
+                  <span class="cmc-badge cmc-badge-students">
+                    👥 {{ g.enroll_count }} {{ 'تلميذ' if lang=='ar' else 'élèves' }}
+                  </span>
+                  <span class="cmc-badge cmc-badge-calc">
+                    {% if g.comp_type == 'percentage' %}
+                      📊 {{ g.comp_val }}% {{ 'من الواجبات' if lang=='ar' else 'du CA' }}
+                    {% elif g.comp_type == 'per_student' %}
+                      👤 {{ g.comp_val }} DH / élève
+                    {% elif g.comp_type == 'fixed' %}
+                      📌 Forfait: {{ g.comp_val }} DH
+                    {% elif g.comp_type == 'hourly' %}
+                      ⏱️ {{ g.comp_val }} DH / heure
+                    {% endif %}
+                  </span>
+                </div>
+              </div>
+            {% endfor %}
+
+            <!-- Mobile Brut Summary Strip -->
+            <div style="background:#f1f5f9; border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+              <span style="font-size:11.5px; font-weight:800; color:#475569; text-transform:uppercase;">
+                {{ 'مجموع الأتعاب الخام' if lang=='ar' else 'Total Brut Enseignant' }}:
+              </span>
+              <span style="font-size:15px; font-weight:900; color:#0B3D6E;">
+                {{ "%.2f"|format(payroll.total_earned) }} DH
+              </span>
+            </div>
+          </div>
+
+        {% else %}
+          <div class="muted" style="text-align:center; padding:18px 0; font-size:13px;">
+            {{ 'لا توجد حصص مسجلة لهذا الشهر' if lang=='ar' else 'Aucune classe enregistrée pour ce mois.' }}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- =====================================================================
+           DEDUCTIONS (ADVANCES & EXPENSES)
+           - DESKTOP: FULL TABLES
+           - MOBILE: TRANSACTION LIST ITEMS
+           ===================================================================== -->
+      {% if payroll.advances or payroll.teacher_expenses or payroll.prior_credit_deducted > 0 %}
+        <div class="section-card">
+          <div class="section-header">
+            <h3 class="section-title">
+              <span>🧾</span>
+              <span>{{ 'تفاصيل الاقتطاعات' if lang=='ar' else 'Détail des Déductions' }}</span>
+            </h3>
+            <span class="chip chip-rose" style="font-size:11px; font-weight:800; padding:2px 7px;">
+              - {{ "%.2f"|format(payroll.total_all_deductions) }} DH
+            </span>
+          </div>
+
+          <!-- 1. ADVANCES -->
+          {% if payroll.advances %}
+            <div style="margin-bottom:14px;">
+              <div style="font-weight:800; font-size:12px; color:#b91c1c; margin-bottom:8px; display:flex; align-items:center; gap:5px;">
+                <span>💸</span> <span>{{ 'التسبيقات المستلمة' if lang=='ar' else 'Avances perçues' }}</span>
+              </div>
+
+              <!-- Desktop Table -->
+              <div class="desktop-table-view">
+                <table class="clean-table">
+                  <thead>
+                    <tr>
+                      <th>{{ 'الوصل' if lang=='ar' else 'Réf' }}</th>
+                      <th>{{ 'التاريخ' if lang=='ar' else 'Date' }}</th>
+                      <th>{{ 'الأداء' if lang=='ar' else 'Mode' }}</th>
+                      <th>{{ 'ملاحظات' if lang=='ar' else 'Notes' }}</th>
+                      <th style="text-align:right;">{{ 'المبلغ' if lang=='ar' else 'Montant' }}</th>
+                      <th class="no-print" style="text-align:center; width:80px;">{{ 'الوصل' if lang=='ar' else 'Reçu' }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for adv in payroll.advances %}
+                      <tr>
+                        <td style="font-weight:800; color:#0B3D6E;">{{ adv.receipt_no }}</td>
+                        <td>{{ adv.date.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ adv.payment_method }}</td>
+                        <td class="muted" style="font-size:11.5px;">{{ adv.notes or '—' }}</td>
+                        <td style="text-align:right; font-weight:900; color:#dc2626;">- {{ "%.2f"|format(adv.amount) }} DH</td>
+                        <td class="no-print" style="text-align:center;">
+                          <a href="{{ url_for('teacher_advance_receipt', aid=adv.id, format='a5') }}" target="_blank" class="btn btn-outline" style="padding:2px 6px; font-size:11px; border-color:#cbd5e1;">
+                            🖨️ A5
+                          </a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Mobile List -->
+              <div class="mobile-cards-view">
+                {% for adv in payroll.advances %}
+                  <div class="trans-mobile-card">
+                    <div class="trans-left">
+                      <div class="trans-ico ico-adv">💸</div>
+                      <div>
+                        <div class="trans-title">Avance {{ adv.receipt_no }}</div>
+                        <div class="trans-meta">{{ adv.date.strftime('%d/%m/%Y') }} &bull; {{ adv.payment_method }}</div>
+                        {% if adv.notes %}
+                          <div class="muted" style="font-size:10.5px;">{{ adv.notes }}</div>
+                        {% endif %}
+                      </div>
+                    </div>
+                    <div class="trans-right">
+                      <div class="trans-amt-adv">-{{ "%.2f"|format(adv.amount) }} DH</div>
+                      <a href="{{ url_for('teacher_advance_receipt', aid=adv.id, format='a5') }}" target="_blank" class="btn btn-outline no-print" style="padding:1px 6px; font-size:10px; margin-top:3px; display:inline-block; border-color:#cbd5e1;">
+                        🖨️ Reçu
+                      </a>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- 2. EXPENSES & COPIES -->
+          {% if payroll.teacher_expenses %}
+            <div style="margin-bottom:10px;">
+              <div style="font-weight:800; font-size:12px; color:#6d28d9; margin-bottom:8px; display:flex; align-items:center; gap:5px;">
+                <span>🖨️</span> <span>{{ 'مصاريف النسخ والتجهيزات' if lang=='ar' else 'Copies & Fournitures' }}</span>
+              </div>
+
+              <!-- Desktop Table -->
+              <div class="desktop-table-view">
+                <table class="clean-table">
+                  <thead>
+                    <tr>
+                      <th>{{ 'الوصل' if lang=='ar' else 'Réf' }}</th>
+                      <th>{{ 'التاريخ' if lang=='ar' else 'Date' }}</th>
+                      <th>{{ 'البيان' if lang=='ar' else 'Désignation' }}</th>
+                      <th style="text-align:center;">{{ 'الكمية' if lang=='ar' else 'Qté' }}</th>
+                      <th style="text-align:right;">{{ 'المبلغ' if lang=='ar' else 'Montant' }}</th>
+                      <th class="no-print" style="text-align:center; width:80px;">{{ 'الوصل' if lang=='ar' else 'Reçu' }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for exp in payroll.teacher_expenses %}
+                      <tr>
+                        <td style="font-weight:800; color:#0B3D6E;">{{ exp.receipt_no }}</td>
+                        <td>{{ exp.date.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ exp.title }}</td>
+                        <td style="text-align:center;">{{ exp.quantity or 1 }}</td>
+                        <td style="text-align:right; font-weight:900; color:#7c3aed;">- {{ "%.2f"|format(exp.amount) }} DH</td>
+                        <td class="no-print" style="text-align:center;">
+                          <a href="{{ url_for('teacher_expense_receipt', teid=exp.id, format='a5') }}" target="_blank" class="btn btn-outline" style="padding:2px 6px; font-size:11px; border-color:#cbd5e1;">
+                            🖨️ A5
+                          </a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Mobile List -->
+              <div class="mobile-cards-view">
+                {% for exp in payroll.teacher_expenses %}
+                  <div class="trans-mobile-card">
+                    <div class="trans-left">
+                      <div class="trans-ico ico-exp">🖨️</div>
+                      <div>
+                        <div class="trans-title">{{ exp.title }}</div>
+                        <div class="trans-meta">{{ exp.date.strftime('%d/%m/%Y') }} &bull; Qté: {{ exp.quantity or 1 }}</div>
+                      </div>
+                    </div>
+                    <div class="trans-right">
+                      <div class="trans-amt-exp">-{{ "%.2f"|format(exp.amount) }} DH</div>
+                      <a href="{{ url_for('teacher_expense_receipt', teid=exp.id, format='a5') }}" target="_blank" class="btn btn-outline no-print" style="padding:1px 6px; font-size:10px; margin-top:3px; display:inline-block; border-color:#cbd5e1;">
+                        🖨️ Reçu
+                      </a>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Prior Credit if any -->
+          {% if payroll.prior_credit_deducted > 0 %}
+            <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:8px 12px; font-size:12px; color:#92400e; display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
+              <div>
+                <strong>⚠️ {{ 'ترحيل سابق' if lang=='ar' else 'Report antérieur' }}:</strong>
+                {{ payroll.prior_credit_reason or 'Déduction' }}
+              </div>
+              <strong style="color:#b45309;">- {{ "%.2f"|format(payroll.prior_credit_deducted) }} DH</strong>
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+    {% endif %}
+
+  {% endif %}
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,231 @@
+{# ============================================================
+   SESSION SECURITY & SHIFT PROTECTION (ADMIN & SECRETAIRE)
+   Automatically logs out inactive users to protect shift data.
+   Forces login on browser reopen. Teachers are exempt.
+   ============================================================ #}
+
+<!-- SESSION TIMEOUT WARNING MODAL -->
+<div id="sessionTimeoutWarningModal" style="display:none; position:fixed; inset:0; background:rgba(15, 23, 42, 0.72); z-index:999999; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#ffffff; border-radius:20px; max-width:440px; width:100%; padding:28px 24px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.4); text-align:center; border:2px solid #f59e0b; animation:ilasModalPop 0.25s ease-out; box-sizing:border-box;">
+    <div style="width:58px; height:58px; border-radius:50%; background:#fef3c7; color:#d97706; font-size:30px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:14px; box-shadow:0 6px 16px rgba(245,158,11,0.25);">
+      ⏳
+    </div>
+    <h3 style="margin:0 0 8px; font-size:18px; font-weight:800; color:#1e293b;">
+      Session Inactive (نهاية الوردية / الخمول)
+    </h3>
+    <p style="margin:0 0 16px; font-size:13.5px; color:#475569; line-height:1.5;">
+      Aucune activité n'a été détectée. Pour protéger vos données lors des changements de shift, votre session sera déconnectée dans :
+    </p>
+    <div style="background:#fef2f2; border:1.5px solid #fecaca; border-radius:12px; padding:10px 16px; display:inline-block; margin-bottom:20px;">
+      <span style="font-size:26px; font-weight:800; color:#dc2626; font-variant-numeric:tabular-nums;" id="sessionTimeoutCountdown">60</span>
+      <span style="font-size:13px; font-weight:700; color:#dc2626; margin-left:4px;">secondes</span>
+    </div>
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+      <button type="button" id="btnExtendSession" class="btn btn-primary" style="background:#1f6feb; border-color:#1f6feb; font-weight:800; padding:11px 20px; border-radius:12px; font-size:13.5px; box-shadow:0 4px 12px rgba(31,111,235,0.3); cursor:pointer;">
+        ✅ Rester connecté
+      </button>
+      <a href="{{ url_for('logout', reason='manual') }}" class="btn btn-outline" style="font-weight:700; padding:11px 16px; border-radius:12px; font-size:13.5px; color:#ef4444; border-color:#fca5a5; text-decoration:none; cursor:pointer;">
+        🚪 Me déconnecter
+      </a>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes ilasModalPop {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+</style>
+
+<script>
+(function() {
+  'use strict';
+
+  // 1. Configuration & Parameters
+  var TIMEOUT_MINUTES = parseInt("{{ settings.session_timeout_minutes or 30 }}", 10);
+  if (isNaN(TIMEOUT_MINUTES) || TIMEOUT_MINUTES <= 0) {
+    TIMEOUT_MINUTES = 30;
+  }
+  var MAX_IDLE_SECONDS = TIMEOUT_MINUTES * 60;
+  var WARNING_SECONDS = 60; // Show warning modal when 60s remain
+
+  var isFreshLogin = {% if session.pop('fresh_login', False) %}true{% else %}false{% endif %};
+  var lastUserAction = Date.now();
+  var hadRecentActivity = false;
+  var isModalVisible = false;
+  var channel = null;
+
+  // 2. BroadcastChannel for Multi-Tab Synchronisation
+  try {
+    if (typeof BroadcastChannel !== 'undefined') {
+      channel = new BroadcastChannel('ilas_shift_security_channel');
+      
+      channel.onmessage = function(ev) {
+        if (!ev || !ev.data) return;
+        var msg = ev.data;
+        
+        // Another tab reported user activity (e.g. typing, clicking)
+        if (msg.type === 'USER_ACTIVE') {
+          lastUserAction = Math.max(lastUserAction, msg.timestamp || Date.now());
+          if (isModalVisible) {
+            hideWarningModal();
+          }
+        }
+        
+        // Another tab initiated logout
+        if (msg.type === 'FORCE_LOGOUT') {
+          sessionStorage.removeItem('ilas_tab_session_active');
+          window.location.href = msg.redirect || '/login?reason=timeout';
+        }
+        
+        // Handshake: A newly opened tab is querying if an active window exists
+        if (msg.type === 'PING_ACTIVE_SESSION') {
+          if (sessionStorage.getItem('ilas_tab_session_active') === '1') {
+            channel.postMessage({ type: 'ACK_ACTIVE_SESSION' });
+          }
+        }
+      };
+    }
+  } catch (err) {}
+
+  // 3. Browser Re-open Verification
+  // If this window has no active sessionStorage marker, check if another ILAS tab is open.
+  // If not, it means all browser windows were closed and freshly re-opened -> require login!
+  if (isFreshLogin) {
+    sessionStorage.setItem('ilas_tab_session_active', '1');
+  } else if (!sessionStorage.getItem('ilas_tab_session_active')) {
+    if (channel) {
+      var tabConfirmed = false;
+      var tempHandler = function(ev) {
+        if (ev && ev.data && ev.data.type === 'ACK_ACTIVE_SESSION') {
+          tabConfirmed = true;
+          sessionStorage.setItem('ilas_tab_session_active', '1');
+        }
+      };
+      channel.addEventListener('message', tempHandler);
+      channel.postMessage({ type: 'PING_ACTIVE_SESSION' });
+
+      setTimeout(function() {
+        channel.removeEventListener('message', tempHandler);
+        if (!tabConfirmed && !sessionStorage.getItem('ilas_tab_session_active')) {
+          // All tabs were closed and browser reopened -> Force re-login
+          window.location.href = '/logout?reason=browser_closed';
+        }
+      }, 350);
+    }
+  }
+
+  // 4. Modal Element Helpers
+  var modalEl = document.getElementById('sessionTimeoutWarningModal');
+  var countdownEl = document.getElementById('sessionTimeoutCountdown');
+  var btnExtend = document.getElementById('btnExtendSession');
+
+  function showWarningModal(remainingSecs) {
+    if (!modalEl) return;
+    isModalVisible = true;
+    modalEl.style.display = 'flex';
+    if (countdownEl) {
+      countdownEl.textContent = Math.max(0, remainingSecs);
+    }
+  }
+
+  function hideWarningModal() {
+    if (!modalEl) return;
+    isModalVisible = false;
+    modalEl.style.display = 'none';
+  }
+
+  function extendSession() {
+    lastUserAction = Date.now();
+    hideWarningModal();
+    
+    // Broadcast activity to other tabs
+    if (channel) {
+      channel.postMessage({ type: 'USER_ACTIVE', timestamp: lastUserAction });
+    }
+    
+    // Server-side heartbeat
+    fetch('/api/session/keep_alive', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    }).catch(function() {});
+  }
+
+  if (btnExtend) {
+    btnExtend.addEventListener('click', extendSession);
+  }
+
+  // 5. Track User Interactions (Mouse, Keyboard, Touch, Scroll)
+  var lastBroadcastTime = 0;
+  function registerActivity() {
+    var now = Date.now();
+    lastUserAction = now;
+    hadRecentActivity = true;
+
+    if (isModalVisible) {
+      extendSession();
+      return;
+    }
+
+    // Throttle broadcast to other tabs (at most once every 10 seconds)
+    if (channel && (now - lastBroadcastTime) > 10000) {
+      lastBroadcastTime = now;
+      channel.postMessage({ type: 'USER_ACTIVE', timestamp: now });
+    }
+  }
+
+  ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'].forEach(function(evtName) {
+    window.addEventListener(evtName, registerActivity, { passive: true });
+  });
+
+  // 6. Periodic Server Heartbeat (Every 2 minutes, ONLY when user had active interactions)
+  setInterval(function() {
+    if (hadRecentActivity) {
+      hadRecentActivity = false;
+      fetch('/api/session/keep_alive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      }).catch(function() {});
+    }
+  }, 120000);
+
+  // 7. Idle Check Loop (Runs every second)
+  setInterval(function() {
+    var now = Date.now();
+    var idleSeconds = Math.floor((now - lastUserAction) / 1000);
+    var remainingSeconds = MAX_IDLE_SECONDS - idleSeconds;
+
+    if (remainingSeconds <= 0) {
+      // Idle timeout reached!
+      if (channel) {
+        channel.postMessage({ type: 'FORCE_LOGOUT', redirect: '/logout?reason=timeout' });
+      }
+      sessionStorage.removeItem('ilas_tab_session_active');
+      window.location.href = '/logout?reason=timeout';
+      return;
+    }
+
+    if (remainingSeconds <= WARNING_SECONDS) {
+      showWarningModal(remainingSeconds);
+    } else if (isModalVisible) {
+      hideWarningModal();
+    }
+  }, 1000);
+
+  // 8. Visibility Change (e.g. laptop lid reopened, user switched back to tab after being away)
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+      var idleSeconds = Math.floor((Date.now() - lastUserAction) / 1000);
+      if (idleSeconds >= MAX_IDLE_SECONDS) {
+        if (channel) {
+          channel.postMessage({ type: 'FORCE_LOGOUT', redirect: '/logout?reason=timeout' });
+        }
+        sessionStorage.removeItem('ilas_tab_session_active');
+        window.location.href = '/logout?reason=timeout';
+      }
+    }
+  });
+
+})();
+</script>

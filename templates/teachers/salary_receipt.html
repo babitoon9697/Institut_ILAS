@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="{{ lang or 'fr' }}" dir="{{ 'rtl' if lang=='ar' else 'ltr' }}">
+<head>
+<meta charset="utf-8">
+<title>{{ 'Bulletin de Versement de Salaire' if lang=='fr' else 'وصل صرف مستحقات الراتب' }} — {{ payout.receipt_no }}</title>
+<style>
+  @page {
+    {% if fmt == 'a4' %}
+      size: A4 portrait;
+      margin: 12mm 15mm;
+    {% elif fmt == 'ticket' %}
+      size: 80mm auto;
+      margin: 0;
+    {% else %}
+      size: A5 landscape;
+      margin: 8mm 10mm;
+    {% endif %}
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: #0f172a;
+    background: #f8fafc;
+    margin: 0;
+    padding: 16px;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 12px;
+  }
+
+  /* Screen Action Bar */
+  .no-print-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0B3D6E;
+    color: #ffffff;
+    padding: 10px 18px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    max-width: 860px;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 4px 14px rgba(11,61,110,0.25);
+  }
+  .no-print-bar a, .no-print-bar button {
+    text-decoration: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* Sheet Layout */
+  .receipt-sheet {
+    max-width: 840px;
+    margin: 0 auto 20px auto;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+    position: relative;
+  }
+
+  /* Header */
+  .header-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #0B3D6E;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+  .institute-info h1 {
+    margin: 0 0 3px 0;
+    font-size: 20px;
+    font-weight: 900;
+    color: #0B3D6E;
+    letter-spacing: -0.3px;
+  }
+  .institute-info p {
+    margin: 1px 0;
+    font-size: 11px;
+    color: #475569;
+  }
+  .receipt-badge-wrap {
+    text-align: right;
+  }
+  body[dir="rtl"] .receipt-badge-wrap {
+    text-align: left;
+  }
+  .receipt-title {
+    font-size: 15px;
+    font-weight: 900;
+    color: #059669;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .receipt-num {
+    display: inline-block;
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1.5px solid #a7f3d0;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-weight: 800;
+    font-size: 13px;
+  }
+
+  /* Info Grid */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .info-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .info-card-title {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 6px;
+    border-bottom: 1px dashed #cbd5e1;
+    padding-bottom: 3px;
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    margin-bottom: 3px;
+  }
+  .info-label {
+    color: #64748b;
+  }
+  .info-val {
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  /* Table */
+  .details-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+  }
+  .details-table th {
+    background: #0B3D6E;
+    color: #ffffff;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 800;
+    padding: 8px 10px;
+    text-align: left;
+  }
+  body[dir="rtl"] .details-table th {
+    text-align: right;
+  }
+  .details-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 11.5px;
+  }
+
+  /* Total Highlights */
+  .total-box {
+    background: #f0fdf4;
+    border: 2px solid #86efac;
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .total-label {
+    font-size: 13px;
+    font-weight: 800;
+    color: #166534;
+    text-transform: uppercase;
+  }
+  .total-amount {
+    font-size: 22px;
+    font-weight: 900;
+    color: #047857;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  /* Legal Notice */
+  .legal-notice {
+    font-size: 10.5px;
+    color: #475569;
+    line-height: 1.4;
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+  }
+  body[dir="rtl"] .legal-notice {
+    border-left: none;
+    border-right: 3px solid #f59e0b;
+  }
+
+  /* Signatures */
+  .sign-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 16px;
+  }
+  .sign-box {
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 10px 14px;
+    min-height: 75px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .sign-title {
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #334155;
+    text-transform: uppercase;
+  }
+  .sign-sub {
+    font-size: 10px;
+    color: #94a3b8;
+    margin-top: 30px;
+  }
+
+  /* Thermal ticket 80mm specific styling */
+  {% if fmt == 'ticket' %}
+    body {
+      background: #ffffff;
+      padding: 0;
+      font-size: 11px;
+    }
+    .receipt-sheet {
+      border: none;
+      box-shadow: none;
+      padding: 10px 14px;
+      max-width: 80mm;
+      margin: 0 auto;
+    }
+    .info-grid {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+    .sign-grid {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+  {% endif %}
+
+  @media print {
+    .no-print-bar {
+      display: none !important;
+    }
+    body {
+      background: #ffffff !important;
+      padding: 0 !important;
+    }
+    .receipt-sheet {
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- NO-PRINT ACTION BAR -->
+<div class="no-print-bar">
+  <div style="display:flex; align-items:center; gap:10px;">
+    <a href="{{ url_for('teachers_payroll', month=payout.period_month) }}" style="color:#ffffff; font-weight:800; font-size:12px; display:inline-flex; align-items:center; gap:4px;">
+      ← {{ 'الرجوع لكشف الأجور' if lang=='ar' else 'Retour à la Paie' }}
+    </a>
+    <span style="opacity:0.6;">|</span>
+    <span style="font-weight:800; font-size:13px;">💰 {{ payout.receipt_no }} — Prof. {{ teacher.full_name }}</span>
+  </div>
+
+  <div style="display:flex; align-items:center; gap:8px;">
+    <!-- Format selector -->
+    <a href="{{ url_for('teacher_salary_receipt', pid=payout.id, format='a5', lang=lang) }}" style="background:{% if fmt=='a5' %}#ffffff{% else %}rgba(255,255,255,0.2){% endif %}; color:{% if fmt=='a5' %}#0B3D6E{% else %}#ffffff{% endif %}; padding:4px 10px; border-radius:6px; font-weight:800; font-size:11px;">
+      A5 Paysage
+    </a>
+    <a href="{{ url_for('teacher_salary_receipt', pid=payout.id, format='ticket', lang=lang) }}" style="background:{% if fmt=='ticket' %}#ffffff{% else %}rgba(255,255,255,0.2){% endif %}; color:{% if fmt=='ticket' %}#0B3D6E{% else %}#ffffff{% endif %}; padding:4px 10px; border-radius:6px; font-weight:800; font-size:11px;">
+      Ticket 80mm
+    </a>
+    <a href="{{ url_for('teacher_salary_receipt', pid=payout.id, format='a4', lang=lang) }}" style="background:{% if fmt=='a4' %}#ffffff{% else %}rgba(255,255,255,0.2){% endif %}; color:{% if fmt=='a4' %}#0B3D6E{% else %}#ffffff{% endif %}; padding:4px 10px; border-radius:6px; font-weight:800; font-size:11px;">
+      A4 Portrait
+    </a>
+    
+    <!-- Language Toggle -->
+    <a href="{{ url_for('teacher_salary_receipt', pid=payout.id, format=fmt, lang='ar' if lang=='fr' else 'fr') }}" style="background:rgba(255,255,255,0.2); color:#fff; padding:4px 10px; border-radius:6px; font-weight:800; font-size:11px;">
+      {{ 'Français' if lang=='ar' else 'العربية' }}
+    </a>
+
+    <!-- Print Button -->
+    <button onclick="window.print()" style="background:#059669; color:#ffffff; border:none; padding:6px 16px; border-radius:6px; font-weight:900; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+      🖨️ {{ 'طباعة' if lang=='ar' else 'Imprimer' }}
+    </button>
+  </div>
+</div>
+
+<!-- OFFICIAL RECEIPT SHEET -->
+<div class="receipt-sheet">
+  
+  <!-- Header -->
+  <div class="header-grid">
+    <div class="institute-info">
+      <h1>{{ settings.inst_name }}</h1>
+      <p>📍 {{ settings.inst_address }}, {{ settings.inst_city }}</p>
+      <p>📞 {{ settings.inst_phone }} {% if settings.inst_email %}· ✉️ {{ settings.inst_email }}{% endif %}</p>
+      {% if settings.inst_ice %}<p style="font-size:10px; color:#64748b;">ICE : {{ settings.inst_ice }}</p>{% endif %}
+    </div>
+    <div class="receipt-badge-wrap">
+      <div class="receipt-title">{{ 'Reçu de Versement de Salaire' if lang=='fr' else 'وصل صرف مستحقات الراتب' }}</div>
+      <div class="receipt-num">{{ payout.receipt_no }}</div>
+      <div style="font-size:10.5px; color:#64748b; margin-top:4px;">
+        {{ 'Date :' if lang=='fr' else 'التاريخ :' }} <strong>{{ payout.payment_date.strftime('%d/%m/%Y') }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Information Grid -->
+  <div class="info-grid">
+    <!-- Teacher Card -->
+    <div class="info-card">
+      <div class="info-card-title">{{ 'Bénéficiaire / Enseignant' if lang=='fr' else 'بيانات الأستاذ المستفيد' }}</div>
+      <div class="info-row">
+        <span class="info-label">{{ 'Nom complet :' if lang=='fr' else 'الاسم الكامل :' }}</span>
+        <span class="info-val">Prof. {{ teacher.full_name }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">{{ 'Code Enseignant :' if lang=='fr' else 'رمز الأستاذ :' }}</span>
+        <span class="info-val">#{{ teacher.code or teacher.id }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">{{ 'Spécialité :' if lang=='fr' else 'التخصص :' }}</span>
+        <span class="info-val">{{ teacher.specialty or 'Général' }}</span>
+      </div>
+      {% if teacher.cin %}
+      <div class="info-row">
+        <span class="info-label">CIN :</span>
+        <span class="info-val">{{ teacher.cin }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Payout Period & Method Card -->
+    <div class="info-card">
+      <div class="info-card-title">{{ 'Détails du Paiement' if lang=='fr' else 'تفاصيل عملية الصرف' }}</div>
+      <div class="info-row">
+        <span class="info-label">{{ 'Mois Cible :' if lang=='fr' else 'الشهر المستهدف :' }}</span>
+        <span class="info-val" style="color:#0B3D6E;">{{ month_display }} ({{ payout.period_month }})</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">{{ 'Mode de Règlement :' if lang=='fr' else 'طريقة الأداء :' }}</span>
+        <span class="info-val">{{ payout.payment_method }}</span>
+      </div>
+      {% if payout.reference_no %}
+      <div class="info-row">
+        <span class="info-label">{{ 'Référence / Chèque :' if lang=='fr' else 'رقم المرجع / الشيك :' }}</span>
+        <span class="info-val">{{ payout.reference_no }}</span>
+      </div>
+      {% endif %}
+      <div class="info-row">
+        <span class="info-label">{{ 'Statut :' if lang=='fr' else 'الحالة :' }}</span>
+        <span class="info-val" style="color:#059669;">✓ {{ 'Payé & Clôturé' if lang=='fr' else 'مؤدى ومقفل' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Financial Breakdown Table -->
+  <table class="details-table">
+    <thead>
+      <tr>
+        <th>{{ 'Rubrique / Description' if lang=='fr' else 'بيان المستحقات والمقتطعات' }}</th>
+        <th style="width:120px; text-align:center;">{{ 'Type' if lang=='fr' else 'النوع' }}</th>
+        <th style="width:140px; text-align:right;">{{ 'Montant' if lang=='fr' else 'المبلغ' }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <strong>{{ 'Émoluments Bruts des Cours du Mois' if lang=='fr' else 'المستحقات الإجمالية للدروس (خام)' }}</strong>
+          <div style="font-size:10.5px; color:#64748b;">Calculé selon les présences et les cotisations scolarité du mois {{ payout.period_month }}</div>
+        </td>
+        <td style="text-align:center;"><span style="color:#6d28d9; font-weight:800;">REVENU BRUT</span></td>
+        <td style="text-align:right; font-weight:800; color:#6d28d9;">+{{ '%.2f'|format((payout.gross_amount or 0.0) - (payout.book_sales_added or 0.0)) }} {{ settings.currency }}</td>
+      </tr>
+
+      {% if payout.book_sales_added and payout.book_sales_added > 0 %}
+      <tr style="background:#ecfdf5;">
+        <td>
+          <span style="color:#065f46; font-weight:700;">📚 {{ 'Commission : Ventes d\'articles / livres scolaires déposés' if lang=='fr' else 'عمولة : مبيعات المقررات والكتب المودعة بالمعهد' }}</span>
+          <div style="font-size:10.5px; color:#047857;">Part revenant à l'enseignant pour les ventes effectuées au comptoir & scolarité</div>
+        </td>
+        <td style="text-align:center;"><span style="color:#059669; font-weight:800;">VENTES LIVRES</span></td>
+        <td style="text-align:right; font-weight:800; color:#059669;">+{{ '%.2f'|format(payout.book_sales_added) }} {{ settings.currency }}</td>
+      </tr>
+      {% endif %}
+
+      {% if payout.advances_deducted and payout.advances_deducted > 0 %}
+      <tr style="background:#fef2f2;">
+        <td>
+          <span style="color:#dc2626;">💸 {{ 'Retenue : Avances sur salaire perçues' if lang=='fr' else 'اقتطاع : التسبيقات على الأجر خلال هذا الشهر' }}</span>
+        </td>
+        <td style="text-align:center;"><span style="color:#dc2626; font-weight:800;">DÉDUCTION</span></td>
+        <td style="text-align:right; font-weight:800; color:#dc2626;">-{{ '%.2f'|format(payout.advances_deducted) }} {{ settings.currency }}</td>
+      </tr>
+      {% endif %}
+
+      {% if payout.expenses_deducted and payout.expenses_deducted > 0 %}
+      <tr style="background:#f0f9ff;">
+        <td>
+          <span style="color:#0284c7;">🖨️ {{ 'Retenue : Frais, Tirages Copies & Livres' if lang=='fr' else 'اقتطاع : مصاريف ونسخ وثائق وكتب تعليمية' }}</span>
+        </td>
+        <td style="text-align:center;"><span style="color:#0284c7; font-weight:800;">DÉDUCTION</span></td>
+        <td style="text-align:right; font-weight:800; color:#0284c7;">-{{ '%.2f'|format(payout.expenses_deducted) }} {{ settings.currency }}</td>
+      </tr>
+      {% endif %}
+
+      {% if payout.prior_credit_deducted and payout.prior_credit_deducted > 0 %}
+      <tr style="background:#fffbeb;">
+        <td>
+          <span style="color:#b45309;">⏳ {{ 'Retenue : Report reliquat avances / solde mois précédent' if lang=='fr' else 'اقتطاع : رصيد دائن / تسبيقات مستحقة من الشهر السابق' }}</span>
+        </td>
+        <td style="text-align:center;"><span style="color:#b45309; font-weight:800;">REPORT</span></td>
+        <td style="text-align:right; font-weight:800; color:#b45309;">-{{ '%.2f'|format(payout.prior_credit_deducted) }} {{ settings.currency }}</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  <!-- Total Net Box -->
+  <div class="total-box">
+    <div>
+      <div class="total-label">{{ 'Net Définitif Versé' if lang=='fr' else 'صافي الراتب المؤدى' }}</div>
+      <div style="font-size:10.5px; color:#166534;">
+        {{ 'Arrêté pour solde de tout compte pour le mois de' if lang=='fr' else 'مبلغ مبرئ للذمة برسم شهر' }} {{ month_display }}
+      </div>
+    </div>
+    <div class="total-amount">
+      {{ '%.2f'|format(payout.net_amount) }} <span style="font-size:14px;">{{ settings.currency }}</span>
+    </div>
+  </div>
+
+  <!-- Legal Notice -->
+  <div class="legal-notice">
+    <strong>{{ 'Mention de décharge :' if lang=='fr' else 'إشهاد وتفريغ ذمة :' }}</strong> 
+    {{ 'Le soussigné atteste avoir reçu ce jour l\'intégralité du montant net mentionné ci-dessus par ' if lang=='fr' else 'يشهد الموقع أسفله بأنه استلم بتاريخه كامل المبلغ الصافي المذكور أعلاه بواسطة ' }}
+    <strong>{{ payout.payment_method }}</strong>
+    {{ ' à titre de rémunération définitive pour le mois indiqué, après déduction de toutes les avances et charges antérieures.' if lang=='fr' else ' كأجر نهائي عن الشهر المذكور، بعد خصم كافة التسبيقات والمصاريف.' }}
+  </div>
+
+  <!-- Signatures Grid -->
+  <div class="sign-grid">
+    <div class="sign-box">
+      <div class="sign-title">{{ 'Émargement de l\'Enseignant(e)' if lang=='fr' else 'توقيع وإشهاد الأستاذ(ة)' }}</div>
+      <div class="sign-sub">{{ 'Pour acquit, le ' if lang=='fr' else 'للمصادقة والاستلام بتاريخ : ' }}{{ payout.payment_date.strftime('%d/%m/%Y') }}</div>
+    </div>
+    <div class="sign-box">
+      <div class="sign-title">{{ 'Cachet & Signature de la Direction' if lang=='fr' else 'خاتم وتوقيع إدارة المعهد' }}</div>
+      <div class="sign-sub">{{ 'Institut ILAS, le ' if lang=='fr' else 'معهد إيلاس، بتاريخ : ' }}{{ payout.payment_date.strftime('%d/%m/%Y') }}</div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,516 @@
+/* ============================================================
+   IDBadge.module.css — Streamlined Top Banner ILAS Modern Card (Recto & Verso)
+   Header: Luxury Navy Gradient (#06101E -> #0B3D6E -> #155DA8)
+   Body: High-Contrast Modern White Base — Ink-Efficient & Ultra-Readable
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Roboto:wght@500;700;800;900&display=swap');
+
+*, *::before, *::after {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+  color-adjust: exact !important;
+}
+
+.wrapper {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 800px;
+  perspective: 1000px;
+}
+
+/* 3D Flippable Container */
+.cardContainer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.585 / 1;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+.cardContainer.isFlipped {
+  transform: rotateY(180deg);
+}
+
+/* Base Card (Recto & Verso) */
+.card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 14px 36px rgba(11, 61, 110, 0.28), 0 0 0 1px rgba(11, 61, 110, 0.15);
+  background: #ffffff !important;
+  display: flex;
+  flex-direction: column;
+  container-type: inline-size;
+  font-family: 'Roboto', sans-serif;
+  user-select: none;
+  box-sizing: border-box;
+  color: #0B3D6E;
+  backface-visibility: hidden;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.cardFront {
+  z-index: 2;
+  transform: rotateY(0deg);
+}
+
+.cardBack {
+  transform: rotateY(180deg);
+}
+
+/* Header Luxury Gradient Block (27%) */
+.cardHeaderBg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 27%;
+  background: linear-gradient(135deg, #06101E 0%, #0B3D6E 60%, #155DA8 100%) !important;
+  z-index: 1;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* Curved Red Accent Wave — Moved UP */
+.accentWave {
+  position: absolute;
+  top: 23.7%;
+  left: -2%;
+  width: 104%;
+  height: 6.5%;
+  background: linear-gradient(90deg, #C8102E 0%, #E02038 60%, #F0A02E 100%) !important;
+  transform: rotate(-1.5deg);
+  z-index: 2;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* Header Content */
+.cardHeader {
+  height: 25%;
+  padding: 1.5cqw 3.5cqw 0 3.5cqw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 3;
+  color: #ffffff !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+.brandBox {
+  display: flex;
+  align-items: center;
+  gap: 1.8cqw;
+}
+.logoImg {
+  height: 4.8cqw;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+}
+.brandLogoText {
+  display: flex;
+  flex-direction: column;
+}
+.brandName {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 3.2cqw;
+  font-weight: 900;
+  color: #ffffff !important;
+  letter-spacing: 0.8px;
+  line-height: 1;
+}
+.brandName span {
+  color: #FFD47A !important;
+}
+.brandSub {
+  font-size: 1.5cqw;
+  color: rgba(255, 255, 255, 0.85) !important;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-top: 0.2cqw;
+}
+.yearPill {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.35) !important;
+  border-radius: 10px;
+  padding: 0.4cqw 2cqw;
+  font-size: 1.9cqw;
+  font-weight: 800;
+  color: #FFD47A !important;
+  letter-spacing: 0.8px;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* RECTO (FRONT) Body Content Area */
+.cardBody {
+  flex: 1;
+  display: flex;
+  padding: 1.5cqw 3.5cqw 1cqw 3.5cqw;
+  gap: 3cqw;
+  z-index: 3;
+  align-items: center;
+}
+.leftCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  z-index: 4;
+}
+.photoFrame {
+  width: 14.5cqw;
+  height: 19.2cqw;
+  border-radius: 2cqw;
+  overflow: hidden;
+  border: 0.6cqw solid #C8102E !important;
+  box-shadow: 0 4px 10px rgba(11, 61, 110, 0.3);
+  background: linear-gradient(145deg, #0B3D6E, #071322) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFD47A !important;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 900;
+  font-size: 6cqw;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+.photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rightCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8cqw;
+  min-width: 0;
+}
+.personName {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 4.4cqw;
+  font-weight: 900;
+  color: #0B3D6E !important;
+  letter-spacing: 0.3px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.roleTagRow {
+  display: flex;
+  align-items: center;
+  gap: 1.8cqw;
+  margin-top: 0.2cqw;
+}
+.roleBadge {
+  background: linear-gradient(90deg, #C8102E 0%, #E02038 100%) !important;
+  color: #ffffff !important;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2.4cqw;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  padding: 0.6cqw 2.4cqw;
+  border-radius: 20px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 5px rgba(200, 16, 46, 0.35);
+  white-space: nowrap;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+.idCodeText {
+  font-family: 'Roboto', sans-serif;
+  font-size: 2.7cqw;
+  font-weight: 800;
+  color: #F0A02E !important;
+  letter-spacing: 0.5px;
+}
+.contactGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5cqw;
+  margin-top: 0.4cqw;
+}
+.contactItem {
+  display: flex;
+  align-items: center;
+  gap: 1.2cqw;
+  font-size: 2.4cqw;
+  color: #1e293b !important;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.contactIcon {
+  flex-shrink: 0;
+  color: #C8102E !important;
+}
+.flagsBar {
+  display: flex;
+  align-items: center;
+  gap: 1.2cqw;
+  margin-top: 0.4cqw;
+}
+.flagSphere {
+  width: 4.3cqw;
+  height: 4.3cqw;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+  background: #ffffff !important;
+  border: 0.5px solid #cbd5e1;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+.flagSphere svg {
+  width: 100%;
+  height: 100%;
+}
+.cardFooter {
+  height: 19.4%;
+  padding: 0 3.5cqw;
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 3;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+.footerLeft {
+  display: flex;
+  align-items: center;
+  gap: 1.8cqw;
+}
+.qrBox {
+  width: 7.2cqw;
+  height: 7.2cqw;
+  background: #ffffff !important;
+  border-radius: 1cqw;
+  border: 1px solid #cbd5e1;
+  padding: 0.4cqw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+.qrBox canvas,
+.qrBox svg {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+}
+.footerText {
+  display: flex;
+  flex-direction: column;
+}
+.footerId {
+  font-size: 2.4cqw;
+  font-weight: 800;
+  color: #0B3D6E !important;
+  letter-spacing: 0.5px;
+}
+.footerSub {
+  font-size: 1.7cqw;
+  color: #64748b !important;
+  font-weight: 700;
+}
+.barcodeBox {
+  background: #ffffff !important;
+  border-radius: 1cqw;
+  border: 1px solid #cbd5e1;
+  padding: 0.4cqw 1.2cqw;
+  height: 6.2cqw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+.barcodeSvg {
+  height: 100%;
+  width: 100%;
+  display: block;
+}
+
+/* VERSO (BACK) Body Content Area */
+.backBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1.8cqw 3.5cqw 1cqw 3.5cqw;
+  z-index: 3;
+  justify-content: space-between;
+}
+.conditionsBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5cqw;
+  margin-top: 0.5cqw;
+}
+.condTitle {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2.3cqw;
+  font-weight: 900;
+  color: #0B3D6E !important;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.condList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6cqw;
+  font-size: 2.1cqw;
+  line-height: 1.35;
+  color: #1e293b !important;
+  font-weight: 700;
+}
+.condItem {
+  display: flex;
+  gap: 0.8cqw;
+  align-items: flex-start;
+}
+.backBottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2cqw;
+  margin-top: 1cqw;
+  padding-top: 1cqw;
+  border-top: 0.8px dashed #cbd5e1;
+}
+.stampBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2cqw;
+}
+.stampTitle {
+  font-size: 1.6cqw;
+  font-weight: 800;
+  color: #64748b !important;
+  text-transform: uppercase;
+}
+.stampArea {
+  width: 15cqw;
+  height: 6.5cqw;
+  border: 0.8px dashed #0B3D6E;
+  border-radius: 0.8cqw;
+  background: rgba(11, 61, 110, 0.03) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5cqw;
+  color: #94a3b8 !important;
+  font-weight: 700;
+}
+.noticePill {
+  flex: 1;
+  background: #f1f5f9 !important;
+  border-left: 2px solid #C8102E !important;
+  border-radius: 0.8cqw;
+  padding: 0.6cqw 1.2cqw;
+  font-size: 1.9cqw;
+  line-height: 1.2;
+  color: #334155 !important;
+  font-weight: 700;
+}
+.backFooter {
+  height: 12.5%;
+  padding: 0 3.5cqw;
+  background: #0B3D6E !important;
+  color: #ffffff !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 2cqw;
+  font-weight: 800;
+  z-index: 3;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+.backFooter span {
+  color: #FFD47A !important;
+}
+
+/* Actions Toolbar */
+.actionsBar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  background: #C8102E !important;
+  color: #ffffff !important;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 10px rgba(200, 16, 46, 0.35);
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+.actionBtn:hover {
+  background: #a80b23 !important;
+  transform: translateY(-1px);
+}
+.actionBtnSecondary {
+  background: #ffffff !important;
+  color: #0B3D6E !important;
+  border: 1.5px solid #0B3D6E !important;
+}
+.actionBtnSecondary:hover {
+  background: #f4f7fc !important;
+}
+
+/* Print Rules */
+@media print {
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  .actionsBar { display: none !important; }
+  .wrapper { width: auto !important; max-width: none !important; }
+  .cardContainer { transform: none !important; aspect-ratio: auto !important; }
+  .card {
+    position: relative !important;
+    transform: none !important;
+    width: 85.6mm !important;
+    height: 54mm !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 5mm;
+  }
+}

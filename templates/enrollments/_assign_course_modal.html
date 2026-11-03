@@ -1,0 +1,451 @@
+<!-- ASSIGN COURSE MODAL (Affectation d'un élève sans groupe) -->
+<div id="assignModal" class="modal-backdrop" onclick="if(event.target===this) closeAssignModal();" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.65); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px); padding:16px;">
+  <div class="card" style="width:100%; max-width:640px; max-height:92vh; display:flex; flex-direction:column; padding:0; border-radius:16px; background:#ffffff; box-shadow:0 25px 60px -15px rgba(0,0,0,0.35); border-top:5px solid #f59e0b; overflow:hidden;">
+    
+    <!-- Modal Header -->
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:18px 24px; border-bottom:1.5px solid #f1f5f9; background:#fff;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:38px; height:38px; border-radius:10px; background:#fef3c7; color:#d97706; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800;">
+          ⚡
+        </div>
+        <div>
+          <h3 style="margin:0; font-size:16px; font-weight:800; color:#0B3D6E;">
+            {{ 'تعيين التلميذ في فوج / قسم' if lang=='ar' else 'Affecter l\'Élève à un Groupe / Classe' }}
+          </h3>
+          <p style="margin:2px 0 0; font-size:11.5px; color:#64748b;">
+            {{ 'تحديد الفوج النهائي للتلميذ المسجل في قائمة الانتظار' if lang=='ar' else 'Sélectionnez la classe définitive pour cet élève en attente de groupe.' }}
+          </p>
+        </div>
+      </div>
+      <button type="button" onclick="closeAssignModal()" style="border:none; background:#f1f5f9; width:32px; height:32px; border-radius:8px; font-size:16px; cursor:pointer; color:#64748b; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">✕</button>
+    </div>
+
+    <!-- Modal Body (Scrollable) -->
+    <div style="padding:20px 24px; overflow-y:auto; flex:1;">
+      <form method="post" id="assignForm" action="">
+        
+        <!-- Student Info Card with Smart Match Info -->
+        <div style="background:#fffbeb; border:1.5px solid #fde68a; padding:12px 16px; border-radius:12px; margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div style="font-size:13px; font-weight:800; color:#0B3D6E;">
+              👤 {{ 'التلميذ :' if lang=='ar' else 'Élève :' }} <span id="assignStudentName" style="color:#1e3a8a;">-</span>
+            </div>
+            <div style="font-size:12px; font-weight:700; color:#92400e; background:#fef3c7; border:1px solid #f59e0b; padding:3px 10px; border-radius:20px;">
+              📚 <span id="assignTariffName">-</span>
+            </div>
+          </div>
+          <!-- Auto-Match Recommendation Notification -->
+          <div id="assignAutoMatchAlert" style="display:none; margin-top:8px; padding-top:8px; border-top:1px dashed #fcd34d; font-size:11.5px; color:#b45309; display:flex; justify-content:space-between; align-items:center;">
+            <span id="assignAutoMatchText">💡 Classes recommandées filtrées automatiquement.</span>
+            <button type="button" onclick="resetAssignFilter()" style="border:none; background:#fef08a; color:#854d0e; font-weight:800; font-size:11px; padding:2px 8px; border-radius:6px; cursor:pointer;">
+              🔄 {{ 'عرض جميع الأقسام' if lang=='ar' else 'Afficher toutes les classes' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Pills / Categories -->
+        <div style="margin-bottom:12px;">
+          <label style="font-size:11.5px; font-weight:800; color:#475569; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.3px;">
+            <span>📂 {{ 'تصنيف المواد والأقسام' if lang=='ar' else 'Catégories & Matières' }}</span>
+            <span id="assignCountBadge" style="font-size:11px; color:#64748b; font-weight:700; text-transform:none;">{{ all_courses|length }} classes au total</span>
+          </label>
+          <div id="assignCategoryPills" style="display:flex; flex-wrap:wrap; gap:5px; max-height:80px; overflow-y:auto; padding-bottom:2px;">
+            <button type="button" class="assign-cat-pill active" data-cat="all" onclick="setAssignCategory('all')">✨ {{ 'الكل' if lang=='ar' else 'Toutes' }} ({{ all_courses|length }})</button>
+            <button type="button" class="assign-cat-pill" data-cat="anglais" onclick="setAssignCategory('anglais')">🇬🇧 Anglais</button>
+            <button type="button" class="assign-cat-pill" data-cat="francais" onclick="setAssignCategory('francais')">🇫🇷 Français</button>
+            <button type="button" class="assign-cat-pill" data-cat="allemand" onclick="setAssignCategory('allemand')">🇩🇪 Allemand</button>
+            <button type="button" class="assign-cat-pill" data-cat="espagnol" onclick="setAssignCategory('espagnol')">🇪🇸 Espagnol</button>
+            <button type="button" class="assign-cat-pill" data-cat="lycee" onclick="setAssignCategory('lycee')">📐 Lycée (2/1 BAC, TC)</button>
+            <button type="button" class="assign-cat-pill" data-cat="college" onclick="setAssignCategory('college')">📚 Collège</button>
+            <button type="button" class="assign-cat-pill" data-cat="primaire" onclick="setAssignCategory('primaire')">✏️ Primaire</button>
+            <button type="button" class="assign-cat-pill" data-cat="particulier" onclick="setAssignCategory('particulier')">👑 VIP / Particulier</button>
+          </div>
+        </div>
+
+        <!-- Search Input -->
+        <div style="position:relative; margin-bottom:12px;">
+          <input type="text" id="assignSearchInput" onkeyup="filterAssignCourses()" placeholder="{{ 'بحث سريع: اسم الأستاذ، التوقيت، اليوم، المستوى...' if lang=='ar' else '🔍 Rechercher par prof, jour, niveau, horaire (ex: Bouchra, Samedi, 2 BAC, A1)...' }}" style="width:100%; padding:9px 36px 9px 12px; font-size:12.5px; font-weight:600; border:1.5px solid #cbd5e1; border-radius:10px; box-sizing:border-box; outline:none; transition:border-color 0.15s, box-shadow 0.15s;" onfocus="this.style.borderColor='#f59e0b'; this.style.boxShadow='0 0 0 3px rgba(245,158,11,0.15)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
+          <span id="assignClearSearch" onclick="clearAssignSearch()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:14px; color:#94a3b8; cursor:pointer; display:none; padding:4px;">✕</span>
+        </div>
+
+        <!-- Main Course Selection Dropdown -->
+        <div class="field mb-3">
+          <label style="font-size:12px; font-weight:800; color:#1e293b; display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <span>🎯 {{ 'اختيار القسم النهائي' if lang=='ar' else 'Sélectionner la classe / groupe définitif' }} <span class="req" style="color:#ef4444;">*</span></span>
+            <span id="assignVisibleCount" style="font-size:11px; font-weight:700; color:#0284c7;">{{ all_courses|length }} disponibles</span>
+          </label>
+          
+          <select name="target_course_id" id="assignTargetCourseId" required onchange="onAssignCourseSelected(this.value)" style="padding:10px 12px; font-size:13px; font-weight:700; width:100%; border:1.8px solid #cbd5e1; border-radius:10px; box-sizing:border-box; background:#ffffff; color:#0B3D6E; outline:none; transition:all 0.15s; cursor:pointer;" onfocus="this.style.borderColor='#f59e0b'; this.style.boxShadow='0 0 0 3px rgba(245,158,11,0.15)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
+            <option value="">{{ '-- اختر قسماً متاحاً من القائمة --' if lang=='ar' else '-- Choisir une classe disponible dans la liste --' }}</option>
+            
+            {% set current_group = namespace(name='') %}
+            {% for c in all_courses %}
+              {% if c.category_group != current_group.name %}
+                {% if current_group.name != '' %}</optgroup>{% endif %}
+                {% set current_group.name = c.category_group %}
+                <optgroup label="{{ current_group.name }}" class="assign-optgroup" data-group-name="{{ current_group.name }}">
+              {% endif %}
+              <option value="{{ c.id }}"
+                      class="assign-course-opt"
+                      data-id="{{ c.id }}"
+                      data-group="{{ c.category_group }}"
+                      data-category="{{ c.category or '' }}"
+                      data-subject="{{ (c.matiere or c.language or '')|lower }}"
+                      data-name="{{ (c.name or '')|lower }}"
+                      data-level="{{ (c.level or '')|lower }}"
+                      data-teacher="{{ (c.teacher.full_name if c.teacher else 'sans prof')|lower }}"
+                      data-teacher-display="{{ c.teacher.full_name if c.teacher else 'Sans prof' }}"
+                      data-schedule="{{ c.schedule_label or '' }}"
+                      data-price="{{ '%.0f'|format(c.price or 0) }}"
+                      data-enrolled="{{ c.enrolled_count }}"
+                      data-max="{{ c.max_students or 20 }}">
+                {{ c.assign_dropdown_label }}
+              </option>
+            {% endfor %}
+            {% if current_group.name != '' %}</optgroup>{% endif %}
+          </select>
+        </div>
+
+        <!-- Live Selected Course Details Preview Card -->
+        <div id="assignCoursePreviewCard" style="display:none; background:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:12px 14px; margin-bottom:14px; animation:fadeIn 0.2s ease;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div style="font-weight:800; font-size:12.5px; color:#166534;" id="prevCourseTitle">Classe sélectionnée</div>
+            <div id="prevHeadcountBadge" style="font-size:11px; font-weight:800; padding:2px 8px; border-radius:12px; background:#dcfce7; color:#15803d; border:1px solid #bbf7d0;">
+              0/20 élèves
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px; font-size:11.5px; color:#14532d;">
+            <div>👨‍🏫 <strong>Prof :</strong> <span id="prevTeacherName">-</span></div>
+            <div>📅 <strong>Horaires :</strong> <span id="prevSchedule">-</span></div>
+            <div>💰 <strong>Tarif normal :</strong> <span id="prevPrice" style="font-weight:800;">- DH</span></div>
+          </div>
+          <div id="prevNoTeacherNotice" style="display:none; margin-top:8px; padding-top:6px; border-top:1px dashed #fdba74; font-size:11px; color:#9a3412;">
+            ⚠️ <em>Cette classe n'a pas encore d'enseignant assigné. L'élève y sera affecté et l'administration sera notifiée dès que le groupe atteindra son quota.</em>
+          </div>
+        </div>
+
+        <!-- Start Date & Adjusted Price (2 columns) -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+          <div>
+            <label style="font-size:12px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">
+              📅 {{ 'تاريخ بداية الحضور' if lang=='ar' else 'Date de début dans le groupe' }} <span class="req" style="color:#ef4444;">*</span>
+            </label>
+            <input type="date" name="start_date" id="assignStartDate" required style="padding:8px 10px; font-size:12.5px; font-weight:700; width:100%; border:1.5px solid #cbd5e1; border-radius:8px; box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">
+              💵 {{ 'السعر الشهري (اختياري)' if lang=='ar' else 'Prix mensuel ajusté (DH)' }}
+            </label>
+            <input type="number" step="0.01" name="custom_monthly_price" id="assignCustomPrice" placeholder="{{ 'سعر الفوج التلقائي' if lang=='ar' else 'Laisser vide pour tarif normal' }}" style="padding:8px 10px; font-size:12.5px; font-weight:700; width:100%; border:1.5px solid #cbd5e1; border-radius:8px; box-sizing:border-box;">
+          </div>
+        </div>
+
+        <!-- Modal Footer Actions -->
+        <div style="display:flex; gap:10px; justify-content:flex-end; padding-top:14px; border-top:1.5px solid #f1f5f9; margin-top:6px;">
+          <button type="button" class="btn btn-light" onclick="closeAssignModal()" style="font-weight:700; font-size:13px; padding:8px 16px;">
+            {{ 'إلغاء' if lang=='ar' else 'Annuler' }}
+          </button>
+          <button type="submit" id="btnSubmitAssign" class="btn btn-primary" style="background:#f59e0b; border-color:#d97706; font-weight:800; font-size:13px; padding:8px 22px; box-shadow:0 3px 12px rgba(245,158,11,0.35); display:flex; align-items:center; gap:6px;">
+            <span>⚡</span>
+            <span>{{ 'تأكيد التعيين في الفوج' if lang=='ar' else 'Valider l\'affectation' }}</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+.assign-cat-pill {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.assign-cat-pill:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+.assign-cat-pill.active {
+  background: #0B3D6E !important;
+  color: #ffffff !important;
+  border-color: #0B3D6E !important;
+  box-shadow: 0 2px 6px rgba(11,61,110,0.25);
+}
+optgroup.assign-optgroup {
+  font-weight: 800;
+  color: #0B3D6E;
+  background: #f8fafc;
+  padding: 6px 4px;
+}
+option.assign-course-opt {
+  font-weight: 600;
+  color: #1e293b;
+  background: #ffffff;
+  padding: 5px 8px;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<script>
+(function() {
+  let activeAssignCat = 'all';
+
+  window.openAssignModal = function(eid, studentName, tariffName) {
+    const form = document.getElementById('assignForm');
+    if (form) form.action = '/enrollments/' + eid + '/assign_course';
+    
+    document.getElementById('assignStudentName').innerText = studentName || ('Dossier #' + eid);
+    document.getElementById('assignTariffName').innerText = tariffName || 'Matière en attente';
+    
+    // Set default start date to today
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('assignStartDate').value = todayStr;
+    
+    // Reset custom price and select
+    const customPriceInput = document.getElementById('assignCustomPrice');
+    if (customPriceInput) customPriceInput.value = '';
+    
+    const targetSelect = document.getElementById('assignTargetCourseId');
+    if (targetSelect) targetSelect.value = '';
+    
+    const searchInput = document.getElementById('assignSearchInput');
+    if (searchInput) searchInput.value = '';
+
+    // Smart Keyword Detection from Tariff Name
+    const tLower = (tariffName || '').toLowerCase();
+    let detectedCat = 'all';
+    let matchDesc = '';
+
+    if (tLower.includes('anglais') || tLower.includes('english')) {
+      detectedCat = 'anglais';
+      matchDesc = "Filtre automatique activé pour l'Anglais 🇬🇧";
+    } else if (tLower.includes('fran') || tLower.includes('french')) {
+      detectedCat = 'francais';
+      matchDesc = "Filtre automatique activé pour le Français 🇫🇷";
+    } else if (tLower.includes('allemand') || tLower.includes('deutsch')) {
+      detectedCat = 'allemand';
+      matchDesc = "Filtre automatique activé pour l'Allemand 🇩🇪";
+    } else if (tLower.includes('espagnol') || tLower.includes('spanish')) {
+      detectedCat = 'espagnol';
+      matchDesc = "Filtre automatique activé pour l'Espagnol 🇪🇸";
+    } else if (tLower.includes('2 bac') || tLower.includes('1 bac') || tLower.includes('tronc') || tLower.includes('lycee')) {
+      detectedCat = 'lycee';
+      matchDesc = "Filtre automatique activé pour le Lycée / BAC 📐";
+    } else if (tLower.includes('coll')) {
+      detectedCat = 'college';
+      matchDesc = "Filtre automatique activé pour le Collège 📚";
+    } else if (tLower.includes('prim')) {
+      detectedCat = 'primaire';
+      matchDesc = "Filtre automatique activé pour le Primaire ✏️";
+    } else if (tLower.includes('particulier') || tLower.includes('vip')) {
+      detectedCat = 'particulier';
+      matchDesc = "Filtre automatique activé pour Cours Particuliers 👑";
+    }
+
+    const autoAlert = document.getElementById('assignAutoMatchAlert');
+    const autoText = document.getElementById('assignAutoMatchText');
+    if (detectedCat !== 'all' && autoAlert) {
+      autoAlert.style.display = 'flex';
+      if (autoText) autoText.innerText = '💡 ' + matchDesc;
+      setAssignCategory(detectedCat);
+    } else {
+      if (autoAlert) autoAlert.style.display = 'none';
+      setAssignCategory('all');
+    }
+
+    onAssignCourseSelected('');
+
+    // Display modal
+    const modal = document.getElementById('assignModal');
+    if (modal) modal.style.display = 'flex';
+  };
+
+  window.closeAssignModal = function() {
+    const modal = document.getElementById('assignModal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  window.setAssignCategory = function(catKey) {
+    activeAssignCat = catKey;
+    document.querySelectorAll('#assignCategoryPills .assign-cat-pill').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-cat') === catKey);
+    });
+    filterAssignCourses();
+  };
+
+  window.resetAssignFilter = function() {
+    const autoAlert = document.getElementById('assignAutoMatchAlert');
+    if (autoAlert) autoAlert.style.display = 'none';
+    const searchInput = document.getElementById('assignSearchInput');
+    if (searchInput) searchInput.value = '';
+    setAssignCategory('all');
+  };
+
+  window.clearAssignSearch = function() {
+    const searchInput = document.getElementById('assignSearchInput');
+    if (searchInput) {
+      searchInput.value = '';
+      filterAssignCourses();
+      searchInput.focus();
+    }
+  };
+
+  window.filterAssignCourses = function() {
+    const searchInput = document.getElementById('assignSearchInput');
+    const q = (searchInput ? searchInput.value : '').trim().toLowerCase();
+    
+    const clearBtn = document.getElementById('assignClearSearch');
+    if (clearBtn) clearBtn.style.display = q ? 'block' : 'none';
+
+    const select = document.getElementById('assignTargetCourseId');
+    if (!select) return;
+
+    const optgroups = select.querySelectorAll('optgroup.assign-optgroup');
+    let totalVisible = 0;
+
+    optgroups.forEach(og => {
+      let groupHasVisible = false;
+      const options = og.querySelectorAll('option.assign-course-opt');
+
+      options.forEach(opt => {
+        const optText = (opt.textContent || '').toLowerCase();
+        const optGroup = (opt.getAttribute('data-group') || '').toLowerCase();
+        const optSubject = (opt.getAttribute('data-subject') || '').toLowerCase();
+        const optTeacher = (opt.getAttribute('data-teacher') || '').toLowerCase();
+        const optSchedule = (opt.getAttribute('data-schedule') || '').toLowerCase();
+
+        // Check Category Pill match
+        let matchCat = true;
+        if (activeAssignCat === 'anglais') {
+          matchCat = optGroup.includes('anglais') || optSubject.includes('anglais');
+        } else if (activeAssignCat === 'francais') {
+          matchCat = optGroup.includes('fran') || optSubject.includes('fran');
+        } else if (activeAssignCat === 'allemand') {
+          matchCat = optGroup.includes('allemand') || optSubject.includes('allemand');
+        } else if (activeAssignCat === 'espagnol') {
+          matchCat = optGroup.includes('espagnol') || optSubject.includes('espagnol');
+        } else if (activeAssignCat === 'lycee') {
+          matchCat = optGroup.includes('bac') || optGroup.includes('tronc') || optGroup.includes('lycée');
+        } else if (activeAssignCat === 'college') {
+          matchCat = optGroup.includes('collège') || optGroup.includes('college');
+        } else if (activeAssignCat === 'primaire') {
+          matchCat = optGroup.includes('primaire');
+        } else if (activeAssignCat === 'particulier') {
+          matchCat = optGroup.includes('particulier') || optGroup.includes('vip');
+        }
+
+        // Check Search Query match
+        let matchQuery = true;
+        if (q) {
+          matchQuery = optText.includes(q) || 
+                       optTeacher.includes(q) || 
+                       optSubject.includes(q) || 
+                       optSchedule.includes(q);
+        }
+
+        const isVisible = matchCat && matchQuery;
+        opt.style.display = isVisible ? '' : 'none';
+        opt.disabled = !isVisible;
+        if (isVisible) {
+          groupHasVisible = true;
+          totalVisible++;
+        }
+      });
+
+      og.style.display = groupHasVisible ? '' : 'none';
+      og.disabled = !groupHasVisible;
+    });
+
+    const countBadge = document.getElementById('assignVisibleCount');
+    if (countBadge) {
+      countBadge.innerText = totalVisible + (totalVisible > 1 ? ' classes trouvées' : ' classe trouvée');
+      countBadge.style.color = totalVisible > 0 ? '#0284c7' : '#ef4444';
+    }
+  };
+
+  window.onAssignCourseSelected = function(courseId) {
+    const previewCard = document.getElementById('assignCoursePreviewCard');
+    if (!previewCard) return;
+
+    if (!courseId) {
+      previewCard.style.display = 'none';
+      return;
+    }
+
+    const select = document.getElementById('assignTargetCourseId');
+    const opt = select.querySelector(`option[value="${courseId}"]`);
+    if (!opt) {
+      previewCard.style.display = 'none';
+      return;
+    }
+
+    previewCard.style.display = 'block';
+
+    const tDisplay = opt.getAttribute('data-teacher-display') || 'Sans prof';
+    const isNoTeacher = tDisplay.toLowerCase().includes('sans prof');
+    const sched = opt.getAttribute('data-schedule') || 'Non défini';
+    const price = opt.getAttribute('data-price') || '0';
+    const enrolled = parseInt(opt.getAttribute('data-enrolled') || '0', 10);
+    const maxStu = parseInt(opt.getAttribute('data-max') || '20', 10);
+
+    document.getElementById('prevCourseTitle').innerText = opt.textContent.split('—')[0].trim();
+    document.getElementById('prevTeacherName').innerText = isNoTeacher ? '⚠️ En attente de prof' : ('Prof. ' + tDisplay);
+    document.getElementById('prevSchedule').innerText = sched;
+    document.getElementById('prevPrice').innerText = price + ' DH';
+
+    // Headcount badge with color
+    const hcBadge = document.getElementById('prevHeadcountBadge');
+    if (hcBadge) {
+      hcBadge.innerText = enrolled + '/' + maxStu + ' élèves';
+      if (enrolled >= maxStu) {
+        hcBadge.style.background = '#fee2e2';
+        hcBadge.style.color = '#b91c1c';
+        hcBadge.style.borderColor = '#fca5a5';
+      } else if (enrolled >= maxStu - 3) {
+        hcBadge.style.background = '#fef3c7';
+        hcBadge.style.color = '#b45309';
+        hcBadge.style.borderColor = '#fde68a';
+      } else {
+        hcBadge.style.background = '#dcfce7';
+        hcBadge.style.color = '#15803d';
+        hcBadge.style.borderColor = '#bbf7d0';
+      }
+    }
+
+    // Notice for classes without teacher
+    const noTeacherNotice = document.getElementById('prevNoTeacherNotice');
+    if (noTeacherNotice) {
+      noTeacherNotice.style.display = isNoTeacher ? 'block' : 'none';
+    }
+
+    // Set placeholder on adjusted price input
+    const customPriceInput = document.getElementById('assignCustomPrice');
+    if (customPriceInput && !customPriceInput.value) {
+      customPriceInput.placeholder = price + ' DH (Tarif normal)';
+    }
+  };
+
+  // Keyboard shortcut: Escape to close modal
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('assignModal');
+      if (modal && modal.style.display === 'flex') {
+        closeAssignModal();
+      }
+    }
+  });
+
+})();
+</script>

@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Test de Niveau {{ test.language }} | Institut ILAS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0B3D6E;
+      --primary-dark: #072647;
+      --accent: #d97706;
+      --accent-light: #fef3c7;
+      --success: #10b981;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --active-opt-bg: #eff6ff;
+      --active-opt-border: #2563eb;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background: #f1f5f9;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Sticky Header */
+    .test-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .brand-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .lang-badge {
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 4px 10px;
+      background: #e0f2fe;
+      color: #0369a1;
+      border-radius: 9999px;
+    }
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #1f6feb 0%, #0B3D6E 100%);
+      transition: width 0.25s ease;
+      border-radius: 999px;
+    }
+
+    /* Question dots navigation bar */
+    .q-dots-strip {
+      display: flex;
+      gap: 5px;
+      overflow-x: auto;
+      padding: 3px 0 4px 0;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      justify-content: space-between;
+    }
+    .q-dots-strip::-webkit-scrollbar {
+      display: none;
+    }
+    .q-dot {
+      flex: 1 1 0;
+      min-width: 23px;
+      max-width: 36px;
+      height: 29px;
+      border-radius: 8px;
+      background: #f1f5f9;
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 1.5px solid #cbd5e1;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .q-dot.answered {
+      background: #10b981;
+      color: #ffffff;
+      border-color: #059669;
+    }
+    .q-dot.current {
+      border: 2px solid #2563eb;
+      background: #eff6ff;
+      color: #1d4ed8;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+      font-weight: 800;
+    }
+    .q-dot.current.answered {
+      border: 2px solid #059669;
+      background: #10b981;
+      color: #ffffff;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35);
+    }
+
+    /* Content Wrapper */
+    .main-wrapper {
+      flex: 1;
+      max-width: 580px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Welcome Card */
+    .welcome-card {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 28px 20px;
+      text-align: center;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+      border: 1px solid var(--border);
+      margin-top: 10px;
+    }
+    .welcome-avatar {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin: 0 auto 16px auto;
+      box-shadow: 0 8px 20px rgba(11,61,110,0.25);
+    }
+    .welcome-card h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    .welcome-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    .instructions-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: left;
+      margin-bottom: 24px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #334155;
+    }
+    .instructions-box li {
+      margin-left: 18px;
+      margin-bottom: 6px;
+    }
+    .instructions-box li:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Question Step */
+    .question-step {
+      display: none;
+      background: var(--card);
+      border-radius: 20px;
+      padding: 22px 18px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .question-step.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .q-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .q-num-badge {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--primary);
+      background: #eff6ff;
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+    .q-level-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: #b45309;
+      background: #fef3c7;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+    .q-text {
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.45;
+      color: #0f172a;
+      margin-bottom: 20px;
+    }
+
+    /* Audio Player Component */
+    .audio-player-box {
+      background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+      border: 1.5px solid #bae6fd;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.08);
+    }
+    .audio-player-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .audio-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #0369a1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .audio-plays-badge {
+      font-size: 11.5px;
+      font-weight: 700;
+      background: #ffffff;
+      color: #0284c7;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #7dd3fc;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .audio-plays-badge.limit-reached {
+      background: #fef2f2;
+      color: #b91c1c;
+      border-color: #fca5a5;
+    }
+    .audio-controls-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-audio-play {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 11px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25);
+      transition: all 0.2s ease;
+      flex: 1;
+    }
+    .btn-audio-play:hover {
+      background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+      transform: translateY(-1px);
+    }
+    .btn-audio-play.playing {
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+      animation: pulse-audio 1.5s infinite;
+    }
+    .btn-audio-play:disabled {
+      background: #cbd5e1 !important;
+      color: #64748b !important;
+      cursor: not-allowed !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+    @keyframes pulse-audio {
+      0% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.5); }
+      70% { box-shadow: 0 0 0 10px rgba(217, 119, 6, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); }
+    }
+    .audio-wave-container {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 12px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 10px;
+    }
+    .audio-bar {
+      width: 4px;
+      height: 16px;
+      background: #0284c7;
+      border-radius: 2px;
+      animation: wave-bar 1s ease-in-out infinite;
+    }
+    .audio-bar:nth-child(2) { animation-delay: 0.15s; height: 22px; }
+    .audio-bar:nth-child(3) { animation-delay: 0.3s; height: 14px; }
+    .audio-bar:nth-child(4) { animation-delay: 0.45s; height: 24px; }
+    .audio-bar:nth-child(5) { animation-delay: 0.6s; height: 18px; }
+    @keyframes wave-bar {
+      0%, 100% { transform: scaleY(0.4); }
+      50% { transform: scaleY(1); }
+    }
+    .audio-wave-text {
+      font-size: 12px;
+      color: #0369a1;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    /* Options */
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .option-card {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      min-height: 54px;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .option-card:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+    .option-card:active {
+      transform: scale(0.985);
+    }
+    .option-card.selected {
+      background: var(--active-opt-bg);
+      border-color: var(--active-opt-border);
+      box-shadow: 0 0 0 1.5px var(--active-opt-border), 0 4px 12px rgba(37, 99, 235, 0.12);
+    }
+    .opt-key {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: #475569;
+      font-size: 13.5px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+      border: 1px solid #e2e8f0;
+    }
+    .option-card.selected .opt-key {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+    .opt-text {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1e293b;
+      line-height: 1.35;
+      flex: 1;
+    }
+    .option-card.selected .opt-text {
+      color: #1d4ed8;
+      font-weight: 700;
+    }
+    .option-card.option-idk {
+      border: 1.5px dashed #cbd5e1;
+      background: #f8fafc;
+      margin-top: 6px;
+    }
+    .option-card.option-idk:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+    .option-card.option-idk.selected {
+      background: #f1f5f9;
+      border-color: #64748b;
+      border-style: solid;
+      box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.25);
+    }
+    .option-card.option-idk.selected .opt-key {
+      background: #64748b;
+      color: #ffffff;
+      border-color: #64748b;
+    }
+    .option-card.option-idk.selected .opt-text {
+      color: #334155;
+      font-weight: 700;
+    }
+
+    /* Navigation Bar */
+    .nav-bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 14px;
+      margin-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    }
+    .btn {
+      padding: 14px 22px;
+      min-height: 52px;
+      font-size: 15px;
+      font-weight: 800;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active {
+      transform: scale(0.98);
+    }
+    .btn-prev {
+      background: #ffffff;
+      color: #475569;
+      border: 1.5px solid var(--border);
+      flex: 0 0 auto;
+      min-width: 120px;
+    }
+    .btn-prev:hover {
+      background: #f8fafc;
+    }
+    .btn-next {
+      background: linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%);
+      color: white;
+      flex: 1;
+      box-shadow: 0 4px 14px rgba(31, 111, 235, 0.28);
+    }
+    .btn-submit {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      flex: 1;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.32);
+    }
+    .btn-start {
+      width: 100%;
+      padding: 16px;
+      font-size: 16.5px;
+      background: linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%);
+      color: white;
+      box-shadow: 0 6px 18px rgba(11, 61, 110, 0.28);
+    }
+
+    /* Modal Confirmation */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+      backdrop-filter: blur(3px);
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-box {
+      background: white;
+      border-radius: 24px;
+      max-width: 420px;
+      width: 100%;
+      padding: 24px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    .modal-icon {
+      font-size: 38px;
+      margin-bottom: 10px;
+    }
+    .modal-box h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    .modal-box p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .missing-alert-box {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 13px;
+      color: #991b1b;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sticky Header -->
+  <header class="test-header" id="testHeader" style="display:none;">
+    <div class="header-top">
+      <div class="brand-title">
+        <span>🏛️</span>
+        <span>ILAS Placement</span>
+      </div>
+      <div class="lang-badge">
+        {{ test.language }}
+      </div>
+    </div>
+    
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+
+    <!-- Question dots strip for quick jumps & visual status -->
+    <div class="q-dots-strip" id="qDotsStrip">
+      {% for q in questions %}
+      <div class="q-dot" id="dot-{{ loop.index }}" onclick="jumpToStep({{ loop.index }})">
+        {{ loop.index }}
+      </div>
+      {% endfor %}
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-wrapper">
+
+    <!-- Screen 1: Welcome Intro -->
+    <div class="welcome-card" id="welcomeScreen">
+      <div class="welcome-avatar">
+        📝
+      </div>
+      <h1>Bonjour {{ test.first_name }} !</h1>
+      <div style="font-size:14.5px; font-weight:700; color:#0369a1; margin-bottom:12px;">
+        مرحباً بك في اختبار تحديد المستوى
+      </div>
+      <p style="font-size:14.5px; line-height:1.5; color:#475569; margin-bottom:18px;">
+        Bienvenue à votre <strong>Test de Niveau en {{ test.language }}</strong> à l'Institut ILAS.
+      </p>
+
+      <div class="instructions-box">
+        <strong>📋 Consignes importantes / إرشادات هامة :</strong>
+        <ul>
+          <li>Ce test comprend <strong>{{ questions|length }} questions</strong> sous forme de QCM (Grammaire, Vocabulaire et Écoutes courtes).</li>
+          <li>Pour chaque question, sélectionnez une réponse puis cliquez sur <strong>Suivant →</strong>.</li>
+          <li>💡 <strong>Très important / تنبيه هام :</strong> Si vous ne connaissez pas une réponse, choisissez <strong>"❓ Je ne sais pas (لا أعلم)"</strong> au lieu de deviner au hasard, pour obtenir votre vrai niveau exact sans fausser l'évaluation.</li>
+          <li>⏱️ Durée estimée : environ <strong>3 à 5 minutes</strong> seulement.</li>
+          <li>🎧 Pour les questions d'écoute audio, activez le son de votre téléphone ou utilisez des écouteurs.</li>
+        </ul>
+      </div>
+
+      <button type="button" class="btn btn-start" onclick="startTest()">
+        Démarrer le Test 🚀
+      </button>
+    </div>
+
+    <!-- Screen 2: Test Form -->
+    <form id="placementForm" method="POST" action="/test/{{ test.token }}" style="display:none;">
+      
+      {% for q in questions %}
+      <div class="question-step" id="step-{{ loop.index }}" data-step="{{ loop.index }}" data-qid="{{ q.id }}">
+        
+        <!-- Hidden input storing selected value -->
+        <input type="hidden" name="q_{{ q.id }}" id="input-q-{{ q.id }}" value="">
+
+        <div class="q-meta">
+          <span class="q-num-badge">Question {{ loop.index }} sur {{ questions|length }}</span>
+          <span class="q-level-badge">{{ q.level }} · {{ q.category }}</span>
+        </div>
+
+        {% if q.audio_url or q.audio_script %}
+        <div class="audio-player-box" id="audio-box-{{ q.id }}">
+          <div class="audio-player-header">
+            <div class="audio-title">
+              <span>🎧</span>
+              <span>Document Sonore (Compréhension Orale)</span>
+            </div>
+            <div class="audio-plays-badge" id="plays-badge-{{ q.id }}">
+              Écoutes : <span id="plays-count-{{ q.id }}">0</span> / {{ q.max_plays or 2 }}
+            </div>
+          </div>
+
+          <div class="audio-controls-row">
+            <button type="button" class="btn-audio-play" id="btn-audio-{{ q.id }}" onclick="handleAudioPlay('{{ q.id }}', '{{ q.audio_url or '' }}', {{ q.max_plays or 2 }})">
+              <span id="audio-icon-{{ q.id }}">▶</span>
+              <span id="audio-label-{{ q.id }}">Écouter l'enregistrement</span>
+            </button>
+          </div>
+
+          <div class="audio-wave-container" id="wave-box-{{ q.id }}" style="display:none;">
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <div class="audio-bar"></div>
+            <span class="audio-wave-text">Lecture en cours... Écoutez attentivement.</span>
+          </div>
+
+          <!-- Hidden audio data -->
+          <div id="script-{{ q.id }}" style="display:none;">{{ q.audio_script or '' }}</div>
+          {% if q.audio_url %}
+          <audio id="native-audio-{{ q.id }}" src="{{ q.audio_url }}" preload="auto" style="display:none;"></audio>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="q-text">
+          {{ q.question_text }}
+        </div>
+
+        <div class="options-list">
+          <div class="option-card" data-val="A" onclick="handleOptionClick(this, {{ loop.index }}, '{{ q.id }}', 'A')">
+            <div class="opt-key">A</div>
+            <div class="opt-text">{{ q.option_a }}</div>
+          </div>
+
+          <div class="option-card" data-val="B" onclick="handleOptionClick(this, {{ loop.index }}, '{{ q.id }}', 'B')">
+            <div class="opt-key">B</div>
+            <div class="opt-text">{{ q.option_b }}</div>
+          </div>
+
+          <div class="option-card" data-val="C" onclick="handleOptionClick(this, {{ loop.index }}, '{{ q.id }}', 'C')">
+            <div class="opt-key">C</div>
+            <div class="opt-text">{{ q.option_c }}</div>
+          </div>
+
+          {% if q.option_d %}
+          <div class="option-card" data-val="D" onclick="handleOptionClick(this, {{ loop.index }}, '{{ q.id }}', 'D')">
+            <div class="opt-key">D</div>
+            <div class="opt-text">{{ q.option_d }}</div>
+          </div>
+          {% endif %}
+
+          <!-- Option Je ne sais pas (élimine le hasard) -->
+          <div class="option-card option-idk" data-val="IDK" onclick="handleOptionClick(this, {{ loop.index }}, '{{ q.id }}', 'IDK')">
+            <div class="opt-key">❓</div>
+            <div class="opt-text">Je ne sais pas (لا أعلم / I don't know)</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      <!-- Navigation Bar -->
+      <div class="nav-bar" id="testNavBar">
+        <button type="button" class="btn btn-prev" id="btnPrev" onclick="navigateStep(-1)" style="display:none;">
+          ← Précédent
+        </button>
+        <button type="button" class="btn btn-next" id="btnNext" onclick="navigateStep(1)">
+          Suivant →
+        </button>
+        <button type="button" class="btn btn-submit" id="btnSubmit" onclick="openConfirmModal()" style="display:none;">
+          Valider le Test ✅
+        </button>
+      </div>
+
+    </form>
+
+  </main>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal-box">
+      <div class="modal-icon">📋</div>
+      <h3>Validation du Test</h3>
+      
+      <div id="missingNotice" class="missing-alert-box" style="display:none;">
+        <strong>⚠️ Attention :</strong><br>
+        Vous n'avez pas répondu aux questions : <strong id="missingListText"></strong>.
+      </div>
+
+      <p id="confirmDesc">
+        Êtes-vous sûr de vouloir soumettre définitivement vos réponses ?
+      </p>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-prev" style="flex:1;" onclick="closeConfirmModal()">
+          Revoir
+        </button>
+        <button type="button" class="btn btn-submit" style="flex:1;" onclick="submitFinalTest()">
+          Confirmer & Envoyer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const totalQuestions = {{ questions|length }};
+    let currentStep = 1;
+    const answeredMap = {};
+
+    function startTest() {
+      document.getElementById('welcomeScreen').style.display = 'none';
+      document.getElementById('testHeader').style.display = 'block';
+      document.getElementById('placementForm').style.display = 'block';
+      showStep(1);
+    }
+
+    function showStep(step) {
+      stopAllAudio();
+      currentStep = step;
+
+      // Toggle step cards
+      for (let i = 1; i <= totalQuestions; i++) {
+        const el = document.getElementById('step-' + i);
+        if (el) el.classList.remove('active');
+        
+        const dot = document.getElementById('dot-' + i);
+        if (dot) {
+          dot.classList.remove('current');
+          if (answeredMap[i]) {
+            dot.classList.add('answered');
+          }
+        }
+      }
+
+      const currentEl = document.getElementById('step-' + currentStep);
+      if (currentEl) currentEl.classList.add('active');
+
+      const currentDot = document.getElementById('dot-' + currentStep);
+      if (currentDot) {
+        currentDot.classList.add('current');
+        currentDot.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+
+      // Update Header Progress
+      const answeredCount = Object.keys(answeredMap).length;
+      const pct = Math.round((answeredCount / totalQuestions) * 100);
+      document.getElementById('progressFill').style.width = pct + '%';
+
+      // Navigation buttons
+      document.getElementById('btnPrev').style.display = currentStep > 1 ? 'inline-flex' : 'none';
+      
+      if (currentStep === totalQuestions) {
+        document.getElementById('btnNext').style.display = 'none';
+        document.getElementById('btnSubmit').style.display = 'inline-flex';
+      } else {
+        document.getElementById('btnNext').style.display = 'inline-flex';
+        document.getElementById('btnSubmit').style.display = 'none';
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function handleOptionClick(cardEl, step, qId, val) {
+      const stepEl = document.getElementById('step-' + step);
+      const allCards = stepEl.querySelectorAll('.option-card');
+      allCards.forEach(c => c.classList.remove('selected'));
+
+      // Mark selected
+      cardEl.classList.add('selected');
+
+      // Update hidden input
+      const hiddenInput = document.getElementById('input-q-' + qId);
+      if (hiddenInput) {
+        hiddenInput.value = val;
+      }
+
+      // Mobile haptic feedback (supported on Android/Chrome)
+      if (window.navigator && window.navigator.vibrate) {
+        try { window.navigator.vibrate(12); } catch(e) {}
+      }
+
+      // Record answered
+      answeredMap[step] = val;
+
+      // Update dot
+      const dot = document.getElementById('dot-' + step);
+      if (dot) dot.classList.add('answered');
+
+      // Update progress bar
+      const answeredCount = Object.keys(answeredMap).length;
+      const pct = Math.round((answeredCount / totalQuestions) * 100);
+      document.getElementById('progressFill').style.width = pct + '%';
+    }
+
+    function jumpToStep(step) {
+      if (step >= 1 && step <= totalQuestions) {
+        showStep(step);
+      }
+    }
+
+    function navigateStep(direction) {
+      const nextStep = currentStep + direction;
+      if (nextStep >= 1 && nextStep <= totalQuestions) {
+        showStep(nextStep);
+      }
+    }
+
+    function getMissingSteps() {
+      const missing = [];
+      for (let i = 1; i <= totalQuestions; i++) {
+        if (!answeredMap[i]) {
+          missing.push(i);
+        }
+      }
+      return missing;
+    }
+
+    function openConfirmModal() {
+      const missing = getMissingSteps();
+      const missingBox = document.getElementById('missingNotice');
+      const missingText = document.getElementById('missingListText');
+      const descText = document.getElementById('confirmDesc');
+
+      if (missing.length > 0) {
+        missingBox.style.display = 'block';
+        missingText.textContent = missing.join(', ');
+        descText.textContent = 'Il vous reste ' + missing.length + ' question(s) sans réponse. Voulez-vous quand même valider votre test ?';
+      } else {
+        missingBox.style.display = 'none';
+        descText.textContent = 'Toutes les questions ont été répondues ! Êtes-vous sûr de vouloir valider définitivement votre test ?';
+      }
+
+      document.getElementById('confirmModal').classList.add('active');
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('confirmModal').classList.remove('active');
+      const missing = getMissingSteps();
+      if (missing.length > 0) {
+        // Jump directly to the first missing question for convenience!
+        showStep(missing[0]);
+      }
+    }
+
+    function submitFinalTest() {
+      stopAllAudio();
+      document.getElementById('confirmModal').classList.remove('active');
+      document.getElementById('btnSubmit').disabled = true;
+      document.getElementById('btnSubmit').textContent = 'Transmission en cours...';
+      document.getElementById('placementForm').submit();
+    }
+
+    // ==========================================
+    // AUDIO LISTENING CONTROLLERS (HTML5 & TTS)
+    // ==========================================
+    const audioPlayCounts = {};
+    let currentActiveAudio = null;
+    let currentActiveUtterance = null;
+    const testLanguage = "{{ test.language }}";
+
+    function stopAllAudio() {
+      if (currentActiveAudio) {
+        try {
+          currentActiveAudio.pause();
+          currentActiveAudio.currentTime = 0;
+        } catch(e) {}
+        currentActiveAudio = null;
+      }
+      if (window.speechSynthesis) {
+        try { window.speechSynthesis.cancel(); } catch(e) {}
+      }
+      // Reset UI wave animation and buttons
+      document.querySelectorAll('.audio-wave-container').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.btn-audio-play').forEach(btn => {
+        if (!btn.disabled) {
+          btn.classList.remove('playing');
+          const qId = btn.id.replace('btn-audio-', '');
+          const label = document.getElementById('audio-label-' + qId);
+          const icon = document.getElementById('audio-icon-' + qId);
+          if (label) label.textContent = "Écouter l'enregistrement";
+          if (icon) icon.textContent = "▶";
+        }
+      });
+    }
+
+    function handleAudioPlay(qId, audioUrl, maxPlays) {
+      const plays = audioPlayCounts[qId] || 0;
+      if (plays >= maxPlays) {
+        return;
+      }
+
+      const btn = document.getElementById('btn-audio-' + qId);
+      const icon = document.getElementById('audio-icon-' + qId);
+      const label = document.getElementById('audio-label-' + qId);
+      const wave = document.getElementById('wave-box-' + qId);
+      const badgeCount = document.getElementById('plays-count-' + qId);
+      const badge = document.getElementById('plays-badge-' + qId);
+
+      // If already playing this audio, stop it
+      if (btn && btn.classList.contains('playing')) {
+        stopAllAudio();
+        return;
+      }
+
+      // Stop any other playing audio
+      stopAllAudio();
+
+      if (btn) btn.classList.add('playing');
+      if (icon) icon.textContent = "⏸️";
+      if (label) label.textContent = "Lecture en cours... (Cliquez pour arrêter)";
+      if (wave) wave.style.display = 'flex';
+
+      function onAudioFinished() {
+        if (btn) btn.classList.remove('playing');
+        if (icon) icon.textContent = "▶";
+        if (label) label.textContent = "Écouter l'enregistrement";
+        if (wave) wave.style.display = 'none';
+
+        audioPlayCounts[qId] = (audioPlayCounts[qId] || 0) + 1;
+        const newCount = audioPlayCounts[qId];
+        if (badgeCount) badgeCount.textContent = newCount;
+
+        if (newCount >= maxPlays) {
+          if (btn) btn.disabled = true;
+          if (label) label.textContent = "Maximum d'écoutes atteint (" + maxPlays + "/" + maxPlays + ")";
+          if (icon) icon.textContent = "✓";
+          if (badge) badge.classList.add('limit-reached');
+        }
+      }
+
+      // If audio file URL is available, play via HTML5 Audio
+      if (audioUrl && audioUrl.trim() !== '') {
+        const audioElem = new Audio(audioUrl);
+        currentActiveAudio = audioElem;
+
+        audioElem.onended = function() {
+          currentActiveAudio = null;
+          onAudioFinished();
+        };
+
+        audioElem.onerror = function(err) {
+          console.warn("Audio file error, falling back to Web Speech API:", err);
+          currentActiveAudio = null;
+          playTTSFallback(qId, onAudioFinished);
+        };
+
+        const playPromise = audioElem.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(function(err) {
+            console.warn("Audio play blocked or missing, falling back to TTS:", err);
+            currentActiveAudio = null;
+            playTTSFallback(qId, onAudioFinished);
+          });
+        }
+      } else {
+        // Fallback to Web Speech API directly
+        playTTSFallback(qId, onAudioFinished);
+      }
+    }
+
+    function playTTSFallback(qId, onFinishCallback) {
+      if (!('speechSynthesis' in window)) {
+        alert("Audio non supporté par ce navigateur.");
+        if (onFinishCallback) onFinishCallback();
+        return;
+      }
+
+      const scriptEl = document.getElementById('script-' + qId);
+      const textToSpeak = scriptEl ? scriptEl.textContent.trim() : "";
+      if (!textToSpeak) {
+        if (onFinishCallback) onFinishCallback();
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(textToSpeak);
+
+      // Map language
+      const langLower = testLanguage.toLowerCase();
+      let langCode = 'fr-FR';
+      if (langLower.includes('ang') || langLower.includes('eng')) langCode = 'en-US';
+      else if (langLower.includes('esp') || langLower.includes('spa')) langCode = 'es-ES';
+      else if (langLower.includes('all') || langLower.includes('ger') || langLower.includes('deut')) langCode = 'de-DE';
+
+      utter.lang = langCode;
+      utter.rate = 0.92; // Clear, articulated exam pace
+
+      // Try selecting an authentic voice
+      try {
+        const voices = window.speechSynthesis.getVoices();
+        const matchedVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(langCode.slice(0, 2).toLowerCase()));
+        if (matchedVoice) utter.voice = matchedVoice;
+      } catch(e) {}
+
+      utter.onend = function() {
+        if (onFinishCallback) onFinishCallback();
+      };
+      utter.onerror = function(e) {
+        console.warn("TTS error:", e);
+        if (onFinishCallback) onFinishCallback();
+      };
+
+      currentActiveUtterance = utter;
+      window.speechSynthesis.speak(utter);
+    }
+  </script>
+</body>
+</html>

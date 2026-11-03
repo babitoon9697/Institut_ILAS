@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Test Validé avec Succès | Institut ILAS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0B3D6E;
+      --success: #10b981;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 16px;
+    }
+    .container {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card-bg);
+      border-radius: 28px;
+      box-shadow: 0 20px 40px -15px rgba(11, 61, 110, 0.15);
+      padding: 36px 24px;
+      text-align: center;
+      border: 1px solid #bfdbfe;
+    }
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 9999px;
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+    .anim-check {
+      width: 90px;
+      height: 90px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 46px;
+      margin: 0 auto 24px auto;
+      box-shadow: 0 12px 28px -6px rgba(16, 185, 129, 0.45);
+      animation: pop 0.4s ease-out;
+    }
+    @keyframes pop {
+      0% { transform: scale(0.6); opacity: 0; }
+      80% { transform: scale(1.08); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 12px;
+      line-height: 1.25;
+    }
+    p.lead {
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+    .highlight-card {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: 18px;
+      padding: 20px 16px;
+      margin-bottom: 24px;
+    }
+    .highlight-card h2 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #166534;
+      margin-bottom: 8px;
+    }
+    .highlight-card p {
+      font-size: 13.5px;
+      color: #15803d;
+      line-height: 1.5;
+    }
+    .info-list {
+      text-align: left;
+      font-size: 13px;
+      color: #475569;
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 14px;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+    .info-list li {
+      margin-left: 18px;
+      margin-bottom: 6px;
+    }
+    .info-list li:last-child {
+      margin-bottom: 0;
+    }
+    .footer-brand {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand-badge">
+      <span>🏛️</span>
+      <span>INSTITUT ILAS</span>
+    </div>
+
+    <div class="anim-check">
+      ✓
+    </div>
+
+    <h1>Félicitations, {{ test.first_name }} !</h1>
+
+    <p class="lead">
+      Votre test de niveau en <strong>{{ test.language }}</strong> a été validé avec succès.
+    </p>
+
+    <div class="highlight-card">
+      <h2>🎉 Réponses bien reçues !</h2>
+      <p>
+        Vos résultats ont été transmis en direct au secrétariat de l'Institut ILAS. Notre équipe pédagogique analyse immédiatement vos compétences pour vous attribuer le groupe idéal.
+      </p>
+      <p style="font-size:13.5px; color:#15803d; line-height:1.5; margin-top:8px; direction:rtl;">
+        تم إرسال إجاباتك بنجاح إلى إدارة المعهد لتوجيهك نحو الفوج الأنسب لمستواك 🎉
+      </p>
+    </div>
+
+    <ul class="info-list">
+      <li><strong>Prochaine étape :</strong> Présentez-vous auprès de notre chargée d'accueil.</li>
+      <li>Votre niveau recommandé sera communiqué pour finaliser votre inscription et votre planning de cours.</li>
+    </ul>
+
+    <div class="footer-brand">
+      Institut ILAS · Excellence & Formation Linguistique
+    </div>
+  </div>
+</body>
+</html>

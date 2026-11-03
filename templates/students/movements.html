@@ -1,0 +1,937 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- ================= TOP HEADER & ACTIONS ================= -->
+<div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+  <div>
+    <div class="muted" style="font-size:12px;">
+      <a href="{{ url_for('dashboard') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ t('dashboard') }}</a>
+      <span style="margin:0 6px; color:#cbd5e1;">/</span>
+      <a href="{{ url_for('students') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">{{ t('students') }}</a>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:2px; flex-wrap:wrap;">
+      <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800; display:flex; align-items:center; gap:8px;">
+        <span>🔄</span>
+        <span>{% if lang == 'ar' %}حركة التلاميذ — الوافدون والمغادرون{% else %}Mouvements des Élèves — Entrées & Sorties{% endif %}</span>
+      </h2>
+      <span class="chip chip-blue" style="font-size:11.5px; font-weight:800;">
+        📅 {% if lang == 'ar' %}{{ period_label_ar }}{% else %}{{ period_label_fr }}{% endif %}
+      </span>
+      {% if selected_matiere != 'all' %}
+        <span class="chip chip-purple" style="font-size:11.5px; font-weight:800;">
+          📚 {{ selected_matiere }}
+        </span>
+      {% endif %}
+    </div>
+    <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">
+      {% if lang == 'ar' %}
+        تتبع دقيق لعدد المسجلين الجدد والملتحقين (دخول) وعدد المغادرين والمنسحبين (خروج) مع التفاصيل الشاملة لكل مادة دراسية على حدة
+      {% else %}
+        Traçabilité mensuelle des inscriptions (Dkhul) et des départs / abandons (Quitta) avec bilan net et détails par matière
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="flex wrap" style="gap:8px; align-items:center;">
+    <a class="btn btn-outline" href="{{ url_for('student_movements_print', month=month_str, matiere=selected_matiere) }}" target="_blank" style="background:#fff; font-weight:700; font-size:13px; padding:7px 14px; border-color:#0B3D6E; color:#0B3D6E; display:flex; align-items:center; gap:6px;" title="Imprimer le rapport mensuel">
+      <span>🖨️</span>
+      <span>{{ 'طباعة التقرير (A4)' if lang == 'ar' else 'Imprimer Bilan (A4)' }}</span>
+    </a>
+    <a class="btn btn-outline" href="{{ url_for('student_movements_export', month=month_str, matiere=selected_matiere) }}" style="background:#fff; font-weight:700; font-size:13px; padding:7px 14px; border-color:#16a34a; color:#16a34a; display:flex; align-items:center; gap:6px;" title="Télécharger le fichier Excel">
+      <span>📊</span>
+      <span>{{ 'تصدير Excel' if lang == 'ar' else 'Exporter Excel (.xlsx)' }}</span>
+    </a>
+    {% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+    <a class="btn btn-primary" href="{{ url_for('express_enrollment') }}" style="background:#10b981; border-color:#10b981; font-weight:800; font-size:13px; padding:7px 14px; box-shadow:0 4px 12px rgba(16,185,129,0.25);">
+      ⚡ Inscription Express
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ================= MONTH & MATIÈRE COMMAND BAR ================= -->
+<div class="card mb-3" style="padding:14px 18px; background:#ffffff; border:1.5px solid #cbd5e1; border-radius:14px; box-shadow:0 4px 16px rgba(15,23,42,0.06);">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    
+    <!-- Left: Month Navigation -->
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <div style="font-size:12px; font-weight:800; color:#0B3D6E; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:6px;">
+        <span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; background:#eff6ff; border-radius:6px; font-size:13px;">📅</span>
+        <span>{{ 'الشهر المعني :' if lang == 'ar' else 'Période du Mois :' }}</span>
+      </div>
+
+      <div style="display:inline-flex; align-items:center; background:#f1f5f9; padding:4px 6px; border-radius:10px; gap:6px;">
+        <a href="{{ url_for('student_movements', month=prev_month_str, matiere=selected_matiere, tab=active_tab) }}" 
+           class="btn btn-xs" 
+           style="background:#fff; border:1px solid #cbd5e1; color:#334155; font-weight:800; padding:4px 10px; border-radius:6px; text-decoration:none;"
+           title="{{ 'الشهر السابق' if lang == 'ar' else 'Mois précédent' }}">
+          ◀ {{ 'السابق' if lang == 'ar' else 'Précédent' }}
+        </a>
+
+        <form method="get" action="{{ url_for('student_movements') }}" id="monthForm" style="display:inline-flex; margin:0; align-items:center;">
+          <input type="hidden" name="matiere" value="{{ selected_matiere }}">
+          <input type="hidden" name="tab" value="{{ active_tab }}">
+          <input type="month" 
+                 name="month" 
+                 value="{{ month_str }}" 
+                 onchange="document.getElementById('monthForm').submit()"
+                 style="font-size:13px; font-weight:800; color:#0B3D6E; background:#fff; border:1.5px solid #0B3D6E; border-radius:7px; padding:3px 10px; cursor:pointer;">
+        </form>
+
+        <a href="{{ url_for('student_movements', month=next_month_str, matiere=selected_matiere, tab=active_tab) }}" 
+           class="btn btn-xs" 
+           style="background:#fff; border:1px solid #cbd5e1; color:#334155; font-weight:800; padding:4px 10px; border-radius:6px; text-decoration:none;"
+           title="{{ 'الشهر الموالي' if lang == 'ar' else 'Mois suivant' }}">
+          {{ 'الموالي' if lang == 'ar' else 'Suivant' }} ▶
+        </a>
+
+        {% if not is_current_month %}
+        <a href="{{ url_for('student_movements', month=today.strftime('%Y-%m'), matiere=selected_matiere, tab=active_tab) }}" 
+           class="btn btn-xs" 
+           style="background:#0B3D6E; color:#fff; font-weight:800; padding:4px 10px; border-radius:6px; text-decoration:none; margin-left:4px;">
+          📍 {{ 'هذا الشهر' if lang == 'ar' else 'Mois en cours' }}
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right: Search Bar -->
+    <form method="get" action="{{ url_for('student_movements') }}" style="display:inline-flex; align-items:center; gap:6px; margin:0;">
+      <input type="hidden" name="month" value="{{ month_str }}">
+      <input type="hidden" name="matiere" value="{{ selected_matiere }}">
+      <input type="hidden" name="tab" value="{{ active_tab }}">
+      <div style="position:relative;">
+        <input type="text" 
+               name="q" 
+               value="{{ search_q }}" 
+               placeholder="{{ 'بحث عن تلميذ، هاتف...' if lang == 'ar' else 'Rechercher un élève, tél...' }}"
+               style="padding:6px 12px 6px 32px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:12.5px; width:220px; background:#fff;">
+        <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:13px; color:#94a3b8;">🔍</span>
+      </div>
+      <button type="submit" class="btn btn-xs" style="background:#0B3D6E; color:#fff; font-weight:700; padding:6px 12px; border-radius:8px; border:none; cursor:pointer;">
+        {{ 'تصفية' if lang == 'ar' else 'Filtrer' }}
+      </button>
+      {% if search_q %}
+      <a href="{{ url_for('student_movements', month=month_str, matiere=selected_matiere, tab=active_tab) }}" class="btn btn-xs" style="background:#e2e8f0; color:#334155; font-weight:700; padding:6px 10px; border-radius:8px; text-decoration:none;">✕</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Row 2: Matière Selector Chips -->
+  <div style="margin-top:14px; padding-top:12px; border-top:1px solid #e2e8f0; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+    <span style="font-size:11.5px; font-weight:800; color:#64748b; text-transform:uppercase; margin-right:4px;">
+      📚 {{ 'المادة :' if lang == 'ar' else 'Filtrer par Matière :' }}
+    </span>
+
+    <a href="{{ url_for('student_movements', month=month_str, matiere='all', tab=active_tab, q=search_q) }}" 
+       class="chip" 
+       style="text-decoration:none; font-size:12px; font-weight:800; padding:5px 12px; border-radius:20px; cursor:pointer; transition:all 0.15s;
+              background:{{ '#0B3D6E' if selected_matiere == 'all' else '#f1f5f9' }};
+              color:{{ '#ffffff' if selected_matiere == 'all' else '#334155' }};
+              border:1px solid {{ '#0B3D6E' if selected_matiere == 'all' else '#cbd5e1' }};">
+      🌐 {{ 'جميع المواد' if lang == 'ar' else 'Toutes les Matières' }}
+      <span style="margin-left:4px; font-size:11px; padding:1px 6px; border-radius:10px; background:{{ '#ffffff' if selected_matiere == 'all' else '#e2e8f0' }}; color:{{ '#0B3D6E' if selected_matiere == 'all' else '#334155' }}; font-weight:900;">
+        +{{ total_entries }}/-{{ total_exits }}
+      </span>
+    </a>
+
+    {% for m in matieres_summary %}
+    <a href="{{ url_for('student_movements', month=month_str, matiere=m.name, tab=active_tab, q=search_q) }}" 
+       class="chip" 
+       style="text-decoration:none; font-size:12px; font-weight:800; padding:5px 12px; border-radius:20px; cursor:pointer; transition:all 0.15s;
+              background:{{ m.color if selected_matiere == m.name else m.bg }};
+              color:{{ '#ffffff' if selected_matiere == m.name else m.color }};
+              border:1.5px solid {{ m.color if selected_matiere == m.name else m.border }};">
+      {{ m.icon }} {{ m.name_ar if lang == 'ar' else m.name }}
+      <span style="margin-left:4px; font-size:10.5px; font-weight:900; padding:1px 6px; border-radius:10px;
+                   background:{{ '#ffffff' if selected_matiere == m.name else '#ffffff' }};
+                   color:{{ m.color }};">
+        +{{ m.entries_count }}/-{{ m.exits_count }}
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ================= 5 MASTER KPI OVERVIEW CARDS ================= -->
+<div class="grid grid-5 gap-3 mb-3" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));">
+  
+  <!-- CARD 1: TOTAL ENTRÉES (DKHUL) -->
+  <div class="card" style="padding:16px 18px; background:linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border:1.5px solid #86efac; border-radius:14px; box-shadow:0 4px 12px rgba(34,197,94,0.08); position:relative; overflow:hidden;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <div style="font-size:11.5px; font-weight:800; color:#166534; text-transform:uppercase; letter-spacing:0.5px;">
+          📥 {{ 'الوافدون / تسجيلات (دخول)' if lang == 'ar' else 'Entrées (Dkhul)' }}
+        </div>
+        <div style="font-size:32px; font-weight:900; color:#15803d; line-height:1.2; margin-top:4px;">
+          +{{ total_entries }}
+        </div>
+      </div>
+      <div style="width:40px; height:40px; background:#dcfce7; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+        🟢
+      </div>
+    </div>
+    <div style="margin-top:10px; display:flex; flex-direction:column; gap:4px; font-size:11.5px; color:#166534; font-weight:700;">
+      <div style="display:flex; justify-content:space-between;">
+        <span>• {{ 'تلاميذ جدد بالمعهد :' if lang == 'ar' else 'Nouveaux élèves :' }}</span>
+        <strong style="color:#15803d;">{{ total_new_students }}</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between;">
+        <span>• {{ 'تجديد اشتراك :' if lang == 'ar' else 'Renouvellements :' }}</span>
+        <strong style="color:#15803d;">{{ total_renewals }}</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between;">
+        <span>• {{ 'مواد إضافية جديدة :' if lang == 'ar' else 'Nouvelles matières :' }}</span>
+        <strong style="color:#15803d;">{{ total_new_matieres }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARD 2: TOTAL SORTIES (QUITTA) -->
+  <div class="card" style="padding:16px 18px; background:linear-gradient(135deg, #fef2f2 0%, #ffffff 100%); border:1.5px solid #fca5a5; border-radius:14px; box-shadow:0 4px 12px rgba(239,68,68,0.08); position:relative; overflow:hidden;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <div style="font-size:11.5px; font-weight:800; color:#991b1b; text-transform:uppercase; letter-spacing:0.5px;">
+          📤 {{ 'المغادرون / انسحابات (خروج)' if lang == 'ar' else 'Sorties (Quitta)' }}
+        </div>
+        <div style="font-size:32px; font-weight:900; color:#b91c1c; line-height:1.2; margin-top:4px;">
+          -{{ total_exits }}
+        </div>
+      </div>
+      <div style="width:40px; height:40px; background:#fee2e2; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+        🔴
+      </div>
+    </div>
+    <div style="margin-top:10px; display:flex; flex-direction:column; gap:4px; font-size:11.5px; color:#991b1b; font-weight:700;">
+      <div style="display:flex; justify-content:space-between;">
+        <span>• {{ 'انسحابات وإلغاءات :' if lang == 'ar' else 'Abandons / Retraits :' }}</span>
+        <strong style="color:#b91c1c;">{{ total_dropped }}</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between;">
+        <span>• {{ 'اشتراكات منتهية دون تجديد :' if lang == 'ar' else 'Non renouvelés :' }}</span>
+        <strong style="color:#b91c1c;">{{ total_non_renewed }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARD 3: BILAN NET DU MOIS -->
+  <div class="card" style="padding:16px 18px; background:linear-gradient(135deg, #eff6ff 0%, #ffffff 100%); border:1.5px solid #93c5fd; border-radius:14px; box-shadow:0 4px 12px rgba(37,99,235,0.08); position:relative; overflow:hidden;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <div style="font-size:11.5px; font-weight:800; color:#1e40af; text-transform:uppercase; letter-spacing:0.5px;">
+          ⚖️ {{ 'الفارق الصافي (صافي الحركة)' if lang == 'ar' else 'Bilan Net (Variation)' }}
+        </div>
+        <div style="font-size:32px; font-weight:900; color:{{ '#15803d' if total_net > 0 else ('#b91c1c' if total_net < 0 else '#1e40af') }}; line-height:1.2; margin-top:4px;">
+          {{ '+' if total_net > 0 else '' }}{{ total_net }}
+        </div>
+      </div>
+      <div style="width:40px; height:40px; background:#dbeafe; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+        {{ '📈' if total_net >= 0 else '📉' }}
+      </div>
+    </div>
+    <div style="margin-top:10px; font-size:11.5px; color:#1e40af; font-weight:700;">
+      {% if total_net > 0 %}
+        <span style="color:#16a34a;">▲ {{ 'نمو إيجابي في عدد التلاميذ' if lang == 'ar' else 'Croissance nette positive' }}</span>
+      {% elif total_net < 0 %}
+        <span style="color:#dc2626;">▼ {{ 'تراجع في صافي الملتحقين' if lang == 'ar' else 'Baisse nette des effectifs' }}</span>
+      {% else %}
+        <span>{{ 'استقرار في العدد الإجمالي' if lang == 'ar' else 'Équilibre parfait (0)' }}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- CARD 4: EFFECTIF ACTIF GLOBAL -->
+  <div class="card" style="padding:16px 18px; background:linear-gradient(135deg, #faf5ff 0%, #ffffff 100%); border:1.5px solid #d8b4fe; border-radius:14px; box-shadow:0 4px 12px rgba(147,51,234,0.08); position:relative; overflow:hidden;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <div style="font-size:11.5px; font-weight:800; color:#6b21a8; text-transform:uppercase; letter-spacing:0.5px;">
+          👥 {{ 'التلاميذ النشطون حالياً' if lang == 'ar' else 'Élèves Actifs (Présents)' }}
+        </div>
+        <div style="font-size:32px; font-weight:900; color:#7e22ce; line-height:1.2; margin-top:4px;">
+          {{ total_active_students }}
+        </div>
+      </div>
+      <div style="width:40px; height:40px; background:#f3e8ff; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+        🏫
+      </div>
+    </div>
+    <div style="margin-top:10px; font-size:11.5px; color:#6b21a8; font-weight:700;">
+      {{ 'تلميذ مسجل ومداوم في المعهد' if lang == 'ar' else 'Élèves ayant au moins 1 inscription active' }}
+    </div>
+  </div>
+
+  <!-- CARD 5: TAUX DE RÉTENTION -->
+  <div class="card" style="padding:16px 18px; background:linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); border:1.5px solid #fcd34d; border-radius:14px; box-shadow:0 4px 12px rgba(245,158,11,0.08); position:relative; overflow:hidden;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <div style="font-size:11.5px; font-weight:800; color:#92400e; text-transform:uppercase; letter-spacing:0.5px;">
+          🔄 {{ 'نسبة الاستمرارية والتجديد' if lang == 'ar' else 'Taux de Rétention' }}
+        </div>
+        <div style="font-size:32px; font-weight:900; color:#b45309; line-height:1.2; margin-top:4px;">
+          {{ retention_rate }}%
+        </div>
+      </div>
+      <div style="width:40px; height:40px; background:#fef3c7; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+        🎯
+      </div>
+    </div>
+    <div style="margin-top:10px; font-size:11.5px; color:#92400e; font-weight:700;">
+      {{ 'نسبة المجددين مقارنة بالمنتهية آجالهم' if lang == 'ar' else 'Ratio renouvellements / départs' }}
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= NAVIGATION TABS ================= -->
+<div class="mb-3" style="display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #e2e8f0; padding-bottom:0; flex-wrap:wrap; gap:10px;">
+  <div style="display:flex; align-items:center; gap:8px; overflow-x:auto;">
+    <a href="{{ url_for('student_movements', month=month_str, matiere=selected_matiere, tab='summary', q=search_q) }}" 
+       style="display:inline-flex; align-items:center; gap:6px; padding:10px 18px; font-size:13.5px; font-weight:800; text-decoration:none; border-bottom:3px solid {{ '#0B3D6E' if active_tab == 'summary' else 'transparent' }}; color:{{ '#0B3D6E' if active_tab == 'summary' else '#64748b' }};">
+      <span>📊</span>
+      <span>{{ 'التفاصيل حسب المادة' if lang == 'ar' else 'Détails par Matière' }}</span>
+      <span class="chip" style="font-size:11px; padding:1px 7px; background:#eff6ff; color:#0B3D6E; border-radius:10px;">{{ matieres_summary|length }}</span>
+    </a>
+
+    <a href="{{ url_for('student_movements', month=month_str, matiere=selected_matiere, tab='entries', q=search_q) }}" 
+       style="display:inline-flex; align-items:center; gap:6px; padding:10px 18px; font-size:13.5px; font-weight:800; text-decoration:none; border-bottom:3px solid {{ '#16a34a' if active_tab == 'entries' else 'transparent' }}; color:{{ '#16a34a' if active_tab == 'entries' else '#64748b' }};">
+      <span>📥</span>
+      <span>{{ 'قائمة الوافدين (دخول)' if lang == 'ar' else 'Liste des Entrées (Dkhul)' }}</span>
+      <span class="chip" style="font-size:11px; padding:1px 7px; background:#dcfce7; color:#15803d; border-radius:10px;">{{ entries|length }}</span>
+    </a>
+
+    <a href="{{ url_for('student_movements', month=month_str, matiere=selected_matiere, tab='exits', q=search_q) }}" 
+       style="display:inline-flex; align-items:center; gap:6px; padding:10px 18px; font-size:13.5px; font-weight:800; text-decoration:none; border-bottom:3px solid {{ '#dc2626' if active_tab == 'exits' else 'transparent' }}; color:{{ '#dc2626' if active_tab == 'exits' else '#64748b' }};">
+      <span>📤</span>
+      <span>{{ 'قائمة المغادرين (خروج)' if lang == 'ar' else 'Liste des Sorties (Quitta)' }}</span>
+      <span class="chip" style="font-size:11px; padding:1px 7px; background:#fee2e2; color:#b91c1c; border-radius:10px;">{{ exits|length }}</span>
+    </a>
+  </div>
+</div>
+
+<!-- ================= TAB CONTENT 1: SYNTHÈSE & DÉTAILS PAR MATIÈRE ================= -->
+{% if active_tab == 'summary' %}
+<div style="margin-bottom:24px;">
+
+  <!-- Visual Grid of Subject Cards -->
+  <div class="grid grid-3 gap-3 mb-4" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+    {% for m in matieres_summary %}
+    <div class="card" style="padding:16px 18px; background:#ffffff; border:1.5px solid {{ m.border }}; border-radius:14px; box-shadow:0 4px 14px rgba(15,23,42,0.04); position:relative; transition:all 0.2s;">
+      
+      <!-- Subject Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid #f1f5f9;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:22px;">{{ m.icon }}</span>
+          <div>
+            <h4 style="margin:0; font-size:16px; font-weight:800; color:#0f172a;">
+              {{ m.name_ar if lang == 'ar' else m.name }}
+            </h4>
+            <div style="font-size:11.5px; color:#64748b; font-weight:600;">
+              {{ m.name if lang == 'ar' else m.name_ar }}
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align:right;">
+          <span class="chip" style="font-size:11px; font-weight:800; background:{{ m.bg }}; color:{{ m.color }}; border:1px solid {{ m.border }};">
+            👥 {{ m.active_now }} {{ 'نشط' if lang == 'ar' else 'actifs' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- In/Out Big Numbers Bar -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; background:#f8fafc; padding:10px 12px; border-radius:10px; margin-bottom:12px; text-align:center;">
+        <div>
+          <div style="font-size:11px; font-weight:700; color:#166534;">📥 {{ 'دخول' if lang == 'ar' else 'Entrées' }}</div>
+          <div style="font-size:20px; font-weight:900; color:#15803d; margin-top:2px;">+{{ m.entries_count }}</div>
+        </div>
+        <div>
+          <div style="font-size:11px; font-weight:700; color:#991b1b;">📤 {{ 'خروج' if lang == 'ar' else 'Sorties' }}</div>
+          <div style="font-size:20px; font-weight:900; color:#b91c1c; margin-top:2px;">-{{ m.exits_count }}</div>
+        </div>
+        <div>
+          <div style="font-size:11px; font-weight:700; color:#1e40af;">⚖️ {{ 'الصافي' if lang == 'ar' else 'Bilan Net' }}</div>
+          <div style="font-size:20px; font-weight:900; color:{{ '#15803d' if m.net_variation > 0 else ('#b91c1c' if m.net_variation < 0 else '#475569') }}; margin-top:2px;">
+            {{ '+' if m.net_variation > 0 else '' }}{{ m.net_variation }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-breakdown details -->
+      <div style="font-size:11.5px; color:#475569; display:flex; flex-direction:column; gap:4px; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between;">
+          <span>• {{ 'جدد بالمعهد :' if lang == 'ar' else 'Nouveaux élèves :' }}</span>
+          <strong style="color:#15803d;">{{ m.entries_new_stu }}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span>• {{ 'تجديد اشتراك :' if lang == 'ar' else 'Renouvellements :' }}</span>
+          <strong style="color:#0284c7;">{{ m.entries_renewal }}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span>• {{ 'انسحابات وإلغاءات :' if lang == 'ar' else 'Abandons / Retraits :' }}</span>
+          <strong style="color:#b91c1c;">{{ m.exits_dropped }}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span>• {{ 'نهاية دون تجديد :' if lang == 'ar' else 'Non renouvelés :' }}</span>
+          <strong style="color:#d97706;">{{ m.exits_non_renewed }}</strong>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div style="display:flex; gap:6px; margin-top:auto;">
+        <button type="button" 
+                onclick="toggleMatiereDetails('{{ m.name|replace(' ', '_') }}')" 
+                class="btn btn-xs btn-outline" 
+                style="flex:1; font-weight:700; font-size:11.5px; padding:6px 8px; border-color:{{ m.color }}; color:{{ m.color }}; background:#ffffff;">
+          👁️ {{ 'عرض التفاصيل واللوائح' if lang == 'ar' else 'Voir les élèves (+/-)' }}
+        </button>
+        <a href="{{ url_for('student_movements', month=month_str, matiere=m.name, tab='entries') }}" 
+           class="btn btn-xs" 
+           style="background:{{ m.color }}; color:#fff; font-weight:700; font-size:11.5px; padding:6px 10px; border-radius:6px; text-decoration:none;"
+           title="Voir tous les inscrits">
+          →
+        </a>
+      </div>
+
+      <!-- Collapsible Detailed Pupils List for this Matière -->
+      <div id="details_{{ m.name|replace(' ', '_') }}" style="display:none; margin-top:14px; padding-top:12px; border-top:1.5px dashed #cbd5e1;">
+        
+        <!-- Tab pills inside subject -->
+        <div style="display:flex; gap:6px; margin-bottom:10px;">
+          <button type="button" 
+                  onclick="showSubTab('{{ m.name|replace(' ', '_') }}', 'ent')"
+                  id="btn_ent_{{ m.name|replace(' ', '_') }}"
+                  class="btn btn-xs" 
+                  style="font-size:11px; font-weight:800; background:#dcfce7; color:#15803d; border:1px solid #86efac; border-radius:6px; padding:3px 8px;">
+            📥 {{ 'الوافدون' if lang == 'ar' else 'Entrées' }} ({{ m.entries|length }})
+          </button>
+          <button type="button" 
+                  onclick="showSubTab('{{ m.name|replace(' ', '_') }}', 'exi')"
+                  id="btn_exi_{{ m.name|replace(' ', '_') }}"
+                  class="btn btn-xs" 
+                  style="font-size:11px; font-weight:800; background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; border-radius:6px; padding:3px 8px;">
+            📤 {{ 'المغادرون' if lang == 'ar' else 'Sorties' }} ({{ m.exits|length }})
+          </button>
+        </div>
+
+        <!-- Sub list 1: Entries -->
+        <div id="sub_ent_{{ m.name|replace(' ', '_') }}" style="max-height:260px; overflow-y:auto;">
+          {% if m.entries %}
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            {% for item in m.entries %}
+            <div style="padding:6px 8px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; font-size:11px; display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <a href="{{ url_for('student_view', sid=item.student_id) }}" style="font-weight:800; color:#0f172a; text-decoration:none;">
+                  {{ item.student_name }}
+                </a>
+                <div style="color:#64748b; font-size:10px;">
+                  {{ item.entry_date.strftime('%d/%m/%Y') }} • {{ item.course_name }}
+                </div>
+              </div>
+              <span class="chip" style="font-size:9.5px; font-weight:800; background:#fff; color:#15803d; border:1px solid #86efac;">
+                {{ item.entry_type_label_ar if lang == 'ar' else item.entry_type_label_fr }}
+              </span>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div style="font-size:11px; color:#94a3b8; text-align:center; padding:10px;">{{ 'لا يوجد وافدون' if lang == 'ar' else 'Aucune entrée ce mois' }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Sub list 2: Exits -->
+        <div id="sub_exi_{{ m.name|replace(' ', '_') }}" style="display:none; max-height:260px; overflow-y:auto;">
+          {% if m.exits %}
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            {% for item in m.exits %}
+            <div style="padding:6px 8px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; font-size:11px; display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <a href="{{ url_for('student_view', sid=item.student_id) }}" style="font-weight:800; color:#0f172a; text-decoration:none;">
+                  {{ item.student_name }}
+                </a>
+                <div style="color:#64748b; font-size:10px;">
+                  {{ item.exit_date.strftime('%d/%m/%Y') }} • {{ item.course_name }}
+                </div>
+              </div>
+              <span class="chip" style="font-size:9.5px; font-weight:800; background:#fff; color:#b91c1c; border:1px solid #fca5a5;">
+                {{ item.reason_ar if lang == 'ar' else item.reason_fr }}
+              </span>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div style="font-size:11px; color:#94a3b8; text-align:center; padding:10px;">{{ 'لا يوجد مغادرون' if lang == 'ar' else 'Aucune sortie ce mois' }}</div>
+          {% endif %}
+        </div>
+
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Master Consolidated Table -->
+  <div class="card" style="padding:0; background:#ffffff; border:1.5px solid #cbd5e1; border-radius:14px; box-shadow:0 4px 16px rgba(15,23,42,0.06); overflow:hidden;">
+    <div style="padding:14px 18px; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0; font-size:15px; color:#0B3D6E; font-weight:800; display:flex; align-items:center; gap:8px;">
+        <span>📋</span>
+        <span>{{ 'جدول المقارنة الشامل لكافة المواد' if lang == 'ar' else 'Tableau Récapitulatif Consolidé par Matière' }}</span>
+      </h3>
+      <span class="muted" style="font-size:12px;">{{ period_label_fr }}</span>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table class="table" style="width:100%; margin:0; border-collapse:collapse; font-size:12.5px;">
+        <thead>
+          <tr style="background:#f1f5f9; color:#475569; font-weight:800; border-bottom:2px solid #cbd5e1;">
+            <th style="padding:12px 16px; text-align:left;">{{ 'المادة الدراسية' if lang == 'ar' else 'Matière / Discipline' }}</th>
+            <th style="padding:12px 10px; text-align:center; color:#15803d;">{{ 'الوافدون (دخول)' if lang == 'ar' else 'Entrées (Dkhul)' }}</th>
+            <th style="padding:12px 10px; text-align:center;">{{ 'جدد بالمعهد' if lang == 'ar' else 'Nouveaux Élèves' }}</th>
+            <th style="padding:12px 10px; text-align:center;">{{ 'تجديد' if lang == 'ar' else 'Renouvellements' }}</th>
+            <th style="padding:12px 10px; text-align:center; color:#b91c1c;">{{ 'المغادرون (خروج)' if lang == 'ar' else 'Sorties (Quitta)' }}</th>
+            <th style="padding:12px 10px; text-align:center;">{{ 'انسحابات' if lang == 'ar' else 'Abandons' }}</th>
+            <th style="padding:12px 10px; text-align:center;">{{ 'دون تجديد' if lang == 'ar' else 'Non renouvelés' }}</th>
+            <th style="padding:12px 10px; text-align:center; font-weight:900;">{{ 'الفارق الصافي' if lang == 'ar' else 'Bilan Net' }}</th>
+            <th style="padding:12px 10px; text-align:center;">{{ 'النشطون حالياً' if lang == 'ar' else 'Actifs en Classe' }}</th>
+            <th style="padding:12px 16px; text-align:center;">{{ 'إجراءات' if lang == 'ar' else 'Actions' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in matieres_summary %}
+          <tr style="border-bottom:1px solid #e2e8f0; transition:background 0.1s;">
+            <td style="padding:12px 16px; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;">
+              <span style="font-size:18px;">{{ m.icon }}</span>
+              <div>
+                <span>{{ m.name_ar if lang == 'ar' else m.name }}</span>
+                <div style="font-size:11px; color:#64748b; font-weight:600;">{{ m.name if lang == 'ar' else m.name_ar }}</div>
+              </div>
+            </td>
+            <td style="padding:12px 10px; text-align:center; font-size:14px; font-weight:900; color:#15803d; background:rgba(34,197,94,0.04);">
+              +{{ m.entries_count }}
+            </td>
+            <td style="padding:12px 10px; text-align:center; font-weight:700; color:#166534;">
+              {{ m.entries_new_stu }}
+            </td>
+            <td style="padding:12px 10px; text-align:center; font-weight:700; color:#0284c7;">
+              {{ m.entries_renewal }}
+            </td>
+            <td style="padding:12px 10px; text-align:center; font-size:14px; font-weight:900; color:#b91c1c; background:rgba(239,68,68,0.04);">
+              -{{ m.exits_count }}
+            </td>
+            <td style="padding:12px 10px; text-align:center; font-weight:700; color:#991b1b;">
+              {{ m.exits_dropped }}
+            </td>
+            <td style="padding:12px 10px; text-align:center; font-weight:700; color:#d97706;">
+              {{ m.exits_non_renewed }}
+            </td>
+            <td style="padding:12px 10px; text-align:center; font-size:14px; font-weight:900; color:{{ '#15803d' if m.net_variation > 0 else ('#b91c1c' if m.net_variation < 0 else '#475569') }};">
+              <span class="chip" style="font-size:12px; font-weight:900; padding:2px 8px; border-radius:12px;
+                           background:{{ '#dcfce7' if m.net_variation > 0 else ('#fee2e2' if m.net_variation < 0 else '#f1f5f9') }};
+                           color:{{ '#15803d' if m.net_variation > 0 else ('#b91c1c' if m.net_variation < 0 else '#475569') }};">
+                {{ '+' if m.net_variation > 0 else '' }}{{ m.net_variation }}
+              </span>
+            </td>
+            <td style="padding:12px 10px; text-align:center; font-weight:800; color:#7e22ce;">
+              {{ m.active_now }}
+            </td>
+            <td style="padding:12px 16px; text-align:center;">
+              <a href="{{ url_for('student_movements', month=month_str, matiere=m.name, tab='entries') }}" 
+                 class="btn btn-xs" 
+                 style="background:#eff6ff; color:#1e40af; border:1px solid #bfdbfe; font-weight:700; padding:4px 10px; border-radius:6px; text-decoration:none;">
+                🔍 {{ 'كشف التلاميذ' if lang == 'ar' else 'Détails' }}
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background:#f8fafc; font-weight:900; font-size:13px; border-top:2px solid #cbd5e1;">
+            <td style="padding:14px 16px; color:#0B3D6E;">{{ 'المجموع الإجمالي' if lang == 'ar' else 'TOTAL GÉNÉRAL' }}</td>
+            <td style="padding:14px 10px; text-align:center; color:#15803d; font-size:15px;">+{{ total_entries }}</td>
+            <td style="padding:14px 10px; text-align:center; color:#166534;">{{ total_new_students }}</td>
+            <td style="padding:14px 10px; text-align:center; color:#0284c7;">{{ total_renewals }}</td>
+            <td style="padding:14px 10px; text-align:center; color:#b91c1c; font-size:15px;">-{{ total_exits }}</td>
+            <td style="padding:14px 10px; text-align:center; color:#991b1b;">{{ total_dropped }}</td>
+            <td style="padding:14px 10px; text-align:center; color:#d97706;">{{ total_non_renewed }}</td>
+            <td style="padding:14px 10px; text-align:center; font-size:15px; color:{{ '#15803d' if total_net > 0 else ('#b91c1c' if total_net < 0 else '#0B3D6E') }};">
+              {{ '+' if total_net > 0 else '' }}{{ total_net }}
+            </td>
+            <td style="padding:14px 10px; text-align:center; color:#7e22ce; font-size:14px;">
+              {{ total_active_students }}
+            </td>
+            <td style="padding:14px 16px; text-align:center;">—</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endif %}
+
+<!-- ================= TAB CONTENT 2: LISTE DÉTAILLÉE DES ENTRÉES (DKHUL) ================= -->
+{% if active_tab == 'entries' %}
+<div class="card" style="padding:0; background:#ffffff; border:1.5px solid #cbd5e1; border-radius:14px; box-shadow:0 4px 16px rgba(15,23,42,0.06); overflow:hidden; margin-bottom:24px;">
+  
+  <div style="padding:14px 18px; background:#f0fdf4; border-bottom:1px solid #bbf7d0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <div>
+      <h3 style="margin:0; font-size:16px; color:#166534; font-weight:800; display:flex; align-items:center; gap:8px;">
+        <span>📥</span>
+        <span>{{ 'لائحة المسجلين والوافدين الجدد في هذا الشهر' if lang == 'ar' else 'Liste Détaillée des Entrées (Dkhul)' }}</span>
+      </h3>
+      <div style="font-size:12px; color:#15803d; margin-top:2px;">
+        {{ entries|length }} {{ 'تسجيل / انخراط مسجل في' if lang == 'ar' else 'inscriptions enregistrées en' }} {{ period_label_fr }}
+      </div>
+    </div>
+
+    <!-- Quick filter chips inside entries tab -->
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      <a href="{{ url_for('student_movements', month=month_str, matiere=selected_matiere, tab='entries', entry_type='all', q=search_q) }}" 
+         class="chip" 
+         style="font-size:11px; font-weight:800; text-decoration:none; padding:4px 10px; border-radius:12px;
+                background:{{ '#15803d' if entry_type_filter == 'all' else '#fff' }};
+                color:{{ '#fff' if entry_type_filter == 'all' else '#334155' }};
+                border:1px solid #86efac;">
+        {{ 'الكل' if lang == 'ar' else 'Tous' }} ({{ all_entries_count }})
+      </a>
+      <a href="{{ url_for('student_movements', month=month_str, matiere=selected_matiere, tab='entries', entry_type='new_student', q=search_q) }}" 
+         class="chip" 
+         style="font-size:11px; font-weight:800; text-decoration:none; padding:4px 10px; border-radius:12px;
+                background:{{ '#15803d' if entry_type_filter == 'new_student' else '#fff' }};
+                color:{{ '#fff' if entry_type_filter == 'new_student' else '#166534' }};
+                border:1px solid #86efac;">
+        🌱 {{ 'جدد بالمعهد' if lang == 'ar' else 'Nouveaux Élèves' }}
+      </a>
+      <a href="{{ url_for('student_movements', month=month_str, matiere=selected_matiere, tab='entries', entry_type='renewal', q=search_q) }}" 
+         class="chip" 
+         style="font-size:11px; font-weight:800; text-decoration:none; padding:4px 10px; border-radius:12px;
+                background:{{ '#0284c7' if entry_type_filter == 'renewal' else '#fff' }};
+                color:{{ '#fff' if entry_type_filter == 'renewal' else '#0284c7' }};
+                border:1px solid #bae6fd;">
+        🔄 {{ 'تجديد' if lang == 'ar' else 'Renouvellements' }}
+      </a>
+      <a href="{{ url_for('student_movements', month=month_str, matiere=selected_matiere, tab='entries', entry_type='new_matiere', q=search_q) }}" 
+         class="chip" 
+         style="font-size:11px; font-weight:800; text-decoration:none; padding:4px 10px; border-radius:12px;
+                background:{{ '#7c3aed' if entry_type_filter == 'new_matiere' else '#fff' }};
+                color:{{ '#fff' if entry_type_filter == 'new_matiere' else '#7c3aed' }};
+                border:1px solid #e9d5ff;">
+        ⭐ {{ 'مادة جديدة' if lang == 'ar' else 'Nouvelle Matière' }}
+      </a>
+    </div>
+  </div>
+
+  <div style="overflow-x:auto;">
+    <table class="table" style="width:100%; margin:0; border-collapse:collapse; font-size:12.5px;">
+      <thead>
+        <tr style="background:#f8fafc; color:#475569; font-weight:800; border-bottom:2px solid #cbd5e1;">
+          <th style="padding:12px 14px; text-align:left;">{{ 'تاريخ الدخول' if lang == 'ar' else 'Date Entrée' }}</th>
+          <th style="padding:12px 16px; text-align:left;">{{ 'التلميذ' if lang == 'ar' else 'Élève' }}</th>
+          <th style="padding:12px 12px; text-align:left;">{{ 'الهاتف / واتساب' if lang == 'ar' else 'Téléphone' }}</th>
+          <th style="padding:12px 12px; text-align:center;">{{ 'المادة' if lang == 'ar' else 'Matière' }}</th>
+          <th style="padding:12px 14px; text-align:left;">{{ 'الفوج / القسم' if lang == 'ar' else 'Classe / Groupe' }}</th>
+          <th style="padding:12px 12px; text-align:center;">{{ 'نوع التسجيل' if lang == 'ar' else "Type d'Entrée" }}</th>
+          <th style="padding:12px 12px; text-align:right;">{{ 'المؤدى (درهم)' if lang == 'ar' else 'Montant Payé' }}</th>
+          <th style="padding:12px 12px; text-align:center;">{{ 'الحالة' if lang == 'ar' else 'Statut' }}</th>
+          <th style="padding:12px 14px; text-align:center;">{{ 'إجراءات' if lang == 'ar' else 'Action' }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if entries %}
+          {% for item in entries %}
+          <tr style="border-bottom:1px solid #e2e8f0; transition:background 0.1s;">
+            
+            <td style="padding:12px 14px; font-weight:800; color:#1e293b; white-space:nowrap;">
+              {{ item.entry_date.strftime('%d/%m/%Y') }}
+            </td>
+
+            <td style="padding:12px 16px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <img src="{{ item.student_avatar }}" alt="" style="width:30px; height:30px; border-radius:50%; object-fit:cover; border:1px solid #cbd5e1;">
+                <div>
+                  <a href="{{ url_for('student_view', sid=item.student_id) }}" style="font-weight:800; color:#0B3D6E; text-decoration:none;">
+                    {{ item.student_name }}
+                  </a>
+                  <div style="font-size:11px; color:#64748b; font-weight:600;">
+                    {{ item.student_code }} • {{ item.student_level or 'Niveau non spécifié' }}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <td style="padding:12px 12px; white-space:nowrap;">
+              {% if item.student_phone %}
+                <a href="https://wa.me/212{{ item.student_whatsapp|replace(' ', '')|replace('-', '')|replace('+212', '')|replace('0', '', 1) if item.student_whatsapp.startswith('0') else item.student_whatsapp }}" 
+                   target="_blank" 
+                   style="color:#16a34a; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+                  <span>💬</span> <span>{{ item.student_phone }}</span>
+                </a>
+              {% else %}
+                <span class="muted" style="font-size:11px;">—</span>
+              {% endif %}
+            </td>
+
+            <td style="padding:12px 12px; text-align:center;">
+              <span class="chip" style="font-size:11px; font-weight:800; background:#f0f9ff; color:#0284c7; border:1px solid #bae6fd;">
+                {{ item.matiere }}
+              </span>
+            </td>
+
+            <td style="padding:12px 14px; font-weight:600; color:#334155;">
+              {{ item.course_name }}
+            </td>
+
+            <td style="padding:12px 12px; text-align:center;">
+              <span class="chip {{ item.entry_type_badge }}" style="font-size:11px; font-weight:800;">
+                {{ item.entry_type_label_ar if lang == 'ar' else item.entry_type_label_fr }}
+              </span>
+            </td>
+
+            <td style="padding:12px 12px; text-align:right; font-weight:800; color:{{ '#15803d' if item.paid_amount > 0 else '#991b1b' }};">
+              {{ item.paid_amount|round(0) }} DH
+              {% if item.balance > 0 %}
+                <div style="font-size:10px; color:#b91c1c; font-weight:700;">Reste: {{ item.balance|round(0) }} DH</div>
+              {% endif %}
+            </td>
+
+            <td style="padding:12px 12px; text-align:center;">
+              {% if item.status == 'active' %}
+                <span class="chip chip-green" style="font-size:10.5px; font-weight:800;">Actif</span>
+              {% elif item.status == 'trial' %}
+                <span class="chip chip-orange" style="font-size:10.5px; font-weight:800;">Essai</span>
+              {% elif item.status == 'dropped' %}
+                <span class="chip chip-red" style="font-size:10.5px; font-weight:800;">Abandon</span>
+              {% else %}
+                <span class="chip chip-gray" style="font-size:10.5px; font-weight:800;">{{ item.status }}</span>
+              {% endif %}
+            </td>
+
+            <td style="padding:12px 14px; text-align:center;">
+              <a href="{{ url_for('student_view', sid=item.student_id) }}" 
+                 class="btn btn-xs" 
+                 style="background:#0B3D6E; color:#fff; font-weight:700; padding:4px 8px; border-radius:6px; text-decoration:none;">
+                👤 {{ 'الملف' if lang == 'ar' else 'Dossier' }}
+              </a>
+            </td>
+
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="9" style="text-align:center; padding:32px; color:#94a3b8;">
+              <div style="font-size:24px; margin-bottom:6px;">📥</div>
+              <div style="font-weight:700;">{{ 'لا توجد تسجيلات مطابقة للمعايير' if lang == 'ar' else 'Aucune entrée trouvée pour cette sélection' }}</div>
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- ================= TAB CONTENT 3: LISTE DÉTAILLÉE DES SORTIES (QUITTA) ================= -->
+{% if active_tab == 'exits' %}
+<div class="card" style="padding:0; background:#ffffff; border:1.5px solid #cbd5e1; border-radius:14px; box-shadow:0 4px 16px rgba(15,23,42,0.06); overflow:hidden; margin-bottom:24px;">
+  
+  <div style="padding:14px 18px; background:#fef2f2; border-bottom:1px solid #fecaca; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <div>
+      <h3 style="margin:0; font-size:16px; color:#991b1b; font-weight:800; display:flex; align-items:center; gap:8px;">
+        <span>📤</span>
+        <span>{{ 'لائحة المغادرين والمنسحبين في هذا الشهر' if lang == 'ar' else 'Liste Détaillée des Sorties (Quitta)' }}</span>
+      </h3>
+      <div style="font-size:12px; color:#b91c1c; margin-top:2px;">
+        {{ exits|length }} {{ 'حالة مغادرة / انتهاء اشتراك في' if lang == 'ar' else 'départs / arrêts constatés en' }} {{ period_label_fr }}
+      </div>
+    </div>
+
+    <!-- Quick filter chips inside exits tab -->
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      <a href="{{ url_for('student_movements', month=month_str, matiere=selected_matiere, tab='exits', exit_type='all', q=search_q) }}" 
+         class="chip" 
+         style="font-size:11px; font-weight:800; text-decoration:none; padding:4px 10px; border-radius:12px;
+                background:{{ '#b91c1c' if exit_type_filter == 'all' else '#fff' }};
+                color:{{ '#fff' if exit_type_filter == 'all' else '#334155' }};
+                border:1px solid #fca5a5;">
+        {{ 'الكل' if lang == 'ar' else 'Toutes les Sorties' }} ({{ all_exits_count }})
+      </a>
+      <a href="{{ url_for('student_movements', month=month_str, matiere=selected_matiere, tab='exits', exit_type='dropped', q=search_q) }}" 
+         class="chip" 
+         style="font-size:11px; font-weight:800; text-decoration:none; padding:4px 10px; border-radius:12px;
+                background:{{ '#b91c1c' if exit_type_filter == 'dropped' else '#fff' }};
+                color:{{ '#fff' if exit_type_filter == 'dropped' else '#991b1b' }};
+                border:1px solid #fca5a5;">
+        🛑 {{ 'انسحابات وحذف يدوي' if lang == 'ar' else 'Abandons & Retraits' }}
+      </a>
+      <a href="{{ url_for('student_movements', month=month_str, matiere=selected_matiere, tab='exits', exit_type='non_renewed', q=search_q) }}" 
+         class="chip" 
+         style="font-size:11px; font-weight:800; text-decoration:none; padding:4px 10px; border-radius:12px;
+                background:{{ '#d97706' if exit_type_filter == 'non_renewed' else '#fff' }};
+                color:{{ '#fff' if exit_type_filter == 'non_renewed' else '#d97706' }};
+                border:1px solid #fcd34d;">
+        ⏳ {{ 'انتهاء دون تجديد' if lang == 'ar' else 'Non renouvelés' }}
+      </a>
+    </div>
+  </div>
+
+  <div style="overflow-x:auto;">
+    <table class="table" style="width:100%; margin:0; border-collapse:collapse; font-size:12.5px;">
+      <thead>
+        <tr style="background:#f8fafc; color:#475569; font-weight:800; border-bottom:2px solid #cbd5e1;">
+          <th style="padding:12px 14px; text-align:left;">{{ 'تاريخ الخروج' if lang == 'ar' else 'Date Sortie' }}</th>
+          <th style="padding:12px 16px; text-align:left;">{{ 'التلميذ' if lang == 'ar' else 'Élève' }}</th>
+          <th style="padding:12px 12px; text-align:left;">{{ 'الهاتف / واتساب' if lang == 'ar' else 'Téléphone' }}</th>
+          <th style="padding:12px 12px; text-align:center;">{{ 'المادة' if lang == 'ar' else 'Matière' }}</th>
+          <th style="padding:12px 14px; text-align:left;">{{ 'الفوج / القسم' if lang == 'ar' else 'Classe / Groupe' }}</th>
+          <th style="padding:12px 12px; text-align:center;">{{ 'سبب الخروج' if lang == 'ar' else 'Motif du Départ' }}</th>
+          <th style="padding:12px 16px; text-align:left;">{{ 'ملاحظات وتفاصيل' if lang == 'ar' else 'Détails & Notes' }}</th>
+          <th style="padding:12px 14px; text-align:center;">{{ 'إجراءات ومتابعة' if lang == 'ar' else 'Relance / Action' }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if exits %}
+          {% for item in exits %}
+          <tr style="border-bottom:1px solid #e2e8f0; transition:background 0.1s;">
+            
+            <td style="padding:12px 14px; font-weight:800; color:#b91c1c; white-space:nowrap;">
+              {{ item.exit_date.strftime('%d/%m/%Y') }}
+            </td>
+
+            <td style="padding:12px 16px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <img src="{{ item.student_avatar }}" alt="" style="width:30px; height:30px; border-radius:50%; object-fit:cover; border:1px solid #cbd5e1;">
+                <div>
+                  <a href="{{ url_for('student_view', sid=item.student_id) }}" style="font-weight:800; color:#0B3D6E; text-decoration:none;">
+                    {{ item.student_name }}
+                  </a>
+                  <div style="font-size:11px; color:#64748b; font-weight:600;">
+                    {{ item.student_code }} • {{ item.student_level or 'Niveau non spécifié' }}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <td style="padding:12px 12px; white-space:nowrap;">
+              {% if item.student_phone %}
+                <a href="https://wa.me/212{{ item.student_whatsapp|replace(' ', '')|replace('-', '')|replace('+212', '')|replace('0', '', 1) if item.student_whatsapp.startswith('0') else item.student_whatsapp }}?text={{ ('السلام عليكم، نتواصل معكم من معهد إيلاس بخصوص متابعة دراسة التلميذ(ة) ' ~ item.student_name)|urlencode }}" 
+                   target="_blank" 
+                   class="btn btn-xs"
+                   style="background:#f0fdf4; border:1px solid #86efac; color:#16a34a; font-weight:800; padding:3px 8px; border-radius:6px; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+                  <span>💬</span> <span>{{ item.student_phone }}</span>
+                </a>
+              {% else %}
+                <span class="muted" style="font-size:11px;">—</span>
+              {% endif %}
+            </td>
+
+            <td style="padding:12px 12px; text-align:center;">
+              <span class="chip" style="font-size:11px; font-weight:800; background:#fef2f2; color:#b91c1c; border:1px solid #fca5a5;">
+                {{ item.matiere }}
+              </span>
+            </td>
+
+            <td style="padding:12px 14px; font-weight:600; color:#334155;">
+              {{ item.course_name }}
+            </td>
+
+            <td style="padding:12px 12px; text-align:center;">
+              {% if item.exit_type == 'non_renewed' %}
+                <span class="chip chip-orange" style="font-size:10.5px; font-weight:800;">
+                  ⏳ {{ item.reason_ar if lang == 'ar' else item.reason_fr }}
+                </span>
+              {% elif item.exit_type == 'trial_cancelled' %}
+                <span class="chip chip-gray" style="font-size:10.5px; font-weight:800;">
+                  🧪 {{ item.reason_ar if lang == 'ar' else item.reason_fr }}
+                </span>
+              {% else %}
+                <span class="chip chip-red" style="font-size:10.5px; font-weight:800;">
+                  🛑 {{ item.reason_ar if lang == 'ar' else item.reason_fr }}
+                </span>
+              {% endif %}
+            </td>
+
+            <td style="padding:12px 16px; font-size:11.5px; color:#64748b; max-width:260px;">
+              <div style="max-height:45px; overflow-y:auto; line-height:1.4;">
+                {{ item.notes or 'Aucun motif complémentaire spécifié.' }}
+              </div>
+            </td>
+
+            <td style="padding:12px 14px; text-align:center; white-space:nowrap;">
+              <a href="{{ url_for('student_view', sid=item.student_id) }}" 
+                 class="btn btn-xs" 
+                 style="background:#0B3D6E; color:#fff; font-weight:700; padding:4px 8px; border-radius:6px; text-decoration:none;">
+                👤 {{ 'الملف' if lang == 'ar' else 'Profil' }}
+              </a>
+              {% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+              <a href="{{ url_for('express_enrollment', student_id=item.student_id) }}" 
+                 class="btn btn-xs" 
+                 style="background:#10b981; color:#fff; font-weight:700; padding:4px 8px; border-radius:6px; text-decoration:none; margin-left:3px;"
+                 title="Réinscrire cet élève">
+                ⚡ {{ 'إعادة تسجيل' if lang == 'ar' else 'Réinscrire' }}
+              </a>
+              {% endif %}
+            </td>
+
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="8" style="text-align:center; padding:32px; color:#94a3b8;">
+              <div style="font-size:24px; margin-bottom:6px;">📤</div>
+              <div style="font-weight:700;">{{ 'لا توجد حالات مغادرة في هذه الفترة' if lang == 'ar' else 'Aucune sortie enregistrée pour cette sélection' }}</div>
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<script>
+function toggleMatiereDetails(matId) {
+  var el = document.getElementById('details_' + matId);
+  if (!el) return;
+  if (el.style.display === 'none' || el.style.display === '') {
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function showSubTab(matId, tabType) {
+  var entDiv = document.getElementById('sub_ent_' + matId);
+  var exiDiv = document.getElementById('sub_exi_' + matId);
+  var btnEnt = document.getElementById('btn_ent_' + matId);
+  var btnExi = document.getElementById('btn_exi_' + matId);
+
+  if (tabType === 'ent') {
+    if (entDiv) entDiv.style.display = 'block';
+    if (exiDiv) exiDiv.style.display = 'none';
+    if (btnEnt) {
+      btnEnt.style.background = '#dcfce7';
+      btnEnt.style.color = '#15803d';
+      btnEnt.style.fontWeight = '800';
+    }
+    if (btnExi) {
+      btnExi.style.background = '#f1f5f9';
+      btnExi.style.color = '#64748b';
+      btnExi.style.fontWeight = '600';
+    }
+  } else {
+    if (entDiv) entDiv.style.display = 'none';
+    if (exiDiv) exiDiv.style.display = 'block';
+    if (btnExi) {
+      btnExi.style.background = '#fee2e2';
+      btnExi.style.color = '#b91c1c';
+      btnExi.style.fontWeight = '800';
+    }
+    if (btnEnt) {
+      btnEnt.style.background = '#f1f5f9';
+      btnEnt.style.color = '#64748b';
+      btnEnt.style.fontWeight = '600';
+    }
+  }
+}
+</script>
+
+{% endblock %}

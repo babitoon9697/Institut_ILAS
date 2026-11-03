@@ -1,0 +1,1382 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+  .exp-container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* Filter Panel */
+  .filter-panel {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+  }
+
+  /* KPI Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1.5px solid #e2e8f0;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+  }
+  .kpi-card.kpi-red { border-left: 5px solid #ef4444; }
+  .kpi-card.kpi-indigo { border-left: 5px solid #6366f1; }
+  .kpi-card.kpi-emerald { border-left: 5px solid #10b981; }
+  .kpi-card.kpi-blue { border-left: 5px solid #0284c7; }
+
+  .kpi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .kpi-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+  .kpi-value {
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .kpi-sub {
+    font-size: 11.5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Table Card & Modern Table */
+  .table-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+    overflow: visible;
+  }
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 16px;
+  }
+  .modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+  }
+  body.rtl .modern-table {
+    text-align: right;
+  }
+  .modern-table th {
+    background: #f8fafc;
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1.5px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  .modern-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    transition: background-color 0.15s ease;
+  }
+  .modern-table tr:hover td {
+    background-color: #f8fbff;
+  }
+  .modern-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Teacher Cell */
+  .teacher-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .teacher-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+    color: #3730a3;
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #a5b4fc;
+  }
+  .wa-pill {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    transition: background 0.15s;
+  }
+  .wa-pill:hover {
+    background: #bbf7d0;
+  }
+
+  /* Actions Cluster & Modern Dropdown */
+  .actions-cell {
+    position: relative;
+    white-space: nowrap;
+    text-align: right;
+    width: 155px;
+    min-width: 155px;
+  }
+  body.rtl .actions-cell {
+    text-align: left;
+  }
+  .action-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    position: relative;
+  }
+  .btn-primary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 110px;
+    min-width: 110px;
+    max-width: 110px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 800;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-sizing: border-box;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .btn-act-blue {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+  }
+  .btn-act-blue:hover {
+    background: #1d4ed8;
+    color: #ffffff;
+    box-shadow: 0 3px 8px rgba(29, 78, 216, 0.25);
+  }
+  .btn-menu-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+    flex-shrink: 0;
+  }
+  .btn-menu-trigger:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+  }
+  .dropdown-menu-float {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 1050;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 10px 28px -4px rgba(15, 23, 42, 0.18), 0 4px 10px -2px rgba(15, 23, 42, 0.08);
+    min-width: 220px;
+    padding: 6px;
+    display: none;
+    text-align: left;
+  }
+  body.rtl .dropdown-menu-float {
+    right: auto;
+    left: 0;
+    text-align: right;
+  }
+  .dropdown-menu-float.show {
+    display: block;
+    animation: fadeInMenu 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes fadeInMenu {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .dropdown-item-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #334155;
+    text-decoration: none;
+    transition: background 0.15s;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    box-sizing: border-box;
+    text-align: inherit;
+  }
+  .dropdown-item-link:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+  .dropdown-item-link.text-danger {
+    color: #dc2626;
+  }
+  .dropdown-item-link.text-danger:hover {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+  .dropdown-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 4px 0;
+  }
+
+  /* Live Calculator Preview Box */
+  .calc-preview-box {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1.5px solid #bae6fd;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  /* ======================================================= */
+  /* PRO COMPACT EXPENSES & COPIES MODAL                     */
+  /* ======================================================= */
+  @keyframes expModalPop {
+    from { opacity: 0; transform: scale(0.97) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .exp-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(4px);
+    z-index: 2500;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+  .exp-modal-container {
+    background: #ffffff;
+    border-radius: 18px;
+    width: 100%;
+    max-width: 760px;
+    max-height: min(92vh, 800px);
+    box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(226, 232, 240, 0.8);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: expModalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .exp-modal-header {
+    background: linear-gradient(135deg, #0B3D6E 0%, #0284c7 100%);
+    color: #ffffff;
+    padding: 14px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .exp-modal-header-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    flex-shrink: 0;
+  }
+  .exp-modal-close-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+  .exp-modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: rotate(90deg);
+  }
+  .exp-modal-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+  }
+  .exp-modal-body::-webkit-scrollbar {
+    width: 6px;
+  }
+  .exp-modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+  .exp-modal-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+  .exp-section-box {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    transition: border-color 0.15s;
+  }
+  .exp-section-box:hover {
+    border-color: #cbd5e1;
+  }
+  .exp-section-box.calc-theme {
+    background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);
+    border: 1.5px solid #bae6fd;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.04);
+  }
+  .exp-field-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .exp-field-input {
+    border-radius: 9px;
+    border: 1.5px solid #cbd5e1;
+    padding: 7px 11px;
+    width: 100%;
+    font-size: 13px;
+    color: #0f172a;
+    background: #ffffff;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .exp-field-input:focus {
+    outline: none;
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+  }
+  .quick-qty-btn {
+    border: 1px solid #bae6fd;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    user-select: none;
+  }
+  .quick-qty-btn:hover {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #0284c7;
+  }
+  .exp-opt-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    padding: 8px 12px;
+    cursor: pointer;
+    flex: 1;
+    min-width: 240px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #1e293b;
+    transition: all 0.15s ease;
+    user-select: none;
+  }
+  .exp-opt-card:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+  }
+  .exp-modal-footer {
+    background: #f8fafc;
+    border-top: 1.5px solid #e2e8f0;
+    padding: 12px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  @media (max-width: 680px) {
+    .exp-grid-2 {
+      grid-template-columns: 1fr !important;
+    }
+    .exp-grid-3 {
+      grid-template-columns: 1fr !important;
+    }
+    .exp-modal-footer {
+      flex-direction: column-reverse;
+      align-items: stretch;
+    }
+    .exp-modal-footer > div {
+      justify-content: space-between;
+      width: 100%;
+    }
+  }
+
+  /* ========================================================
+     MOBILE SAAS CARDS (PORTRAIT <= 768px)
+     ======================================================== */
+  .mobile-card-label {
+    display: none;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+
+  @media screen and (max-width: 768px) {
+    .exp-container {
+      padding: 0 4px;
+    }
+    .kpi-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 10px !important;
+    }
+    .modern-table thead {
+      display: none !important;
+    }
+    .modern-table, .modern-table tbody {
+      display: block !important;
+      width: 100% !important;
+    }
+    .modern-table tr {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 10px !important;
+      background: #ffffff !important;
+      border: 1.5px solid #cbd5e1 !important;
+      border-radius: 18px !important;
+      padding: 15px !important;
+      margin-bottom: 14px !important;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05) !important;
+      position: relative !important;
+      box-sizing: border-box !important;
+    }
+    .modern-table td {
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      padding: 0 !important;
+      border: none !important;
+      background: transparent !important;
+      min-width: 0 !important;
+    }
+
+    /* 1. Header: Bon & Date */
+    .modern-table td.cell-receipt {
+      grid-column: 1 / -1 !important;
+      padding-bottom: 10px !important;
+      padding-right: 95px !important;
+      border-bottom: 1px solid #f1f5f9 !important;
+    }
+    body.rtl .modern-table td.cell-receipt {
+      padding-right: 0 !important;
+      padding-left: 95px !important;
+    }
+
+    /* 2. Top-Right Pinned Amount */
+    .modern-table td.cell-amount {
+      position: absolute !important;
+      top: 15px !important;
+      right: 15px !important;
+      text-align: right !important;
+      align-items: flex-end !important;
+      background: #fef2f2 !important;
+      border: 1.5px solid #fecaca !important;
+      border-radius: 12px !important;
+      padding: 6px 12px !important;
+      z-index: 2 !important;
+    }
+    body.rtl .modern-table td.cell-amount {
+      right: auto !important;
+      left: 15px !important;
+      text-align: left !important;
+      align-items: flex-start !important;
+    }
+
+    /* 3. Middle Boxes: Period & Teacher & Details */
+    .modern-table td.cell-period,
+    .modern-table td.cell-teacher {
+      background: #f8fafc !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 12px !important;
+      padding: 9px 11px !important;
+    }
+
+    .modern-table td.cell-details {
+      grid-column: 1 / -1 !important;
+      background: #f0f9ff !important;
+      border: 1px solid #bae6fd !important;
+      border-radius: 10px !important;
+      padding: 8px 11px !important;
+    }
+
+    /* 4. Footer Actions */
+    .modern-table td.cell-actions {
+      grid-column: 1 / -1 !important;
+      border-top: 1.5px solid #f1f5f9 !important;
+      padding-top: 10px !important;
+      margin-top: 2px !important;
+      width: 100% !important;
+    }
+    .modern-table td.cell-actions .action-group {
+      width: 100% !important;
+      display: flex !important;
+      gap: 8px !important;
+      align-items: center !important;
+      position: relative !important;
+    }
+    .modern-table td.cell-actions .btn-primary-action {
+      flex: 1 1 auto !important;
+      width: auto !important;
+      height: 42px !important;
+      font-size: 13.5px !important;
+      font-weight: 800 !important;
+      justify-content: center !important;
+      border-radius: 10px !important;
+    }
+    .modern-table td.cell-actions .btn-menu-trigger {
+      width: 42px !important;
+      min-width: 42px !important;
+      max-width: 42px !important;
+      height: 42px !important;
+      border-radius: 10px !important;
+      font-size: 18px !important;
+      flex-shrink: 0 !important;
+    }
+
+    .mobile-card-label {
+      display: block !important;
+    }
+  }
+
+  @media screen and (max-width: 440px) {
+    .kpi-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .modern-table tr {
+      grid-template-columns: 1fr !important;
+    }
+    .modern-table td.cell-period,
+    .modern-table td.cell-teacher {
+      grid-column: 1 / -1 !important;
+    }
+  }
+</style>
+
+<div class="exp-container">
+
+  <!-- TOP HEADER & CONTROLS -->
+  <div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+    <div>
+      <div class="muted" style="font-size:12px">
+        <a href="{{ url_for('teachers') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ 'الأساتذة' if lang=='ar' else 'Enseignants' }}</a>
+        {% if cur_user and cur_user.role == 'admin' %}
+        <span style="margin:0 5px; color:#cbd5e1;">•</span>
+        <a href="{{ url_for('teachers_payroll', month=req_month) }}" style="text-decoration:none; color:#7c3aed; font-weight:700;">💰 {{ 'كشف الأجور' if lang=='ar' else 'Rapport de Paie' }}</a>
+        <span style="margin:0 5px; color:#cbd5e1;">•</span>
+        <a href="{{ url_for('teacher_advances', month=req_month) }}" style="text-decoration:none; color:#059669; font-weight:700;">💸 {{ 'التسبيقات' if lang=='ar' else 'Avances' }}</a>
+        {% endif %}
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+        <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:900;">
+          🖨️ {{ 'سجل مصاريف ونسخ وثائق الأساتذة' if lang=='ar' else 'Frais & Copies des Enseignants' }}
+        </h2>
+        <span class="chip" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;">
+          EXPENSES & COPIES
+        </span>
+      </div>
+      <p class="muted" style="margin:3px 0 0 0; font-size:12.5px;">
+        {{ 'حساب تكلفة النسخ بالصفحة والكتب والمستلزمات مع الخصم التلقائي المباشر من أجر الأستاذ للشهر المعني' if lang=='ar' else 'Tarification automatique des copies par page, livres et charges avec déduction directe sur la paie du même mois.' }}
+      </p>
+    </div>
+
+    <div class="flex wrap" style="gap:8px;">
+      <button type="button" class="btn btn-primary" onclick="openExpenseModal()" style="background:#0284c7; border-color:#0284c7; font-weight:800; font-size:12.5px; padding:7px 15px; border-radius:9px; box-shadow:0 3px 10px rgba(2,132,199,0.25); display:inline-flex; align-items:center; gap:6px;">
+        🖨️ <span>{{ '+ تسجيل نسخ / مصاريف' if lang=='ar' else '+ Enregistrer Copies / Frais' }}</span>
+      </button>
+      {% if cur_user and cur_user.role == 'admin' %}
+      <a class="btn btn-outline" href="{{ url_for('teachers_payroll', month=req_month) }}" style="font-weight:700; font-size:12.5px; padding:7px 13px; border-radius:9px; border-color:#cbd5e1; color:#334155; display:inline-flex; align-items:center; gap:6px;">
+        💰 <span>{{ 'كشف الأجور الشهري' if lang=='ar' else 'Voir le Rapport de Paie' }}</span>
+      </a>
+      <a class="btn btn-outline" href="{{ url_for('teacher_advances', month=req_month) }}" style="font-weight:700; font-size:12.5px; padding:7px 13px; border-radius:9px; border-color:#cbd5e1; color:#059669; display:inline-flex; align-items:center; gap:6px;">
+        💸 <span>{{ 'سجل التسبيقات' if lang=='ar' else 'Avances sur Salaire' }}</span>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- COMPACT FILTER BAR -->
+  <div class="filter-panel">
+    <form method="GET" action="{{ url_for('teacher_expenses') }}">
+      <div style="display:flex; align-items:flex-end; flex-wrap:wrap; gap:14px;">
+        
+        <!-- Month Filter -->
+        <div style="min-width:170px;">
+          <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">
+            📅 {{ 'شهر الخصم من الأجر' if lang=='ar' else 'Mois de déduction (Paie)' }}
+          </label>
+          <input type="month" name="month" value="{{ req_month }}" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:7px 12px; font-weight:700; color:#0B3D6E; height:38px; width:100%; box-sizing:border-box;">
+        </div>
+
+        <!-- Teacher Filter -->
+        <div style="min-width:220px; flex:1;">
+          <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">
+            👨‍🏫 {{ 'الأستاذ' if lang=='ar' else 'Enseignant' }}
+          </label>
+          <select name="teacher_id" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:7px 12px; font-weight:700; color:#0B3D6E; height:38px; width:100%; box-sizing:border-box;">
+            <option value="">{{ 'جميع الأساتذة' if lang=='ar' else 'Tous les enseignants' }}</option>
+            {% for t in all_teachers %}
+            <option value="{{ t.id }}" {% if selected_teacher_id == t.id %}selected{% endif %}>Prof. {{ t.full_name }} ({{ t.specialty or 'Général' }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Type Filter -->
+        <div style="min-width:180px;">
+          <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">
+            🏷️ {{ 'نوع العملية' if lang=='ar' else 'Type de Charge' }}
+          </label>
+          <select name="expense_type" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:7px 12px; font-weight:600; color:#0B3D6E; height:38px; width:100%; box-sizing:border-box;">
+            <option value="">{{ 'الكل (جميع الأنواع)' if lang=='ar' else 'Tous les types' }}</option>
+            <option value="copies" {% if selected_type == 'copies' %}selected{% endif %}>📄 Photocopies & Tirages</option>
+            <option value="book" {% if selected_type == 'book' %}selected{% endif %}>📚 Manuels & Livres</option>
+            <option value="paper" {% if selected_type == 'paper' %}selected{% endif %}>📦 Papier & Ramettes</option>
+            <option value="supplies" {% if selected_type == 'supplies' %}selected{% endif %}>✏️ Fournitures</option>
+            <option value="other" {% if selected_type == 'other' %}selected{% endif %}>🏷️ Autre charge</option>
+          </select>
+        </div>
+
+        <!-- Text Search Box -->
+        <div style="min-width:200px; flex:1;">
+          <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">
+            🔍 {{ 'بحث سريع' if lang=='ar' else 'Recherche' }}
+          </label>
+          <input type="text" name="q" value="{{ search_q }}" placeholder="{{ 'رقم الوصل، الموضوع، الأستاذ...' if lang=='ar' else 'N° reçu, titre, motif...' }}" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:7px 12px; font-size:12.5px; height:38px; width:100%; box-sizing:border-box;">
+        </div>
+
+        <!-- Submit & Reset -->
+        <div style="display:flex; gap:8px;">
+          <button type="submit" class="btn btn-primary" style="background:#0B3D6E; border-color:#0B3D6E; font-weight:800; border-radius:10px; padding:8px 18px; font-size:13px; height:38px; display:inline-flex; align-items:center; gap:6px;">
+            🔍 <span>{{ 'تصفية' if lang=='ar' else 'Filtrer' }}</span>
+          </button>
+          {% if req_month or selected_teacher_id or selected_type or search_q %}
+          <a href="{{ url_for('teacher_expenses') }}" class="btn btn-light" style="font-weight:700; border-radius:10px; padding:8px 12px; height:38px; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; border:1px solid #cbd5e1;" title="{{ 'إعادة ضبط' if lang=='ar' else 'Réinitialiser' }}">
+            🔄
+          </a>
+          {% endif %}
+        </div>
+
+      </div>
+    </form>
+  </div>
+
+  <!-- STAT CARDS (4 Modern SaaS Cards) -->
+  <div class="kpi-grid">
+    <!-- 1. Total Frais & Copies Déduits -->
+    <div class="kpi-card kpi-red">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'مجموع المصاريف والنسخ المخصومة' if lang=='ar' else 'Total Frais & Copies Déduits' }}</span>
+        <div class="kpi-icon" style="background:#fef2f2; color:#dc2626;">🖨️</div>
+      </div>
+      <div class="kpi-value" style="color:#dc2626;">
+        -{{ '%.2f'|format(total_amount) }} <span style="font-size:13px; font-weight:700;">{{ settings.currency }}</span>
+      </div>
+      <div class="kpi-sub" style="color:#dc2626; font-weight:700;">
+        <span>✓</span> {{ 'Déduit automatiquement de la paie du mois' if lang=='fr' else 'تخصم تلقائياً من كشف أجور الشهر' }}
+      </div>
+    </div>
+
+    <!-- 2. Total Copies Imprimées -->
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'مجموع النسخ والصفحات' if lang=='ar' else 'Volume Total des Tirages' }}</span>
+        <div class="kpi-icon" style="background:#e0f2fe; color:#0284c7;">📄</div>
+      </div>
+      <div class="kpi-value" style="color:#0284c7;">
+        {{ "{:,}".format(total_copies)|replace(',', ' ') }} <span style="font-size:13px; font-weight:700; color:#64748b;">copies</span>
+      </div>
+      <div class="kpi-sub" style="color:#0284c7; font-weight:700;">
+        <span>📊</span> Tarif réf : {{ '%.2f'|format(default_copy_price) }} DH / page
+      </div>
+    </div>
+
+    <!-- 3. Enseignants Concernés -->
+    <div class="kpi-card kpi-indigo">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'الأساتذة المعنيون' if lang=='ar' else 'Enseignants Concernés' }}</span>
+        <div class="kpi-icon" style="background:#e0e7ff; color:#4f46e5;">👨‍🏫</div>
+      </div>
+      <div class="kpi-value" style="color:#4338ca;">
+        {{ teacher_count }} <span style="font-size:13px; font-weight:700; color:#64748b;">prof(s)</span>
+      </div>
+      <div class="kpi-sub" style="color:#4338ca;">
+        <span>✓</span> {{ 'Sur la période sélectionnée' if lang=='fr' else 'خلال الفترة المحددة' }}
+      </div>
+    </div>
+
+    <!-- 4. Nombre de Bons / Reçus -->
+    <div class="kpi-card kpi-emerald">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'إجمالي العمليات' if lang=='ar' else 'Nombre de Bons Émis' }}</span>
+        <div class="kpi-icon" style="background:#dcfce7; color:#059669;">📑</div>
+      </div>
+      <div class="kpi-value" style="color:#047857;">
+        {{ expenses|length }} <span style="font-size:13px; font-weight:700; color:#64748b;">bon(s)</span>
+      </div>
+      <div class="kpi-sub" style="color:#047857; font-weight:700;">
+        <span>✓</span> {{ 'Justificatifs comptables archivés' if lang=='fr' else 'وصولات تسليم رسمية محفوظة' }}
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE CARD -->
+  <div class="table-card">
+    {% if expenses %}
+    <div class="table-responsive">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th style="padding-left:20px;">{{ 'رقم الوصل & التاريخ' if lang=='ar' else 'Bon & Date' }}</th>
+            <th style="text-align:center;">{{ 'شهر الخصم & الربط' if lang=='ar' else 'Mois & Liaison' }}</th>
+            <th>{{ 'الأستاذ & التخصص' if lang=='ar' else 'Enseignant & Contact' }}</th>
+            <th>{{ 'طبيعة العملية والتفاصيل' if lang=='ar' else 'Nature & Détails du Tirage' }}</th>
+            <th style="text-align:center;">{{ 'المبلغ المخصوم' if lang=='ar' else 'Montant Déduit' }}</th>
+            <th class="actions-cell" style="padding-right:20px;">{{ 'إجراءات' if lang=='ar' else 'Actions' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in expenses %}
+          <tr>
+            <!-- 1. Bon / Reçu & Date -->
+            <td class="cell-receipt" style="padding-left:20px;">
+              <span class="mobile-card-label">{{ 'وصل السحب' if lang=='ar' else 'Bon de tirage' }}</span>
+              <div style="font-weight:900; color:#0B3D6E; font-family:monospace; font-size:12.5px; display:flex; align-items:center; gap:6px;">
+                <span>📄</span>
+                <span>{{ e.receipt_no }}</span>
+              </div>
+              <div style="font-size:11.5px; color:#64748b; margin-top:2px; display:flex; align-items:center; gap:6px;">
+                <span>📆 {{ e.date.strftime('%d/%m/%Y') if e.date else '—' }}</span>
+                <span>•</span>
+                <span class="chip" style="background:#f1f5f9; color:#475569; font-size:10px; font-weight:800; border:1px solid #e2e8f0; padding:1px 5px; border-radius:4px;">
+                  {{ e.type_badge_label_fr }}
+                </span>
+              </div>
+            </td>
+
+            <!-- 2. Mois d'imputation & Caisse -->
+            <td class="cell-period" style="text-align:center;">
+              <span class="mobile-card-label">{{ 'شهر الخصم' if lang=='ar' else 'Mois d\'imputation' }}</span>
+              <span class="chip" style="background:#ede9fe; color:#6d28d9; border:1px solid #ddd6fe; font-weight:800; font-size:11px; padding:2px 8px; border-radius:6px; display:inline-block; margin-bottom:4px;">
+                📅 {{ e.period_month }}
+              </span>
+              <div>
+                {% if e.expense_id %}
+                <span class="chip" style="background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;" title="Synchronisé dans la caisse générale de l'institut">
+                  ✓ Caisse
+                </span>
+                {% else %}
+                <span class="chip" style="background:#f8fafc; color:#64748b; border:1px solid #e2e8f0; font-size:10px; font-weight:700; padding:1px 6px; border-radius:4px;" title="Retenue interne sur paie">
+                  Interne Paie
+                </span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- 3. Enseignant -->
+            <td class="cell-teacher">
+              <span class="mobile-card-label">{{ 'الأستاذ' if lang=='ar' else 'Enseignant' }}</span>
+              <div class="teacher-cell">
+                <div class="teacher-avatar">
+                  {{ e.teacher.full_name[:1]|upper if e.teacher else 'P' }}
+                </div>
+                <div>
+                  <div style="font-weight:800; color:#0B3D6E; font-size:13.5px;">
+                    Prof. {{ e.teacher.full_name if e.teacher else 'Inconnu' }}
+                  </div>
+                  <div style="font-size:11px; color:#64748b; margin-top:2px; display:flex; align-items:center; gap:6px;">
+                    <span>📚 {{ e.teacher.specialty if e.teacher and e.teacher.specialty else 'Général' }}</span>
+                    {% if e.teacher and e.teacher.phone %}
+                    <span>•</span>
+                    <a href="https://wa.me/{{ e.teacher.phone|replace(' ', '')|replace('-', '') }}" target="_blank" class="wa-pill" title="WhatsApp direct">
+                      <span>💬</span> {{ e.teacher.phone }}
+                    </a>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- 4. Nature & Détails -->
+            <td class="cell-details">
+              <span class="mobile-card-label">{{ 'تفاصيل العملية' if lang=='ar' else 'Détails de la dépense' }}</span>
+              <div style="font-weight:700; color:#1e293b; font-size:13px;">
+                {{ e.title }}
+              </div>
+              <div style="font-size:11px; color:#64748b; margin-top:2px; display:flex; align-items:center; gap:8px;">
+                {% if e.expense_type == 'copies' %}
+                <span class="chip" style="background:#f0f9ff; color:#0284c7; border:1px solid #bae6fd; font-weight:800; font-size:10.5px; padding:1px 6px;">
+                  📄 {{ e.quantity }} copies × {{ '%.2f'|format(e.unit_price) }} DH/page
+                </span>
+                {% elif e.quantity and e.unit_price %}
+                <span class="chip" style="background:#f8fafc; color:#475569; border:1px solid #e2e8f0; font-size:10.5px; padding:1px 6px;">
+                  Qté: {{ e.quantity }} × {{ '%.2f'|format(e.unit_price) }} DH
+                </span>
+                {% endif %}
+                {% if e.notes %}
+                <span style="color:#94a3b8;">· {{ e.notes }}</span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- 5. Montant Déduit -->
+            <td class="cell-amount" style="text-align:center; background:#fff5f5;">
+              <div style="font-weight:900; color:#dc2626; font-size:15px;">
+                -{{ '%.2f'|format(e.amount) }} <small style="font-size:11px;">{{ settings.currency }}</small>
+              </div>
+              <div style="font-size:10px; color:#991b1b; font-weight:700; text-transform:uppercase; margin-top:1px;">
+                {{ 'خصم من الراتب' if lang=='ar' else 'Déduit sur paie' }}
+              </div>
+            </td>
+
+            <!-- 6. Actions (Standard 110px Button + Dropdown) -->
+            <td class="actions-cell cell-actions" style="padding-right:20px;">
+              <div class="action-group">
+                <!-- Primary Action: 110px Bon de Tirage -->
+                <a href="{{ url_for('teacher_expense_receipt', teid=e.id) }}" target="_blank" class="btn-primary-action btn-act-blue" title="{{ 'طباعة وصل التسليم والاقتطاع' if lang=='ar' else 'Imprimer le Bon de Tirage' }}">
+                  🖨️ <span>{{ 'bon tirage' if lang=='fr' else 'وصل السحب' }}</span>
+                </a>
+
+                <!-- Menu Trigger: 32px -->
+                <button type="button" class="btn-menu-trigger" onclick="toggleActionMenu(event, 'menu-exp-{{ e.id }}')" title="{{ 'خيارات إضافية' if lang=='ar' else 'Options' }}">
+                  ⋮
+                </button>
+
+                <!-- Floating Dropdown Menu -->
+                <div id="menu-exp-{{ e.id }}" class="dropdown-menu-float">
+                  <a href="{{ url_for('teacher_expense_receipt', teid=e.id) }}" target="_blank" class="dropdown-item-link">
+                    <span>🖨️</span>
+                    <span>{{ 'طباعة وصل السحب' if lang=='ar' else 'Imprimer le Bon de Tirage' }}</span>
+                  </a>
+                  <a href="{{ url_for('teachers_payroll', month=e.period_month) }}" class="dropdown-item-link">
+                    <span>💰</span>
+                    <span>{{ 'كشف أجور هذا الشهر' if lang=='ar' else 'Rapport de Paie du mois' }}</span>
+                  </a>
+                  {% if e.teacher_id %}
+                  <div class="dropdown-divider"></div>
+                  <a href="{{ url_for('teacher_student_lists', teacher_ids=e.teacher_id, month=e.period_month) }}" class="dropdown-item-link">
+                    <span>📜</span>
+                    <span>{{ 'تلاميذ الأستاذ' if lang=='ar' else 'Élèves de l\'enseignant' }}</span>
+                  </a>
+                  <a href="{{ url_for('teacher_form', tid=e.teacher_id) }}" class="dropdown-item-link">
+                    <span>👤</span>
+                    <span>{{ 'ملف الأستاذ' if lang=='ar' else 'Fiche enseignant' }}</span>
+                  </a>
+                  {% endif %}
+                  {% if cur_user and cur_user.role == 'admin' %}
+                  <div class="dropdown-divider"></div>
+                  <form method="POST" action="{{ url_for('teacher_expense_delete', teid=e.id) }}" onsubmit="return confirm('{{ 'هل أنت متأكد من حذف هذه العملية واسترجاع المستحقات للأستاذ؟' if lang=='ar' else 'Êtes-vous sûr de vouloir supprimer cette charge et rétablir le montant dans la paie de l\'enseignant ?' }}');" style="margin:0;">
+                    <button type="submit" class="dropdown-item-link text-danger">
+                      <span>🗑️</span>
+                      <span>{{ 'حذف واسترجاع المبلغ' if lang=='ar' else 'Supprimer la charge' }}</span>
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+        <!-- Table Footer -->
+        <tfoot>
+          <tr style="background:#f8fafc; font-weight:800; border-top:1.5px solid #cbd5e1;">
+            <td colspan="3" style="padding:12px 20px; text-align:right; color:#0B3D6E; font-size:13px;">
+              {{ 'مجموع المصاريف والتيرجات المخصومة' if lang=='ar' else 'TOTAL DES FRAIS & COPIES DÉDUITS' }} :
+            </td>
+            <td style="padding:12px 10px; color:#0284c7; font-size:13px;">
+              📄 {{ "{:,}".format(total_copies)|replace(',', ' ') }} copies
+            </td>
+            <td style="padding:12px 10px; text-align:center; color:#dc2626; font-size:16px; background:#fef2f2;">
+              -{{ '%.2f'|format(total_amount) }} {{ settings.currency }}
+            </td>
+            <td style="padding:12px 20px; text-align:right; color:#64748b; font-size:12px;">
+              {{ expenses|length }} {{ 'عملية' if lang=='ar' else 'opération(s)' }} · {{ teacher_count }} {{ 'أستاذ' if lang=='ar' else 'prof(s)' }}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty p-5" style="text-align:center; padding:50px 20px; color:#64748b;">
+      <div style="font-size:36px; margin-bottom:10px;">🖨️</div>
+      <h3 style="margin:0 0 6px 0; color:#0B3D6E;">{{ 'لا توجد مصاريف أو نسخ وثائق مسجلة' if lang=='ar' else 'Aucun tirage ou frais enregistré' }}</h3>
+      <p style="margin:0; font-size:13px;">{{ 'لم يتم تسجيل أي مصاريف تصوير أو كتب للأساتذة تطابق معايير البحث.' if lang=='ar' else 'Aucune charge de tirage ou achat pour enseignant n\'a été enregistrée pour les filtres sélectionnés.' }}</p>
+      <button type="button" class="btn btn-primary" onclick="openExpenseModal()" style="margin-top:14px; font-weight:800; background:#0284c7; border-color:#0284c7; border-radius:9px; padding:8px 18px;">
+        + {{ 'تسجيل نسخ جديدة الآن' if lang=='ar' else 'Enregistrer un Tirage Maintenant' }}
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- MODAL: ENREGISTRER FRAIS & COPIES ENSEIGNANT -->
+<div id="expenseModal" class="exp-modal-overlay">
+  <div class="exp-modal-container">
+    
+    <!-- Modal Header -->
+    <div class="exp-modal-header">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="exp-modal-header-icon">🖨️</div>
+        <div>
+          <h3 style="margin:0; font-size:16px; font-weight:800; line-height:1.2;">
+            {{ 'تسجيل نسخ وثائق أو مصاريف للأستاذ' if lang=='ar' else 'Enregistrer Frais & Copies Enseignant' }}
+          </h3>
+          <div style="font-size:11.5px; color:#bae6fd; font-weight:600; margin-top:2px;">
+            <span>✓</span> {{ 'Déduction automatique sur le bulletin de paie du mois' if lang=='fr' else 'خصم تلقائي مباشر من أجر الأستاذ للشهر المعني' }}
+          </div>
+        </div>
+      </div>
+      <button type="button" onclick="closeExpenseModal()" class="exp-modal-close-btn" title="{{ 'إغلاق' if lang=='ar' else 'Fermer' }}">&times;</button>
+    </div>
+
+    <!-- Modal Form -->
+    <form method="POST" action="{{ url_for('teacher_expense_new') }}" style="display:contents;">
+      
+      <div class="exp-modal-body">
+        
+        <!-- SECTION 1: ENSEIGNANT & ARTICLE / PRESTATION -->
+        <div class="exp-section-box">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;" class="exp-grid-2">
+            <!-- Enseignant Bénéficiaire -->
+            <div>
+              <label class="exp-field-label">
+                👨‍🏫 <span>{{ 'اختيار الأستاذ المعني' if lang=='ar' else 'Enseignant Bénéficiaire' }}</span> <span style="color:#dc2626;">*</span>
+              </label>
+              <select name="teacher_id" id="modalTeacherSelect" required class="exp-field-input" style="font-weight:700; color:#0B3D6E; height:38px;">
+                <option value="">-- {{ 'اختر الأستاذ...' if lang=='ar' else 'Sélectionnez un enseignant...' }} --</option>
+                {% for t in all_teachers %}
+                <option value="{{ t.id }}" {% if selected_teacher_id == t.id %}selected{% endif %}>
+                  Prof. {{ t.full_name }} ({{ t.specialty or 'Général' }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Dynamic Article Catalog Selection -->
+            <div>
+              <label class="exp-field-label">
+                📦 <span>{{ 'المادة أو نوع الخدمة' if lang=='ar' else 'Article / Type de Charge' }}</span> <span style="color:#dc2626;">*</span>
+              </label>
+              <select name="charge_item_id" id="modalChargeItemId" onchange="onChargeItemChanged()" class="exp-field-input" style="font-weight:700; color:#0B3D6E; height:38px;">
+                <optgroup label="{{ 'اللوازم والخدمات المعرفة' if lang=='ar' else 'Catalogue standard & mémorisé' }}">
+                  {% for ci in charge_items %}
+                  <option value="{{ ci.id }}" 
+                          data-price="{{ '%.2f'|format(ci.unit_price) }}" 
+                          data-unit="{{ ci.unit_label }}" 
+                          data-category="{{ ci.category }}" 
+                          data-name="{{ ci.name }}">
+                    {{ ci.name }} — {{ '%.2f'|format(ci.unit_price) }} DH / {{ ci.unit_label }}
+                  </option>
+                  {% endfor %}
+                </optgroup>
+                <option value="custom" style="font-weight:800; color:#0284c7;">➕ {{ 'أخرى (إضافة مادة جديدة يدوياً)' if lang=='ar' else 'Autre (Ajouter un nouvel article personnalisé)' }}</option>
+              </select>
+              <input type="hidden" name="expense_type" id="modalExpenseType" value="copies">
+            </div>
+          </div>
+
+          <!-- Custom Item Input Row (Revealed only when 'custom' is selected) -->
+          <div id="customItemRow" style="display:none; background:#f0f9ff; border:1.5px dashed #0284c7; border-radius:10px; padding:10px 12px; margin-top:10px;">
+            <div style="font-size:11.5px; font-weight:800; color:#0369a1; margin-bottom:6px;">
+              ✨ {{ 'تعريف مادة جديدة لحفظها واستخدامها مستقبلاً' if lang=='ar' else 'Nouvel Article personnalisé (Sera enregistré dans le catalogue)' }}
+            </div>
+            <div style="display:grid; grid-template-columns:2fr 1fr; gap:10px; margin-bottom:6px;" class="exp-grid-2">
+              <div>
+                <label style="font-size:10.5px; font-weight:700; color:#334155; display:block; margin-bottom:3px;">
+                  {{ 'اسم المادة' if lang=='ar' else 'Nom de l\'article' }} <span style="color:#dc2626;">*</span>
+                </label>
+                <input type="text" name="custom_item_name" id="modalCustomName" placeholder="Ex: Marqueur bleu, Trousse..." class="exp-field-input" style="height:34px;">
+              </div>
+              <div>
+                <label style="font-size:10.5px; font-weight:700; color:#334155; display:block; margin-bottom:3px;">
+                  {{ 'وحدة القياس' if lang=='ar' else 'Unité' }}
+                </label>
+                <input type="text" name="unit_label" id="modalUnitLabel" placeholder="Ex: unité, paquet..." value="unité" class="exp-field-input" style="height:34px;">
+              </div>
+            </div>
+            <label style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700; color:#0369a1; cursor:pointer; margin:0;">
+              <input type="checkbox" name="save_to_catalog" value="1" checked style="accent-color:#0284c7;">
+              <span>💾 {{ 'حفظ هذه المادة وسعرها في النظام للاستعمال السريع لاحقاً' if lang=='ar' else 'Mémoriser dans le catalogue pour une réutilisation rapide' }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- SECTION 2: TARIFICATION & CALCULATEUR AUTOMATIQUE (3 Columns) -->
+        <div class="exp-section-box calc-theme">
+          <div style="display:grid; grid-template-columns:1.2fr 1fr 1.1fr; gap:12px; align-items:flex-start;" class="exp-grid-3">
+            <!-- Quantity with Quick Chips -->
+            <div>
+              <label id="lblQuantity" class="exp-field-label">
+                📄 <span>{{ 'عدد النسخ / الصفحات' if lang=='ar' else 'Nombre de Copies / Pages' }}</span> <span style="color:#dc2626;">*</span>
+              </label>
+              <input type="number" step="1" min="1" name="quantity" id="modalQuantity" value="100" oninput="recalcTotal()" required placeholder="Ex: 100" class="exp-field-input" style="font-weight:800; font-size:15px; height:38px;">
+              <div style="display:flex; align-items:center; gap:4px; margin-top:5px; flex-wrap:wrap;">
+                <span style="font-size:10px; color:#64748b; font-weight:700;">{{ 'سريع:' if lang=='ar' else 'Rapide:' }}</span>
+                <button type="button" class="quick-qty-btn" onclick="setQuickQty(50)">50</button>
+                <button type="button" class="quick-qty-btn" onclick="setQuickQty(100)">100</button>
+                <button type="button" class="quick-qty-btn" onclick="setQuickQty(150)">150</button>
+                <button type="button" class="quick-qty-btn" onclick="setQuickQty(200)">200</button>
+                <button type="button" class="quick-qty-btn" onclick="setQuickQty(500)">500</button>
+              </div>
+            </div>
+
+            <!-- Unit Price -->
+            <div>
+              <label id="lblUnitPrice" class="exp-field-label">
+                💵 <span>{{ 'سعر الصفحة (درهم)' if lang=='ar' else 'Prix par Page (DH)' }}</span> <span style="color:#dc2626;">*</span>
+              </label>
+              <input type="number" step="0.01" min="0" name="unit_price" id="modalUnitPrice" value="{{ '%.2f'|format(default_copy_price) }}" oninput="recalcTotal()" required placeholder="Ex: 0.50" class="exp-field-input" style="font-weight:800; font-size:15px; height:38px;">
+              <div id="unitIndicatorText" style="font-size:10.5px; color:#64748b; font-weight:600; margin-top:5px;">
+                DH / page
+              </div>
+            </div>
+
+            <!-- Total Amount -->
+            <div>
+              <label class="exp-field-label" style="color:#b91c1c;">
+                💰 <span>{{ 'المبلغ المخصوم (درهم)' if lang=='ar' else 'Total à Déduire (DH)' }}</span> <span style="color:#dc2626;">*</span>
+              </label>
+              <input type="number" step="0.01" min="0.01" name="amount" id="modalAmount" value="50.00" oninput="onManualAmountChanged()" required class="exp-field-input" style="font-weight:900; font-size:16px; color:#dc2626; background:#fef2f2; border-color:#fca5a5; height:38px;">
+              <div style="font-size:11px; font-weight:700; color:#0369a1; margin-top:5px; display:flex; align-items:center; gap:4px;">
+                <span>🧮</span>
+                <span id="calcFormulaText">100 pages × 0.50 DH</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: CALENDRIER & MOTIF (2 Columns) -->
+        <div class="exp-section-box">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;" class="exp-grid-2">
+            <!-- Period Month -->
+            <div>
+              <label class="exp-field-label">
+                📅 <span>{{ 'شهر الخصم من الأجر' if lang=='ar' else 'Mois d\'imputation (Paie)' }}</span> <span style="color:#dc2626;">*</span>
+              </label>
+              <input type="month" name="period_month" id="modalPeriodMonth" value="{{ req_month or '' }}" required class="exp-field-input" style="font-weight:700; color:#0B3D6E; height:36px;">
+            </div>
+
+            <!-- Date -->
+            <div>
+              <label class="exp-field-label">
+                📆 <span>{{ 'تاريخ السحب الفعلي' if lang=='ar' else 'Date de l\'opération' }}</span> <span style="color:#dc2626;">*</span>
+              </label>
+              <input type="date" name="date" id="modalDate" required class="exp-field-input" style="font-weight:600; height:36px;">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:12px;" class="exp-grid-2">
+            <!-- Title / Designation -->
+            <div>
+              <label class="exp-field-label">
+                📝 <span>{{ 'موضوع السحب / البيان' if lang=='ar' else 'Titre / Objet du Tirage ou Frais' }}</span>
+              </label>
+              <input type="text" name="title" id="modalTitle" placeholder="{{ 'مثال: تصوير ملخص دروس 2Bac Maths...' if lang=='ar' else 'Ex: Polycopié 2Bac Maths - Devoir N°1' }}" class="exp-field-input" style="height:36px;">
+            </div>
+
+            <!-- Notes -->
+            <div>
+              <label class="exp-field-label">
+                💬 <span>{{ 'ملاحظات إضافية' if lang=='ar' else 'Remarques / Format' }}</span>
+              </label>
+              <input type="text" name="notes" placeholder="{{ 'اختياري: توضيحات إضافية...' if lang=='ar' else 'Optionnel: A4, Recto-verso, etc.' }}" class="exp-field-input" style="height:36px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4: OPTIONS (Sync Caisse & Print) -->
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <label class="exp-opt-card">
+            <input type="checkbox" name="sync_expense" value="1" style="width:16px; height:16px; accent-color:#0284c7; margin:0;">
+            <span>💼 {{ 'تسجيل تلقائي في الصندوق (Dépense Caisse)' if lang=='ar' else 'Synchroniser avec la caisse (Journal des charges)' }}</span>
+          </label>
+          <label class="exp-opt-card">
+            <input type="checkbox" name="print_after" value="1" checked style="width:16px; height:16px; accent-color:#0284c7; margin:0;">
+            <span>🖨️ {{ 'فتح وصل السحب فوراً بعد التأكيد' if lang=='ar' else 'Ouvrir le bon officiel immédiatement après validation' }}</span>
+          </label>
+        </div>
+
+      </div>
+
+      <!-- FIXED FOOTER: LIVE DEDUCTION TOTAL & ACTION BUTTONS -->
+      <div class="exp-modal-footer">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:12px; font-weight:700; color:#475569;">{{ 'المبلغ المخصوم' if lang=='ar' else 'Total à Déduire' }} :</span>
+          <span id="footerTotalDisplay" style="font-size:17px; font-weight:900; color:#dc2626; background:#fee2e2; border:1px solid #fca5a5; padding:3px 12px; border-radius:8px;">
+            50.00 {{ settings.currency }}
+          </span>
+          <span id="calcTotalText" style="display:none;">50.00 DH</span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button type="button" onclick="closeExpenseModal()" class="btn btn-light" style="font-weight:700; border-radius:10px; padding:8px 16px; border:1px solid #cbd5e1; color:#475569;">
+            {{ 'إلغاء' if lang=='ar' else 'Annuler' }}
+          </button>
+          <button type="submit" class="btn btn-primary" style="background:linear-gradient(135deg, #0284c7 0%, #0B3D6E 100%); border:none; font-weight:800; font-size:13.5px; border-radius:10px; padding:9px 22px; box-shadow:0 4px 12px rgba(2,132,199,0.35); display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+            <span>✓</span> <span>{{ 'تأكيد وخصم من الراتب' if lang=='ar' else 'Valider & Déduire sur Paie' }}</span>
+          </button>
+        </div>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<!-- SCRIPTS: DROPDOWNS, MODALS, AND LIVE CALCULATOR -->
+<script>
+  function setQuickQty(qty) {
+    const qInput = document.getElementById('modalQuantity');
+    if (qInput) {
+      qInput.value = qty;
+      recalcTotal();
+    }
+  }
+
+  function onManualAmountChanged() {
+    const amt = parseFloat(String(document.getElementById('modalAmount').value).replace(',', '.')) || 0;
+    const footerBadge = document.getElementById('footerTotalDisplay');
+    if (footerBadge) footerBadge.innerText = amt.toFixed(2) + " {{ settings.currency }}";
+    const calcText = document.getElementById('calcTotalText');
+    if (calcText) calcText.innerText = amt.toFixed(2) + " {{ settings.currency }}";
+  }
+
+  function onChargeItemChanged() {
+    const select = document.getElementById('modalChargeItemId');
+    const selectedOption = select.options[select.selectedIndex];
+    const customRow = document.getElementById('customItemRow');
+    const lblQty = document.getElementById('lblQuantity');
+    const lblPrice = document.getElementById('lblUnitPrice');
+    const unitPriceInput = document.getElementById('modalUnitPrice');
+    const hiddenType = document.getElementById('modalExpenseType');
+    const titleInput = document.getElementById('modalTitle');
+    const unitIndicator = document.getElementById('unitIndicatorText');
+
+    if (select.value === 'custom') {
+      if (customRow) customRow.style.display = 'block';
+      if (lblQty) lblQty.innerHTML = "📄 <span>{{ 'الكمية' if lang=='ar' else 'Quantité' }}</span> <span style='color:#dc2626;'>*</span>";
+      if (lblPrice) lblPrice.innerHTML = "💵 <span>{{ 'السعر الفردي (درهم)' if lang=='ar' else 'Prix Unitaire (DH)' }}</span> <span style='color:#dc2626;'>*</span>";
+      if (hiddenType) hiddenType.value = 'other';
+      if (unitIndicator) unitIndicator.innerText = "DH / unité";
+    } else {
+      if (customRow) customRow.style.display = 'none';
+      const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
+      const unit = selectedOption.getAttribute('data-unit') || 'unité';
+      const category = selectedOption.getAttribute('data-category') || 'copies';
+      const name = selectedOption.getAttribute('data-name') || '';
+
+      if (unitPriceInput) unitPriceInput.value = price.toFixed(2);
+      if (hiddenType) hiddenType.value = category;
+
+      if (category === 'copies') {
+        if (lblQty) lblQty.innerHTML = "📄 <span>{{ 'عدد النسخ / الصفحات' if lang=='ar' else 'Nombre de Copies / Pages' }}</span> <span style='color:#dc2626;'>*</span>";
+        if (lblPrice) lblPrice.innerHTML = "💵 <span>{{ 'سعر الصفحة (درهم)' if lang=='ar' else 'Prix par Page (DH)' }}</span> <span style='color:#dc2626;'>*</span>";
+        if (unitIndicator) unitIndicator.innerText = "DH / page";
+      } else {
+        if (lblQty) lblQty.innerHTML = `📄 <span>{{ 'الكمية' if lang=='ar' else 'Quantité' }} (${unit})</span> <span style='color:#dc2626;'>*</span>`;
+        if (lblPrice) lblPrice.innerHTML = `💵 <span>{{ 'السعر الفردي (درهم)' if lang=='ar' else 'Prix Unitaire (DH)' }}</span> <span style='color:#dc2626;'>*</span>`;
+        if (unitIndicator) unitIndicator.innerText = `DH / ${unit}`;
+      }
+
+      if (titleInput && (!titleInput.value || titleInput.dataset.autofilled === '1')) {
+        titleInput.value = name;
+        titleInput.dataset.autofilled = '1';
+      }
+    }
+    recalcTotal();
+  }
+
+  function recalcTotal() {
+    const qty = parseFloat(document.getElementById('modalQuantity').value) || 0;
+    const price = parseFloat(String(document.getElementById('modalUnitPrice').value).replace(',', '.')) || 0;
+    const total = Math.round(qty * price * 100) / 100;
+    
+    document.getElementById('modalAmount').value = total.toFixed(2);
+    const calcTotal = document.getElementById('calcTotalText');
+    if (calcTotal) calcTotal.innerText = total.toFixed(2) + " {{ settings.currency }}";
+    const footerBadge = document.getElementById('footerTotalDisplay');
+    if (footerBadge) footerBadge.innerText = total.toFixed(2) + " {{ settings.currency }}";
+
+    const select = document.getElementById('modalChargeItemId');
+    const selectedOption = select ? select.options[select.selectedIndex] : null;
+    const unit = selectedOption && select.value !== 'custom' ? (selectedOption.getAttribute('data-unit') || 'pages') : 'unités';
+    const formulaElem = document.getElementById('calcFormulaText');
+    if (formulaElem) {
+      formulaElem.innerText = `${qty} ${unit} × ${price.toFixed(2)} DH`;
+    }
+  }
+
+  // Toggle Action Dropdowns
+  function toggleActionMenu(event, menuId) {
+    event.stopPropagation();
+    if (window.openFloatingDropdown) {
+      window.openFloatingDropdown(event.currentTarget, document.getElementById(menuId));
+    }
+  }
+
+  // Open & Close Modal
+  function openExpenseModal(teacherId) {
+    const modal = document.getElementById('expenseModal');
+    modal.style.display = 'flex';
+    
+    if (teacherId) {
+      const select = document.getElementById('modalTeacherSelect');
+      if (select) select.value = teacherId;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('modalDate');
+    if (dateInput && !dateInput.value) {
+      dateInput.value = today;
+    }
+
+    const periodInput = document.getElementById('modalPeriodMonth');
+    if (periodInput && !periodInput.value) {
+      periodInput.value = "{{ req_month }}" || today.substring(0, 7);
+    }
+
+    recalcTotal();
+
+    setTimeout(() => {
+      const qtyInput = document.getElementById('modalQuantity');
+      if (qtyInput) qtyInput.focus();
+    }, 100);
+  }
+
+  function closeExpenseModal() {
+    document.getElementById('expenseModal').style.display = 'none';
+  }
+
+  // Global Outside Click
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.action-group')) {
+      document.querySelectorAll('.dropdown-menu-float').forEach(m => m.classList.remove('show'));
+    }
+    const modal = document.getElementById('expenseModal');
+    if (e.target === modal) {
+      closeExpenseModal();
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.dropdown-menu-float').forEach(m => m.classList.remove('show'));
+      closeExpenseModal();
+    }
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,1619 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- ============================================================== -->
+<!-- TEACHERS VACATION TIMETABLE & ROOMS WHATSAPP ANTI-BAN DISPATCHER -->
+<!-- Période : Du Lundi 19 au Mercredi 21 Octobre 2026              -->
+<!-- ============================================================== -->
+<style>
+  .wa-vac-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  .banner-vac-timetable {
+    background: linear-gradient(135deg, #0f766e 0%, #0369a1 45%, #1e1b4b 100%);
+    border-radius: 16px;
+    color: #ffffff;
+    padding: 24px 28px;
+    box-shadow: 0 10px 25px -5px rgba(15, 118, 110, 0.3);
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .banner-vac-timetable::after {
+    content: '🏖️';
+    position: absolute;
+    right: 20px;
+    bottom: -15px;
+    font-size: 110px;
+    opacity: 0.12;
+    pointer-events: none;
+  }
+
+  /* Day Selector Strip */
+  .vac-filter-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  }
+  .vac-filter-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .vac-tab-pill {
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    color: #334155;
+    background: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .vac-tab-pill:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+    transform: translateY(-1px);
+  }
+  .vac-tab-pill.active {
+    background: #0f766e;
+    color: #ffffff;
+    border-color: #0f766e;
+    box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+  }
+  .vac-badge-count {
+    background: rgba(0, 0, 0, 0.08);
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 800;
+  }
+  .vac-tab-pill.active .vac-badge-count {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+  }
+
+  /* KPI Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+  }
+  .kpi-teal::before { background: #0f766e; }
+  .kpi-blue::before { background: #0284c7; }
+  .kpi-green::before { background: #10b981; }
+  .kpi-amber::before { background: #f59e0b; }
+
+  /* Toolbar */
+  .toolbar-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  }
+
+  /* Table styling */
+  .table-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+    overflow: hidden;
+  }
+  .wa-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .wa-table th {
+    background: #f8fafc;
+    padding: 12px 14px;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1.5px solid #e2e8f0;
+    text-align: left;
+  }
+  .wa-table td {
+    padding: 14px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .wa-table tr:hover td {
+    background: #f8fafc;
+  }
+
+  /* Badge styling */
+  .badge-session {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 700;
+    margin: 2px 4px 2px 0;
+  }
+  .badge-room {
+    background: #0f766e;
+    color: #ffffff;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 10.5px;
+  }
+
+  /* Switch link button */
+  .btn-switch-timetable {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .btn-switch-timetable:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+  }
+</style>
+
+<div class="wa-vac-container">
+
+  <!-- BANNER -->
+  <div class="banner-vac-timetable">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+      <div>
+        <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.2); padding:4px 12px; border-radius:20px; font-size:12px; font-weight:800; margin-bottom:8px;">
+          <span>🏖️ VACANCES SCOLAIRES</span>
+          <span>•</span>
+          <span>DU 19 AU 25 OCTOBRE 2026</span>
+          <span>•</span>
+          <span>🛡️ ANTI-BAN V2.0</span>
+        </div>
+        <h1 style="margin:0 0 6px 0; font-size:22px; font-weight:900; letter-spacing:-0.5px;">
+          {{ 'إرسال جدول حصص العطلة المدرسية للأساتذة عبر واتساب (نظام Anti-Ban)' if session.get('lang')=='ar' else 'Diffusion WhatsApp de l\'Emploi du Temps des Vacances (Système Anti-Ban)' }}
+        </h1>
+        <p style="margin:0; font-size:13px; opacity:0.92; max-width:850px; line-height:1.5;">
+          {{ 'إرسال جدول الحصص الرسمي لفترة العطلة (من الإثنين 19 إلى الأربعاء 21 أكتوبر 2026) لكل أستاذ على حِدة مع حماية كاملة ضد الحظر (Spintax + مرجع تشفيري فريد).' if session.get('lang')=='ar' else 'Envoi de l\'emploi du temps officiel des vacances (19 au 21 Octobre 2026) à chaque enseignant avec protection anti-ban complète (Spintax aléatoire, hash unique #VAC-EDT).' }}
+        </p>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <a href="{{ url_for('teachers_whatsapp_daily_timetable') }}" class="btn-switch-timetable" title="Revenir à l'emploi du temps des jours normaux">
+            🗓️ Emploi Normal
+          </a>
+          <a href="{{ url_for('static', filename='Emploi_Lundi_19-10_A4_Paysage.xlsx') }}" download class="btn-switch-timetable" style="background:#0284c7; border-color:#0369a1;" title="Imprimer l'emploi du temps du Lundi (A4 Paysage)">
+            🖨️ Lundi (A4 Paysage)
+          </a>
+          <a href="{{ url_for('static', filename='Emploi_Par_Jour_A4_Paysage_Officiel.xlsx') }}" download class="btn-switch-timetable" style="background:#047857; border-color:#059669;" title="Télécharger le classeur complet avec tous les jours A4 Paysage">
+            📥 Classeur Tous les Jours (A4 Paysage)
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTICE BANNER -->
+  <div style="background:#ecfdf5; border:1.5px solid #a7f3d0; border-radius:14px; padding:12px 18px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="font-size:24px;">🛡️</span>
+      <div>
+        <strong style="color:#065f46; font-size:13px;">Garantie Intégrité & Protection Anti-Ban WhatsApp Active :</strong>
+        <span style="color:#047857; font-size:12.5px; display:block;">
+          L'emploi du temps des jours normaux n'a pas été touché. Ce module est <strong>strictement réservé à la période des vacances (19 - 25 Octobre 2026)</strong>. Chaque message envoyé est unique au niveau cryptographique.
+        </span>
+      </div>
+    </div>
+    <span style="background:#10b981; color:#fff; font-size:11px; font-weight:800; padding:4px 10px; border-radius:20px;">
+      0 CONFLIT GARANTI
+    </span>
+  </div>
+
+  <!-- DAY FILTER STRIP -->
+  <div class="vac-filter-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div class="vac-filter-wrap">
+        <span style="font-size:12px; font-weight:800; color:#64748b; text-transform:uppercase; margin-right:4px;">
+          📅 {{ 'عرض الحصص حسب' if session.get('lang')=='ar' else 'Période d\'envoi' }} :
+        </span>
+
+        <a href="{{ url_for('teachers_whatsapp_vacances_timetable', day='all', q=q, room_filter=room_filter) }}" 
+           class="vac-tab-pill {% if filter_day == 'all' %}active{% endif %}">
+          <span>📋 Tout le Planning Vacances (Complet)</span>
+          <span class="vac-badge-count">{{ stats.total_sessions }}</span>
+        </a>
+
+        <a href="{{ url_for('teachers_whatsapp_vacances_timetable', day='0', q=q, room_filter=room_filter) }}" 
+           class="vac-tab-pill {% if filter_day == '0' %}active{% endif %}">
+          <span>📅 Lundi 19 Octobre</span>
+          <span class="vac-badge-count">{{ stats.days_count.get(0, 0) }}</span>
+        </a>
+
+        <a href="{{ url_for('teachers_whatsapp_vacances_timetable', day='1', q=q, room_filter=room_filter) }}" 
+           class="vac-tab-pill {% if filter_day == '1' %}active{% endif %}">
+          <span>📅 Mardi 20 Octobre</span>
+          <span class="vac-badge-count">{{ stats.days_count.get(1, 0) }}</span>
+        </a>
+
+        <a href="{{ url_for('teachers_whatsapp_vacances_timetable', day='2', q=q, room_filter=room_filter) }}" 
+           class="vac-tab-pill {% if filter_day == '2' %}active{% endif %}">
+          <span>📅 Mercredi 21 Octobre</span>
+          <span class="vac-badge-count">{{ stats.days_count.get(2, 0) }}</span>
+        </a>
+
+        {% if stats.days_count.get(3, 0) > 0 %}
+          <a href="{{ url_for('teachers_whatsapp_vacances_timetable', day='3', q=q, room_filter=room_filter) }}" 
+             class="vac-tab-pill {% if filter_day == '3' %}active{% endif %}">
+            <span>📅 Jeudi 22 Octobre</span>
+            <span class="vac-badge-count">{{ stats.days_count.get(3, 0) }}</span>
+          </a>
+        {% endif %}
+
+        {% if stats.days_count.get(4, 0) > 0 %}
+          <a href="{{ url_for('teachers_whatsapp_vacances_timetable', day='4', q=q, room_filter=room_filter) }}" 
+             class="vac-tab-pill {% if filter_day == '4' %}active{% endif %}">
+            <span>📅 Vendredi 23 Octobre</span>
+            <span class="vac-badge-count">{{ stats.days_count.get(4, 0) }}</span>
+          </a>
+        {% endif %}
+
+        {% if stats.days_count.get(5, 0) > 0 %}
+          <a href="{{ url_for('teachers_whatsapp_vacances_timetable', day='5', q=q, room_filter=room_filter) }}" 
+             class="vac-tab-pill {% if filter_day == '5' %}active{% endif %}">
+            <span>📅 Samedi 24 Octobre</span>
+            <span class="vac-badge-count">{{ stats.days_count.get(5, 0) }}</span>
+          </a>
+        {% endif %}
+
+        {% if stats.days_count.get(6, 0) > 0 %}
+          <a href="{{ url_for('teachers_whatsapp_vacances_timetable', day='6', q=q, room_filter=room_filter) }}" 
+             class="vac-tab-pill {% if filter_day == '6' %}active{% endif %}">
+            <span>📅 Dimanche 25 Octobre</span>
+            <span class="vac-badge-count">{{ stats.days_count.get(6, 0) }}</span>
+          </a>
+        {% endif %}
+
+        {% if stats.days_count.get(17, 0) > 0 or stats.days_count.get(18, 0) > 0 %}
+          <a href="{{ url_for('teachers_whatsapp_vacances_timetable', day='17', q=q, room_filter=room_filter) }}" 
+             class="vac-tab-pill {% if filter_day in ['17', '18'] %}active{% endif %}">
+            <span>🔄 Rattrapage 17-18 Oct</span>
+            <span class="vac-badge-count">{{ (stats.days_count.get(17, 0) or 0) + (stats.days_count.get(18, 0) or 0) }}</span>
+          </a>
+        {% endif %}
+      </div>
+
+      <div style="font-size:12px; color:#0f766e; font-weight:700;">
+        ✨ Planning complet couvrant toute la semaine des vacances (19 au 25 Octobre 2026)
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-teal">
+      <span style="font-size:11.5px; font-weight:800; color:#0f766e; text-transform:uppercase;">Enseignants Programmés</span>
+      <div style="font-size:24px; font-weight:900; color:#0f172a; margin:4px 0;">{{ stats.total_teachers }}</div>
+      <span style="font-size:11px; color:#64748b;">Tous groupes unifiés sur la fiche</span>
+    </div>
+
+    <div class="kpi-card kpi-blue">
+      <span style="font-size:11.5px; font-weight:800; color:#0284c7; text-transform:uppercase;">Séances Affichées</span>
+      <div style="font-size:24px; font-weight:900; color:#0f172a; margin:4px 0;">{{ stats.displayed_sessions }}</div>
+      <span style="font-size:11px; color:#64748b;">Volume horaire exact sans découpage</span>
+    </div>
+
+    <div class="kpi-card kpi-green">
+      <span style="font-size:11.5px; font-weight:800; color:#10b981; text-transform:uppercase;">Numéros WhatsApp</span>
+      <div style="font-size:24px; font-weight:900; color:#10b981; margin:4px 0;">{{ stats.with_phone }} / {{ stats.total_teachers }}</div>
+      <span style="font-size:11px; color:#64748b;">{{ stats.missing_phone }} sans numéro</span>
+    </div>
+
+    <div class="kpi-card kpi-amber">
+      <span style="font-size:11.5px; font-weight:800; color:#d97706; text-transform:uppercase;">Salles Utilisées</span>
+      <div style="font-size:24px; font-weight:900; color:#0f172a; margin:4px 0;">{{ stats.total_rooms }} salles</div>
+      <span style="font-size:11px; color:#16a34a; font-weight:700;">✅ Salle 11 évitée à 100% (0 cours)</span>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar-card">
+    <form method="GET" action="{{ url_for('teachers_whatsapp_vacances_timetable') }}" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <input type="hidden" name="day" value="{{ filter_day }}">
+      
+      <div style="display:flex; align-items:center; gap:10px; flex:1; max-width:500px;">
+        <input type="text" name="q" value="{{ q or '' }}" placeholder="🔍 Rechercher par prof, matière, téléphone, salle..." class="form-control" style="font-size:13px; height:38px; border-radius:10px;">
+        <button type="submit" class="btn btn-sm btn-primary" style="background:#0f766e; border-color:#0f766e; height:38px; padding:0 16px; border-radius:10px; font-weight:700;">
+          Filtrer
+        </button>
+        {% if q or room_filter %}
+          <a href="{{ url_for('teachers_whatsapp_vacances_timetable', day=filter_day) }}" class="btn btn-sm btn-outline" style="height:38px; display:inline-flex; align-items:center; border-radius:10px;">✕</a>
+        {% endif %}
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button type="button" onclick="selectAllTeachers()" class="btn btn-sm btn-outline" style="font-weight:700; border-radius:8px;">
+          ☑️ Tout sélectionner
+        </button>
+        <button type="button" onclick="deselectAllTeachers()" class="btn btn-sm btn-outline" style="font-weight:700; border-radius:8px;">
+          ⬜ Tout désélectionner
+        </button>
+        <button type="button" onclick="openDispatchRunner('all')" class="btn btn-sm" style="background:#15803d; color:#fff; border:none; font-weight:800; border-radius:8px; padding:8px 16px;">
+          🚀 Envoi Emploi (Image+Texte)
+        </button>
+        <button type="button" onclick="openConfirmDispatchRunner('all')" class="btn btn-sm" style="background:#b45309; color:#fff; border:none; font-weight:800; border-radius:8px; padding:8px 16px; box-shadow:0 2px 8px rgba(180,83,9,0.3);">
+          📢 Relance Confirmation (Avant 16/10)
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- TEACHERS TABLE -->
+  <div class="table-card">
+    <table class="wa-table">
+      <thead>
+        <tr>
+          <th style="width:40px; text-align:center;">
+            <input type="checkbox" id="masterCheckbox" onchange="toggleSelectAll(this)" style="cursor:pointer; width:16px; height:16px;">
+          </th>
+          <th style="width:230px;">Enseignant & Contact</th>
+          <th style="width:190px;">Groupes & Discipline</th>
+          <th>Planning des Séances Vacances</th>
+          <th style="width:260px; text-align:center;">Actions WhatsApp & Image</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in teachers_data %}
+          <tr id="rowTeacher{{ t.teacher_id }}">
+            <!-- Checkbox -->
+            <td style="text-align:center;">
+              {% if t.has_phone %}
+                <input type="checkbox" class="teacher-select-box" value="{{ t.teacher_id }}" onchange="updateFloatingBar()" style="cursor:pointer; width:16px; height:16px;">
+              {% else %}
+                <span title="Numéro manquant" style="opacity:0.4;">🚫</span>
+              {% endif %}
+            </td>
+
+            <!-- Teacher Info -->
+            <td>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:38px; height:38px; border-radius:50%; background:#0f766e; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; flex-shrink:0;">
+                  {{ t.first_name[0]|upper if t.first_name else 'P' }}
+                </div>
+                <div>
+                  <div style="font-weight:800; font-size:13.5px; color:#0f172a;">{{ t.teacher_name }}</div>
+                  {% if t.has_phone %}
+                    <a href="https://wa.me/{{ t.clean_phone }}" target="_blank" style="color:#047857; text-decoration:none; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+                      <span>💬 {{ t.phone }}</span>
+                    </a>
+                  {% else %}
+                    <span style="color:#ef4444; font-size:11.5px; font-weight:700;">⚠️ Pas de numéro</span>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+
+            <!-- Discipline & Groups -->
+            <td>
+              <div style="font-size:12px; font-weight:700; color:#334155;">{{ t.specialty }}</div>
+              <div style="margin-top:4px;">
+                {% for g in t.groups_summary %}
+                  <span style="display:inline-block; font-size:10.5px; background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px; margin:1px 2px 1px 0;">
+                    {{ g }}
+                  </span>
+                {% endfor %}
+              </div>
+            </td>
+
+            <!-- Sessions in Vacation -->
+            <td>
+              {% if t.sessions %}
+                <div>
+                  {% for s in t.sessions %}
+                    <div class="badge-session">
+                      <span class="badge-room">{{ s.room_name }}</span>
+                      <strong style="color:#0f172a;">{{ s.day_fr[:3]|upper }} {{ s.start_str }}-{{ s.end_str }}</strong>
+                      <span style="color:#334155;">: {{ s.course_name }}</span>
+                      <span style="color:#64748b; font-size:10.5px;">({{ s.student_count }} él.)</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <span style="color:#94a3b8; font-style:italic; font-size:12px;">Aucun cours programmé pour ce filtre.</span>
+              {% endif %}
+            </td>
+
+            <!-- Actions -->
+            <td style="text-align:center;">
+              <div style="display:flex; justify-content:center; gap:5px; flex-wrap:wrap;">
+                <button type="button" onclick="openPreviewModal({{ t.teacher_id }}, 'image')" class="btn btn-xs btn-outline" style="font-weight:700; padding:5px 8px; font-size:11px; border-radius:8px;" title="Aperçu & Carte Image">
+                  🖼️ Fiche
+                </button>
+                <button type="button" onclick="copyDirectImageRow({{ t.teacher_id }}, this)" class="btn btn-xs" style="background:#0f766e; color:#fff; border:none; font-weight:800; padding:5px 8px; font-size:11px; border-radius:8px; cursor:pointer;" title="Copier l'image directement dans le presse-papier (Ctrl+V)">
+                  📸 Ctrl+V
+                </button>
+                {% if t.has_phone %}
+                  <button type="button" onclick="sendDirectSingle({{ t.teacher_id }})" class="btn btn-xs" style="background:#15803d; color:#fff; border:none; font-weight:800; padding:5px 8px; font-size:11px; border-radius:8px; cursor:pointer;" title="Copier l'image et ouvrir WhatsApp">
+                    📲 Emploi
+                  </button>
+                  <button type="button" onclick="openPreviewModal({{ t.teacher_id }}, 'confirm')" class="btn btn-xs" style="background:#fffbeb; border:1.5px solid #fde68a; color:#b45309; font-weight:800; padding:5px 8px; font-size:11px; border-radius:8px; cursor:pointer;" title="Demande de confirmation urgente avant le 16/10">
+                    📢 Confirmer
+                  </button>
+                {% else %}
+                  <button type="button" disabled class="btn btn-xs" style="background:#e2e8f0; color:#94a3b8; border:none; padding:5px 7px; font-size:11px; border-radius:8px; cursor:not-allowed;">
+                    Sans N°
+                  </button>
+                {% endif %}
+              </div>
+            </td>
+
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- FLOATING ACTION BAR FOR SELECTED -->
+  <div id="selectionFloatingBar" style="display:none; position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#0f172a; color:#fff; padding:12px 24px; border-radius:50px; box-shadow:0 12px 32px rgba(0,0,0,0.35); z-index:9999; align-items:center; gap:16px;">
+    <span style="font-size:13.5px; font-weight:700;">
+      <span id="floatingSelectedCount" style="color:#22c55e; font-weight:900;">0</span> enseignant(s) sélectionné(s)
+    </span>
+    <button type="button" onclick="openDispatchRunner('selected')" class="btn btn-sm" style="background:#22c55e; border-color:#22c55e; color:#fff; font-weight:800; font-size:13px; padding:6px 20px; border-radius:30px; cursor:pointer;">
+      🚀 Lancer l'envoi WhatsApp Anti-Ban (Image + Texte)
+    </button>
+  </div>
+
+</div>
+
+<!-- ============================================================== -->
+<!-- MODAL 1: PREVIEW & IMAGE CARD MODAL (ANTI-BAN & CTRL+V)       -->
+<!-- ============================================================== -->
+<div id="previewMsgModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:10000; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#ffffff; border-radius:18px; max-width:720px; width:100%; box-shadow:0 25px 50px rgba(0,0,0,0.25); overflow:hidden; display:flex; flex-direction:column; max-height:92vh;">
+    
+    <!-- Modal Header -->
+    <div style="background:linear-gradient(135deg, #0B3D6E 0%, #0f766e 100%); color:#fff; padding:16px 22px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:22px;">🏖️</span>
+        <div>
+          <div style="font-weight:900; font-size:16px;" id="previewModalTitle">Emploi du Temps Vacances — Carte Graphique & WhatsApp</div>
+          <div style="font-size:12px; opacity:0.85;" id="previewModalTeacherMeta">Enseignant · Tél</div>
+        </div>
+      </div>
+      <button type="button" onclick="closePreviewModal()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; width:30px; height:30px; border-radius:50%; font-size:16px; font-weight:bold; cursor:pointer;">✕</button>
+    </div>
+
+    <!-- Modal Navigation Tabs (Image vs Texte vs Confirmation) -->
+    <div style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; padding:10px 20px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button type="button" id="tabBtnPreviewImage" onclick="switchPreviewModalTab('image')" class="btn btn-sm" style="background:#0f766e; color:#fff; font-weight:800; border-radius:20px; padding:6px 14px; border:none; cursor:pointer;">
+        🖼️ Carte Image (Ctrl+V)
+      </button>
+      <button type="button" id="tabBtnPreviewText" onclick="switchPreviewModalTab('text')" class="btn btn-sm btn-outline" style="font-weight:800; border-radius:20px; padding:6px 14px; cursor:pointer;">
+        💬 Emploi Texte Anti-Ban
+      </button>
+      <button type="button" id="tabBtnPreviewConfirm" onclick="switchPreviewModalTab('confirm')" class="btn btn-sm btn-outline" style="font-weight:800; border-radius:20px; padding:6px 14px; cursor:pointer; color:#b45309; border-color:#fde68a;">
+        📢 Confirmation Urgente (Avant 16/10)
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div style="padding:18px 22px; overflow-y:auto; flex:1;">
+      
+      <!-- TAB 1: CARTE IMAGE -->
+      <div id="tabContentPreviewImage">
+        <!-- Banner instruction -->
+        <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:12px; padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div style="font-size:12.5px; color:#065f46; font-weight:700; display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px;">💡</span>
+            <span>Cliquez sur <strong>Copier Image (Ctrl+V)</strong> puis collez directement avec <strong>Ctrl+V</strong> dans WhatsApp !</span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" id="btnCopyCardImageTop" onclick="copyPreviewCardImage()" class="btn btn-sm" style="background:#15803d; border-color:#15803d; color:#fff; font-weight:800; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
+              <span>📸</span> <span id="btnCopyCardImageText">Copier Image (Ctrl+V)</span>
+            </button>
+            <button type="button" onclick="downloadPreviewCardImage()" class="btn btn-sm btn-outline" style="font-weight:700; border-radius:8px;" title="Télécharger l'image en PNG">
+              📥 Télécharger PNG
+            </button>
+          </div>
+        </div>
+
+        <!-- Rendered Card Container -->
+        <div style="background:#f1f5f9; padding:16px; border-radius:14px; overflow-x:auto;">
+          <div id="teacherCardDisplay">
+            <!-- Injected dynamically via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: TEXTE EMPLOI DU TEMPS -->
+      <div id="tabContentPreviewText" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:12px; font-weight:700; color:#64748b;">Emploi du temps personnalisé avec Spintax dynamique :</span>
+          <button type="button" onclick="regeneratePreviewVariation()" class="btn btn-xs btn-outline" style="font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+            🎲 Régénérer variation (Anti-Ban)
+          </button>
+        </div>
+
+        <textarea id="previewModalMsgBody" style="width:100%; height:260px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:12px; font-size:12.5px; line-height:1.5; color:#14532d; font-family:monospace; resize:none; box-sizing:border-box; outline:none;"></textarea>
+      </div>
+
+      <!-- TAB 3: CONFIRMATION URGENTE AVANT 16/10 -->
+      <div id="tabContentPreviewConfirm" style="display:none;">
+        <div style="background:#fffbeb; border:1.5px solid #fde68a; border-radius:12px; padding:12px 16px; margin-bottom:14px; display:flex; align-items:flex-start; gap:12px;">
+          <span style="font-size:24px; line-height:1;">🚨</span>
+          <div>
+            <div style="font-size:13px; font-weight:800; color:#92400e;">
+              Confirmation impérative aujourd'hui (Délai : Avant le 16/10/2026)
+            </div>
+            <div style="font-size:11.5px; color:#b45309; margin-top:2px; line-height:1.45;">
+              Ce message demande à l'enseignant de valider immédiatement son planning afin que l'administration puisse <strong>transmettre officiellement les emplois du temps aux élèves dès demain incha'Allah</strong>.
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:12px; font-weight:700; color:#475569;">Langue :</span>
+            <button type="button" onclick="setConfirmLanguage('fr')" id="btnConfirmLangFr" class="btn btn-xs" style="font-weight:700; background:#0f766e; color:#fff; border-radius:6px;">🇫🇷 Français</button>
+            <button type="button" onclick="setConfirmLanguage('ar')" id="btnConfirmLangAr" class="btn btn-xs btn-outline" style="font-weight:700; border-radius:6px;">🇲🇦 العربية</button>
+            <button type="button" onclick="setConfirmLanguage('en')" id="btnConfirmLangEn" class="btn btn-xs btn-outline" style="font-weight:700; border-radius:6px;">🇬🇧 English</button>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button type="button" onclick="regenerateConfirmVariation()" class="btn btn-xs btn-outline" style="font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+              🎲 Régénérer variation
+            </button>
+            <button type="button" onclick="copyConfirmMessage()" class="btn btn-xs btn-outline" style="font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+              📋 Copier texte
+            </button>
+          </div>
+        </div>
+
+        <textarea id="previewModalConfirmBody" style="width:100%; height:260px; background:#fffdf5; border:1.5px solid #fcd34d; border-radius:10px; padding:12px; font-size:12.5px; line-height:1.5; color:#78350f; font-family:monospace; resize:none; box-sizing:border-box; outline:none;"></textarea>
+
+        <div style="margin-top:12px; display:flex; justify-content:flex-end;">
+          <button type="button" onclick="sendConfirmDirectFromModal()" class="btn btn-primary btn-sm" style="background:#b45309; border-color:#b45309; font-weight:800; display:inline-flex; align-items:center; gap:6px;">
+            <span>📢</span> <span>Envoyer la Demande de Confirmation via WhatsApp</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Modal Footer -->
+    <div style="background:#f8fafc; border-top:1px solid #e2e8f0; padding:12px 22px; display:flex; justify-content:space-between; align-items:center;">
+      <div id="footerLeftActionBox">
+        <button type="button" onclick="copyPreviewCardImage()" class="btn btn-outline btn-sm" style="font-weight:800; display:inline-flex; align-items:center; gap:6px; color:#0f766e; border-color:#0f766e;">
+          <span>📸</span> <span>Copier Image (Ctrl+V)</span>
+        </button>
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <button type="button" onclick="closePreviewModal()" class="btn btn-outline btn-sm" style="font-weight:700;">
+          Fermer
+        </button>
+        <button type="button" id="btnPreviewModalSend" onclick="sendFromPreviewModal()" class="btn btn-primary btn-sm" style="background:#15803d; border-color:#15803d; font-weight:800; display:inline-flex; align-items:center; gap:6px;">
+          <span>📲</span> <span id="btnPreviewModalSendText">Ouvrir WhatsApp (Image + Texte)</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- MODAL 2: BULK DISPATCH RUNNER (ANTI-BAN ENGINE)                -->
+<!-- ============================================================== -->
+<div id="dispatchRunnerModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(4px); z-index:10000; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#ffffff; border-radius:18px; max-width:760px; width:100%; box-shadow:0 25px 50px rgba(0,0,0,0.3); overflow:hidden; display:flex; flex-direction:column; max-height:92vh;">
+    
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg, #0f766e 0%, #0369a1 100%); color:#fff; padding:16px 22px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:22px;">🚀</span>
+        <div>
+          <h2 style="margin:0; font-size:16px; font-weight:800;">
+            Diffusion WhatsApp des Emplois du Temps Vacances (Système Anti-Ban)
+          </h2>
+          <span style="font-size:11.5px; opacity:0.85;">
+            Période : 19 - 25 Octobre 2026 · {{ stats.total_teachers }} enseignants programmés
+          </span>
+        </div>
+      </div>
+      <button type="button" onclick="closeDispatchRunner()" style="background:rgba(255,255,255,0.2); border:none; width:32px; height:32px; border-radius:50%; color:#fff; font-size:16px; font-weight:bold; cursor:pointer;" title="Fermer">✕</button>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:20px; overflow-y:auto; flex:1;">
+      
+      <!-- STEP 1: CONFIGURATION -->
+      <div id="waStepConfig">
+        <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:12px; padding:12px 16px; margin-bottom:18px; display:flex; align-items:center; gap:12px;">
+          <div style="font-size:28px;">🛡️</div>
+          <div>
+            <div style="font-size:13px; font-weight:800; color:#065f46;">
+              Protection Anti-Ban Active pour les Emplois du Temps Vacances
+            </div>
+            <div style="font-size:11.5px; color:#047857; margin-top:2px;">
+              Chaque enseignant reçoit un message personnalisé unique avec Spintax dynamique, horodatage et référence cryptographique distincte [#VAC-EDT-XXXX].
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px; margin-bottom:18px;">
+          <!-- Scope Selection -->
+          <div style="border:1.5px solid #e2e8f0; border-radius:12px; padding:14px;">
+            <label style="font-size:12px; font-weight:800; color:#0f172a; display:block; margin-bottom:8px;">
+              👥 Destinataires :
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; padding:7px 0; cursor:pointer; font-size:13px; font-weight:600;">
+              <input type="radio" name="dispatchScope" value="all" id="radioScopeAll" checked style="width:16px; height:16px;">
+              <span>Tous les enseignants avec WhatsApp ({{ stats.with_phone }})</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; padding:7px 0; cursor:pointer; font-size:13px; font-weight:600;">
+              <input type="radio" name="dispatchScope" value="selected" id="radioScopeSelected" style="width:16px; height:16px;">
+              <span>Uniquement la sélection (<span id="dispatchSelectedCountLbl">0</span>)</span>
+            </label>
+          </div>
+
+          <!-- Cadence -->
+          <div style="border:1.5px solid #e2e8f0; border-radius:12px; padding:14px;">
+            <label style="font-size:12px; font-weight:800; color:#0f172a; display:block; margin-bottom:8px;">
+              ⏱️ Cadence Anti-Ban :
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; padding:7px 0; cursor:pointer; font-size:13px; font-weight:600;">
+              <input type="radio" name="dispatchCadence" value="manual" checked style="width:16px; height:16px;">
+              <span>⚡ Manuel (Contrôle total avec la touche Espace)</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; padding:7px 0; cursor:pointer; font-size:13px; font-weight:600;">
+              <input type="radio" name="dispatchCadence" value="auto" style="width:16px; height:16px;">
+              <span>⏱️ Semi-Auto sécurisé (Délai Anti-Ban 6-10s aléatoire)</span>
+            </label>
+
+            <div style="margin-top:10px; padding-top:8px; border-top:1px dashed #cbd5e1;">
+              <label style="font-size:11px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+                💻 Canal d'envoi :
+              </label>
+              <select id="dispatchPlatform" class="form-control" style="font-size:12px; height:32px; padding:2px 8px; border-radius:6px;">
+                <option value="web" selected>🌐 WhatsApp Web (recommandé pour navigateur)</option>
+                <option value="app">📱 Application WhatsApp Bureau / Mobile (wa.me)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" onclick="closeDispatchRunner()" class="btn btn-outline" style="font-weight:700;">
+            Annuler
+          </button>
+          <button type="button" onclick="startDispatchExecution()" class="btn btn-primary" style="background:#15803d; border-color:#15803d; font-weight:800; padding:10px 24px;">
+            🚀 Démarrer la Diffusion Anti-Ban
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: EXECUTION PROGRESS -->
+      <div id="waStepExecution" style="display:none;">
+        
+        <!-- Progress bar -->
+        <div style="margin-bottom:18px;">
+          <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:700; margin-bottom:6px;">
+            <span id="runnerProgressLabel">Envoi en cours : 0 / 0</span>
+            <span id="runnerProgressPercent" style="color:#0f766e; font-weight:800;">0%</span>
+          </div>
+          <div style="height:10px; background:#e2e8f0; border-radius:999px; overflow:hidden;">
+            <div id="runnerProgressBar" style="width:0%; height:100%; background:linear-gradient(90deg, #0f766e, #10b981); transition:width 0.3s ease;"></div>
+          </div>
+        </div>
+
+        <!-- Current Teacher Action Box -->
+        <div id="runnerCurrentBox" style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:14px; padding:16px 20px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:24px;">👤</span>
+              <div>
+                <div style="font-size:14px; font-weight:800; color:#0f172a;" id="runnerCurrentTeacherName">Professeur</div>
+                <div style="font-size:12px; color:#047857; font-weight:700;" id="runnerCurrentTeacherPhone">+212 ...</div>
+              </div>
+            </div>
+            <span class="badge" style="background:#e0f2fe; color:#0369a1; font-weight:800; font-size:11px;" id="runnerCurrentBadge">Prêt</span>
+          </div>
+
+          <!-- Message Preview snippet -->
+          <div id="runnerCurrentMsgSnippet" style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; font-size:12px; line-height:1.5; color:#334155; max-height:140px; overflow-y:auto; white-space:pre-wrap; font-family:monospace; margin-bottom:12px;">
+            Aperçu...
+          </div>
+
+          <!-- Runner Action Buttons -->
+          <div style="display:flex; gap:8px;">
+            <button type="button" id="btnRunnerSendNext" onclick="triggerNextSend()" class="btn btn-primary" style="background:#15803d; border-color:#15803d; font-weight:800; flex:1; padding:10px;">
+              📲 Envoyer maintenant (ou Appuyez sur Espace)
+            </button>
+            <button type="button" onclick="skipCurrentTeacher()" class="btn btn-outline" style="font-weight:700; padding:10px 16px;">
+              Passer ⏭️
+            </button>
+          </div>
+
+          <!-- Countdown -->
+          <div id="runnerCountdownContainer" style="display:none; margin-top:12px; padding:8px 12px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; align-items:center; justify-content:space-between;">
+            <div style="font-size:12px; font-weight:700; color:#b45309; display:flex; align-items:center; gap:6px;">
+              <span>⏱️</span>
+              <span>Envoi automatique dans <strong id="runnerCountdownVal">6</strong>s...</span>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button type="button" id="btnPauseRunnerAuto" onclick="pauseRunnerAuto()" class="btn btn-xs btn-outline" style="font-weight:700; background:#fff;">⏸️ Pause</button>
+              <button type="button" id="btnResumeRunnerAuto" onclick="resumeRunnerAuto()" class="btn btn-xs btn-outline" style="display:none; font-weight:700; background:#fff;">▶️ Reprendre</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Finish Card -->
+        <div id="runnerFinishCard" style="display:none; background:#f0fdf4; border:1.5px solid #86efac; border-radius:14px; padding:28px 20px; text-align:center; margin-bottom:14px;">
+          <div style="font-size:48px; margin-bottom:8px;">🎉</div>
+          <h3 style="margin:0; font-size:18px; font-weight:800; color:#166534;">
+            Diffusion des Emplois du Temps Vacances terminée avec succès !
+          </h3>
+          <p style="margin:6px 0 16px; font-size:13px; color:#15803d;" id="runnerFinishSummary">
+            Tous les enseignants sélectionnés ont été traités.
+          </p>
+          <button type="button" onclick="closeDispatchRunner(true)" class="btn btn-primary" style="background:#15803d; border-color:#15803d; font-weight:800; padding:9px 24px;">
+            Fermer et actualiser
+          </button>
+        </div>
+
+        <!-- Queue Summary Table -->
+        <div style="margin-top:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-size:12px; font-weight:800; color:#475569;">
+              📋 File d'attente (<span id="runnerQueueTableCount">0</span>)
+            </span>
+          </div>
+          <div style="max-height:160px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:10px;">
+            <table style="margin:0; font-size:12px; width:100%; border-collapse:collapse;">
+              <tbody id="runnerQueueTableBody">
+                <!-- Injected in JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- OFFSCREEN HD CARD CONTAINER (FOR 1-CLICK CLIPBOARD CAPTURE)    -->
+<!-- ============================================================== -->
+<div id="offscreenCardContainer" style="position:fixed; left:-9999px; top:0; z-index:-1000; width:650px; background:#ffffff; padding:20px; box-sizing:border-box;">
+  <div id="offscreenCardContent"></div>
+</div>
+
+<!-- ============================================================== -->
+<!-- HTML2CANVAS & JAVASCRIPT ENGINE & LOGIC                        -->
+<!-- ============================================================== -->
+<script src="{{ url_for('static', filename='vendor/html2canvas.min.js') }}"></script>
+<script>
+var RAW_VAC_TEACHERS = [
+  {% for item in teachers_data %}
+  {
+    id: {{ item.teacher_id }},
+    name: {{ item.teacher_name|tojson }},
+    first_name: {{ (item.first_name or '')|tojson }},
+    specialty: {{ (item.specialty or '')|tojson }},
+    phone: {{ (item.clean_phone or '')|tojson }},
+    raw_phone: {{ (item.phone or '')|tojson }},
+    has_phone: {{ 'true' if item.has_phone else 'false' }},
+    sample_msg: {{ item.sample_msg|tojson }},
+    confirm_msg: {{ (item.confirm_msg or '')|tojson }},
+    lang: {{ (item.lang or 'fr')|tojson }},
+    sessions: {{ item.sessions|tojson }}
+  }{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+var CURRENT_FILTER_DAY = {{ filter_day|tojson }};
+var previewCurrentTeacherId = null;
+var currentPreviewTab = 'image';
+
+// -------------------------------------------------------------
+// TEACHER CARD HTML BUILDER (HIGH DEFINITION STYLING)
+// -------------------------------------------------------------
+function buildTeacherCardHTML(tObj) {
+  var initials = tObj.first_name ? tObj.first_name[0].toUpperCase() : (tObj.name ? tObj.name[0].toUpperCase() : 'P');
+  var sessions = tObj.sessions || [];
+  
+  var daysOrder = [0, 1, 2];
+  var daysNames = {
+    0: 'Lundi 19 Octobre 2026',
+    1: 'Mardi 20 Octobre 2026',
+    2: 'Mercredi 21 Octobre 2026'
+  };
+  
+  var sessionsByDay = { 0: [], 1: [], 2: [] };
+  sessions.forEach(function(s) {
+    if (sessionsByDay[s.day] !== undefined) {
+      sessionsByDay[s.day].push(s);
+    }
+  });
+
+  var sessionsHtml = '';
+  daysOrder.forEach(function(d) {
+    var daySessions = sessionsByDay[d];
+    var dayTitle = daysNames[d];
+    
+    sessionsHtml += '<div style="margin-bottom:12px;">' +
+      '<div style="font-size:12px; font-weight:800; color:#0f766e; text-transform:uppercase; letter-spacing:0.5px; padding-bottom:4px; border-bottom:1.5px solid #ccfbf1; margin-bottom:8px; display:flex; align-items:center; gap:6px;">' +
+        '<span>📅</span> <span>' + dayTitle + '</span>' +
+      '</div>';
+      
+    if (daySessions && daySessions.length > 0) {
+      daySessions.forEach(function(s) {
+        sessionsHtml += '<div style="background:#ffffff; border:1px solid #e2e8f0; border-left:4.5px solid #0f766e; border-radius:10px; padding:10px 14px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,0.03);">' +
+          '<div style="flex:1;">' +
+            '<div style="font-size:13.5px; font-weight:800; color:#0f172a;">' + s.course_name + '</div>' +
+            '<div style="font-size:11px; color:#64748b; margin-top:2px; display:flex; align-items:center; gap:8px;">' +
+              '<span>👥 ' + s.student_count + ' élève(s)</span>' +
+              '<span>•</span>' +
+              '<span>⏱️ ' + s.duration_txt + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div style="text-align:right; margin-left:14px;">' +
+            '<div style="font-size:13px; font-weight:900; color:#0f172a; background:#f1f5f9; padding:3px 8px; border-radius:6px; display:inline-block; font-family:monospace;">⏰ ' + s.start_str + ' - ' + s.end_str + '</div>' +
+            '<div style="margin-top:4px;">' +
+              '<span style="background:#ecfdf5; border:1px solid #6ee7b7; color:#065f46; font-weight:800; padding:2px 8px; border-radius:6px; font-size:11.5px; display:inline-block;">🚪 ' + s.room_name + '</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      });
+    } else {
+      sessionsHtml += '<div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; padding:8px 12px; font-size:11.5px; color:#94a3b8; font-style:italic;">' +
+        'Aucune séance programmée (Journée de repos)' +
+      '</div>';
+    }
+    
+    sessionsHtml += '</div>';
+  });
+
+  var randHash = Math.floor(1000 + Math.random() * 9000);
+
+  return '<div style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:18px; padding:22px; box-shadow:0 10px 25px rgba(15,23,42,0.05); font-family:system-ui, -apple-system, sans-serif; color:#0f172a; max-width:650px; margin:0 auto; box-sizing:border-box;">' +
+    '<!-- Header -->' +
+    '<div style="background:linear-gradient(135deg, #0B3D6E 0%, #0f766e 100%); color:#ffffff; padding:16px 20px; border-radius:14px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">' +
+      '<div>' +
+        '<div style="font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase; opacity:0.9;">INSTITUT ILAS · LES SAGES</div>' +
+        '<div style="font-size:17px; font-weight:900; margin-top:2px;">EMPLOI DU TEMPS DES VACANCES</div>' +
+        '<div style="font-size:12px; opacity:0.9; margin-top:2px;">Du Lundi 19 au Mercredi 21 Octobre 2026</div>' +
+      '</div>' +
+      '<div style="font-size:32px;">🏖️</div>' +
+    '</div>' +
+
+    '<!-- Teacher Profile -->' +
+    '<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px 16px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">' +
+      '<div style="display:flex; align-items:center; gap:12px;">' +
+        '<div style="width:42px; height:42px; border-radius:50%; background:#0f766e; color:#fff; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:900; flex-shrink:0;">' +
+          initials +
+        '</div>' +
+        '<div>' +
+          '<div style="font-size:15px; font-weight:900; color:#0f172a;">' + tObj.name + '</div>' +
+          '<div style="font-size:12px; font-weight:700; color:#0284c7;">' + (tObj.specialty || 'Enseignant') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="text-align:right;">' +
+        '<div style="font-size:10.5px; font-weight:800; color:#64748b; text-transform:uppercase;">Volume Vacances</div>' +
+        '<div style="font-size:14px; font-weight:900; color:#0f766e;">' + (tObj.sessions ? tObj.sessions.length : 0) + ' séance(s)</div>' +
+      '</div>' +
+    '</div>' +
+
+    '<!-- Sessions List -->' +
+    '<div style="margin-bottom:14px;">' +
+      sessionsHtml +
+    '</div>' +
+
+    '<!-- Notice -->' +
+    '<div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:10px 14px; margin-bottom:14px; font-size:11.5px; color:#92400e; line-height:1.45;">' +
+      '📌 <strong>Fermeture Pédagogique :</strong> L\'Institut sera totalement fermé du <strong>Jeudi 22 au Dimanche 25 Octobre 2026</strong>. Reprise normale de tous les cours le <strong>Lundi 26 Octobre 2026</strong>.' +
+    '</div>' +
+
+    '<!-- Footer -->' +
+    '<div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed #cbd5e1; padding-top:10px; font-size:11px; color:#64748b;">' +
+      '<div>🏛️ Institut ILAS | 📞 06 60 29 11 55</div>' +
+      '<div style="font-family:monospace; font-weight:700; color:#0f766e;">[Réf: #VAC-EDT-' + randHash + ']</div>' +
+    '</div>' +
+  '</div>';
+}
+
+// -------------------------------------------------------------
+// MULTI-SELECTION & FLOATING BAR
+// -------------------------------------------------------------
+function updateFloatingBar() {
+  var checked = document.querySelectorAll('.teacher-select-box:checked');
+  var count = checked.length;
+  var bar = document.getElementById('selectionFloatingBar');
+  var lbl = document.getElementById('floatingSelectedCount');
+  var dispatchLbl = document.getElementById('dispatchSelectedCountLbl');
+  if (count > 0) {
+    bar.style.display = 'flex';
+    lbl.textContent = count;
+    if (dispatchLbl) dispatchLbl.textContent = count;
+  } else {
+    bar.style.display = 'none';
+    if (dispatchLbl) dispatchLbl.textContent = '0';
+  }
+}
+
+function selectAllTeachers() {
+  document.querySelectorAll('.teacher-select-box').forEach(function(cb) {
+    cb.checked = true;
+  });
+  updateFloatingBar();
+}
+
+function deselectAllTeachers() {
+  document.querySelectorAll('.teacher-select-box').forEach(function(cb) {
+    cb.checked = false;
+  });
+  var master = document.getElementById('masterCheckbox');
+  if (master) master.checked = false;
+  updateFloatingBar();
+}
+
+function toggleSelectAll(masterCb) {
+  var boxes = document.querySelectorAll('.teacher-select-box');
+  boxes.forEach(function(cb) {
+    cb.checked = masterCb.checked;
+  });
+  updateFloatingBar();
+}
+
+// -------------------------------------------------------------
+// -------------------------------------------------------------
+// PREVIEW MODAL LOGIC (IMAGE + SPINTAX TEXT + CONFIRMATION)
+// -------------------------------------------------------------
+function switchPreviewModalTab(tab) {
+  currentPreviewTab = tab;
+  var btnImg = document.getElementById('tabBtnPreviewImage');
+  var btnTxt = document.getElementById('tabBtnPreviewText');
+  var btnConf = document.getElementById('tabBtnPreviewConfirm');
+  var contImg = document.getElementById('tabContentPreviewImage');
+  var contTxt = document.getElementById('tabContentPreviewText');
+  var contConf = document.getElementById('tabContentPreviewConfirm');
+  var leftActionBox = document.getElementById('footerLeftActionBox');
+  var sendBtn = document.getElementById('btnPreviewModalSend');
+  var sendBtnText = document.getElementById('btnPreviewModalSendText');
+
+  // Reset all tabs
+  [btnImg, btnTxt, btnConf].forEach(function(b) {
+    if (b) {
+      b.className = 'btn btn-sm btn-outline';
+      b.style.background = '';
+      b.style.color = '';
+    }
+  });
+  if (contImg) contImg.style.display = 'none';
+  if (contTxt) contTxt.style.display = 'none';
+  if (contConf) contConf.style.display = 'none';
+
+  if (tab === 'image') {
+    btnImg.style.background = '#0f766e';
+    btnImg.style.color = '#fff';
+    btnImg.className = 'btn btn-sm';
+    contImg.style.display = 'block';
+    if (leftActionBox) leftActionBox.style.display = 'block';
+    if (sendBtn) {
+      sendBtn.style.background = '#15803d';
+      sendBtn.style.borderColor = '#15803d';
+      sendBtn.onclick = sendFromPreviewModal;
+    }
+    if (sendBtnText) sendBtnText.textContent = "Ouvrir WhatsApp (Image + Texte)";
+  } else if (tab === 'text') {
+    btnTxt.style.background = '#0f766e';
+    btnTxt.style.color = '#fff';
+    btnTxt.className = 'btn btn-sm';
+    contTxt.style.display = 'block';
+    if (leftActionBox) leftActionBox.style.display = 'none';
+    if (sendBtn) {
+      sendBtn.style.background = '#15803d';
+      sendBtn.style.borderColor = '#15803d';
+      sendBtn.onclick = sendFromPreviewModal;
+    }
+    if (sendBtnText) sendBtnText.textContent = "Ouvrir WhatsApp (Image + Texte)";
+  } else if (tab === 'confirm') {
+    btnConf.style.background = '#b45309';
+    btnConf.style.color = '#fff';
+    btnConf.className = 'btn btn-sm';
+    contConf.style.display = 'block';
+    if (leftActionBox) leftActionBox.style.display = 'none';
+    if (sendBtn) {
+      sendBtn.style.background = '#b45309';
+      sendBtn.style.borderColor = '#b45309';
+      sendBtn.onclick = sendConfirmDirectFromModal;
+    }
+    if (sendBtnText) sendBtnText.textContent = "Envoyer Confirmation WhatsApp";
+  }
+}
+
+function openPreviewModal(tid, defaultTab) {
+  var tObj = RAW_VAC_TEACHERS.find(function(x) { return x.id === tid; });
+  if (!tObj) return;
+  previewCurrentTeacherId = tid;
+
+  document.getElementById('previewModalTeacherMeta').textContent = tObj.name + ' · ' + (tObj.phone ? '+' + tObj.phone : 'N° absent');
+  document.getElementById('previewModalMsgBody').value = tObj.sample_msg || 'Génération du message...';
+  document.getElementById('previewModalConfirmBody').value = tObj.confirm_msg || 'Génération de la demande de confirmation...';
+
+  // Render the HD Card into the display container
+  document.getElementById('teacherCardDisplay').innerHTML = buildTeacherCardHTML(tObj);
+
+  var sendBtn = document.getElementById('btnPreviewModalSend');
+  if (tObj.has_phone) {
+    sendBtn.disabled = false;
+    sendBtn.style.opacity = '1';
+  } else {
+    sendBtn.disabled = true;
+    sendBtn.style.opacity = '0.5';
+  }
+
+  // Set initial language button state for confirmation
+  updateConfirmLanguageButtons(tObj.lang || 'fr');
+
+  switchPreviewModalTab(defaultTab || 'image');
+  document.getElementById('previewMsgModal').style.display = 'flex';
+}
+
+function closePreviewModal() {
+  document.getElementById('previewMsgModal').style.display = 'none';
+  previewCurrentTeacherId = null;
+}
+
+function regeneratePreviewVariation() {
+  if (!previewCurrentTeacherId) return;
+  var box = document.getElementById('previewModalMsgBody');
+  box.value = "🎲 Génération d'une nouvelle variation Anti-Ban...";
+
+  fetch('/api/teachers/' + previewCurrentTeacherId + '/whatsapp_vacances_timetable_data?day=' + CURRENT_FILTER_DAY + '&rnd=' + Date.now())
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data && data.message) {
+        box.value = data.message;
+        var tObj = RAW_VAC_TEACHERS.find(function(x) { return x.id === previewCurrentTeacherId; });
+        if (tObj) tObj.sample_msg = data.message;
+      }
+    })
+    .catch(function(err) {
+      console.error(err);
+      box.value = "Erreur lors de la régénération.";
+    });
+}
+
+function copyPreviewMessage() {
+  var text = document.getElementById('previewModalMsgBody').value;
+  navigator.clipboard.writeText(text).then(function() {
+    alert("✅ Message copié dans le presse-papier !");
+  });
+}
+
+// -------------------------------------------------------------
+// CONFIRMATION REMINDER ACTIONS (AVANT 16/10/2026)
+// -------------------------------------------------------------
+var currentConfirmLang = 'fr';
+
+function updateConfirmLanguageButtons(lang) {
+  currentConfirmLang = lang;
+  var btnFr = document.getElementById('btnConfirmLangFr');
+  var btnAr = document.getElementById('btnConfirmLangAr');
+  var btnEn = document.getElementById('btnConfirmLangEn');
+  [btnFr, btnAr, btnEn].forEach(function(b) {
+    if (b) {
+      b.className = 'btn btn-xs btn-outline';
+      b.style.background = '';
+      b.style.color = '';
+    }
+  });
+
+  if (lang === 'ar' && btnAr) {
+    btnAr.className = 'btn btn-xs';
+    btnAr.style.background = '#0f766e';
+    btnAr.style.color = '#fff';
+  } else if (lang === 'en' && btnEn) {
+    btnEn.className = 'btn btn-xs';
+    btnEn.style.background = '#0f766e';
+    btnEn.style.color = '#fff';
+  } else if (btnFr) {
+    btnFr.className = 'btn btn-xs';
+    btnFr.style.background = '#0f766e';
+    btnFr.style.color = '#fff';
+  }
+}
+
+function setConfirmLanguage(lang) {
+  if (!previewCurrentTeacherId) return;
+  updateConfirmLanguageButtons(lang);
+  var box = document.getElementById('previewModalConfirmBody');
+  box.value = "⏳ Génération en cours (" + lang.toUpperCase() + ")...";
+
+  fetch('/api/teachers/' + previewCurrentTeacherId + '/whatsapp_vacances_confirm_data?lang=' + lang + '&rnd=' + Date.now())
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data && data.message) {
+        box.value = data.message;
+        var tObj = RAW_VAC_TEACHERS.find(function(x) { return x.id === previewCurrentTeacherId; });
+        if (tObj) tObj.confirm_msg = data.message;
+      }
+    })
+    .catch(function(err) {
+      console.error(err);
+      box.value = "Erreur lors de la génération.";
+    });
+}
+
+function regenerateConfirmVariation() {
+  if (!previewCurrentTeacherId) return;
+  setConfirmLanguage(currentConfirmLang);
+}
+
+function copyConfirmMessage() {
+  var text = document.getElementById('previewModalConfirmBody').value;
+  navigator.clipboard.writeText(text).then(function() {
+    alert("✅ Message de confirmation copié dans le presse-papier !");
+  });
+}
+
+function sendConfirmDirectFromModal() {
+  if (!previewCurrentTeacherId) return;
+  var tObj = RAW_VAC_TEACHERS.find(function(x) { return x.id === previewCurrentTeacherId; });
+  if (!tObj || !tObj.has_phone) {
+    alert("Cet enseignant n'a pas de numéro de téléphone enregistré.");
+    return;
+  }
+  var msg = document.getElementById('previewModalConfirmBody').value;
+  var url = "https://web.whatsapp.com/send?phone=" + tObj.phone + "&text=" + encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+
+// -------------------------------------------------------------
+// IMAGE CAPTURE TO CLIPBOARD (CTRL+V READY)
+// -------------------------------------------------------------
+async function copyTeacherCardToBlob(element) {
+  if (typeof html2canvas === 'undefined') {
+    throw new Error("html2canvas not loaded");
+  }
+  var canvas = await html2canvas(element, {
+    scale: 2,
+    backgroundColor: '#ffffff',
+    useCORS: true,
+    logging: false
+  });
+  return new Promise(function(resolve) {
+    canvas.toBlob(function(blob) {
+      resolve(blob);
+    }, 'image/png');
+  });
+}
+
+async function copyPreviewCardImage() {
+  var card = document.getElementById('teacherCardDisplay');
+  var btnText = document.getElementById('btnCopyCardImageText');
+  if (btnText) btnText.textContent = "Capture en cours...";
+
+  try {
+    var blob = await copyTeacherCardToBlob(card);
+    if (blob && navigator.clipboard && navigator.clipboard.write) {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      if (btnText) btnText.textContent = "✅ Image Copiée (Ctrl+V) !";
+      setTimeout(function() {
+        if (btnText) btnText.textContent = "Copier Image (Ctrl+V)";
+      }, 3500);
+    } else {
+      alert("Votre navigateur ne supporte pas la copie directe d'images dans le presse-papier.");
+    }
+  } catch(e) {
+    console.error("Copy card error:", e);
+    if (btnText) btnText.textContent = "Erreur capture";
+  }
+}
+
+function downloadPreviewCardImage() {
+  var card = document.getElementById('teacherCardDisplay');
+  html2canvas(card, { scale: 2, backgroundColor: '#ffffff', useCORS: true }).then(function(canvas) {
+    var tObj = RAW_VAC_TEACHERS.find(function(x) { return x.id === previewCurrentTeacherId; });
+    var tname = (tObj ? tObj.name : 'Enseignant').replace(/\s+/g, '_');
+    var link = document.createElement('a');
+    link.download = tname + '_Emploi_Vacances_19_25_Oct.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+}
+
+// Direct 1-Click Copy from Row
+async function copyDirectImageRow(tid, btnElement) {
+  var tObj = RAW_VAC_TEACHERS.find(function(x) { return x.id === tid; });
+  if (!tObj) return;
+
+  var origText = btnElement ? btnElement.innerHTML : '';
+  if (btnElement) btnElement.innerHTML = '⏳ Capture...';
+
+  var offContainer = document.getElementById('offscreenCardContainer');
+  var offContent = document.getElementById('offscreenCardContent');
+  offContent.innerHTML = buildTeacherCardHTML(tObj);
+  offContainer.style.display = 'block';
+
+  try {
+    var blob = await copyTeacherCardToBlob(offContent);
+    offContainer.style.display = 'none';
+
+    if (blob && navigator.clipboard && navigator.clipboard.write) {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      if (btnElement) {
+        btnElement.innerHTML = '✅ Copiée (Ctrl+V) !';
+        btnElement.style.background = '#15803d';
+        setTimeout(function() {
+          btnElement.innerHTML = origText;
+          btnElement.style.background = '#0f766e';
+        }, 3000);
+      }
+    } else {
+      alert("Votre navigateur ne supporte pas la copie directe d'images.");
+    }
+  } catch(e) {
+    offContainer.style.display = 'none';
+    console.error("Direct capture error:", e);
+    if (btnElement) btnElement.innerHTML = 'Erreur';
+  }
+}
+
+// Send From Preview Modal (Copies Image to Clipboard + Opens WhatsApp)
+async function sendFromPreviewModal() {
+  if (!previewCurrentTeacherId) return;
+  var tObj = RAW_VAC_TEACHERS.find(function(x) { return x.id === previewCurrentTeacherId; });
+  if (!tObj || !tObj.has_phone) {
+    alert("Cet enseignant n'a pas de numéro de téléphone enregistré.");
+    return;
+  }
+
+  var btn = document.getElementById('btnPreviewModalSend');
+  var origHtml = btn.innerHTML;
+  btn.innerHTML = '📸 Capture Image...';
+
+  try {
+    var card = document.getElementById('teacherCardDisplay');
+    var blob = await copyTeacherCardToBlob(card);
+    if (blob && navigator.clipboard && navigator.clipboard.write) {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    }
+  } catch(e) {
+    console.warn("Could not copy image automatically to clipboard:", e);
+  }
+
+  btn.innerHTML = '✅ Image Copiée (Ctrl+V) ! Ouverture...';
+
+  var msg = document.getElementById('previewModalMsgBody').value;
+  var url = "https://web.whatsapp.com/send?phone=" + tObj.phone + "&text=" + encodeURIComponent(msg);
+  window.open(url, '_blank');
+
+  setTimeout(function() {
+    btn.innerHTML = origHtml;
+  }, 3000);
+}
+
+// Single direct send from table row (Copies Image to Clipboard + Opens WhatsApp)
+async function sendDirectSingle(tid) {
+  var tObj = RAW_VAC_TEACHERS.find(function(x) { return x.id === tid; });
+  if (!tObj || !tObj.has_phone) {
+    alert("Cet enseignant n'a pas de numéro WhatsApp valide.");
+    return;
+  }
+
+  try {
+    var offContainer = document.getElementById('offscreenCardContainer');
+    var offContent = document.getElementById('offscreenCardContent');
+    offContent.innerHTML = buildTeacherCardHTML(tObj);
+    offContainer.style.display = 'block';
+
+    var blob = await copyTeacherCardToBlob(offContent);
+    offContainer.style.display = 'none';
+
+    if (blob && navigator.clipboard && navigator.clipboard.write) {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    }
+  } catch(e) {
+    console.warn("Could not auto copy image:", e);
+  }
+
+  var msg = tObj.sample_msg;
+  var url = "https://web.whatsapp.com/send?phone=" + tObj.phone + "&text=" + encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+
+// -------------------------------------------------------------
+// BULK DISPATCH RUNNER (DUAL MODE: TIMETABLE OR CONFIRMATION)
+// -------------------------------------------------------------
+var runnerQueue = [];
+var runnerCurrentIndex = 0;
+var runnerMode = 'manual'; // 'manual' or 'auto'
+var runnerType = 'timetable'; // 'timetable' or 'confirm'
+var runnerAutoCountdown = 0;
+var runnerAutoTimer = null;
+var runnerPlatform = 'web';
+var runnerIsPaused = false;
+
+function openDispatchRunner(defaultScope) {
+  runnerType = 'timetable';
+  prepareAndOpenRunner(defaultScope, "Diffusion WhatsApp : Emplois du Temps Vacances (Image + Texte)", "#15803d");
+}
+
+function openConfirmDispatchRunner(defaultScope) {
+  runnerType = 'confirm';
+  prepareAndOpenRunner(defaultScope, "Relance WhatsApp : Demande de Confirmation Urgente (Avant 16/10)", "#b45309");
+}
+
+function prepareAndOpenRunner(defaultScope, title, themeColor) {
+  var selCount = document.querySelectorAll('.teacher-select-box:checked').length;
+  if (defaultScope === 'selected' || (selCount > 0 && defaultScope !== 'all')) {
+    document.getElementById('radioScopeSelected').checked = true;
+  } else {
+    document.getElementById('radioScopeAll').checked = true;
+  }
+
+  document.getElementById('waStepConfig').style.display = 'block';
+  document.getElementById('waStepExecution').style.display = 'none';
+  document.getElementById('runnerFinishCard').style.display = 'none';
+  document.getElementById('dispatchRunnerModal').style.display = 'flex';
+}
+
+function closeDispatchRunner(refresh) {
+  clearInterval(runnerAutoTimer);
+  document.getElementById('dispatchRunnerModal').style.display = 'none';
+  if (refresh) {
+    window.location.reload();
+  }
+}
+
+function startDispatchExecution() {
+  var scope = document.querySelector('input[name="dispatchScope"]:checked').value;
+  var cadence = document.querySelector('input[name="dispatchCadence"]:checked').value;
+  runnerPlatform = document.getElementById('dispatchPlatform').value;
+  runnerMode = cadence;
+
+  runnerQueue = [];
+  if (scope === 'selected') {
+    var checkedBoxes = document.querySelectorAll('.teacher-select-box:checked');
+    checkedBoxes.forEach(function(cb) {
+      var tid = parseInt(cb.value);
+      var tObj = RAW_VAC_TEACHERS.find(function(x) { return x.id === tid; });
+      if (tObj && tObj.has_phone) {
+        runnerQueue.push({ teacher: tObj, status: 'pending' });
+      }
+    });
+  } else {
+    RAW_VAC_TEACHERS.forEach(function(tObj) {
+      if (tObj.has_phone) {
+        runnerQueue.push({ teacher: tObj, status: 'pending' });
+      }
+    });
+  }
+
+  if (runnerQueue.length === 0) {
+    alert("Aucun enseignant avec numéro WhatsApp sélectionné.");
+    return;
+  }
+
+  runnerCurrentIndex = 0;
+  document.getElementById('waStepConfig').style.display = 'none';
+  document.getElementById('waStepExecution').style.display = 'block';
+  document.getElementById('runnerFinishCard').style.display = 'none';
+
+  renderRunnerQueueTable();
+  setupCurrentRunnerTeacher();
+}
+
+function renderRunnerQueueTable() {
+  var tbody = document.getElementById('runnerQueueTableBody');
+  document.getElementById('runnerQueueTableCount').textContent = runnerQueue.length;
+  tbody.innerHTML = '';
+
+  runnerQueue.forEach(function(item, idx) {
+    var tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid #f1f5f9';
+    var statusBadge = '';
+    if (item.status === 'sent') {
+      statusBadge = '<span style="color:#16a34a; font-weight:800;">✅ Envoyé</span>';
+    } else if (item.status === 'skipped') {
+      statusBadge = '<span style="color:#94a3b8; font-weight:700;">⏭️ Passé</span>';
+    } else if (idx === runnerCurrentIndex) {
+      statusBadge = '<span style="color:#0284c7; font-weight:800;">▶️ En cours</span>';
+    } else {
+      statusBadge = '<span style="color:#64748b;">⏳ En attente</span>';
+    }
+
+    tr.innerHTML = '<td style="padding:6px 10px; font-weight:700;">' + (idx+1) + '. ' + item.teacher.name + '</td>' +
+                   '<td style="padding:6px 10px; color:#64748b;">+' + item.teacher.phone + '</td>' +
+                   '<td style="padding:6px 10px; text-align:right;">' + statusBadge + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function updateProgressBar() {
+  var total = runnerQueue.length;
+  var current = runnerCurrentIndex;
+  var pct = Math.round((current / total) * 100);
+  document.getElementById('runnerProgressLabel').textContent = 'Progression : ' + current + ' / ' + total;
+  document.getElementById('runnerProgressPercent').textContent = pct + '%';
+  document.getElementById('runnerProgressBar').style.width = pct + '%';
+}
+
+function setupCurrentRunnerTeacher() {
+  updateProgressBar();
+  renderRunnerQueueTable();
+
+  if (runnerCurrentIndex >= runnerQueue.length) {
+    finishRunnerExecution();
+    return;
+  }
+
+  var currentItem = runnerQueue[runnerCurrentIndex];
+  var tObj = currentItem.teacher;
+
+  document.getElementById('runnerCurrentTeacherName').textContent = tObj.name;
+  document.getElementById('runnerCurrentTeacherPhone').textContent = '+' + tObj.phone;
+  document.getElementById('runnerCurrentBadge').textContent = 'Destinataire ' + (runnerCurrentIndex + 1) + ' / ' + runnerQueue.length;
+  
+  var targetMsg = (runnerType === 'confirm') ? tObj.confirm_msg : tObj.sample_msg;
+  document.getElementById('runnerCurrentMsgSnippet').textContent = targetMsg;
+
+  if (runnerMode === 'auto') {
+    startAutoCountdown();
+  } else {
+    document.getElementById('runnerCountdownContainer').style.display = 'none';
+  }
+}
+
+async function triggerNextSend() {
+  clearInterval(runnerAutoTimer);
+  if (runnerCurrentIndex >= runnerQueue.length) return;
+
+  var currentItem = runnerQueue[runnerCurrentIndex];
+  var tObj = currentItem.teacher;
+  var msg = (runnerType === 'confirm') ? tObj.confirm_msg : tObj.sample_msg;
+
+  // In timetable mode, copy HD image card into clipboard automatically
+  if (runnerType === 'timetable') {
+    try {
+      var offContainer = document.getElementById('offscreenCardContainer');
+      var offContent = document.getElementById('offscreenCardContent');
+      offContent.innerHTML = buildTeacherCardHTML(tObj);
+      offContainer.style.display = 'block';
+
+      var blob = await copyTeacherCardToBlob(offContent);
+      offContainer.style.display = 'none';
+
+      if (blob && navigator.clipboard && navigator.clipboard.write) {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      }
+    } catch(e) {
+      console.warn("Could not copy card to clipboard in runner:", e);
+    }
+  }
+
+  // Open WhatsApp
+  var baseUrl = (runnerPlatform === 'app') ? "https://api.whatsapp.com/send?phone=" : "https://web.whatsapp.com/send?phone=";
+  var url = baseUrl + tObj.phone + "&text=" + encodeURIComponent(msg);
+  window.open(url, '_blank');
+
+  currentItem.status = 'sent';
+  runnerCurrentIndex++;
+  setupCurrentRunnerTeacher();
+}
+
+function skipCurrentTeacher() {
+  clearInterval(runnerAutoTimer);
+  if (runnerCurrentIndex >= runnerQueue.length) return;
+  runnerQueue[runnerCurrentIndex].status = 'skipped';
+  runnerCurrentIndex++;
+  setupCurrentRunnerTeacher();
+}
+
+function startAutoCountdown() {
+  clearInterval(runnerAutoTimer);
+  runnerAutoCountdown = Math.floor(Math.random() * 4) + 6;
+  document.getElementById('runnerCountdownVal').textContent = runnerAutoCountdown;
+  document.getElementById('runnerCountdownContainer').style.display = 'flex';
+  runnerIsPaused = false;
+  document.getElementById('btnPauseRunnerAuto').style.display = 'inline-block';
+  document.getElementById('btnResumeRunnerAuto').style.display = 'none';
+
+  runnerAutoTimer = setInterval(function() {
+    if (runnerIsPaused) return;
+    runnerAutoCountdown--;
+    document.getElementById('runnerCountdownVal').textContent = runnerAutoCountdown;
+    if (runnerAutoCountdown <= 0) {
+      clearInterval(runnerAutoTimer);
+      triggerNextSend();
+    }
+  }, 1000);
+}
+
+function pauseRunnerAuto() {
+  runnerIsPaused = true;
+  document.getElementById('btnPauseRunnerAuto').style.display = 'none';
+  document.getElementById('btnResumeRunnerAuto').style.display = 'inline-block';
+}
+
+function resumeRunnerAuto() {
+  runnerIsPaused = false;
+  document.getElementById('btnPauseRunnerAuto').style.display = 'inline-block';
+  document.getElementById('btnResumeRunnerAuto').style.display = 'none';
+}
+
+function finishRunnerExecution() {
+  clearInterval(runnerAutoTimer);
+  document.getElementById('runnerCurrentBox').style.display = 'none';
+  document.getElementById('runnerFinishCard').style.display = 'block';
+  var sentCount = runnerQueue.filter(function(x) { return x.status === 'sent'; }).length;
+  var actionLbl = (runnerType === 'confirm') ? "demande(s) de confirmation envoyée(s)" : "emploi(s) du temps envoyé(s)";
+  document.getElementById('runnerFinishSummary').textContent = sentCount + ' ' + actionLbl + ' avec succès via WhatsApp.';
+  updateProgressBar();
+  renderRunnerQueueTable();
+}
+
+// Spacebar shortcut for manual dispatch
+window.addEventListener('keydown', function(e) {
+  var modal = document.getElementById('dispatchRunnerModal');
+  if (modal && modal.style.display === 'flex') {
+    var execBox = document.getElementById('waStepExecution');
+    if (execBox && execBox.style.display === 'block') {
+      if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        triggerNextSend();
+      }
+    }
+  }
+});
+</script>
+
+{% endblock %}

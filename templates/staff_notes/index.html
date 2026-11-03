@@ -1,0 +1,1301 @@
+{% extends "base.html" %}
+{% block title %}Cahier de Liaison & Consignes Internes | {{ settings.inst_name }}{% endblock %}
+
+{% block content %}
+<style>
+  /* ============================================================
+     CAHIER DE LIAISON — PROFESSIONAL DESIGN SYSTEM
+     Organized: Variables → Base → Header → Stats → Toolbar →
+     Cards → Modals → Forms → Responsive → Animations
+     ============================================================ */
+
+  /* ——— Design Tokens ——— */
+  .sn-container {
+    --sn-primary: #0B3D6E;
+    --sn-primary-light: #1f6feb;
+    --sn-primary-soft: #eff6ff;
+    --sn-success: #10b981;
+    --sn-success-soft: #ecfdf5;
+    --sn-warning: #f97316;
+    --sn-warning-soft: #fff7ed;
+    --sn-danger: #ef4444;
+    --sn-danger-soft: #fef2f2;
+    --sn-amber: #d97706;
+    --sn-amber-soft: #fffbeb;
+    --sn-text: #0f172a;
+    --sn-text-secondary: #475569;
+    --sn-text-muted: #64748b;
+    --sn-text-faint: #94a3b8;
+    --sn-bg: #f8fafc;
+    --sn-surface: #ffffff;
+    --sn-border: #e2e8f0;
+    --sn-border-light: #f1f5f9;
+    --sn-radius-sm: 8px;
+    --sn-radius-md: 12px;
+    --sn-radius-lg: 16px;
+    --sn-radius-xl: 20px;
+    --sn-radius-2xl: 24px;
+    --sn-shadow-sm: 0 1px 3px rgba(15,23,42,0.04);
+    --sn-shadow-md: 0 4px 14px rgba(15,23,42,0.06);
+    --sn-shadow-lg: 0 8px 28px rgba(15,23,42,0.1);
+    --sn-shadow-xl: 0 20px 48px rgba(15,23,42,0.16);
+    --sn-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ——— Container ——— */
+  .sn-container {
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+
+  /* ——— Section Dividers ——— */
+  .sn-section-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 28px 0 16px 0;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--sn-text-muted);
+  }
+  .sn-section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--sn-border) 0%, transparent 100%);
+  }
+
+  /* ============================================================
+     HERO HEADER
+     ============================================================ */
+  .sn-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 20px;
+    border-radius: var(--sn-radius-lg);
+    background: var(--sn-surface);
+    border: 1px solid var(--sn-border);
+  }
+  .sn-title-area h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--sn-text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.3px;
+  }
+  .sn-title-area p {
+    color: var(--sn-text-muted);
+    font-size: 0.88rem;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* ============================================================
+     STAT CARDS
+     ============================================================ */
+  .sn-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .sn-stat-card {
+    background: var(--sn-surface);
+    border-radius: var(--sn-radius-lg);
+    padding: 18px 20px;
+    border: 1px solid var(--sn-border);
+    box-shadow: var(--sn-shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: all var(--sn-transition);
+    position: relative;
+    overflow: hidden;
+  }
+  .sn-stat-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: var(--sn-border);
+    transition: width var(--sn-transition);
+  }
+  .sn-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--sn-shadow-md);
+  }
+  .sn-stat-card:hover::before {
+    width: 6px;
+  }
+  .sn-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--sn-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .sn-stat-info .val {
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: var(--sn-text);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .sn-stat-info .lbl {
+    font-size: 0.78rem;
+    color: var(--sn-text-muted);
+    font-weight: 600;
+    margin-top: 4px;
+    line-height: 1.3;
+  }
+
+  /* ============================================================
+     TOOLBAR & FILTER TABS
+     ============================================================ */
+  .sn-toolbar {
+    background: var(--sn-surface);
+    border-radius: var(--sn-radius-lg);
+    border: 1px solid var(--sn-border);
+    padding: 10px 14px;
+    margin-bottom: 22px;
+    box-shadow: var(--sn-shadow-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .sn-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--sn-border-light);
+    padding: 4px;
+    border-radius: var(--sn-radius-md);
+    flex-wrap: wrap;
+  }
+  .sn-tab-btn {
+    padding: 7px 13px;
+    border-radius: var(--sn-radius-sm);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--sn-text-muted);
+    text-decoration: none;
+    transition: all var(--sn-transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .sn-tab-btn:hover {
+    color: var(--sn-text);
+    background: rgba(255,255,255,0.6);
+  }
+  .sn-tab-btn.active {
+    background: var(--sn-surface);
+    color: var(--sn-primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    font-weight: 800;
+  }
+  .sn-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .sn-select, .sn-input {
+    height: 36px;
+    border: 1.5px solid var(--sn-border);
+    border-radius: var(--sn-radius-sm);
+    padding: 0 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--sn-text);
+    background: var(--sn-bg);
+    outline: none;
+    transition: all var(--sn-transition);
+  }
+  .sn-select:focus, .sn-input:focus {
+    border-color: var(--sn-primary-light);
+    background: var(--sn-surface);
+    box-shadow: 0 0 0 3px rgba(31,111,235,0.1);
+  }
+
+  /* ============================================================
+     NOTE CARDS
+     ============================================================ */
+  .sn-notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 18px;
+  }
+  .sn-card {
+    background: var(--sn-surface);
+    border-radius: var(--sn-radius-xl);
+    border: 1px solid var(--sn-border);
+    box-shadow: var(--sn-shadow-sm);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all var(--sn-transition);
+    position: relative;
+  }
+  .sn-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 5px;
+    background: var(--sn-success);
+    border-radius: var(--sn-radius-xl) 0 0 var(--sn-radius-xl);
+    transition: width var(--sn-transition);
+  }
+  .sn-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--sn-shadow-lg);
+  }
+  .sn-card:hover::before {
+    width: 7px;
+  }
+  .sn-card.urgent::before {
+    background: var(--sn-danger);
+  }
+  .sn-card.urgent {
+    border-color: #fecaca;
+    background: linear-gradient(135deg, #fff5f5 0%, var(--sn-surface) 40%);
+  }
+  .sn-card.high::before {
+    background: var(--sn-warning);
+  }
+  .sn-card.high {
+    border-color: #fed7aa;
+  }
+  .sn-card.resolved::before {
+    background: var(--sn-text-faint);
+  }
+  .sn-card.resolved {
+    background: var(--sn-bg);
+    border-color: var(--sn-border);
+    opacity: 0.85;
+  }
+  .sn-card.resolved:hover {
+    opacity: 1;
+  }
+
+  .sn-card-head {
+    padding: 16px 18px 10px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .sn-badges-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+  }
+  .sn-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1.4;
+  }
+  .sn-badge-cat {
+    background: var(--sn-border-light);
+    color: var(--sn-text-secondary);
+  }
+  .sn-card-body {
+    padding: 2px 18px 16px 22px;
+    flex: 1;
+  }
+  .sn-card-title {
+    font-size: 1.04rem;
+    font-weight: 800;
+    color: var(--sn-text);
+    margin: 0 0 8px 0;
+    line-height: 1.35;
+    letter-spacing: -0.1px;
+  }
+  .sn-card-content {
+    font-size: 0.88rem;
+    color: var(--sn-text-secondary);
+    line-height: 1.6;
+    white-space: pre-line;
+    word-break: break-word;
+    background: var(--sn-bg);
+    border: 1px solid var(--sn-border-light);
+    border-radius: var(--sn-radius-md);
+    padding: 12px 14px;
+    border-left: 3px solid var(--sn-border);
+  }
+  .sn-card:not(.urgent):not(.high):not(.resolved) .sn-card-content {
+    border-left-color: var(--sn-success);
+  }
+  .sn-card.urgent .sn-card-content {
+    border-left-color: var(--sn-danger);
+    background: #fffafa;
+  }
+  .sn-card.high .sn-card-content {
+    border-left-color: var(--sn-warning);
+    background: #fffcf5;
+  }
+
+  .sn-card-meta {
+    padding: 12px 18px 12px 22px;
+    background: var(--sn-bg);
+    border-top: 1px solid var(--sn-border-light);
+    font-size: 0.78rem;
+    color: var(--sn-text-muted);
+  }
+  .sn-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+  .sn-meta-row:last-child {
+    margin-bottom: 0;
+  }
+  .sn-card-foot {
+    padding: 12px 18px 12px 22px;
+    background: var(--sn-surface);
+    border-top: 1px solid var(--sn-border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .sn-resolved-banner {
+    background: var(--sn-success-soft);
+    border: 1px solid #a7f3d0;
+    border-radius: var(--sn-radius-sm);
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    color: #065f46;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+
+  /* ============================================================
+     MODALS
+     ============================================================ */
+  .sn-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 99999;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+  }
+  .sn-modal-overlay.open {
+    display: flex;
+    animation: sn-fadeIn 0.2s ease;
+  }
+  .sn-modal-box {
+    background: var(--sn-surface);
+    border-radius: var(--sn-radius-xl);
+    width: 100%;
+    max-width: 680px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: var(--sn-shadow-xl);
+    animation: sn-slideUp 0.25s ease;
+  }
+  .sn-modal-box form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    margin: 0;
+  }
+  .sn-modal-head {
+    padding: 16px 22px;
+    background: linear-gradient(135deg, var(--sn-primary) 0%, var(--sn-primary-light) 100%);
+    color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .sn-modal-head h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.1px;
+  }
+  .sn-modal-body {
+    padding: 20px 22px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
+  .sn-modal-foot {
+    padding: 14px 22px;
+    background: var(--sn-bg);
+    border-top: 1px solid var(--sn-border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  /* ============================================================
+     FORM ELEMENTS
+     ============================================================ */
+  .sn-form-group {
+    margin-bottom: 14px;
+  }
+  .sn-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--sn-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .sn-form-control {
+    width: 100%;
+    border: 1.5px solid var(--sn-border);
+    border-radius: var(--sn-radius-sm);
+    padding: 9px 12px;
+    font-size: 0.88rem;
+    color: var(--sn-text);
+    outline: none;
+    box-sizing: border-box;
+    transition: all var(--sn-transition);
+    background: var(--sn-surface);
+  }
+  .sn-form-control:focus {
+    border-color: var(--sn-primary-light);
+    box-shadow: 0 0 0 3px rgba(31,111,235,0.1);
+  }
+  .sn-pills-group {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .sn-pill-btn {
+    border: 1.5px solid var(--sn-border);
+    border-radius: var(--sn-radius-sm);
+    padding: 7px 4px;
+    cursor: pointer;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.78rem;
+    transition: all var(--sn-transition);
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sn-surface);
+  }
+  .sn-pill-btn input {
+    display: none;
+  }
+  .sn-pill-btn:hover {
+    border-color: var(--sn-text-faint);
+  }
+  .sn-pill-btn.active-normal {
+    background: var(--sn-success-soft);
+    border-color: var(--sn-success);
+    color: #065f46;
+    box-shadow: 0 0 0 2px rgba(16,185,129,0.15);
+  }
+  .sn-pill-btn.active-high {
+    background: var(--sn-warning-soft);
+    border-color: var(--sn-warning);
+    color: #9a3412;
+    box-shadow: 0 0 0 2px rgba(249,115,22,0.15);
+  }
+  .sn-pill-btn.active-urgent {
+    background: var(--sn-danger-soft);
+    border-color: var(--sn-danger);
+    color: #991b1b;
+    box-shadow: 0 0 0 2px rgba(239,68,68,0.15);
+  }
+
+  /* ——— Target Box ——— */
+  .sn-target-box {
+    border: 1.5px solid var(--sn-border);
+    border-radius: var(--sn-radius-md);
+    padding: 12px 14px;
+    background: var(--sn-bg);
+  }
+  .sn-target-all-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 0.84rem;
+    color: #1e40af;
+    user-select: none;
+  }
+  .sn-users-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 6px;
+    max-height: 140px;
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+  .sn-user-check-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px;
+    background: var(--sn-surface);
+    border: 1px solid var(--sn-border);
+    border-radius: var(--sn-radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--sn-text-secondary);
+    cursor: pointer;
+    transition: all var(--sn-transition);
+  }
+  .sn-user-check-item:hover {
+    border-color: var(--sn-text-faint);
+    background: var(--sn-border-light);
+    transform: translateY(-1px);
+  }
+
+  /* ============================================================
+     ANIMATIONS
+     ============================================================ */
+  @keyframes sn-fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes sn-slideUp {
+    from { opacity: 0; transform: translateY(16px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* ============================================================
+     RESPONSIVE — MOBILE
+     ============================================================ */
+  @media (max-width: 640px) {
+    .sn-modal-box {
+      max-height: 94vh;
+      margin: 8px;
+      border-radius: var(--sn-radius-lg);
+    }
+    .sn-grid-form-2 {
+      grid-template-columns: 1fr !important;
+    }
+    .sn-notes-grid {
+      grid-template-columns: 1fr;
+    }
+    .sn-stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .sn-stat-card {
+      padding: 14px 12px;
+    }
+    .sn-stat-icon {
+      width: 40px;
+      height: 40px;
+      font-size: 18px;
+    }
+    .sn-stat-info .val {
+      font-size: 1.3rem;
+    }
+    .sn-tabs {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  /* ============================================================
+     RESPONSIVE — DESKTOP ENHANCEMENTS
+     ============================================================ */
+  @media (min-width: 769px) {
+    .sn-container { padding: 28px 28px 56px; }
+
+    /* ——— Hero Header ——— */
+    .sn-header {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #071e3a 0%, var(--sn-primary) 40%, var(--sn-primary-light) 100%);
+      border-radius: var(--sn-radius-2xl);
+      padding: 32px 36px;
+      border: none;
+      box-shadow: 0 16px 40px rgba(11,61,110,0.3), 0 0 0 1px rgba(255,255,255,0.05) inset;
+    }
+    .sn-header::after {
+      content: '';
+      position: absolute;
+      right: -40px; top: -60px;
+      width: 280px; height: 280px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .sn-header::before {
+      content: '';
+      position: absolute;
+      left: 30%; bottom: -100px;
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .sn-title-area, .sn-header > div { position: relative; z-index: 1; }
+    .sn-title-area h2 {
+      color: #ffffff;
+      font-size: 1.85rem;
+      letter-spacing: -0.4px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .sn-title-area p {
+      color: #93c5fd;
+      font-size: 0.92rem;
+      max-width: 640px;
+      line-height: 1.55;
+    }
+    .sn-header .btn-primary {
+      background: rgba(255,255,255,0.95) !important;
+      color: var(--sn-primary) !important;
+      border: none !important;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2) !important;
+      transition: all var(--sn-transition);
+      font-weight: 800 !important;
+      backdrop-filter: blur(4px);
+    }
+    .sn-header .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.3) !important;
+      background: #ffffff !important;
+    }
+
+    /* ——— Stat Cards Enhanced ——— */
+    .sn-stats-grid { gap: 18px; }
+    .sn-stat-card {
+      border: none;
+      border-radius: var(--sn-radius-xl);
+      padding: 22px 24px;
+      box-shadow: var(--sn-shadow-md);
+    }
+    .sn-stat-card::before { width: 5px; }
+    .sn-stat-card:nth-child(1)::before { background: var(--sn-primary-light); }
+    .sn-stat-card:nth-child(1) { background: linear-gradient(135deg, var(--sn-primary-soft) 0%, var(--sn-surface) 60%); }
+    .sn-stat-card:nth-child(2)::before { background: var(--sn-amber); }
+    .sn-stat-card:nth-child(2) { background: linear-gradient(135deg, var(--sn-amber-soft) 0%, var(--sn-surface) 60%); }
+    .sn-stat-card:nth-child(3)::before { background: var(--sn-danger); }
+    .sn-stat-card:nth-child(3) { background: linear-gradient(135deg, var(--sn-danger-soft) 0%, var(--sn-surface) 60%); }
+    .sn-stat-card:nth-child(4)::before { background: var(--sn-success); }
+    .sn-stat-card:nth-child(4) { background: linear-gradient(135deg, var(--sn-success-soft) 0%, var(--sn-surface) 60%); }
+    .sn-stat-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: var(--sn-radius-lg);
+      font-size: 26px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .sn-stat-info .val { font-size: 2rem; }
+
+    /* ——— Toolbar Enhanced ——— */
+    .sn-toolbar {
+      border: none;
+      border-radius: var(--sn-radius-xl);
+      padding: 10px 18px;
+      box-shadow: var(--sn-shadow-md);
+    }
+    .sn-tabs {
+      background: #edf1f7;
+      padding: 4px;
+      border-radius: var(--sn-radius-md);
+    }
+    .sn-tab-btn {
+      padding: 9px 16px;
+      border-radius: var(--sn-radius-sm);
+    }
+    .sn-tab-btn.active {
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--sn-primary) 0%, var(--sn-primary-light) 100%);
+      box-shadow: 0 4px 14px rgba(31,111,235,0.35);
+    }
+    .sn-tab-btn.active span[style] {
+      background: #ffffff !important;
+      color: var(--sn-primary) !important;
+    }
+    .sn-select, .sn-input {
+      height: 38px;
+      border-radius: var(--sn-radius-sm);
+      border-color: var(--sn-border);
+      background: var(--sn-bg);
+    }
+
+    /* ——— Note Cards Enhanced ——— */
+    .sn-notes-grid {
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: 20px;
+    }
+    .sn-card {
+      border: none;
+      border-radius: var(--sn-radius-2xl);
+      box-shadow: var(--sn-shadow-md);
+    }
+    .sn-card::before {
+      width: 6px;
+      border-radius: var(--sn-radius-2xl) 0 0 var(--sn-radius-2xl);
+    }
+    .sn-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 40px rgba(15,23,42,0.14);
+    }
+    .sn-card:hover::before {
+      width: 8px;
+    }
+    .sn-card.resolved { opacity: 0.82; }
+    .sn-card.resolved:hover { opacity: 1; }
+    .sn-card-head { padding: 18px 22px 8px 28px; }
+    .sn-card-body { padding: 4px 22px 18px 28px; }
+    .sn-card-title { font-size: 1.1rem; margin-bottom: 10px; }
+    .sn-card-content {
+      border-radius: var(--sn-radius-md);
+      padding: 14px 16px;
+      font-size: 0.88rem;
+      line-height: 1.7;
+    }
+    .sn-card-meta {
+      background: var(--sn-surface);
+      border-top: 1px dashed var(--sn-border);
+      padding: 12px 22px 12px 28px;
+    }
+    .sn-card-foot {
+      background: var(--sn-bg);
+      padding: 12px 22px 12px 28px;
+    }
+    .sn-author-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sn-author-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--sn-primary) 0%, var(--sn-primary-light) 100%);
+      color: #fff; font-weight: 800; font-size: 12px;
+      display: inline-flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 6px rgba(11,61,110,0.25);
+    }
+    .sn-badge { border-radius: 20px; padding: 4px 11px; }
+
+    /* ——— Modal Enhanced ——— */
+    .sn-modal-box {
+      border-radius: var(--sn-radius-2xl);
+      box-shadow: 0 30px 60px -16px rgba(15,23,42,0.4);
+    }
+    .sn-modal-head {
+      background: linear-gradient(135deg, #071e3a 0%, var(--sn-primary) 40%, var(--sn-primary-light) 100%);
+      padding: 18px 24px;
+    }
+  }
+</style>
+
+<div class="sn-container">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       HERO HEADER
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="sn-header">
+    <div class="sn-title-area">
+      <h2>
+        <span>📝</span>
+        <span>Cahier de Liaison & Consignes Internes</span>
+      </h2>
+      <p>
+        Transmission de notes, rappels et consignes entre l'équipe du soir et l'équipe du matin (دفتر تسليم المهام والملاحظات).
+      </p>
+    </div>
+    <div>
+      <button type="button" class="btn btn-primary" onclick="openNewNoteModal()" style="font-weight:800; border-radius:14px; padding:12px 24px; font-size:0.9rem; box-shadow:0 4px 14px rgba(11,61,110,0.25); display:inline-flex; align-items:center; gap:8px; letter-spacing:-0.1px;">
+        <span style="font-size:1.1em;">➕</span>
+        <span>Nouvelle Consigne</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SUMMARY DASHBOARD
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="sn-section-label">📊 Tableau de Bord</div>
+  <div class="sn-stats-grid">
+    <div class="sn-stat-card">
+      <div class="sn-stat-icon" style="background:#eff6ff; color:#1d4ed8;">🏢</div>
+      <div class="sn-stat-info">
+        <div class="val">{{ staff_pending_count }}</div>
+        <div class="lbl">Consignes Secrétariat & Admin</div>
+      </div>
+    </div>
+    <div class="sn-stat-card">
+      <div class="sn-stat-icon" style="background:#fffbeb; color:#d97706;">👨‍🏫</div>
+      <div class="sn-stat-info">
+        <div class="val" style="color:#d97706;">{{ teacher_pending_count }}</div>
+        <div class="lbl">Messages & Alertes Profs</div>
+      </div>
+    </div>
+    <div class="sn-stat-card">
+      <div class="sn-stat-icon" style="background:#fef2f2; color:#dc2626;">🚨</div>
+      <div class="sn-stat-info">
+        <div class="val" style="color:#dc2626;">{{ urgent_count }}</div>
+        <div class="lbl">Consignes Urgentes</div>
+      </div>
+    </div>
+    <div class="sn-stat-card">
+      <div class="sn-stat-icon" style="background:#ecfdf5; color:#059669;">✅</div>
+      <div class="sn-stat-info">
+        <div class="val" style="color:#059669;">{{ resolved_today_count }}</div>
+        <div class="lbl">Traitées aujourd'hui</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       NAVIGATION & FILTERS
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="sn-section-label">🔎 Navigation & Filtres</div>
+  <div class="sn-toolbar">
+    <div class="sn-tabs">
+      <a href="{{ url_for('staff_notes', tab='staff', priority=selected_priority, category=selected_category, q=search_query) }}" class="sn-tab-btn {{ 'active' if active_tab == 'staff' else '' }}">
+        <span>🏢 Secrétariat & Admin</span>
+        {% if staff_pending_count > 0 %}
+          <span style="background:#0B3D6E; color:#fff; font-size:10px; padding:2px 7px; border-radius:10px; font-weight:800;">{{ staff_pending_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{{ url_for('staff_notes', tab='teachers', priority=selected_priority, category=selected_category, q=search_query) }}" class="sn-tab-btn {{ 'active' if active_tab == 'teachers' else '' }}">
+        <span>👨‍🏫 Messages Profs</span>
+        {% if teacher_pending_count > 0 %}
+          <span style="background:#d97706; color:#fff; font-size:10px; padding:2px 7px; border-radius:10px; font-weight:800;">{{ teacher_pending_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{{ url_for('staff_notes', tab='active', priority=selected_priority, category=selected_category, q=search_query) }}" class="sn-tab-btn {{ 'active' if active_tab == 'active' else '' }}">
+        <span>⚡ Tout afficher</span>
+        {% if pending_count > 0 %}
+          <span style="background:#64748b; color:#fff; font-size:10px; padding:2px 7px; border-radius:10px; font-weight:800;">{{ pending_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{{ url_for('staff_notes', tab='assigned_me', priority=selected_priority, category=selected_category, q=search_query) }}" class="sn-tab-btn {{ 'active' if active_tab == 'assigned_me' else '' }}">
+        <span>🎯 Pour moi</span>
+      </a>
+      <a href="{{ url_for('staff_notes', tab='resolved', priority=selected_priority, category=selected_category, q=search_query) }}" class="sn-tab-btn {{ 'active' if active_tab == 'resolved' else '' }}">
+        <span>✅ Archives</span>
+      </a>
+    </div>
+
+    <form method="GET" action="{{ url_for('staff_notes') }}" class="sn-filters">
+      <input type="hidden" name="tab" value="{{ active_tab }}">
+      
+      <select name="priority" class="sn-select" onchange="this.form.submit()">
+        <option value="">Toutes priorités</option>
+        <option value="urgent" {{ 'selected' if selected_priority == 'urgent' else '' }}>🔴 Urgent</option>
+        <option value="high" {{ 'selected' if selected_priority == 'high' else '' }}>🟠 Important</option>
+        <option value="normal" {{ 'selected' if selected_priority == 'normal' else '' }}>🟢 Normal</option>
+      </select>
+
+      <select name="category" class="sn-select" onchange="this.form.submit()">
+        <option value="">Toutes catégories</option>
+        <option value="general" {{ 'selected' if selected_category == 'general' else '' }}>📌 Général</option>
+        <option value="reception" {{ 'selected' if selected_category == 'reception' else '' }}>👋 Accueil & Inscription</option>
+        <option value="finance" {{ 'selected' if selected_category == 'finance' else '' }}>💰 Paiement & Caisse</option>
+        <option value="pedagogy" {{ 'selected' if selected_category == 'pedagogy' else '' }}>📚 Pédagogie</option>
+        <option value="maintenance" {{ 'selected' if selected_category == 'maintenance' else '' }}>🔑 Locaux & Matériel</option>
+      </select>
+
+      <input type="text" name="q" value="{{ search_query }}" placeholder="Rechercher..." class="sn-input" style="width:150px;">
+      <button type="submit" class="btn btn-secondary btn-sm" style="border-radius:10px; font-size:0.82rem;">🔍</button>
+      {% if selected_priority or selected_category or search_query %}
+        <a href="{{ url_for('staff_notes', tab=active_tab) }}" class="btn btn-outline btn-sm" style="border-radius:10px; font-size:0.82rem;">✕ Reset</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       NOTES GRID
+       ═══════════════════════════════════════════════════════════ -->
+  {% if notes %}
+    <div class="sn-section-label">📋 Consignes {% if active_tab == 'resolved' %}(Archives){% else %}en cours{% endif %} — {{ notes|length }} élément{{ 's' if notes|length > 1 else '' }}</div>
+    <div class="sn-notes-grid">
+      {% for n in notes %}
+      {% set is_teacher_note = (n.author and n.author.role == 'teacher') %}
+      <div class="sn-card {{ n.priority }} {{ 'resolved' if n.status == 'done' else '' }} {{ 'sn-card-teacher' if is_teacher_note else 'sn-card-staff' }}">
+        
+        <!-- Header -->
+        <div class="sn-card-head">
+          <div class="sn-badges-row">
+            <!-- Source Tag (Teacher vs Staff) -->
+            {% if is_teacher_note %}
+              <span class="sn-badge" style="background:#fffbeb; color:#b45309; border:1px solid #fde68a; font-weight:800;">
+                <span>👨‍🏫</span> <span>Message Prof</span>
+              </span>
+            {% else %}
+              <span class="sn-badge" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-weight:800;">
+                <span>🏢</span> <span>Secrétariat / Admin</span>
+              </span>
+            {% endif %}
+
+            {% set p_info = n.priority_label %}
+            <span class="sn-badge" style="background:{{ p_info.bg }}; color:{{ p_info.color }};">
+              <span>{{ p_info.icon }}</span>
+              <span>{{ p_info.fr }}</span>
+            </span>
+
+            {% set c_info = n.category_label %}
+            <span class="sn-badge sn-badge-cat">
+              <span>{{ c_info.icon }}</span>
+              <span>{{ c_info.fr }}</span>
+            </span>
+
+            {% if n.is_pinned %}
+              <span class="sn-badge" style="background:#fef3c7; color:#b45309;">📌 Épinglé</span>
+            {% endif %}
+
+            {% if n.due_date %}
+              <span class="sn-badge" style="background:#e0f2fe; color:#0369a1;">
+                🗓️ {{ n.due_date.strftime('%d/%m/%Y') }}
+              </span>
+            {% endif %}
+          </div>
+
+          <!-- Actions drop/delete -->
+          <div>
+            {% if cur_user.role == 'admin' or cur_user.id == n.author_id %}
+              <form method="POST" action="{{ url_for('staff_notes_delete', note_id=n.id) }}" style="display:inline;" onsubmit="return confirm('Confirmer la suppression de cette note ?');">
+                <button type="submit" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:14px;" title="Supprimer la note">🗑️</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="sn-card-body">
+          <h4 class="sn-card-title">{{ n.title }}</h4>
+          <div class="sn-card-content">{{ n.content }}</div>
+        </div>
+
+        <!-- Meta -->
+        <div class="sn-card-meta">
+          <div class="sn-meta-row">
+            <div>
+              <strong>{{ '👨‍🏫 Professeur :' if is_teacher_note else '✍️ Rédigé par :' }}</strong> {{ n.author.full_name or n.author.username }}
+            </div>
+            <div style="font-size:0.75rem; color:#94a3b8;">
+              {{ n.created_at.strftime('%d/%m/%Y à %H:%M') if n.created_at else '—' }}
+            </div>
+          </div>
+          
+          <div class="sn-meta-row" style="margin-top:4px;">
+            <div>
+              <strong>Destinataires :</strong>
+              {% if n.target_type == 'all' %}
+                <span style="color:#0369a1; font-weight:700;">👥 Tout le personnel (الكل)</span>
+              {% else %}
+                <span style="color:#7c3aed; font-weight:700;">🎯 Destinataires ciblés</span>
+              {% endif %}
+            </div>
+            <div>
+              {% set r_count = n.get_read_users()|length %}
+              {% if r_count > 0 %}
+                <span title="Vu par des membres de l'équipe" style="color:#059669; font-weight:700; font-size:0.75rem;">
+                  👁️ Vu ({{ r_count }})
+                </span>
+              {% else %}
+                <span style="color:#94a3b8; font-size:0.75rem;">👁️ Non encore vu</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Foot / Action -->
+        <div class="sn-card-foot">
+          {% if n.status == 'pending' %}
+            <button type="button" class="btn btn-sm" onclick="openResolveModal('{{ n.id }}', '{{ n.title|replace('\'', '\\\'') }}')" style="background:linear-gradient(135deg, #059669, #10b981); color:#fff; border:none; font-weight:800; border-radius:12px; padding:8px 16px; font-size:0.8rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 3px 10px rgba(16,185,129,0.3); transition:all 0.2s ease;">
+              <span>✅</span>
+              <span>Marquer Traité</span>
+            </button>
+          {% else %}
+            <div style="flex:1;">
+              <div class="sn-resolved-banner">
+                <strong>Traité par :</strong> {{ n.resolved_by.full_name or n.resolved_by.username if n.resolved_by else 'Équipe' }}
+                le {{ n.resolved_at.strftime('%d/%m/%Y à %H:%M') if n.resolved_at else '—' }}
+                {% if n.resolution_note %}
+                  <div style="margin-top:3px; font-style:italic;">💬 "{{ n.resolution_note }}"</div>
+                {% endif %}
+              </div>
+            </div>
+            <form method="POST" action="{{ url_for('staff_notes_toggle_status', note_id=n.id) }}" style="display:inline;">
+              <button type="submit" class="btn btn-outline btn-xs" style="border-radius:8px; font-size:0.75rem;" title="Rétablir la consigne comme non traitée">
+                🔄 Rouvrir
+              </button>
+            </form>
+          {% endif %}
+        </div>
+
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-radius:24px; border:1px dashed #cbd5e1; padding:64px 24px; text-align:center; color:#94a3b8; box-shadow: 0 4px 14px rgba(15,23,42,0.04);">
+      <div style="width:72px; height:72px; border-radius:20px; background:linear-gradient(135deg, #ecfdf5, #d1fae5); display:inline-flex; align-items:center; justify-content:center; font-size:2.2rem; margin-bottom:16px; box-shadow:0 4px 12px rgba(16,185,129,0.15);">🎉</div>
+      <h3 style="color:#0f172a; margin-bottom:8px; font-weight:800; font-size:1.15rem;">Aucune consigne trouvée</h3>
+      <p style="font-size:0.9rem; max-width:440px; margin:0 auto 24px auto; line-height:1.6; color:#64748b;">
+        {% if active_tab == 'teachers' %}
+          Aucun message d'enseignant en attente. Toutes les remarques transmises lors de l'appel ont été traitées !
+        {% elif active_tab == 'staff' %}
+          Aucune consigne interne en attente entre le secrétariat et l'administration.
+        {% elif active_tab == 'active' %}
+          Toutes les consignes de l'équipe ont été traitées ou aucune note n'est en attente pour le moment.
+        {% else %}
+          Aucun élément ne correspond aux filtres sélectionnés.
+        {% endif %}
+      </p>
+      <button type="button" class="btn btn-primary" onclick="openNewNoteModal()" style="border-radius:14px; font-weight:800; padding:12px 24px; font-size:0.88rem; box-shadow:0 4px 14px rgba(11,61,110,0.2); display:inline-flex; align-items:center; gap:8px;">
+        <span>➕</span> Laisser une nouvelle consigne
+      </button>
+    </div>
+  {% endif %}
+
+</div>
+
+<!-- Modal: New Staff Note -->
+<div class="sn-modal-overlay" id="newNoteModal">
+  <div class="sn-modal-box">
+    <div class="sn-modal-head">
+      <h3>📝 Nouvelle Consigne / Note de Liaison</h3>
+      <button type="button" onclick="closeNewNoteModal()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; width:30px; height:30px; border-radius:8px; cursor:pointer; font-size:16px;">✕</button>
+    </div>
+    
+    <form method="POST" action="{{ url_for('staff_notes_new') }}">
+      <div class="sn-modal-body">
+        
+        <!-- Grid Container -->
+        <div class="sn-grid-form-2" style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:12px;">
+          
+          <!-- Titre (Full width span 2) -->
+          <div style="grid-column: 1 / -1;">
+            <label class="sn-label">Objet / Titre de la consigne *</label>
+            <input type="text" name="title" required placeholder="Ex: Règlement M. Alami, clés du 1er étage, rappel parents..." class="sn-form-control">
+          </div>
+
+          <!-- Colonne Gauche: Urgence, Catégorie, Échéance -->
+          <div>
+            <!-- Priorité -->
+            <div style="margin-bottom:10px;">
+              <label class="sn-label">Niveau d'Urgence :</label>
+              <div class="sn-pills-group">
+                <label class="sn-pill-btn active-normal" id="lblPrioNormal" onclick="setPrio('normal')">
+                  <input type="radio" name="priority" value="normal" checked>
+                  <span>🟢 Normal</span>
+                </label>
+                <label class="sn-pill-btn" id="lblPrioHigh" onclick="setPrio('high')">
+                  <input type="radio" name="priority" value="high">
+                  <span>🟠 Important</span>
+                </label>
+                <label class="sn-pill-btn" id="lblPrioUrgent" onclick="setPrio('urgent')">
+                  <input type="radio" name="priority" value="urgent">
+                  <span>🔴 Urgent</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Catégorie -->
+            <div style="margin-bottom:10px;">
+              <label class="sn-label">Catégorie :</label>
+              <select name="category" class="sn-form-control">
+                <option value="general">📌 Général</option>
+                <option value="reception">👋 Accueil & Inscription</option>
+                <option value="finance">💰 Paiement & Caisse</option>
+                <option value="pedagogy">📚 Pédagogie & Profs</option>
+                <option value="maintenance">🔑 Locaux & Matériel</option>
+              </select>
+            </div>
+
+            <!-- Échéance -->
+            <div>
+              <label class="sn-label">Date d'échéance (Optionnel) :</label>
+              <input type="date" name="due_date" class="sn-form-control">
+            </div>
+          </div>
+
+          <!-- Colonne Droite: Message / Contenu -->
+          <div style="display:flex; flex-direction:column;">
+            <label class="sn-label">Détails / Message de la consigne *</label>
+            <textarea name="content" required class="sn-form-control" style="flex:1; min-height:140px; resize:vertical; line-height:1.45;" placeholder="Expliquez la situation avec précision pour l'équipe (matin/soir)..."></textarea>
+          </div>
+
+          <!-- Destinataires (Full width span 2) -->
+          <div style="grid-column: 1 / -1;" class="sn-target-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <label class="sn-target-all-label">
+                <input type="checkbox" name="target_all" id="targetAllCheck" checked onchange="toggleTargetAll(this.checked)" style="accent-color:#1e40af; width:17px; height:17px; cursor:pointer;">
+                <span>☑️ Tous les collaborateurs / الجميع (Visible par toute l'équipe - Par défaut)</span>
+              </label>
+              <span id="targetHelperText" style="font-size:0.75rem; color:#64748b; font-weight:600;">(Décochez pour cibler des personnes spécifiques)</span>
+            </div>
+
+            <div id="allUsersInfo" style="font-size:0.8rem; color:#475569; margin-top:6px; padding-left:26px; line-height:1.4;">
+              🌐 <strong>Visible par toute l'équipe :</strong> Directeurs, secrétaires et personnel administratif.
+            </div>
+
+            <!-- Collapsible: Liste des utilisateurs spécifiques -->
+            <div id="usersCheckSection" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed #cbd5e1;">
+              <div style="font-size:0.78rem; font-weight:700; color:#334155; margin-bottom:6px;">
+                👥 Sélectionner les destinataires qui verront cette note :
+              </div>
+              <div class="sn-users-list" id="usersCheckList">
+                {% for u in active_users %}
+                <label class="sn-user-check-item" id="lblUser_{{ u.id }}">
+                  <input type="checkbox" name="target_user_ids" value="{{ u.id }}" class="user-check-input" disabled style="accent-color:#2563eb; cursor:pointer;">
+                  <span>
+                    {{ u.full_name or u.username }}
+                    <small style="color:#64748b;">({{ u.role }})</small>
+                  </span>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Option Épingler (Full width span 2) -->
+          <div style="grid-column: 1 / -1;">
+            <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-weight:700; font-size:0.84rem; color:#0f172a;">
+              <input type="checkbox" name="is_pinned" value="1" style="accent-color:#d97706; width:16px; height:16px;">
+              <span>📌 Épingler cette note en tête de liste</span>
+            </label>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="sn-modal-foot">
+        <button type="button" class="btn btn-secondary" onclick="closeNewNoteModal()">Annuler</button>
+        <button type="submit" class="btn btn-primary" style="font-weight:800; border-radius:10px; padding:9px 20px;">
+          Enregistrer & Transmettre 🚀
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Marquer comme Traité -->
+<div class="sn-modal-overlay" id="resolveModal">
+  <div class="sn-modal-box" style="max-width:440px;">
+    <div class="sn-modal-head" style="background:linear-gradient(135deg, #059669 0%, #10b981 100%);">
+      <h3>✅ Clôturer la Consigne</h3>
+      <button type="button" onclick="closeResolveModal()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; width:30px; height:30px; border-radius:8px; cursor:pointer;">✕</button>
+    </div>
+    <form method="POST" id="resolveForm" action="">
+      <div class="sn-modal-body">
+        <div style="font-weight:800; font-size:1.05rem; color:#0f172a; margin-bottom:8px;" id="resolveNoteTitle"></div>
+        <p style="font-size:0.88rem; color:#64748b; margin-bottom:16px;">
+          Confirmez-vous que cette consigne a été prise en compte et traitée ?
+        </p>
+        <div class="sn-form-group">
+          <label>Commentaire de résolution (Optionnel)</label>
+          <input type="text" name="resolution_note" class="sn-form-control" placeholder="Ex: M. Alami a payé, reçu délivré.">
+        </div>
+      </div>
+      <div class="sn-modal-foot">
+        <button type="button" class="btn btn-secondary" onclick="closeResolveModal()">Annuler</button>
+        <button type="submit" class="btn btn-success" style="background:#10b981; border:none; color:#fff; font-weight:800; border-radius:10px; padding:9px 18px;">
+          Confirmer le Traitement ✅
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openNewNoteModal() {
+    document.getElementById('newNoteModal').classList.add('open');
+  }
+  function closeNewNoteModal() {
+    document.getElementById('newNoteModal').classList.remove('open');
+  }
+
+  function setPrio(p) {
+    const lNorm = document.getElementById('lblPrioNormal');
+    const lHigh = document.getElementById('lblPrioHigh');
+    const lUrg = document.getElementById('lblPrioUrgent');
+
+    lNorm.className = 'sn-pill-btn' + (p === 'normal' ? ' active-normal' : '');
+    lHigh.className = 'sn-pill-btn' + (p === 'high' ? ' active-high' : '');
+    lUrg.className = 'sn-pill-btn' + (p === 'urgent' ? ' active-urgent' : '');
+
+    const radio = document.querySelector(`input[name="priority"][value="${p}"]`);
+    if (radio) radio.checked = true;
+  }
+
+  function toggleTargetAll(isAll) {
+    const info = document.getElementById('allUsersInfo');
+    const sec = document.getElementById('usersCheckSection');
+    const helper = document.getElementById('targetHelperText');
+    const inputs = document.querySelectorAll('.user-check-input');
+
+    if (isAll) {
+      if (info) info.style.display = 'block';
+      if (sec) sec.style.display = 'none';
+      if (helper) helper.textContent = '(Décochez pour cibler des personnes spécifiques)';
+      inputs.forEach(inp => {
+        inp.disabled = true;
+        inp.checked = false;
+      });
+    } else {
+      if (info) info.style.display = 'none';
+      if (sec) sec.style.display = 'block';
+      if (helper) helper.textContent = '(Cochez ci-dessous les destinataires)';
+      inputs.forEach(inp => {
+        inp.disabled = false;
+      });
+    }
+  }
+
+  function openResolveModal(noteId, title) {
+    document.getElementById('resolveNoteTitle').textContent = title;
+    document.getElementById('resolveForm').action = '/staff-notes/' + noteId + '/toggle-status';
+    document.getElementById('resolveModal').classList.add('open');
+  }
+  function closeResolveModal() {
+    document.getElementById('resolveModal').classList.remove('open');
+  }
+
+  // Auto mark read on load for visible notes
+  window.addEventListener('DOMContentLoaded', () => {
+    {% for n in notes %}
+      {% if not n.is_read_by(cur_user.id) %}
+        fetch('/staff-notes/{{ n.id }}/mark-read', { method: 'POST' }).catch(() => {});
+      {% endif %}
+    {% endfor %}
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="{{ lang or 'fr' }}">
+<head>
+<meta charset="utf-8">
+<title>{{ 'Emploi du Temps' }} — {{ settings.inst_name }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800;900&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  @page {
+    {% if fmt == 'a4' %}
+      size: A4 landscape;
+      margin: 8mm 10mm;
+    {% elif fmt == 'a5' %}
+      size: A5 portrait;
+      margin: 6mm;
+    {% else %}
+      size: 80mm auto;
+      margin: 0;
+    {% endif %}
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: #0f172a;
+    background: #ffffff;
+    margin: 0;
+    padding: {% if fmt == '80mm' %}0{% else %}16px{% endif %};
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Screen Action Bar (Hidden in Print) */
+  .no-print-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0B3D6E;
+    color: #ffffff;
+    padding: 10px 18px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(11,61,110,0.2);
+  }
+  .no-print-bar a, .no-print-bar button {
+    font-family: inherit;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  @media print {
+    @page {
+      {% if fmt == 'a4' %}
+        size: A4 landscape;
+        margin: 8mm 10mm;
+      {% elif fmt == 'a5' %}
+        size: A5 portrait;
+        margin: 6mm;
+      {% else %}
+        size: 80mm auto;
+        margin: 0;
+      {% endif %}
+    }
+    .no-print-bar, .no-print {
+      display: none !important;
+      height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      visibility: hidden !important;
+    }
+    body {
+      padding: 0 !important;
+      margin: 0 !important;
+      background: #ffffff !important;
+      color: #000000 !important;
+      width: 100% !important;
+    }
+    {% if fmt == '80mm' %}
+    .thermal-ticket {
+      width: 72mm !important;
+      max-width: 72mm !important;
+      margin: 0 auto !important;
+      padding: 2mm 1mm !important;
+      display: block !important;
+      visibility: visible !important;
+      color: #000000 !important;
+    }
+    .thermal-ticket * {
+      visibility: visible !important;
+    }
+    .thermal-title-badge,
+    .thermal-day-banner {
+      background-color: #000000 !important;
+      color: #ffffff !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    {% endif %}
+  }
+
+  /* ================= 80mm Thermal Ticket (100% Pure Black & White) ================= */
+  {% if fmt == '80mm' %}
+  .thermal-ticket {
+    width: 72mm;
+    margin: 0 auto;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    font-size: 10px;
+    line-height: 1.25;
+    color: #000000;
+    padding: 3mm 2mm;
+  }
+  .thermal-logo {
+    max-width: 44mm;
+    height: auto;
+    display: block;
+    margin: 0 auto 3px auto;
+  }
+  .thermal-header {
+    text-align: center;
+    padding-bottom: 2px;
+  }
+  .thermal-brand {
+    font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #000000;
+    line-height: 1.1;
+  }
+  .thermal-sub {
+    font-size: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #000000;
+    letter-spacing: 0.3px;
+    margin-top: 2px;
+  }
+  .thermal-contact {
+    font-size: 8px;
+    font-weight: 700;
+    color: #000000;
+    margin-top: 1.5px;
+  }
+  .thermal-title-badge {
+    background: #000000;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 4px 0;
+    margin: 7px 0 5px 0;
+    border-radius: 2px;
+  }
+  .thermal-meta-box {
+    border: 1.5px solid #000000;
+    border-radius: 3px;
+    padding: 4px 6px;
+    margin-bottom: 7px;
+    font-size: 9px;
+  }
+  .thermal-meta-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 1.5px 0;
+  }
+  .thermal-meta-row:not(:last-child) {
+    border-bottom: 1px dashed #000000;
+  }
+  .thermal-meta-lbl {
+    font-size: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .thermal-meta-val {
+    font-weight: 900;
+    text-align: right;
+  }
+  .thermal-day-banner {
+    background: #000000;
+    color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 6px;
+    margin-top: 8px;
+    margin-bottom: 5px;
+    border-radius: 2px;
+  }
+  .thermal-day-title {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+  }
+  .thermal-day-cnt {
+    font-size: 8px;
+    font-weight: 900;
+    background: #ffffff;
+    color: #000000;
+    padding: 0 4px;
+    border-radius: 2px;
+  }
+  .thermal-slot {
+    border-left: 3.5px solid #000000;
+    padding: 3px 0 4px 6px;
+    margin-bottom: 5px;
+    border-bottom: 1px dashed #000000;
+  }
+  .thermal-slot:last-child {
+    border-bottom: none;
+  }
+  .thermal-slot-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+  }
+  .thermal-time {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.2px;
+  }
+  .thermal-room {
+    font-size: 8.5px;
+    font-weight: 900;
+    border: 1.2px solid #000000;
+    padding: 0 4px;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+  .thermal-course {
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1.25;
+    margin-bottom: 2px;
+  }
+  .thermal-slot-bot {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8.5px;
+    font-weight: 800;
+  }
+  .thermal-footer {
+    text-align: center;
+    margin-top: 10px;
+    padding-top: 6px;
+    border-top: 1.5px dashed #000000;
+    font-size: 8px;
+    font-weight: 800;
+    line-height: 1.35;
+  }
+  {% else %}
+
+  /* ================= A4 Landscape & A5 Layout ================= */
+  .doc-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  /* Header Box */
+  .doc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2.5px solid #0B3D6E;
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+  .inst-title {
+    font-size: 19px;
+    font-weight: 900;
+    color: #0B3D6E;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .inst-meta {
+    font-size: 11px;
+    color: #475569;
+    margin-top: 2px;
+  }
+  .doc-badge-title {
+    text-align: right;
+  }
+  .main-heading {
+    font-size: 17px;
+    font-weight: 900;
+    color: #1f6feb;
+    text-transform: uppercase;
+  }
+  .filter-sub {
+    font-size: 11.5px;
+    color: #334155;
+    font-weight: 700;
+    margin-top: 3px;
+  }
+
+  /* 7-Day Grid */
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    width: 100%;
+  }
+  .day-column-print {
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+  }
+  .day-header-print {
+    background: #0B3D6E;
+    color: #ffffff;
+    padding: 6px 4px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .day-body-print {
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-height: {% if fmt=='a4' %}360px{% else %}240px{% endif %};
+    background: #f8fafc;
+  }
+  .slot-box {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-left: 3.5px solid #1f6feb;
+    border-radius: 6px;
+    padding: 6px 7px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  .slot-box.soutien {
+    border-left-color: #10b981;
+  }
+  .slot-box.merged {
+    border-left-color: #8b5cf6 !important;
+    background: #faf5ff !important;
+  }
+  .slot-box.merged .slot-time-print {
+    color: #6d28d9 !important;
+  }
+  .badge-merged {
+    display: inline-block;
+    background: #ede9fe;
+    color: #6d28d9;
+    border: 1px solid #c4b5fd;
+    font-weight: 800;
+    font-size: 8.5px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-bottom: 3px;
+    letter-spacing: 0.3px;
+  }
+  .slot-time-print {
+    font-weight: 800;
+    color: #1f6feb;
+    font-size: 10.5px;
+    margin-bottom: 2px;
+  }
+  .slot-box.soutien .slot-time-print {
+    color: #047857;
+  }
+  .slot-title-print {
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 11.5px;
+    line-height: 1.25;
+    margin-bottom: 3px;
+  }
+  .slot-meta-print {
+    font-size: 10px;
+    color: #475569;
+    line-height: 1.3;
+  }
+  .room-tag {
+    display: inline-block;
+    background: #f1f5f9;
+    color: #0B3D6E;
+    font-weight: 800;
+    font-size: 9.5px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    border: 1px solid #cbd5e1;
+    margin-top: 2px;
+  }
+
+  /* Tabular View (When single day or table requested) */
+  .table-schedule {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6px;
+  }
+  .table-schedule th {
+    background: #0B3D6E;
+    color: #ffffff;
+    padding: 8px 10px;
+    font-size: 11.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-align: left;
+    border: 1px solid #0B3D6E;
+  }
+  .table-schedule td {
+    padding: 8px 10px;
+    font-size: 12px;
+    border: 1px solid #cbd5e1;
+    vertical-align: middle;
+  }
+  .table-schedule tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+
+  /* Official Footer Block */
+  .doc-footer {
+    margin-top: 14px;
+    padding-top: 8px;
+    border-top: 1px solid #cbd5e1;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-size: 10.5px;
+    color: #475569;
+  }
+  .stamp-box {
+    text-align: center;
+    border: 1.5px dashed #94a3b8;
+    border-radius: 8px;
+    padding: 6px 18px;
+    background: #f8fafc;
+  }
+  {% endif %}
+</style>
+</head>
+<body>
+
+<!-- NO PRINT SCREEN BAR -->
+<div class="no-print-bar">
+  <div style="display:flex; align-items:center; gap:14px;">
+    <a href="{{ url_for('schedule') }}" style="color:#ffffff; font-weight:700; font-size:13px;">
+      ← Retour au Planning
+    </a>
+    <span style="opacity:0.6;">|</span>
+    <span style="font-weight:800; font-size:14px;">Aperçu Avant Impression — Emploi du Temps Pro</span>
+  </div>
+
+  <div style="display:flex; align-items:center; gap:8px;">
+    <!-- Format Switcher -->
+    <div style="display:flex; gap:4px; background:rgba(255,255,255,0.15); padding:3px; border-radius:6px;">
+      <a href="{{ url_for('schedule_print', format='a4', day=request.args.get('day',''), teacher_id=request.args.get('teacher_id',''), room_id=request.args.get('room_id',''), level=request.args.get('level',''), subject=request.args.get('subject',''), group=request.args.get('group',''), q=request.args.get('q','')) }}" style="color:{% if fmt=='a4' %}#0B3D6E{% else %}#fff{% endif %}; background:{% if fmt=='a4' %}#fff{% else %}transparent{% endif %}; padding:3px 8px; border-radius:4px; font-weight:700; font-size:11.5px;">📄 A4 Paysage</a>
+      <a href="{{ url_for('schedule_print', format='a5', day=request.args.get('day',''), teacher_id=request.args.get('teacher_id',''), room_id=request.args.get('room_id',''), level=request.args.get('level',''), subject=request.args.get('subject',''), group=request.args.get('group',''), q=request.args.get('q','')) }}" style="color:{% if fmt=='a5' %}#0B3D6E{% else %}#fff{% endif %}; background:{% if fmt=='a5' %}#fff{% else %}transparent{% endif %}; padding:3px 8px; border-radius:4px; font-weight:700; font-size:11.5px;">📄 A5 Portrait</a>
+      <a href="{{ url_for('schedule_print', format='80mm', day=request.args.get('day',''), teacher_id=request.args.get('teacher_id',''), room_id=request.args.get('room_id',''), level=request.args.get('level',''), subject=request.args.get('subject',''), group=request.args.get('group',''), q=request.args.get('q','')) }}" style="color:{% if fmt=='80mm' %}#0B3D6E{% else %}#fff{% endif %}; background:{% if fmt=='80mm' %}#fff{% else %}transparent{% endif %}; padding:3px 8px; border-radius:4px; font-weight:700; font-size:11.5px;">🧾 Ticket 80mm</a>
+    </div>
+
+    <button onclick="window.print()" style="background:#10b981; border:none; color:#ffffff; font-weight:800; padding:6px 16px; border-radius:6px; font-size:13px; box-shadow:0 2px 8px rgba(16,185,129,0.4);">
+      🖨️ Imprimer le Document
+    </button>
+  </div>
+</div>
+
+{% if fmt == '80mm' %}
+<!-- ================= 80mm THERMAL TICKET (MODERN PURE B&W) ================= -->
+<div class="thermal-ticket">
+  <div class="thermal-header">
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAC+AQAAAAAzFWSTAAAFgElEQVR4nO1aPW7kNhT+SAkeFYuMShdBrCIHcJlu5ih7hL3Bqky5R/BJEhUuUvoISpAiTQAlcCEvpGHwHkmJ0pASuUZcmTBmRiN+8/5/+GShkLrk8vIpHYJ0SP8mVIY3oXJ5EyrqTaigToY030ClSYcgHdKO51QIHnch+er677NKpfK8B8A1Y2IXIpZ8CGRDGhW1zxZWkH+v9bEHKYEiDfISwxcWkJ81oSTGAFRpkHM6Y/dRMOGaYsxjTCPdiywqkmVyHGMJuU+HfEiH4K0gzf9PZUiHRC35ekjbJkJ6cZtOJU+GyCwZkqebskiNfXT7bGFNpUyHVOkQpEPOMRjlrkZFLPlaxkQ6RKZDkA55TIcU6ZCoJZNdDEvIQxQZ5a5fY6wvXn0YiVkyatc75HUaE86qMIoceKGXef01fVJCxlGZK84fUOcVxJ/45gJaAb+lyTIC+BoF+cXt1FWdRIXrwqr+fFYDMqV6epnXFFLcqh2TsiVD+gjGlG0EdTAOKbJcfOdb5ZNlwEl/MAd7lUDFQOp9yLCuvdK5Gco2y7amSWDMIuXuab9fdQOtC9mh2ACnLqoz6uaxiWjGVQdyGHx2aXEwvkYfahz3xW9nNRfUGNzLlAa2pMA8y92yZwNEcSCXIsL6ju7PQLEE3PU+8ckraF24fA2rEAsMoVw/kuXCfDHNGKr9ECMS9dzhiGYJ6aKUIPf6t8tVIpJ7jF3vlM6X3iPltUdI9yJ0qmgXypYATu1Gy3dtK0l6+95chPr9bsG5BG4Md/uaaOy+AoLheZACMyccWU9KMfyg4HFL2qbDkrI+LckWrMLh0uJ2UvSzZayO7PZqrnxWZiZQepNlgx8XMQbI2Rx7vn82s2NNJQ8ny3ry1ooHSASZGobQQUQaTym5Hi/t58tJaumtD/xKSmeWVO+xCyUJKtWmimXT+YVDdG9kTQKPC8b8LnaBQK2dywos40+V7IlPBLF+4vdKKvNn44+k0meXShEMSnewc3Ehfj/rmbpmmfjhTmnWUygorSfd0MuDQ8XvYt1a/s7GD3dW8JiyxVF1tvS1OhAniNqH9Gx/zRgVEf/8rUWJwnrfDdtf2ksZ8VhAkIJM4QvvblAhn+7fcw9Tm8s8ZqD0QfNDawieQnVQWjEz7mHsYLsM+77jug0ZpqH46SgBth4lcxm+mBhTvPEgK43cGkGIpTCSM21LTPscea3KDBhkqUlkIa8kEiYstTogCzyTQvKohyIwgTxSRgvoWPfeNixB/n7JcyAfScdxh+USkEwG+BjqRfNl2BSzYbVnX9lF+z1FgFkDycJSZ4E2qTNCujeltuF2I+tkEkl/HPO3gcTX4h++73q5pN2cK0JZ7Pe1BaTmqdkY8V6lHkUqI7XApzHSTaYGbi9H/obFaViUsCVHt4QraxCtcA8V3vt54B2tCSAJHOq77U78QYflg/Xb2c4eKtqJjheWhY9xgxPXG/WoF7RNGTOICeI1i6YycAB/5V8dHCob49oR9T25GTlaD0ibJrZiskZToWMNdbM/WuUvl1Fj0yjinPZQRbqb68C1xozPH+lA0QB3pMJMGk35U6X59pksXwF/8oMz2ft0PPKMZcqGI77wtlFQ5OTD1sjO/pDAYYqzQl52FHbUBhvmoJFqQ2Fk308/rL4rTboIPtkUtW6iZ3NUUps98A8HDVXUj/Tp4h5GnugtWCqKKb/YknHWDUlAFOdx5Nww1vrUaJVpra/XSXF3r81gunxQq0Dzqy9BKlOXV5uHZjldP+IlYBW1EEIbpljvWTKmz7h6lmSj+rQ9h6FelAsJ53lN7bxNRac8vqbkSPKLnTm/0yBR5v4JwHe7BzC+TS7D3RuAT9hmzIan7eE6fn8fQacumYzAOyR1fYPG/gOKo10pOlir8gAAAABJRU5ErkJggg==" class="thermal-logo" alt="ILAS">
+    <div class="thermal-brand">{{ settings.inst_name }}</div>
+    <div class="thermal-sub">{{ settings.inst_tagline }}</div>
+    <div class="thermal-contact">Tél: {{ settings.inst_phone or '06 60 29 11 55' }} · {{ settings.inst_city or 'Deroua' }}</div>
+  </div>
+
+  <div class="thermal-title-badge">
+    {% if selected_day_name %}
+      [ EMPLOI DU TEMPS — {{ selected_day_name|upper }} ]
+    {% else %}
+      [ EMPLOI DU TEMPS OFFICIEL ]
+    {% endif %}
+  </div>
+
+  <div class="thermal-meta-box">
+    <div class="thermal-meta-row">
+      <span class="thermal-meta-lbl">Année Scolaire</span>
+      <span class="thermal-meta-val">{{ settings.school_year or '2025/2026' }}</span>
+    </div>
+    <div class="thermal-meta-row">
+      <span class="thermal-meta-lbl">Date d'Émission</span>
+      <span class="thermal-meta-val">{{ today.strftime('%d/%m/%Y') }}</span>
+    </div>
+    {% if selected_teacher %}
+    <div class="thermal-meta-row">
+      <span class="thermal-meta-lbl">Enseignant</span>
+      <span class="thermal-meta-val">{{ selected_teacher.full_name }}</span>
+    </div>
+    {% endif %}
+    {% if selected_room %}
+    <div class="thermal-meta-row">
+      <span class="thermal-meta-lbl">Salle</span>
+      <span class="thermal-meta-val">{{ selected_room.name }}</span>
+    </div>
+    {% endif %}
+    {% if selected_level %}
+    <div class="thermal-meta-row">
+      <span class="thermal-meta-lbl">Niveau</span>
+      <span class="thermal-meta-val">{{ selected_level }}</span>
+    </div>
+    {% endif %}
+    {% if selected_subject %}
+    <div class="thermal-meta-row">
+      <span class="thermal-meta-lbl">Matière</span>
+      <span class="thermal-meta-val">{{ selected_subject }}</span>
+    </div>
+    {% endif %}
+    {% if selected_group %}
+    <div class="thermal-meta-row">
+      <span class="thermal-meta-lbl">Groupe</span>
+      <span class="thermal-meta-val">{{ selected_group }}</span>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if selected_day_name %}
+    <div class="thermal-day-banner">
+      <span class="thermal-day-title">&gt;&gt; {{ selected_day_name|upper }}</span>
+      <span class="thermal-day-cnt">{{ daily_slots|length }} COURS</span>
+    </div>
+    {% for s in daily_slots %}
+    <div class="thermal-slot">
+      <div class="thermal-slot-top">
+        <span class="thermal-time">[{{ s.start_time }} – {{ s.end_time }}]</span>
+        <span class="thermal-room">{{ s.effective_room.name if s.effective_room else 'SALLE ?' }}</span>
+      </div>
+      {% if s.is_merged_session %}
+      <div class="thermal-course">🤝 SÉANCE COMMUNE (GROUPE 1 + 2)</div>
+      <div style="font-size: 8.5px; font-weight: 700; margin-bottom: 2px;">
+        ● {{ s.course.display_name }} ({{ s.course.enrolled_count or 0 }} él.)<br>
+        {% for cs in s.co_slots %}
+        ● {{ cs.course.display_name }} ({{ cs.course.enrolled_count or 0 }} él.)
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="thermal-course">{{ s.course.name if (s.course and s.course.name) else (s.course.display_name if s.course else 'Cours') }}</div>
+      {% endif %}
+      <div class="thermal-slot-bot">
+        {% set prof = s.effective_teacher if hasattr(s, 'effective_teacher') else (s.teacher or (s.course.teacher if s.course else None)) %}
+        <span>Prof: {{ prof.full_name if prof else 'ILAS' }}</span>
+        {% if s.is_merged_session %}
+          <span>Groupe 1 + 2 ({{ (s.course.enrolled_count or 0) + (s.co_slots[0].course.enrolled_count or 0 if s.co_slots else 0) }} él.)</span>
+        {% elif s.course and s.course.group_name %}
+          <span>{{ s.course.group_name }}</span>
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:10px; font-weight:800;">Aucune séance programmée.</div>
+    {% endfor %}
+  {% else %}
+    {% for i in range(7) %}
+    {% set day_slots = grid[i] %}
+    {% if day_slots %}
+      <div class="thermal-day-banner">
+        <span class="thermal-day-title">&gt;&gt; {{ days[i]|upper }}</span>
+        <span class="thermal-day-cnt">{{ day_slots|length }} COURS</span>
+      </div>
+      {% for s in day_slots %}
+      <div class="thermal-slot">
+        <div class="thermal-slot-top">
+          <span class="thermal-time">[{{ s.start_time }} – {{ s.end_time }}]</span>
+          <span class="thermal-room">{{ s.effective_room.name if s.effective_room else 'SALLE ?' }}</span>
+        </div>
+        {% if s.is_merged_session %}
+        <div class="thermal-course">🤝 SÉANCE COMMUNE (GROUPE 1 + 2)</div>
+        <div style="font-size: 8.5px; font-weight: 700; margin-bottom: 2px;">
+          ● {{ s.course.display_name }} ({{ s.course.enrolled_count or 0 }} él.)<br>
+          {% for cs in s.co_slots %}
+          ● {{ cs.course.display_name }} ({{ cs.course.enrolled_count or 0 }} él.)
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="thermal-course">{{ s.course.name if (s.course and s.course.name) else (s.course.display_name if s.course else 'Cours') }}</div>
+        {% endif %}
+        <div class="thermal-slot-bot">
+          {% set prof_grid = s.effective_teacher if hasattr(s, 'effective_teacher') else (s.teacher or (s.course.teacher if s.course else None)) %}
+          <span>Prof: {{ prof_grid.full_name if prof_grid else 'ILAS' }}</span>
+          {% if s.is_merged_session %}
+            <span>Groupe 1 + 2 ({{ (s.course.enrolled_count or 0) + (s.co_slots[0].course.enrolled_count or 0 if s.co_slots else 0) }} él.)</span>
+          {% elif s.course and s.course.group_name %}
+            <span>{{ s.course.group_name }}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  <div class="thermal-footer">
+    <div style="font-weight:900; font-size:9px;">{{ settings.inst_name }}</div>
+    <div>* Prière d'arriver 5 minutes avant le cours.</div>
+    <div style="margin-top:2px; font-size:7.5px;">Document Officiel · Émis le {{ today.strftime('%d/%m/%Y') }}</div>
+  </div>
+</div>
+
+{% else %}
+
+<!-- ================= A4 LANDSCAPE / A5 PORTRAIT DOCUMENT ================= -->
+<div class="doc-container">
+
+  <!-- OFFICIAL HEADER -->
+  <div class="doc-header">
+    <div>
+      <div class="inst-title">{{ settings.inst_name }}</div>
+      <div class="inst-meta">{{ settings.inst_tagline }} · Lot Nora N10, Deroua · Tél: 05 22 53 22 17 / 06 60 29 11 55</div>
+      <div class="inst-meta" style="font-weight:700; color:#15803d; margin-top:2px;">Autorisation Ministérielle N° 22-200/2020</div>
+    </div>
+
+    <div class="doc-badge-title">
+      <div class="main-heading">
+        {% if selected_day_name %}
+          📅 EMPLOI DU TEMPS — {{ selected_day_name|upper }}
+        {% else %}
+          🗓️ EMPLOI DU TEMPS HEBDOMADAIRE OFFICIEL
+        {% endif %}
+      </div>
+      <div class="filter-sub">
+        {% if selected_teacher %}👨‍🏫 Enseignant : {{ selected_teacher.full_name }} | {% endif %}
+        {% if selected_room %}🚪 Salle : {{ selected_room.name }} | {% endif %}
+        Année Scolaire : {{ settings.school_year or '2025/2026' }}
+      </div>
+    </div>
+  </div>
+
+  {% if selected_day_name %}
+  <!-- SINGLE DAY TABULAR VIEW -->
+  <table class="table-schedule">
+    <thead>
+      <tr>
+        <th style="width:18%;">⏱️ Horaire / Créneau</th>
+        <th style="width:34%;">📖 Classe & Discipline</th>
+        <th style="width:20%;">🚪 Salle Assignée</th>
+        <th style="width:28%;">👨‍🏫 Enseignant Titulaire</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in daily_slots %}
+      <tr>
+        <td style="font-weight:800; color:#1f6feb; font-size:12.5px;">
+          ⏱️ {{ s.start_time }} – {{ s.end_time }}
+        </td>
+        <td>
+          {% if s.is_merged_session %}
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+              <span style="background:#ede9fe; color:#6d28d9; border:1px solid #c4b5fd; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px;">🤝 SÉANCE COMMUNE (GROUPE 1 + 2)</span>
+              {% set total_stu = (s.course.enrolled_count or 0) + (s.co_slots[0].course.enrolled_count or 0 if s.co_slots else 0) %}
+              <span style="background:#7c3aed; color:#fff; font-weight:800; font-size:9.5px; padding:2px 7px; border-radius:10px;">👥 {{ total_stu }} élèves</span>
+            </div>
+            <strong style="color:#0B3D6E; font-size:13px; display:block;">
+              ● {{ s.course.display_name }} ({{ s.course.enrolled_count or 0 }} élèves)
+            </strong>
+            {% for cs in s.co_slots %}
+            <strong style="color:#4c1d95; font-size:13px; display:block; margin-top:2px;">
+              ● {{ cs.course.display_name }} ({{ cs.course.enrolled_count or 0 }} élèves)
+            </strong>
+            {% endfor %}
+          {% else %}
+            <strong style="color:#0B3D6E; font-size:13.5px;">{{ s.course.name if (s.course and s.course.name) else (s.course.display_name if s.course else 'Classe') }}</strong>
+          {% endif %}
+        </td>
+        <td>
+          {% if s.effective_room %}
+            <span style="font-weight:800; color:#047857; background:#d1fae5; border:1px solid #86efac; padding:2px 8px; border-radius:12px; font-size:11.5px;">
+              🚪 {{ s.effective_room.name }}
+            </span>
+          {% else %}
+            <span style="color:#ef4444; font-size:11px; font-style:italic;">Non assignée</span>
+          {% endif %}
+        </td>
+        <td>
+          {% set prof_table = s.effective_teacher if hasattr(s, 'effective_teacher') else (s.teacher or (s.course.teacher if s.course else None)) %}
+          <strong>{{ prof_table.full_name if prof_table else '—' }}</strong>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4" style="text-align:center; padding:30px; color:#94a3b8;">
+          ☕ Aucune séance programmée pour cette journée.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% else %}
+
+  <!-- 7-DAY WEEKLY CALENDAR GRID -->
+  <div class="week-grid">
+    {% for i in range(7) %}
+    {% set day_slots = grid[i] %}
+    <div class="day-column-print">
+      <div class="day-header-print">{{ days[i] }}</div>
+      <div class="day-body-print">
+        {% if day_slots %}
+          {% for s in day_slots %}
+          {% set is_soutien = s.course and s.course.category == 'support' %}
+          <div class="slot-box {{ 'merged' if s.is_merged_session else ('soutien' if is_soutien else '') }}">
+            <div class="slot-time-print">⏱️ {{ s.start_time }} – {{ s.end_time }}</div>
+            {% if s.is_merged_session %}
+              <div class="badge-merged">🤝 Séance Commune (G1 + G2)</div>
+              <div class="slot-title-print" style="color: #4c1d95; font-size: 11px; line-height: 1.25;">
+                ● {{ s.course.display_name }} ({{ s.course.enrolled_count or 0 }} él.)<br>
+                {% for cs in s.co_slots %}
+                ● {{ cs.course.display_name }} ({{ cs.course.enrolled_count or 0 }} él.)
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="slot-title-print">{{ s.course.name if (s.course and s.course.name) else (s.course.display_name if s.course else '') }}</div>
+            {% endif %}
+            <div class="slot-meta-print">
+              {% set prof_grid = s.effective_teacher if hasattr(s, 'effective_teacher') else (s.teacher or (s.course.teacher if s.course else None)) %}
+              {% if prof_grid %}<div>👨‍🏫 {{ prof_grid.full_name }}</div>{% endif %}
+              <div>
+                {% if s.effective_room %}
+                  <span class="room-tag" {% if s.is_merged_session %}style="background:#ede9fe; color:#5b21b6; border-color:#c4b5fd;"{% endif %}>🚪 {{ s.effective_room.name }}</span>
+                {% else %}
+                  <span style="color:#ef4444; font-size:9px;">🚪 Non assignée</span>
+                {% endif %}
+                {% if s.is_merged_session %}
+                  {% set total_stu = (s.course.enrolled_count or 0) + (s.co_slots[0].course.enrolled_count or 0 if s.co_slots else 0) %}
+                  <span class="room-tag" style="background:#f3e8ff; color:#7e22ce; border-color:#d8b4fe;">👥 {{ total_stu }} él.</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="text-align:center; padding:30px 4px; color:#cbd5e1; font-size:11px;">—</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% endif %}
+
+  <!-- OFFICIAL SIGNATURE & STAMP FOOTER -->
+  <div class="doc-footer">
+    <div>
+      <div>Document officiel émis le {{ today.strftime('%d/%m/%Y') }} par l'Institut ILAS</div>
+      <div style="font-size:9.5px; color:#94a3b8; margin-top:2px;">Valable pour l'année scolaire {{ settings.school_year or '2025/2026' }}</div>
+    </div>
+
+    <div class="stamp-box">
+      <div style="font-weight:800; color:#0B3D6E; font-size:11px; margin-bottom:28px;">
+        Cachet de l'Établissement & Signature de la Direction
+      </div>
+      <div style="color:#94a3b8; font-size:9px;">Direction Pédagogique ILAS</div>
+    </div>
+  </div>
+
+</div>
+
+{% endif %}
+
+<script>
+  window.addEventListener('DOMContentLoaded', function() {
+    // Automatically trigger print dialog once loaded if auto parameter not disabled
+    setTimeout(function() {
+      window.print();
+    }, 400);
+  });
+</script>
+
+</body>
+</html>

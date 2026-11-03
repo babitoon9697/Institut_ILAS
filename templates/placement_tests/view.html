@@ -1,0 +1,422 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+  .pt-view-header {
+    display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; margin-bottom:24px;
+  }
+  .pt-title-area h2 { margin:0 0 6px 0; font-size:1.5rem; font-weight:800; color:var(--primary); }
+  .pt-sub { font-size:0.9rem; color:#64748b; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+
+  .overview-grid {
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px;
+  }
+  .res-card {
+    background:#fff; border-radius:16px; padding:18px 20px; border:1px solid #e2e8f0;
+    box-shadow:0 2px 10px rgba(0,0,0,0.03); display:flex; flex-direction:column;
+  }
+  .res-card .lbl { font-size:0.8rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+  .res-card .val { font-size:1.8rem; font-weight:800; color:#0f172a; line-height:1.1; }
+
+  .level-banner {
+    background:linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border:2px solid #93c5fd; border-radius:18px; padding:20px 24px;
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:24px;
+  }
+  .level-title { font-size:0.88rem; font-weight:700; color:#1e40af; text-transform:uppercase; margin-bottom:4px; }
+  .level-val { font-size:2rem; font-weight:800; color:#1e3a8a; }
+
+  .section-card {
+    background:#fff; border-radius:16px; padding:22px; border:1px solid #e2e8f0;
+    box-shadow:0 2px 10px rgba(0,0,0,0.03); margin-bottom:24px;
+  }
+  .section-card h3 {
+    margin:0 0 16px 0; font-size:1.15rem; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;
+  }
+
+  .skills-bar-row { margin-bottom:14px; }
+  .skills-meta { display:flex; justify-content:space-between; font-size:0.85rem; font-weight:700; margin-bottom:6px; }
+  .bar-bg { width:100%; height:8px; background:#e2e8f0; border-radius:999px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:999px; background:#2563eb; }
+
+  /* Question Table */
+  .answers-table { width:100%; border-collapse:collapse; font-size:0.88rem; }
+  .answers-table th {
+    background:#f8fafc; padding:12px 14px; font-weight:700; color:#475569;
+    border-bottom:1.5px solid #e2e8f0; font-size:0.8rem; text-transform:uppercase;
+  }
+  .answers-table td { padding:14px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+  .answers-table tr:hover td { background:#fafbfc; }
+
+  .badge-correct {
+    display:inline-flex; align-items:center; gap:4px; padding:4px 9px;
+    background:#dcfce7; color:#166534; font-weight:700; font-size:0.78rem; border-radius:6px;
+  }
+  .badge-incorrect {
+    display:inline-flex; align-items:center; gap:4px; padding:4px 9px;
+    background:#fee2e2; color:#991b1b; font-weight:700; font-size:0.78rem; border-radius:6px;
+  }
+
+  /* Assignment Box */
+  .assign-box {
+    background:#f0fdf4; border:1.5px solid #86efac; border-radius:18px; padding:22px;
+  }
+
+  @media print {
+    .sidebar, .topbar, .btn-no-print { display:none !important; }
+    .main { margin:0 !important; padding:0 !important; width:100% !important; }
+    .section-card, .level-banner { box-shadow:none !important; border:1px solid #ccc !important; }
+  }
+</style>
+
+<div class="pt-view-header">
+  <div class="pt-title-area">
+    <div style="margin-bottom:6px;">
+      <a href="{{ url_for('placement_tests') }}" style="color:#64748b; font-size:0.88rem; text-decoration:none; font-weight:600;">
+        ← Retour aux tests
+      </a>
+    </div>
+    <h2>Fiche de Test : {{ test.full_name }}</h2>
+    <div class="pt-sub">
+      <span><strong>Langue :</strong> {{ test.language }}</span>
+      <span>•</span>
+      <span><strong>Téléphone :</strong> {{ test.phone or '—' }}</span>
+      {% if test.whatsapp %}
+        <span>•</span>
+        <span><strong>WhatsApp :</strong> {{ test.whatsapp }}</span>
+      {% endif %}
+      <span>•</span>
+      <span><strong>Date :</strong> {{ test.created_at.strftime('%d/%m/%Y à %H:%M') if test.created_at else '—' }}</span>
+    </div>
+  </div>
+
+  <div class="btn-no-print" style="display:flex; gap:10px; align-items:center;">
+    <button type="button" class="btn btn-secondary" onclick="window.print()" style="font-weight:700; border-radius:10px;">
+      🖨️ Imprimer Bilan
+    </button>
+    <button type="button" class="btn btn-success" onclick="openPlacementWhatsAppModal('{{ test.id }}')" style="background:#10b981; border:none; font-weight:700; border-radius:10px; color:#fff; display:inline-flex; align-items:center; gap:6px; padding:9px 16px; cursor:pointer;" title="Envoyer le lien du test par WhatsApp (Anti-Ban)">
+      📲 WhatsApp (Anti-Ban)
+    </button>
+    {% if test.status == 'completed' %}
+      <form method="POST" action="{{ url_for('placement_test_reset', test_id=test.id) }}" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment réinitialiser ce test ? Le candidat pourra le repasser.');">
+        <button type="submit" class="btn btn-secondary" style="font-weight:700; border-radius:10px; color:#d97706; border-color:#fde68a; background:#fffbeb;">
+          🔄 Réinitialiser
+        </button>
+      </form>
+    {% endif %}
+    {% if test.status != 'completed' %}
+      <a href="{{ url_for('placement_test_qr', test_id=test.id) }}" target="_blank" class="btn btn-primary" style="font-weight:700; border-radius:10px;">
+        📱 Afficher QR Code
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+{% if test.status == 'completed' %}
+  {% if test.is_level_mismatch %}
+  <div style="background: linear-gradient(135deg, #fff1f2 0%, #fee2e2 100%); border: 2px solid #ef4444; border-radius: 16px; padding: 18px 22px; margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; box-shadow:0 4px 14px rgba(239,68,68,0.15);">
+    <div style="display:flex; align-items:flex-start; gap:14px;">
+      <div style="font-size:28px;">⚠️</div>
+      <div>
+        <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#b91c1c; letter-spacing:0.5px;">
+          INCOHÉRENCE DE NIVEAU DÉTECTÉE (عدم تطابق المستوى)
+        </div>
+        <div style="font-size:15px; font-weight:800; color:#991b1b; margin-top:2px;">
+          Le test recommande : <span style="background:#fee2e2; border:1px solid #f87171; padding:2px 8px; border-radius:6px; color:#7f1d1d;">{{ test.recommended_level }}</span>
+          mais l'élève est inscrit en : <span style="background:#fef3c7; border:1px solid #f59e0b; padding:2px 8px; border-radius:6px; color:#92400e;">{{ test.target_enrolled_course.level or test.target_enrolled_course.name }}</span>
+        </div>
+        <div style="font-size:12px; color:#7f1d1d; margin-top:3px;">
+          Une réorientation vers une classe du niveau recommandé est conseillée.
+        </div>
+      </div>
+    </div>
+    <div>
+      <form method="post" action="{{ url_for('placement_test_dismiss_mismatch', test_id=test.id) }}" style="margin:0;" onsubmit="return confirm('Confirmez-vous que l\'élève conserve sa classe actuelle et que l\'alerte doit être levée ?');">
+        <input type="hidden" name="redirect_to" value="{{ url_for('placement_test_view', test_id=test.id) }}">
+        <button class="btn btn-outline btn-sm" type="submit" style="background:#fff; color:#475569; font-weight:700; font-size:12px; padding:7px 14px; border-color:#cbd5e1;">
+          ✓ Marquer comme traité (Garder cette classe)
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Level Banner -->
+  <div class="level-banner">
+    <div>
+      <div class="level-title">Niveau CECRL Recommandé</div>
+      <div class="level-val">{{ test.recommended_level or 'Évalué' }}</div>
+      <div style="font-size:0.88rem; color:#1e40af; margin-top:4px;">
+        Test complété le {{ test.submitted_at.strftime('%d/%m/%Y à %H:%M') if test.submitted_at else '—' }}
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:1.8rem; font-weight:800; color:#1e3a8a;">
+        {{ test.score|int }} / {{ test.max_score|int }}
+      </div>
+      <div style="font-size:1.1rem; font-weight:700; color:#2563eb;">
+        {{ test.percentage }}% de réussite
+      </div>
+    </div>
+  </div>
+
+  <!-- Overview Stats -->
+  <div class="overview-grid">
+    <div class="res-card">
+      <div class="lbl">Score Total</div>
+      <div class="val">{{ test.score|int }} <span style="font-size:1rem; color:#64748b;">/ {{ test.max_score|int }}</span></div>
+    </div>
+    <div class="res-card">
+      <div class="lbl">Pourcentage Global</div>
+      <div class="val" style="color:#059669;">{{ test.percentage }}%</div>
+    </div>
+    <div class="res-card">
+      <div class="lbl">Statut d'Inscription</div>
+      <div class="val" style="font-size:1.3rem;">
+        {% if test.is_enrolled %}
+          <span style="color:#7c3aed;">Inscrit en cours ✅</span>
+        {% else %}
+          <span style="color:#d97706;">À affecter ⏳</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- 1-Click Enrollment / Assignment Section -->
+  <!-- Enrollment / Assignment Section -->
+  <div class="section-card assign-box" id="affecter" style="border: 2px solid #818cf8; background: #faf5ff;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+      <h3 style="margin:0; color:#4338ca;">🎯 Orientation & Inscription au Groupe de Langue</h3>
+      {% if not test.is_enrolled %}
+        <a href="{{ url_for('express_enrollment', test_id=test.id) }}" class="btn btn-primary" style="background:#4f46e5; border:none; padding:10px 20px; font-weight:800; border-radius:10px; color:#fff; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(79,70,229,0.3); text-decoration:none;">
+          ⚡ Ouvrir l'Inscription Express (Contrôle Prix, Durée & Reçu) 🚀
+        </a>
+      {% endif %}
+    </div>
+
+    {% if test.is_enrolled %}
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:#fff; padding:16px 20px; border-radius:12px; border:1.5px solid #86efac;">
+        <div>
+          <p style="margin:0 0 6px 0; font-size:0.95rem; color:#166534; font-weight:700;">
+            ✓ Cet élève a été officiellement inscrit dans le cours :
+          </p>
+          <div style="font-size:1.2rem; font-weight:800; color:#0f172a;">
+            {{ test.enrolled_course.name if test.enrolled_course else 'Cours assigné' }}
+          </div>
+        </div>
+        <div>
+          {% if test.enrolled_student_id %}
+            <a href="{{ url_for('student_view', sid=test.enrolled_student_id) }}" class="btn btn-primary" style="font-weight:700; border-radius:10px; padding:9px 18px;">
+              👤 Voir Fiche Élève
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    {% else %}
+      
+      <!-- SUGGESTED CLASSES SECTION -->
+      <div style="background:#fff; border-radius:12px; border:1px solid #e9d5ff; padding:18px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+          <div>
+            <div style="font-size:0.95rem; font-weight:800; color:#1e1b4b;">
+              ⭐ Classes Ouvertes Recommandées pour le Niveau Détecté : <span style="color:#7c3aed; font-size:1.05rem;">{{ test.recommended_level }}</span>
+            </div>
+            <div style="font-size:0.83rem; color:#64748b; margin-top:2px;">
+              Groupes {{ test.language }} actifs correspondant au niveau du candidat. Cliquez pour inscrire directement en mode Express avec plein contrôle sur le prix et le reçu.
+            </div>
+          </div>
+          <span style="background:#f3e8ff; color:#6b21a8; font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:999px;">
+            {{ suggested_courses|length }} groupe(s) suggéré(s)
+          </span>
+        </div>
+
+        {% if suggested_courses %}
+          <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px;">
+            {% for c in suggested_courses %}
+            <div style="border:1.5px solid #c084fc; background:#faf5ff; border-radius:10px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px;">
+                  <div style="font-weight:800; color:#0f172a; font-size:1rem;">{{ c.name }}</div>
+                  <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; font-size:0.75rem; font-weight:800; padding:2px 6px; border-radius:6px; white-space:nowrap;">
+                    {{ c.level }}
+                  </span>
+                </div>
+                <div style="font-size:0.82rem; color:#475569; margin-top:6px; display:flex; flex-direction:column; gap:3px;">
+                  <div>👨‍🏫 Prof : <strong>{{ c.teacher.full_name if c.teacher else 'Non assigné' }}</strong></div>
+                  <div>💰 Tarif : <strong style="color:#059669;">{{ '%.0f'|format(c.price_per_month or c.price) }} DH/mois</strong> (+{{ '%.0f'|format(c.registration_fee or 100) }} DH frais)</div>
+                  <div>👥 Inscrits : <strong>{{ c.enrolled_count }}/{{ c.max_students }}</strong></div>
+                </div>
+              </div>
+              <a href="{{ url_for('express_enrollment', test_id=test.id, course_id=c.id) }}" class="btn btn-sm btn-primary" style="background:#7c3aed; border:none; padding:8px 12px; font-weight:800; border-radius:8px; text-align:center; color:#fff; text-decoration:none; display:flex; justify-content:center; align-items:center; gap:6px;">
+                ⚡ Choisir ce groupe & Inscrire (Express)
+              </a>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="padding:14px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; color:#92400e; font-size:0.88rem;">
+            ℹ️ Aucun groupe ouvert n'est actuellement configuré pour le niveau exact <strong>{{ test.recommended_level }}</strong>. 
+            Vous pouvez cliquer sur le bouton ci-dessus pour ouvrir l'Inscription Express et sélectionner parmi tous les autres groupes disponibles.
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- ALTERNATIVE QUICK FORM -->
+      <div style="background:#fff; border-radius:12px; border:1px solid #e2e8f0; padding:16px;">
+        <details>
+          <summary style="cursor:pointer; font-size:0.88rem; font-weight:700; color:#475569;">
+            ⚙️ Affectation alternative directe (choisir parmi toutes les classes ouvertes)
+          </summary>
+          <form method="POST" action="{{ url_for('placement_test_assign', test_id=test.id) }}" style="margin-top:14px;">
+            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+              <div style="flex:1; min-width:260px;">
+                <label style="display:block; font-size:0.83rem; font-weight:700; color:#334155; margin-bottom:6px;">
+                  Tous les groupes disponibles ({{ test.language }}) :
+                </label>
+                <select name="course_id" required style="width:100%; border:1.5px solid #cbd5e1; border-radius:10px; padding:10px 14px; font-size:0.92rem; background:#fff;">
+                  <option value="">-- Sélectionner un cours --</option>
+                  {% if suggested_courses %}
+                    <optgroup label="⭐ Groupes Suggérés (Niveau Détecté)">
+                      {% for c in suggested_courses %}
+                        <option value="{{ c.id }}">
+                          ⭐ {{ c.name }} — Niveau: {{ c.level }} ({{ c.price_per_month or c.price }} DH/mois)
+                        </option>
+                      {% endfor %}
+                    </optgroup>
+                  {% endif %}
+                  {% if other_courses %}
+                    <optgroup label="Autres groupes">
+                      {% for c in other_courses %}
+                        <option value="{{ c.id }}">
+                          {{ c.name }} — Niveau: {{ c.level }} ({{ c.price_per_month or c.price }} DH/mois)
+                        </option>
+                      {% endfor %}
+                    </optgroup>
+                  {% endif %}
+                </select>
+              </div>
+              <button type="submit" class="btn btn-outline" style="border:1.5px solid #64748b; padding:10px 18px; font-weight:700; border-radius:10px; color:#334155; cursor:pointer;">
+                Affecter directement
+              </button>
+            </div>
+          </form>
+        </details>
+      </div>
+
+    {% endif %}
+  </div>
+
+  <!-- Skill Breakdown -->
+  {% if skills_breakdown %}
+  <div class="section-card">
+    <h3>📊 Bilan par Compétence Linguistique</h3>
+    <div style="max-width:550px;">
+      {% for cat, data in skills_breakdown.items() %}
+      <div class="skills-bar-row">
+        <div class="skills-meta">
+          <span>{{ cat }}</span>
+          <span>{{ data.score }}/{{ data.total }} ({{ data.pct }}%)</span>
+        </div>
+        <div class="bar-bg">
+          <div class="bar-fill" style="width: {{ data.pct }}%;"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Detailed Answers Audit -->
+  {% if answers_list %}
+  <div class="section-card">
+    <h3>📝 Détail des Réponses du Candidat</h3>
+    <div style="overflow-x:auto;">
+      <table class="answers-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Niveau</th>
+            <th>Catégorie</th>
+            <th>Question Posée</th>
+            <th>Choix Candidat</th>
+            <th>Bonne Réponse</th>
+            <th>Résultat</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in answers_list %}
+          <tr>
+            <td style="font-weight:700; color:#64748b;">{{ loop.index }}</td>
+            <td><span style="font-weight:700; font-size:0.8rem; background:#f1f5f9; padding:2px 6px; border-radius:4px;">{{ a.level }}</span></td>
+            <td style="color:#64748b; font-size:0.82rem;">{{ a.category }}</td>
+            <td style="font-weight:600; color:#0f172a; max-width:320px;">
+              {{ a.question }}
+              {% if a.audio_url %}
+                <div style="margin-top:6px;">
+                  <audio controls src="{{ a.audio_url }}" style="height:26px; max-width:210px;"></audio>
+                </div>
+              {% elif a.audio_script %}
+                <details style="margin-top:4px; font-size:0.75rem; color:#64748b;">
+                  <summary style="cursor:pointer; color:#0284c7; font-weight:700;">🎧 Voir script audio</summary>
+                  <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:6px 8px; border-radius:6px; margin-top:3px; line-height:1.4;">
+                    {{ a.audio_script }}
+                  </div>
+                </details>
+              {% endif %}
+            </td>
+            <td>
+              {% if a.chosen == 'IDK' or a.is_idk %}
+                <span style="font-weight:700; color:#64748b; font-size:0.85rem;">❓ Je ne sais pas</span>
+              {% else %}
+                <span style="font-weight:700; color:{{ '#166534' if a.is_correct else '#991b1b' }};">
+                  Option {{ a.chosen or 'Non répondu' }}
+                </span>
+              {% endif %}
+            </td>
+            <td style="font-weight:700; color:#1e40af;">
+              Option {{ a.correct }}
+            </td>
+            <td>
+              {% if a.is_correct %}
+                <span class="badge-correct">✓ Correct</span>
+              {% elif a.chosen == 'IDK' or a.is_idk %}
+                <span style="background:#f1f5f9; color:#475569; padding:3px 8px; border-radius:6px; font-weight:700; font-size:0.78rem;">❓ Ne sait pas</span>
+              {% else %}
+                <span class="badge-incorrect">✗ Incorrect</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+{% else %}
+  <!-- Pending State Card -->
+  <div class="section-card" style="text-align:center; padding:48px 24px;">
+    <div style="font-size:3rem; margin-bottom:12px;">⏳</div>
+    <h3 style="justify-content:center; margin-bottom:8px;">Test en attente de passage</h3>
+    <p style="font-size:0.95rem; color:#64748b; max-width:440px; margin:0 auto 24px auto; line-height:1.5;">
+      Le candidat <strong>{{ test.full_name }}</strong> n'a pas encore validé son test sur smartphone.
+      Faites-lui scanner le QR Code pour démarrer.
+    </p>
+
+    <div style="display:inline-block; padding:14px; background:#fff; border-radius:18px; border:1px solid #e2e8f0; box-shadow:0 4px 14px rgba(0,0,0,0.06); margin-bottom:20px;">
+      <img src="{{ url_for('placement_test_qr_image', test_id=test.id) }}" style="width:200px; height:200px; display:block;" alt="QR Code">
+    </div>
+
+    <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+      <a href="{{ url_for('placement_test_qr', test_id=test.id) }}" target="_blank" class="btn btn-primary" style="border-radius:10px; font-weight:700; padding:10px 20px;">
+        📱 Plein écran QR Code / Ticket
+      </a>
+      <button type="button" class="btn btn-success" onclick="openPlacementWhatsAppModal('{{ test.id }}')" style="background:#10b981; border:none; font-weight:700; border-radius:10px; color:#fff; padding:10px 20px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+        <span>📲</span>
+        <span>Envoyer le Lien par WhatsApp</span>
+      </button>
+    </div>
+  </div>
+{% endif %}
+
+{% include 'placement_tests/_whatsapp_modal.html' %}
+{% endblock %}

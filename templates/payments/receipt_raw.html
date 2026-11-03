@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" class="{{ 'rtl' if lang == 'ar' else '' }}">
+<head>
+<meta charset="UTF-8">
+<title>{{ 'Reçu' if lang != 'ar' else 'وصل' }} - {{ p.receipt or ('REC-' ~ p.id) }} - {{ settings.inst_name }}</title>
+<style>
+  /* Configuration d'impression thermique 80mm */
+  @page {
+    size: 80mm auto;
+    margin: 0; /* Supprime les marges par défaut du driver/navigateur */
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  @media print {
+    *, body, table, td, th, span, div, p {
+      color: #000000 !important;
+      text-shadow: none !important;
+    }
+    .reste-box {
+      border: 2px solid #000 !important;
+      background: transparent !important;
+      color: #000 !important;
+      display: block !important;
+      visibility: visible !important;
+      page-break-inside: avoid !important;
+    }
+    .reste-table td, .reste-label, .reste-val {
+      color: #000 !important;
+      font-weight: 900 !important;
+      visibility: visible !important;
+    }
+    .timetable-ticket-section {
+      page-break-before: always !important;
+      break-before: page !important;
+    }
+  }
+
+  body {
+    background-color: #fff;
+    color: #000;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 11px;
+    line-height: 1.25;
+    /* Zone imprimable sécurisée : 72mm max pour éviter le rognage */
+    width: 72mm;
+    margin: 0 auto;
+    padding: 4mm 2.5mm;
+  }
+
+  /* RTL mode pour l'arabe */
+  .rtl, body.rtl {
+    direction: rtl;
+    font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  /* En-tête */
+  .header {
+    text-align: center;
+    margin-bottom: 5px;
+  }
+  .logo {
+    display: block;
+    margin: 0 auto 3px auto;
+  }
+  .brand-title {
+    font-size: 14px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.1;
+  }
+  .brand-sub {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .brand-contact {
+    font-size: 9px;
+    color: #000;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  /* Badge Titre */
+  .badge-recu {
+    background-color: #000;
+    color: #fff;
+    text-align: center;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 3px 0;
+    margin: 6px 0;
+    border-radius: 2px;
+  }
+
+  /* Tableaux Génériques */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .meta-table td {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #000;
+    padding: 1px 0;
+  }
+  .text-right {
+    text-align: right;
+  }
+  .rtl .text-right {
+    text-align: left;
+  }
+
+  .dashed-sep {
+    border-top: 1.5px dashed #000;
+    margin: 5px 0;
+  }
+
+  /* Encadré Infos Élève */
+  .student-box {
+    border: 1.5px solid #000;
+    border-radius: 3px;
+    padding: 4px 5px;
+    margin: 4px 0;
+    background-color: #fff;
+  }
+  .student-box-title {
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+    border-bottom: 1px solid #000;
+    padding-bottom: 2px;
+    margin-bottom: 3px;
+    color: #000;
+  }
+  .student-table td {
+    font-size: 10.5px;
+    padding: 1.5px 0;
+  }
+  .student-table td.lbl {
+    width: 35%;
+    color: #000;
+    font-weight: 800;
+  }
+  .student-table td.val {
+    width: 65%;
+    font-weight: 900;
+    color: #000;
+  }
+
+  /* Tableau Matières */
+  .items-table th {
+    font-size: 9.5px;
+    font-weight: 900;
+    text-transform: uppercase;
+    border-bottom: 1.5px solid #000;
+    padding: 3px 0;
+    color: #000;
+  }
+  .items-table td {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #000;
+    padding: 3.5px 0;
+    border-bottom: 1px dashed #000;
+    vertical-align: middle;
+  }
+  .items-table .sub-desc {
+    display: block;
+    font-size: 9px;
+    color: #000;
+    font-weight: 700;
+  }
+  .items-table td.price {
+    text-align: right;
+    font-weight: 900;
+    white-space: nowrap;
+    width: 32%;
+    font-size: 11px;
+    color: #000;
+  }
+  .rtl .items-table th:first-child {
+    text-align: right !important;
+  }
+  .rtl .items-table th:last-child {
+    text-align: left !important;
+  }
+  .rtl .items-table td.price {
+    text-align: left !important;
+  }
+
+  /* Totaux */
+  .totals-table td {
+    font-size: 11px;
+    font-weight: 800;
+    color: #000;
+    padding: 2px 0;
+  }
+  .totals-table td.val {
+    text-align: right;
+    font-weight: 900;
+    font-size: 12px;
+    color: #000;
+  }
+  .rtl .totals-table td.val {
+    text-align: left !important;
+  }
+
+  /* Bannière Reste Haute Visibilité Thermique */
+  .reste-box {
+    border: 2px solid #000 !important;
+    background-color: #f8fafc;
+    color: #000 !important;
+    padding: 5px 6px;
+    border-radius: 3px;
+    margin: 5px 0;
+    display: block !important;
+  }
+  .reste-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  .reste-table td {
+    color: #000 !important;
+    font-weight: 900 !important;
+    padding: 1px 0 !important;
+  }
+  .reste-label {
+    font-size: 11.5px !important;
+    text-transform: uppercase;
+    color: #000 !important;
+    font-weight: 900 !important;
+  }
+  .reste-val {
+    font-size: 14px !important;
+    text-align: right;
+    color: #000 !important;
+    font-weight: 900 !important;
+  }
+  .rtl .reste-val {
+    text-align: left !important;
+  }
+
+  /* Règlement Box */
+  .reglement-box {
+    border: 1px dashed #000;
+    background: #fff;
+    padding: 3px 5px;
+    margin-top: 3px;
+  }
+  .reglement-box td {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #000;
+  }
+  .rtl .reglement-box td.text-right {
+    text-align: left !important;
+  }
+
+  /* Footer & Code Barres */
+  .footer {
+    text-align: center;
+    margin-top: 6px;
+  }
+  .barcode {
+    display: block;
+    margin: 0 auto 3px auto;
+  }
+  .footer-thanks {
+    font-size: 9.5px;
+    font-weight: 800;
+    margin-bottom: 2px;
+  }
+  .footer-terms {
+    font-size: 8.5px;
+    color: #000;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+  .cut-guide {
+    margin-top: 6px;
+    font-size: 8px;
+    color: #000;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body class="{{ 'rtl' if lang == 'ar' else '' }}">
+
+{% set tr = {
+  'fr': {
+    'inst_title': settings.inst_name|default('Institut Ilas des Langues'),
+    'sub_title': settings.inst_tagline|default('Formation Continue & Soutien'),
+    'contact_phone': settings.inst_phone|default('+212 5 22 89 40 12'),
+    'contact_city': settings.inst_city|default('Casablanca'),
+    'receipt_no': 'N°',
+    'date': 'Date',
+    'session': 'Session',
+    'caisse': 'Caisse',
+    'badge_recu': ('REÇU D\'INSCRIPTION (DIFFÉRÉ)' if (total_payment_amount is defined and total_payment_amount <= 0.01) else 'REÇU DE PAIEMENT'),
+    'duplicata': 'DUPLICATA',
+    'student_box_title': 'Dossier Étudiant & Contacts',
+    'student': 'Étudiant',
+    'student_id': 'ID Étudiant',
+    'student_phone': 'Tél. Élève',
+    'parent_phone': 'Tél. Parent',
+    'items_header': 'Matière(s)',
+    'price_header': 'Prix',
+    'level': 'Niveau',
+    'sessions_per_week': 'séances / sem.',
+    'total_cours': 'TOTAL COURS :',
+    'montant_verse': 'MONTANT VERSÉ :',
+    'balance': 'RESTE À PAYER :',
+    'mode': 'Mode',
+    'statut': 'Statut',
+    'thanks': 'Merci de votre confiance !',
+    'terms_ticket': "Ticket à présenter obligatoirement pour l'accès aux cours.",
+    'cut_guide': '- - - - - - - - DÉCOUPE TICKET - - - - - - - -',
+    'code': 'Code',
+    'designation': 'Désignation',
+    'total': 'Total',
+    'invoice_ref': 'Réf. Paiement',
+    'course_label': 'Cours / Formation'
+  },
+  'ar': {
+    'inst_title': settings.inst_name_ar|default(settings.inst_name)|default('معهد إيلاس للغات'),
+    'sub_title': settings.inst_tagline_ar|default(settings.inst_tagline)|default('التكوين المستمر والدعم المدرسي'),
+    'contact_phone': settings.inst_phone|default('+212 5 22 89 40 12'),
+    'contact_city': settings.inst_city|default('الدار البيضاء'),
+    'receipt_no': 'رقم الوصل',
+    'date': 'التاريخ',
+    'session': 'الدورة',
+    'caisse': 'الصندوق',
+    'badge_recu': ('وصل تسجيل (مؤجل)' if (total_payment_amount is defined and total_payment_amount <= 0.01) else 'وصل أداء'),
+    'duplicata': 'نسخة مطابقة',
+    'student_box_title': 'ملف التلميذ ومعلومات الاتصال',
+    'student': 'التلميذ',
+    'student_id': 'معرف التلميذ',
+    'student_phone': 'هاتف التلميذ',
+    'parent_phone': 'هاتف الولي',
+    'items_header': 'المادة / الدورة',
+    'price_header': 'المبلغ',
+    'level': 'المستوى',
+    'sessions_per_week': 'حصص / أسبوع',
+    'total_cours': 'المجموع الإجمالي :',
+    'montant_verse': 'المبلغ المدفوع :',
+    'balance': 'الباقي أداؤه :',
+    'mode': 'طريقة الدفع',
+    'statut': 'الحالة',
+    'thanks': 'شكراً لثقتكم بنا !',
+    'terms_ticket': 'يجب الإدلاء بهذا التوصيل كشرط أساسي لولوج قاعات التدريس.',
+    'cut_guide': '- - - - - - - - مكان قطع التوصيل - - - - - - - -',
+    'code': 'الرمز',
+    'designation': 'البيان',
+    'total': 'المجموع',
+    'invoice_ref': 'مرجع الأداء',
+    'course_label': 'دورة تكوينية'
+  }
+} %}
+
+{% set l = tr[lang] %}
+{% set is_rtl = (lang == 'ar') %}
+
+  <!-- Header -->
+  <div class="header">
+    <svg class="logo" width="28" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2">
+      <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+      <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+    </svg>
+    <div class="brand-title">{{ l.inst_title }}</div>
+    <div class="brand-sub">{{ l.sub_title }}</div>
+    <div class="brand-contact">{% if is_rtl %}الهاتف : {{ l.contact_phone }} • {{ l.contact_city }}{% else %}Tél : {{ l.contact_phone }} • {{ l.contact_city }}{% endif %}</div>
+  </div>
+
+  <div class="badge-recu">{% if is_duplicata %}{{ l.duplicata }} - {{ l.badge_recu }}{% else %}{{ l.badge_recu }}{% endif %}</div>
+
+  <table class="meta-table">
+    <tr>
+      <td><strong>{{ l.receipt_no }} :</strong> {{ p.receipt or ('REC-' ~ p.id) }}</td>
+      <td class="text-right"><strong>{{ l.date }} :</strong> {{ p.date.strftime('%d/%m/%Y') if p.date else (p.created_at.strftime('%d/%m/%Y') if p.created_at else '') }}{% if p.created_at %} <small style="font-size:9px; color:#555;">{{ p.created_at.strftime('%H:%M') }}</small>{% endif %}</td>
+    </tr>
+    <tr>
+      <td><strong>{{ l.session }} :</strong> {{ session_label }}</td>
+      <td class="text-right"><strong>{{ l.caisse }} :</strong> {{ cashier_code }}</td>
+    </tr>
+  </table>
+
+  <div class="dashed-sep"></div>
+
+  <!-- Infos Élève & Parents -->
+  <div class="student-box">
+    <div class="student-box-title">{{ l.student_box_title }}</div>
+    <table class="student-table">
+      <tr>
+        <td class="lbl">{{ l.student }} :</td>
+        <td class="val">{{ stu.full_name if stu else 'Comptoir Libre' }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">{{ l.student_id }} :</td>
+        <td class="val">{{ (stu.code or ('#' ~ stu.id)) if stu else '—' }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">{{ l.student_phone }} :</td>
+        <td class="val">{{ stu.phone or stu.whatsapp or '—' if stu else '—' }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">{{ l.parent_phone }} :</td>
+        <td class="val">{{ stu.parent_phone or stu.phone or '—' if stu else '—' }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="dashed-sep"></div>
+
+  <!-- Articles / Cours -->
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th style="text-align: {{ 'right' if is_rtl else 'left' }};">{{ l.items_header }}</th>
+        <th style="text-align: {{ 'left' if is_rtl else 'right' }};">{{ l.price_header }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if inv and inv.items %}
+        {% for item in inv.items %}
+        {% set desc_lower = (item.description or '')|lower %}
+        {% set is_reg_fee = ('frais' in desc_lower and 'inscription' in desc_lower) or ('frais de dossier' in desc_lower) or ('واجبات التسجيل' in item.description) or ('رسوم التسجيل' in item.description) or ('registration fee' in desc_lower) %}
+        {% set is_book = ('manuel' in desc_lower) or ('livre' in desc_lower) %}
+        <tr>
+          <td>
+            {% if is_reg_fee %}
+              <div style="font-weight:900; font-size:11px; color:#000;">
+                {% if is_rtl %}واجبات التسجيل{% else %}Frais d'inscription{% endif %}
+              </div>
+              <span class="sub-desc" style="color:#000; font-weight:700; font-size:8.5px; margin-top:1px;">
+                {% if is_rtl %}رسوم إدارية للتسجيل{% else %}Dossier administratif{% endif %}
+              </span>
+            {% elif is_book %}
+              <div style="font-weight:900; font-size:11px; color:#000;">{{ item.description }}</div>
+            {% else %}
+              <strong>{{ item.description|smart_short_course(item.enrollment.course if item.enrollment else None) }}</strong>
+              {% set it_en = item.enrollment %}
+              {% if it_en and it_en.end_date %}
+                <span class="sub-desc" style="font-weight:900; color:#000;">
+                  {% if is_rtl %}
+                    📅 نهاية الاشتراك : <strong>{{ it_en.end_date.strftime('%d/%m/%Y') }}</strong>
+                  {% else %}
+                    📅 Fin d'abonnement : <strong>{{ it_en.end_date.strftime('%d/%m/%Y') }}</strong>
+                  {% endif %}
+                </span>
+              {% endif %}
+              {% if item.enrollment and item.enrollment.course and item.enrollment.course.sessions_per_week %}
+                <span class="sub-desc">
+                  {{ item.enrollment.course.sessions_per_week }} {{ l.sessions_per_week }}
+                </span>
+              {% endif %}
+            {% endif %}
+          </td>
+          <td class="price">{{ '%.2f'|format(item.amount) }} DH</td>
+        </tr>
+        {% endfor %}
+      {% elif enrollments %}
+        {% for en in enrollments %}
+        <tr>
+          <td>
+            <strong>{{ en.course.receipt_name if en.course else l.course_label }}</strong>
+            {% if en.end_date %}
+              <span class="sub-desc" style="font-weight:900; color:#000;">
+                {% if is_rtl %}
+                  📅 نهاية الاشتراك : <strong>{{ en.end_date.strftime('%d/%m/%Y') }}</strong>
+                {% else %}
+                  📅 Fin d'abonnement : <strong>{{ en.end_date.strftime('%d/%m/%Y') }}</strong>
+                {% endif %}
+              </span>
+            {% endif %}
+            {% if en.course and en.course.sessions_per_week %}
+              <span class="sub-desc">
+                {{ en.course.sessions_per_week }} {{ l.sessions_per_week }}
+              </span>
+            {% endif %}
+          </td>
+          <td class="price">{{ '%.2f'|format(en.calculated_price or en.monthly_price or (en.course.price if en.course else 0.0)) }} DH</td>
+        </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td>
+            <strong>{{ p.courses_description|smart_short_course(p.enrollment.course if p.enrollment else None) if p.courses_description else l.course_label }}</strong>
+            {% if p.enrollment and p.enrollment.end_date %}
+              <span class="sub-desc" style="font-weight:900; color:#000;">
+                {% if is_rtl %}
+                  📅 نهاية الاشتراك : <strong>{{ p.enrollment.end_date.strftime('%d/%m/%Y') }}</strong>
+                {% else %}
+                  📅 Fin d'abonnement : <strong>{{ p.enrollment.end_date.strftime('%d/%m/%Y') }}</strong>
+                {% endif %}
+              </span>
+            {% endif %}
+            <span class="sub-desc">{{ l.invoice_ref }} #{{ p.receipt or p.id }}</span>
+          </td>
+          <td class="price">{{ '%.2f'|format(total_payment_amount) }} DH</td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  <div class="dashed-sep"></div>
+
+  <!-- Totaux -->
+  <table class="totals-table">
+    <tr>
+      <td>{{ l.total_cours }}</td>
+      <td class="val">{{ '%.2f'|format(total_due_amount) }} DH</td>
+    </tr>
+    <tr>
+      <td>{{ l.montant_verse }}</td>
+      <td class="val">{{ '%.2f'|format(total_payment_amount) }} DH</td>
+    </tr>
+  </table>
+
+  <!-- Reste -->
+  <div class="reste-box">
+    <table class="reste-table">
+      <tr>
+        <td class="reste-label">{{ l.balance }}</td>
+        <td class="reste-val">{{ '%.2f'|format(balance_remaining) }} DH</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Mode Règlement -->
+  <div class="reglement-box">
+    <table>
+      <tr>
+        <td><strong>{{ l.mode }} :</strong> {{ method_label }}</td>
+        <td class="text-right"><strong>{{ l.statut }} :</strong> {{ status_label }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <svg class="barcode" width="160" height="28" viewBox="0 0 160 28">
+      <rect x="0" y="0" width="2" height="20" fill="#000"/>
+      <rect x="4" y="0" width="1" height="20" fill="#000"/>
+      <rect x="7" y="0" width="3" height="20" fill="#000"/>
+      <rect x="12" y="0" width="1" height="20" fill="#000"/>
+      <rect x="15" y="0" width="4" height="20" fill="#000"/>
+      <rect x="22" y="0" width="2" height="20" fill="#000"/>
+      <rect x="26" y="0" width="1" height="20" fill="#000"/>
+      <rect x="30" y="0" width="3" height="20" fill="#000"/>
+      <rect x="36" y="0" width="2" height="20" fill="#000"/>
+      <rect x="41" y="0" width="4" height="20" fill="#000"/>
+      <rect x="48" y="0" width="1" height="20" fill="#000"/>
+      <rect x="52" y="0" width="3" height="20" fill="#000"/>
+      <rect x="58" y="0" width="2" height="20" fill="#000"/>
+      <rect x="63" y="0" width="1" height="20" fill="#000"/>
+      <rect x="67" y="0" width="4" height="20" fill="#000"/>
+      <rect x="74" y="0" width="2" height="20" fill="#000"/>
+      <rect x="79" y="0" width="3" height="20" fill="#000"/>
+      <rect x="85" y="0" width="1" height="20" fill="#000"/>
+      <rect x="89" y="0" width="2" height="20" fill="#000"/>
+      <rect x="94" y="0" width="4" height="20" fill="#000"/>
+      <rect x="101" y="0" width="1" height="20" fill="#000"/>
+      <rect x="105" y="0" width="3" height="20" fill="#000"/>
+      <rect x="111" y="0" width="2" height="20" fill="#000"/>
+      <rect x="116" y="0" width="4" height="20" fill="#000"/>
+      <rect x="123" y="0" width="2" height="20" fill="#000"/>
+      <rect x="128" y="0" width="1" height="20" fill="#000"/>
+      <rect x="132" y="0" width="3" height="20" fill="#000"/>
+      <rect x="138" y="0" width="2" height="20" fill="#000"/>
+      <rect x="143" y="0" width="4" height="20" fill="#000"/>
+      <rect x="150" y="0" width="2" height="20" fill="#000"/>
+      <rect x="155" y="0" width="2" height="20" fill="#000"/>
+      <text x="80" y="27" font-size="7" text-anchor="middle" font-family="monospace">{{ p.receipt or ('REC-' ~ p.id) }}-ILAS</text>
+    </svg>
+    <div class="payment-rush-notice" style="border:1.5px solid #000; border-radius:4px; padding:5px 6px; margin:8px 0; text-align:center; font-size:8.5px; line-height:1.35; color:#000;">
+      <div style="font-weight:900; font-size:9.5px; text-transform:uppercase; margin-bottom:3px; letter-spacing:0.3px;">
+        ⚠️ {% if is_rtl %}تنبيه هام : أوقات الصندوق{% else %}NOTE IMPORTANTE : HORAIRES DE CAISSE{% endif %}
+      </div>
+      {% if is_rtl %}
+      <div style="font-weight:800; margin-bottom:3px;">
+        لتفادي الاكتظاظ وضمان انسيابية الدخول، يُرجى العلم أن الصندوق لا يستقبل واجبات الأداء خلال الفترات التالية :
+      </div>
+      <div style="font-weight:900; font-size:9.5px; margin:3px 0; direction:ltr; unicode-bidi:embed;">
+        [ 18:50 &rarr; 19:20 ] &bull; [ 20:20 &rarr; 20:50 ]
+      </div>
+      <div style="font-size:7.5px; font-weight:700; margin-top:2px;">
+        (Prière de noter : aucun paiement n'est accepté de 18:50 à 19:20 et de 20:20 à 20:50)
+      </div>
+      {% else %}
+      <div style="font-weight:800; margin-bottom:3px;">
+        Pour éviter l'encombrement et fluidifier l'accès aux cours, la caisse ne reçoit aucun règlement durant les créneaux d'entrée :
+      </div>
+      <div style="font-weight:900; font-size:9.5px; margin:3px 0;">
+        [ 18:50 &agrave; 19:20 ] &bull; [ 20:20 &agrave; 20:50 ]
+      </div>
+      <div style="font-size:7.5px; font-weight:700; margin-top:2px; direction:rtl;">
+        (لتفادي الاكتظاظ، يتوقف الصندوق عن استخلاص الأداءات من 18:50 إلى 19:20 ومن 20:20 إلى 20:50)
+      </div>
+      {% endif %}
+    </div>
+    <div class="footer-thanks">{{ l.thanks }}</div>
+    <div class="footer-terms">{{ l.terms_ticket }}</div>
+    <div class="cut-guide">{{ l.cut_guide }}</div>
+  </div>
+
+{% if with_timetable and stu and stu.id and timetable_slots %}
+<!-- =========================================================
+     PAGE 2 OPTIONNELLE : EMPLOI DU TEMPS 80MM (MODERN PURE B&W)
+========================================================= -->
+<div class="timetable-ticket-section {{ 'rtl' if is_rtl else '' }}" style="margin-top: 15px;">
+  <div style="text-align:center; padding-bottom:2px;">
+    <svg class="logo" width="28" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" style="margin:0 auto 3px auto; display:block;">
+      <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+      <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+    </svg>
+    <div style="font-family:'Space Grotesk', 'Plus Jakarta Sans', sans-serif; font-size:13px; font-weight:900; letter-spacing:0.6px; text-transform:uppercase; color:#000; line-height:1.1;">{{ l.inst_title }}</div>
+    <div style="font-size:8px; font-weight:800; text-transform:uppercase; color:#000; letter-spacing:0.3px; margin-top:2px;">{{ l.sub_title }}</div>
+    <div style="font-size:8px; font-weight:700; color:#000; margin-top:1.5px;">Tél: {{ l.contact_phone }} · {{ l.contact_city }}</div>
+  </div>
+
+  <div style="background:#000; color:#fff; font-size:11px; font-weight:900; letter-spacing:0.8px; text-transform:uppercase; text-align:center; padding:4px 0; margin:7px 0 5px 0; border-radius:2px;">
+    [ {% if is_rtl %}جدول الحصص والتوقيت{% else %}EMPLOI DU TEMPS ÉLÈVE{% endif %} ]
+  </div>
+
+  <div style="border:1.5px solid #000; border-radius:3px; padding:4px 6px; margin-bottom:7px; font-size:9px;">
+    <div style="display:flex; justify-content:space-between; padding:1.5px 0; border-bottom:1px dashed #000;">
+      <span style="font-size:8px; font-weight:800; text-transform:uppercase;">{% if is_rtl %}التلميذ{% else %}ÉLÈVE{% endif %}</span>
+      <span style="font-weight:900; text-align:right;">{{ stu.full_name }}</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; padding:1.5px 0; border-bottom:1px dashed #000;">
+      <span style="font-size:8px; font-weight:800; text-transform:uppercase;">{% if is_rtl %}الرمز{% else %}CODE ÉLÈVE{% endif %}</span>
+      <span style="font-weight:900; text-align:right;">{{ stu.code or ('#' ~ stu.id) }}</span>
+    </div>
+    {% if stu.school_level %}
+    <div style="display:flex; justify-content:space-between; padding:1.5px 0; border-bottom:1px dashed #000;">
+      <span style="font-size:8px; font-weight:800; text-transform:uppercase;">{% if is_rtl %}المستوى{% else %}NIVEAU{% endif %}</span>
+      <span style="font-weight:900; text-align:right;">{{ stu.school_level }}</span>
+    </div>
+    {% endif %}
+    <div style="display:flex; justify-content:space-between; padding:1.5px 0;">
+      <span style="font-size:8px; font-weight:800; text-transform:uppercase;">{% if is_rtl %}تاريخ الإصدار{% else %}DATE D'ÉMISSION{% endif %}</span>
+      <span style="font-weight:900; text-align:right;">{{ (p.date or p.created_at).strftime('%d/%m/%Y') if (p.date or p.created_at) else '' }}</span>
+    </div>
+  </div>
+
+  {% set active_days = [] %}
+  {% for d in range(7) %}
+    {% if timetable_grid[d]|length > 0 %}
+      {% set _ = active_days.append(d) %}
+    {% endif %}
+  {% endfor %}
+
+  {% for d in active_days %}
+  <div style="margin-top:8px;">
+    <div style="background:#000; color:#fff; display:flex; justify-content:space-between; align-items:center; padding:3px 6px; margin-bottom:5px; border-radius:2px;">
+      <span style="font-size:10px; font-weight:900; letter-spacing:0.5px; text-transform:uppercase;">&gt;&gt; {% if is_rtl %}{{ days_ar_bilingual[d] }}{% else %}{{ days_fr[d] }}{% endif %}</span>
+      <span style="font-size:8px; font-weight:900; background:#fff; color:#000; padding:0 4px; border-radius:2px;">{{ timetable_grid[d]|length }} {% if is_rtl %}حصص{% else %}COURS{% endif %}</span>
+    </div>
+    {% for slot in timetable_grid[d] %}
+    <div style="border-left:3.5px solid #000; padding:3px 0 4px 6px; margin-bottom:5px; border-bottom:1px dashed #000;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+        <span style="font-size:10px; font-weight:900; letter-spacing:0.2px;">[{{ slot.start_time }} – {{ slot.end_time }}]</span>
+        <span style="font-size:8.5px; font-weight:900; border:1.2px solid #000; padding:0 4px; border-radius:2px; text-transform:uppercase;">
+          {{ slot.room.name if slot.room else (slot.course.room.name if slot.course.room else 'SALLE ?') }}
+        </span>
+      </div>
+      <div style="font-size:11px; font-weight:900; line-height:1.25; margin-bottom:2px; color:#000;">
+        {{ slot.course.name }}
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:8.5px; font-weight:800; color:#000;">
+        <span>{% if slot.course.teacher %}Prof: {{ slot.course.teacher.full_name }}{% else %}{{ l.inst_title }}{% endif %}</span>
+        {% if slot.course.group_name %}<span>{{ slot.course.group_name }}</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+
+  <div style="text-align:center; margin-top:10px; padding-top:6px; border-top:1.5px dashed #000; font-size:8px; font-weight:800; line-height:1.35;">
+    <div style="font-weight:900; font-size:9px;">{{ l.inst_title }}</div>
+    <div>* {% if is_rtl %}يرجى الحضور 5 دقائق قبل بدء الحصة.{% else %}Prière d'arriver 5 minutes avant le cours.{% endif %}</div>
+    <div style="margin-top:2px; font-size:7.5px;">{% if is_rtl %}نتمنى لكم كامل التوفيق والنجاح !{% else %}Bonne réussite avec l'Institut ILAS !{% endif %}</div>
+  </div>
+</div>
+{% endif %}
+
+  <script>
+    // Lance automatiquement l'impression si ouvert dans une popup ou iframe POS
+    window.onload = () => {
+      window.print();
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex between wrap mb-3">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('dashboard') }}">← {{ t('dashboard') }}</a></div>
+    <h2 class="mt-0 mb-0" style="font-size:22px">⚙️ {{ t('settings') }}</h2>
+  </div>
+  <div style="display:flex; gap:10px; align-items:center;">
+    <a href="{{ url_for('settings_security') }}" class="btn btn-sm btn-outline-danger" style="font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+      <span>🛡️</span><span>{{ 'مراقبة الأمان وعناوين IP' if lang=='ar' else 'Sécurité & Contrôle des IP' }}</span>
+    </a>
+    <form method="post" action="{{ url_for('settings_reset') }}" onsubmit="return confirm('Réinitialiser tous les réglages ?')">
+      <button class="btn btn-red btn-sm">↺ Réinitialiser par défaut</button>
+    </form>
+  </div>
+</div>
+
+<form method="post">
+
+<div class="card card-pad mb-3" style="background:linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border:1.5px solid #93c5fd; border-radius:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <div style="font-size:28px;">☁️</div>
+    <div>
+      <h3 style="margin:0; font-size:16px; color:#1e40af; font-weight:800;">
+        Sauvegarde Automatique Google Drive & Exports Excel (22:00)
+      </h3>
+      <p style="margin:2px 0 0 0; font-size:12.5px; color:#3b82f6;">
+        Sauvegarde quotidienne automatique à 22:00, exports complets de toutes les tables en Excel et rappels de sécurité.
+      </p>
+    </div>
+  </div>
+  <div>
+    <a href="{{ url_for('settings_backups') }}" class="btn btn-primary" style="background:#2563eb; border-color:#2563eb; font-weight:700;">
+      Gérer la Sauvegarde Google Drive →
+    </a>
+  </div>
+</div>
+
+<div class="grid grid-2">
+
+  <div class="form-section">
+    <div class="sec-head"><span class="sec-ico">🏢</span><div><h3>Institut (général)</h3><p>Identité et coordonnées</p></div></div>
+    <div class="sec-body">
+      <div class="field"><label>Nom de l'institut</label><input name="inst_name" value="{{ s.inst_name }}"></div>
+      <div class="field"><label>Slogan</label><input name="inst_tagline" value="{{ s.inst_tagline }}"></div>
+      <div class="field"><label>Adresse</label><input name="inst_address" value="{{ s.inst_address }}"></div>
+      <div class="form-row">
+        <div class="field"><label>Ville</label><input name="inst_city" value="{{ s.inst_city }}"></div>
+        <div class="field"><label>Téléphone</label><input name="inst_phone" value="{{ s.inst_phone }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>WhatsApp</label><input name="inst_whatsapp" value="{{ s.inst_whatsapp }}"></div>
+        <div class="field"><label>Email</label><input name="inst_email" value="{{ s.inst_email }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Site web</label><input name="inst_website" value="{{ s.inst_website }}"></div>
+        <div class="field"><label>Année scolaire</label><input name="school_year" value="{{ s.school_year }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Devise</label><select name="currency"><option {{ 'selected' if s.currency=='MAD' }}>MAD</option><option {{ 'selected' if s.currency=='EUR' }}>EUR</option><option {{ 'selected' if s.currency=='USD' }}>USD</option></select></div>
+        <div class="field"><label>Couleur du thème</label><input type="color" name="theme_color" value="{{ s.theme_color }}" style="height:38px;padding:3px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="sec-head"><span class="sec-ico">⚖️</span><div><h3>Identifiants fiscaux</h3><p>Format marocain pour les factures</p></div></div>
+    <div class="sec-body">
+      <div class="field"><label>ICE</label><input name="inst_ice" value="{{ s.inst_ice }}"></div>
+      <div class="form-row">
+        <div class="field"><label>IF</label><input name="inst_if" value="{{ s.inst_if }}"></div>
+        <div class="field"><label>RC</label><input name="inst_rc" value="{{ s.inst_rc }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Patente</label><input name="inst_patente" value="{{ s.inst_patente }}"></div>
+        <div class="field"><label>CNSS</label><input name="inst_cnss" value="{{ s.inst_cnss }}"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="sec-head"><span class="sec-ico">🧾</span><div><h3>Facturation & TVA</h3><p>Numérotation et taxes</p></div></div>
+    <div class="sec-body">
+      <div class="form-row">
+        <div class="field"><label>TVA (%)</label><input type="number" step="0.01" min="0" name="tva_rate" value="{{ s.tva_rate }}"></div>
+        <div class="field"><label>Délai d'échéance (jours)</label><input type="number" name="due_days" value="{{ s.due_days }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Préfixe facture</label><input name="invoice_prefix" value="{{ s.invoice_prefix }}"></div>
+        <div class="field"><label>Préfixe devis</label><input name="quote_prefix" value="{{ s.quote_prefix }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Préfixe reçu</label><input name="receipt_prefix" value="{{ s.receipt_prefix }}"></div>
+        <div class="field"><label>Prochain N° facture</label><input type="number" name="next_invoice_number" value="{{ s.next_invoice_number }}"></div>
+      </div>
+      <div class="field"><label>Pied de page facture</label><textarea name="invoice_footer" rows="2">{{ s.invoice_footer }}</textarea></div>
+      <label class="check"><input type="checkbox" name="enable_tva" value="1" {{ 'checked' if s.enable_tva=='1' }}> Appliquer la TVA</label>
+      <label class="check"><input type="checkbox" name="enable_partial_payment" value="1" {{ 'checked' if s.enable_partial_payment=='1' }}> Paiements partiels</label>
+      <label class="check"><input type="checkbox" name="auto_invoice_on_enroll" value="1" {{ 'checked' if s.auto_invoice_on_enroll=='1' }}> Créer auto la facture à l'inscription</label>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="sec-head"><span class="sec-ico">💳</span><div><h3>Méthodes de paiement</h3><p>Méthodes activées</p></div></div>
+    <div class="sec-body">
+      <label class="check"><input type="checkbox" name="pay_cash" value="1" {{ 'checked' if s.pay_cash=='1' }}> Espèces</label>
+      <label class="check"><input type="checkbox" name="pay_transfer" value="1" {{ 'checked' if s.pay_transfer=='1' }}> Virement bancaire</label>
+      <label class="check"><input type="checkbox" name="pay_card" value="1" {{ 'checked' if s.pay_card=='1' }}> Carte bancaire (comptoir)</label>
+      <label class="check"><input type="checkbox" name="pay_online" value="1" {{ 'checked' if s.pay_online=='1' }}> Paiement en ligne (CMI / CIH)</label>
+      <hr>
+      <h3 class="mt-0" style="font-size:14px">🏦 Coordonnées bancaires</h3>
+      <div class="field"><label>Banque</label><input name="bank_name" value="{{ s.bank_name }}"></div>
+      <div class="field"><label>RIB</label><input name="bank_rib" value="{{ s.bank_rib }}"></div>
+      <div class="field"><label>Titulaire du compte</label><input name="bank_holder" value="{{ s.bank_holder }}"></div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="sec-head"><span class="sec-ico">👤</span><div><h3>Numérotation auto</h3><p>Codes élèves & cours</p></div></div>
+    <div class="sec-body">
+      <div class="form-row">
+        <div class="field"><label>Préfixe code élève</label><input name="student_prefix" value="{{ s.student_prefix }}"></div>
+        <div class="field"><label>Prochain N° élève</label><input type="number" name="next_student_number" value="{{ s.next_student_number }}"></div>
+      </div>
+      <div class="field"><label>Préfixe code cours</label><input name="course_prefix" value="{{ s.course_prefix }}"></div>
+      <label class="check"><input type="checkbox" name="student_photo" value="1" {{ 'checked' if s.student_photo=='1' }}> Autoriser photo élève</label>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="sec-head"><span class="sec-ico">🧩</span><div><h3>Fonctionnalités</h3><p>Modules activés</p></div></div>
+    <div class="sec-body">
+      <label class="check"><input type="checkbox" name="enable_attendance" value="1" {{ 'checked' if s.enable_attendance=='1' }}> Activer les absences</label>
+      <label class="check"><input type="checkbox" name="enable_grades" value="1" {{ 'checked' if s.enable_grades=='1' }}> Activer notes & examens</label>
+      <label class="check"><input type="checkbox" name="enable_badges" value="1" {{ 'checked' if s.enable_badges=='1' }}> Activer les badges</label>
+      <div class="field"><label>Seuil de retard (minutes)</label><input type="number" name="late_minutes_threshold" value="{{ s.late_minutes_threshold }}"></div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="sec-head"><span class="sec-ico">🖨️</span><div><h3>Tirages & Copies Enseignants</h3><p>Tarification par défaut des photocopies</p></div></div>
+    <div class="sec-body">
+      <div class="field">
+        <label>Prix par défaut par page de photocopie (DH)</label>
+        <input type="number" step="0.01" min="0" name="teacher_copy_price_page" value="{{ s.teacher_copy_price_page or '0.50' }}">
+        <small class="muted" style="font-size:11.5px; color:#64748b; display:block; margin-top:4px;">Ce tarif sera proposé par défaut lors de la saisie des tirages pour les professeurs (modifiable lors de chaque opération).</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="sec-head"><span class="sec-ico">🪪</span><div><h3>Badges (template)</h3><p>Dimensions et affichage</p></div></div>
+    <div class="sec-body">
+      <div class="form-row">
+        <div class="field"><label>Template</label><select name="badge_template"><option value="student" {{ 'selected' if s.badge_template=='student' }}>Élève</option><option value="course" {{ 'selected' if s.badge_template=='course' }}>Cours</option></select></div>
+        <div class="field"><label>Largeur (mm)</label><input type="number" name="badge_width_mm" value="{{ s.badge_width_mm }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Hauteur (mm)</label><input type="number" name="badge_height_mm" value="{{ s.badge_height_mm }}"></div>
+        <div class="field"><label>Taille de police (px)</label><input type="number" name="badge_font_size" value="{{ s.badge_font_size }}"></div>
+      </div>
+      <div class="field"><label>Couleur de fond</label><input type="color" name="badge_background_color" value="{{ s.badge_background_color }}" style="height:38px;padding:3px"></div>
+      <div class="field"><label>Règlement & conditions (affiché à l'arrière du badge)</label><textarea name="badge_conditions" rows="4" placeholder="Texte des conditions / règlement intérieur...">{{ s.badge_conditions }}</textarea></div>
+      <label class="check"><input type="checkbox" name="badge_show_photo" value="1" {{ 'checked' if s.badge_show_photo=='1' }}> Afficher la photo</label>
+      <label class="check"><input type="checkbox" name="badge_show_code" value="1" {{ 'checked' if s.badge_show_code=='1' }}> Afficher le code</label>
+      <label class="check"><input type="checkbox" name="badge_show_course" value="1" {{ 'checked' if s.badge_show_course=='1' }}> Afficher le cours</label>
+      <label class="check"><input type="checkbox" name="badge_show_institute" value="1" {{ 'checked' if s.badge_show_institute=='1' }}> Afficher le nom de l'institut</label>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="sec-head"><span class="sec-ico">🌐</span><div><h3>Langue</h3><p>Langue par défaut de l'interface</p></div></div>
+    <div class="sec-body">
+      <div class="field"><label>Langue par défaut</label>
+        <select name="default_lang"><option value="fr" {{ 'selected' if s.default_lang=='fr' }}>Français</option><option value="ar" {{ 'selected' if s.default_lang=='ar' }}>العربية</option></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="sec-head"><span class="sec-ico">🖨️</span><div><h3>Design & Impression (Ticket 80mm)</h3><p>Modèle de reçu d'inscription</p></div></div>
+    <div class="sec-body">
+      <div class="field"><label>Design du Ticket Thermique</label>
+        <select name="receipt_design">
+          <option value="default" {{ 'selected' if s.receipt_design in ['default', '', None] }}>Ticket Thermique ILAS (Par défaut - Officiel)</option>
+          <option value="classic" {{ 'selected' if s.receipt_design=='classic' }}>Classique Élégant (V1)</option>
+          <option value="modern" {{ 'selected' if s.receipt_design=='modern' }}>Moderne Premium (V5)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section" style="grid-column: 1 / -1; border-left: 4px solid #1f6feb;">
+    <div class="sec-head"><span class="sec-ico">🔒</span><div><h3>Sécurité des Sessions & Changement de Shift</h3><p>Protection contre l'utilisation non autorisée du compte lors des fins de shift ou d'inactivité</p></div></div>
+    <div class="sec-body">
+      <div class="form-row">
+        <div class="field">
+          <label>Délai d'inactivité avant déconnexion automatique (Admin & Secrétaires)</label>
+          <select name="session_timeout_minutes">
+            <option value="15" {{ 'selected' if s.session_timeout_minutes == '15' }}>15 minutes (Sécurité élevée)</option>
+            <option value="20" {{ 'selected' if s.session_timeout_minutes == '20' }}>20 minutes</option>
+            <option value="30" {{ 'selected' if s.session_timeout_minutes in ['30', '', None] }}>30 minutes (Recommandé standard)</option>
+            <option value="45" {{ 'selected' if s.session_timeout_minutes == '45' }}>45 minutes</option>
+            <option value="60" {{ 'selected' if s.session_timeout_minutes == '60' }}>60 minutes (1 heure)</option>
+            <option value="120" {{ 'selected' if s.session_timeout_minutes == '120' }}>120 minutes (2 heures)</option>
+          </select>
+          <div class="muted" style="font-size:11.5px; margin-top:4px;">
+            Après cette durée sans mouvement de souris ni frappe clavier, le compte est automatiquement verrouillé et déconnecté.
+          </div>
+        </div>
+        <div class="field">
+          <label>Fermeture du navigateur (Admin & Secrétaires)</label>
+          <input type="text" class="input" readonly value="Déconnexion automatique active (Session éphémère)" style="background:#f8fafc; color:#047857; font-weight:700;">
+          <div class="muted" style="font-size:11.5px; margin-top:4px;">
+            À la réouverture du navigateur, la saisie des identifiants est obligatoire pour Admin et Secrétaire. Les enseignants restent connectés.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-2" style="max-width:860px">
+  <button class="btn btn-primary" style="padding:12px 24px">💾 {{ t('save') }} les réglages</button>
+</div>
+</form>
+{% endblock %}

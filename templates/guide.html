@@ -1,0 +1,1017 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+@media screen and (max-width: 768px) {
+  .guide-container {
+    padding: 20px 14px !important;
+    border-radius: 14px !important;
+  }
+  .guide-container h1 {
+    font-size: 21px !important;
+  }
+  .guide-container [style*="minmax(320px"] {
+    grid-template-columns: 1fr !important;
+  }
+  .guide-container [style*="justify-content:space-between"] {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+}
+</style>
+
+<!-- ================================================================= -->
+<!-- TOP ACTION BAR (NON-PRINTABLE)                                    -->
+<!-- ================================================================= -->
+<div class="no-print flex between wrap mb-3" style="align-items:center; gap:12px;">
+  <div>
+    <div class="muted" style="font-size:12px;"><a href="{{ url_for('dashboard') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ t('dashboard') }}</a></div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+      <h2 class="mt-0 mb-0" style="font-size:24px; color:#0B3D6E; font-weight:900;">📖 {{ 'دليل الاستخدام الرسمي الشامل' if lang=='ar' else 'Guide Officiel d\'Utilisation & Référence Système' }}</h2>
+      <span class="chip chip-blue" style="font-weight:800; font-size:11.5px;">ÉDITION COMPLÈTE V3.0 PROD</span>
+    </div>
+    <p class="muted" style="margin:2px 0 0 0; font-size:13px;">Manuel de référence exhaustif, procédures opérationnelles standards et règles de gestion (Français / العربية)</p>
+  </div>
+  <div class="flex" style="gap:10px;">
+    <button class="btn btn-primary" onclick="window.print()" style="background:#10b981; border-color:#10b981; font-weight:800; font-size:14px; padding:9px 20px; box-shadow:0 4px 14px rgba(16,185,129,0.35); display:inline-flex; align-items:center; gap:8px;">
+      <span>🖨️</span><span>Exporter / Imprimer en PDF (A4)</span>
+    </button>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- MAIN GUIDE DOCUMENT CONTAINER                                     -->
+<!-- ================================================================= -->
+<div class="guide-container" style="background:#ffffff; border-radius:18px; padding:36px 42px; border:1.5px solid #cbd5e1; box-shadow:0 10px 30px rgba(0,0,0,0.04); max-width:1150px; margin:0 auto; color:#1e293b; line-height:1.65;">
+
+  <!-- OFFICIAL COVER / HEADER BLOCK -->
+  <div style="border-bottom:3.5px solid #1f6feb; padding-bottom:24px; margin-bottom:32px; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:20px;">
+    <div>
+      <div style="background:linear-gradient(135deg, #1f6feb 0%, #0b3d6e 100%); color:#fff; font-weight:800; font-size:11.5px; padding:4px 14px; border-radius:20px; display:inline-block; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px; box-shadow:0 2px 8px rgba(31,111,235,0.3);">
+        🇲🇦 DOCUMENTATION OFFICIELLE INTERNE — MANUEL EXÉCUTIF
+      </div>
+      <h1 style="font-size:30px; color:#0B3D6E; margin:0; font-weight:900; line-height:1.2;">
+        MANUEL OPÉRATOIRE & GUIDE SYSTÈME COMPLET
+      </h1>
+      <div style="font-size:18px; color:#047857; font-weight:800; margin-top:6px; direction:rtl; text-align:left;">
+        الدليل المرجعي الشامل لإدارة معهد اللغات والدعم المدرسي — Institut ILAS
+      </div>
+      <div style="font-size:13.5px; color:#64748b; margin-top:6px;">
+        Gestion Scolaire · Inscriptions Express 30s · Caisse & Reçus 80mm · Paie Enseignants · Primes Secrétariat · Achats & Fournisseurs · Badges QR
+      </div>
+    </div>
+    <div style="text-align:right; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:14px 18px;">
+      <div style="font-weight:900; color:#0B3D6E; font-size:16px;">{{ settings.inst_name }}</div>
+      <div style="font-size:12.5px; color:#475569; font-weight:700;">Année Académique : {{ settings.school_year }}</div>
+      <div style="font-size:11.5px; color:#047857; font-weight:800; margin-top:3px;">Autorisation État N° 22-200/2020</div>
+      <div style="font-size:11px; color:#94a3b8; margin-top:2px;">Mise à jour système : Version 3.0 PROD</div>
+    </div>
+  </div>
+
+  <!-- TABLE DES MATIÈRES / SOMMAIRE INTERACTIF -->
+  <div class="no-print" style="background:#f8fafc; border:2px solid #e2e8f0; border-radius:14px; padding:22px; margin-bottom:36px;">
+    <h3 style="margin-top:0; margin-bottom:14px; color:#0B3D6E; font-size:17px; font-weight:800; display:flex; align-items:center; gap:8px;">
+      <span>📑</span><span>الفهرس التفاعلي — Sommaire Général du Manuel</span>
+    </h3>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:12px; font-size:13.5px;">
+      <div><a href="#ch-workflow" style="text-decoration:none; color:#1f6feb; font-weight:700;">🧭 1. الترتيب الصحيح للعمل (Workflow Chronologique)</a></div>
+      <div><a href="#ch-express" style="text-decoration:none; color:#10b981; font-weight:700;">⚡ 2. التسجيل السريع في 30 ثانية (Inscription Express 30s)</a></div>
+      <div><a href="#ch-calc-student" style="text-decoration:none; color:#8b5cf6; font-weight:700;">🧮 3. حساب واجب التلميذ والنسبي (Prorata & Fin d'Abonnement)</a></div>
+      <div><a href="#ch-pause-transfer" style="text-decoration:none; color:#ea580c; font-weight:700;">⏸️ 4. تجميد الاشتراك والتحويل (Pause, Reprise & Transfert)</a></div>
+      <div><a href="#ch-calc-teacher" style="text-decoration:none; color:#dc2626; font-weight:700;">👨‍🏫 5. أجور الأساتذة وأرباح المعهد (Paie Profs & Net École)</a></div>
+      <div><a href="#ch-secretary-bonus" style="text-decoration:none; color:#047857; font-weight:700;">🎯 6. مكافآت ونسب السكرتارية (Primes & Audit Secrétaires)</a></div>
+      <div><a href="#ch-students-date" style="text-decoration:none; color:#0284c7; font-weight:700;">📅 7. تتبع تواريخ الانتهاء والواتساب (Échéances & WhatsApp)</a></div>
+      <div><a href="#ch-attendance" style="text-decoration:none; color:#16a34a; font-weight:700;">📍 8. الحضور والغياب والإشعارات (Présences & Absences)</a></div>
+      <div><a href="#ch-schedule-rooms" style="text-decoration:none; color:#4338ca; font-weight:700;">🗓️ 9. جدول الحصص والقاعات والتعويض (Planning & Salles)</a></div>
+      <div><a href="#ch-badges-certs" style="text-decoration:none; color:#b45309; font-weight:700;">🪪 10. بطاقات الطلاب والشواهد (Badges QR & Certificats)</a></div>
+      <div><a href="#ch-payments-invoices" style="text-decoration:none; color:#0f766e; font-weight:700;">💳 11. الصندوق والمقبوضات والفواتير (Caisse & Facturation)</a></div>
+      <div><a href="#ch-expenses-suppliers" style="text-decoration:none; color:#c026d3; font-weight:700;">💸 12. المشتريات والمصاريف والموردون (Achats & Fournisseurs)</a></div>
+      <div><a href="#ch-books-stock" style="text-decoration:none; color:#d97706; font-weight:700;">📚 13. مخزون وبيع الكتب والمقررات (Manuels Scolaires & Stock)</a></div>
+      <div><a href="#ch-reports-analytics" style="text-decoration:none; color:#2563eb; font-weight:700;">📈 14. التقارير المالية والإحصائيات (Rapports & Bilan Net)</a></div>
+      <div><a href="#ch-security-backups" style="text-decoration:none; color:#475569; font-weight:700;">💾 15. النسخ الاحتياطي والأمان (Sauvegardes & Sécurité IP)</a></div>
+      <div><a href="#ch-excel-migration" style="text-decoration:none; color:#059669; font-weight:700;">📥 16. استيراد بيانات إكسيل الشامل (Importation Excel Massive)</a></div>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- CHAPITRE 1 : WORKFLOW CHRONOLOGIQUE                               -->
+  <!-- ================================================================= -->
+  <section id="ch-workflow" style="margin-bottom:46px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:#1f6feb; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px;">1</div>
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">
+          الترتيب المنطقي للعمل من الصفر (Workflow Chronologique de Démarrage)
+        </h2>
+        <div style="font-size:13px; color:#64748b;">Ordre d'exécution obligatoire pour une mise en place sans incohérences pédagogiques ou financières</div>
+      </div>
+    </div>
+
+    <div style="background:#eff6ff; border-left:4px solid #1f6feb; padding:16px 20px; border-radius:0 12px 12px 0; margin-bottom:20px; font-size:13.5px; color:#1e40af;">
+      <strong>⚠️ قاعدة ذهبية :</strong> لتفادي أي أخطاء أو نواقص، لا يمكن تسجيل تلميذ في فوج إلا إذا كان هذا الفوج قد تم إنشاؤه مسبقاً ومربوطاً بأستاذ وقاعة وتوقيت محدد. النظام مبني على تسلسل هرمي منطقي.
+    </div>
+
+    <!-- Stepper Grid Visual -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:12px; margin-bottom:20px;">
+      
+      <div style="background:#fff; border:1.5px solid #bae6fd; border-radius:12px; padding:14px; text-align:center; box-shadow:0 3px 10px rgba(0,0,0,0.02);">
+        <div style="font-size:26px;">⚙️</div>
+        <div style="font-weight:900; color:#0369a1; font-size:13.5px; margin-top:4px;">1. الإعدادات العامة</div>
+        <div style="font-size:11.5px; color:#475569; margin-top:3px;"><code>/settings</code></div>
+        <div style="font-size:11px; color:#64748b; margin-top:2px;">اسم المؤسسة، الشعار، الهاتف، الواتساب، وبيانات الضرائب (ICE, IF, RC, Patente).</div>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #bbf7d0; border-radius:12px; padding:14px; text-align:center; box-shadow:0 3px 10px rgba(0,0,0,0.02);">
+        <div style="font-size:26px;">🚪</div>
+        <div style="font-weight:900; color:#15803d; font-size:13.5px; margin-top:4px;">2. القاعات الدراسية</div>
+        <div style="font-size:11.5px; color:#475569; margin-top:3px;"><code>/rooms</code></div>
+        <div style="font-size:11px; color:#64748b; margin-top:2px;">إدخال القاعات والطاقة الاستيعابية القصوى (Capacité) لكل قاعة لتفادي الاكتظاظ.</div>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #f0abfc; border-radius:12px; padding:14px; text-align:center; box-shadow:0 3px 10px rgba(0,0,0,0.02);">
+        <div style="font-size:26px;">👨‍🏫</div>
+        <div style="font-weight:900; color:#a21caf; font-size:13.5px; margin-top:4px;">3. هيئة التدريس</div>
+        <div style="font-size:11.5px; color:#475569; margin-top:3px;"><code>/teachers</code></div>
+        <div style="font-size:11px; color:#64748b; margin-top:2px;">بيانات الأساتذة ونموذج الراتب (% أو لكل تلميذ أو بالساعة أو راتب قار).</div>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #fde68a; border-radius:12px; padding:14px; text-align:center; box-shadow:0 3px 10px rgba(0,0,0,0.02);">
+        <div style="font-size:26px;">🏷️</div>
+        <div style="font-weight:900; color:#b45309; font-size:13.5px; margin-top:4px;">4. دليل التسعيرات</div>
+        <div style="font-size:11.5px; color:#475569; margin-top:3px;"><code>/tariffs</code></div>
+        <div style="font-size:11px; color:#64748b; margin-top:2px;">تحديد تسعيرات اللغات والدعم المدرسي وواجبات التسجيل المعتمدة.</div>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #fed7aa; border-radius:12px; padding:14px; text-align:center; box-shadow:0 3px 10px rgba(0,0,0,0.02);">
+        <div style="font-size:26px;">📚</div>
+        <div style="font-weight:900; color:#c2410c; font-size:13.5px; margin-top:4px;">5. الأفواج والصفوف</div>
+        <div style="font-size:11.5px; color:#475569; margin-top:3px;"><code>/courses</code></div>
+        <div style="font-size:11px; color:#64748b; margin-top:2px;">ربط المادة بالأستاذ، القاعة، أيام الأسبوع (اثنين/أربعاء/جمعة)، والتوقيت.</div>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #a7f3d0; border-radius:12px; padding:14px; text-align:center; box-shadow:0 3px 10px rgba(0,0,0,0.02);">
+        <div style="font-size:26px;">⚡</div>
+        <div style="font-weight:900; color:#047857; font-size:13.5px; margin-top:4px;">6. التسجيل السريع</div>
+        <div style="font-size:11.5px; color:#475569; margin-top:3px;"><code>/express_enrollment</code></div>
+        <div style="font-size:11px; color:#64748b; margin-top:2px;">تسجيل التلميذ في مواده وكتبه وطباعة التذكرة الحرارية في 30 ثانية.</div>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #c7d2fe; border-radius:12px; padding:14px; text-align:center; box-shadow:0 3px 10px rgba(0,0,0,0.02);">
+        <div style="font-size:26px;">📍</div>
+        <div style="font-weight:900; color:#4338ca; font-size:13.5px; margin-top:4px;">7. الحضور والواتساب</div>
+        <div style="font-size:11.5px; color:#475569; margin-top:3px;"><code>/attendance</code></div>
+        <div style="font-size:11px; color:#64748b; margin-top:2px;">نداء الأستاذ في القسم وإشعار الإدارة وأولياء الأمور بالغياب فوراً.</div>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #fecdd3; border-radius:12px; padding:14px; text-align:center; box-shadow:0 3px 10px rgba(0,0,0,0.02);">
+        <div style="font-size:26px;">💰</div>
+        <div style="font-weight:900; color:#be123c; font-size:13.5px; margin-top:4px;">8. الأجور والمصاريف</div>
+        <div style="font-size:11.5px; color:#475569; margin-top:3px;"><code>/teachers/payroll</code></div>
+        <div style="font-size:11px; color:#64748b; margin-top:2px;">احتساب مستحقات الأساتذة ومصاريف التسيير وصافي أرباح المعهد.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr style="border:none; border-top:1.5px dashed #cbd5e1; margin:36px 0;">
+
+  <!-- ================================================================= -->
+  <!-- CHAPITRE 2 : INSCRIPTION EXPRESS 30s                              -->
+  <!-- ================================================================= -->
+  <section id="ch-express" style="margin-bottom:46px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:#10b981; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px;">2</div>
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">
+          التسجيل السريع الشامل في 30 ثانية (Inscription Express ⚡)
+        </h2>
+        <div style="font-size:13px; color:#64748b;">Guichet unique ultra-rapide pour l'accueil : inscription multi-matières, calcul de prorata, vente de manuels et impression thermique 80mm</div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:20px; margin-bottom:20px;">
+      <div style="font-size:13.5px; line-height:1.7;">
+        <p style="margin-top:0;">
+          صفحة <strong>Inscription Express</strong> تم تصميمها خصيصاً لمكتب الاستقبال (Accueil / Secrétariat) لتفادي التنقل بين 4 أو 5 صفحات مختلفة. في شاشة واحدة يتم كل شيء :
+        </p>
+        <ul style="margin:8px 0 14px 20px; padding:0;">
+          <li><strong>التبديل الفوري بين التلميذ الجديد والسابق :</strong> زر <code>[✨ Nouveau]</code> لإدخال البيانات لأول مرة، أو زر <code>[🔍 Déjà Inscrit]</code> مع محرك بحث ذكي فوري يبحث بمجرد كتابة حرفين من الاسم أو رقم الهاتف أو كود التلميذ.</li>
+          <li><strong>حساب السن الآلي :</strong> بمجرد تحديد تاريخ الازدياد، يظهر شريط أزرق يحسب عمر التلميذ تلقائياً لتوجيهه للمستوى الأنسب.</li>
+          <li><strong>الهاتف الإجباري للواتساب :</strong> رقم هاتف ولي الأمر إجباري لضمان وصول تنبيهات الغياب ومواعيد تجديد الاشتراك.</li>
+          <li><strong>إدراج صورة البطاقة :</strong> زر <code>[📸 Photo QR Badge]</code> لرفع صورة التلميذ مباشرة لإدراجها في بطاقته المدرسية.</li>
+        </ul>
+      </div>
+
+      <div style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:14px; padding:18px;">
+        <div style="font-size:12px; font-weight:800; color:#0B3D6E; text-transform:uppercase; margin-bottom:10px; display:flex; justify-content:space-between;">
+          <span>🧾 شاشة التذكرة الحرارية (Aperçu Ticket 80mm)</span>
+          <span class="chip chip-green" style="font-size:10px;">TEMPS RÉEL</span>
+        </div>
+        <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:12px; font-family:monospace; font-size:12px; color:#1e293b; box-shadow:0 2px 6px rgba(0,0,0,0.03);">
+          <div style="text-align:center; font-weight:bold;">INSTITUT LES SAGES ILAS</div>
+          <div style="text-align:center; font-size:10px; color:#64748b;">Tél: 0522-532217 / 0660-291155</div>
+          <div style="border-top:1px dashed #94a3b8; margin:6px 0;"></div>
+          <div>Élève : <strong>Yassine Benali</strong></div>
+          <div>Date : 19/09/2026 18:30</div>
+          <div style="border-top:1px dashed #94a3b8; margin:6px 0;"></div>
+          <div style="display:flex; justify-content:space-between;"><span>Anglais B1 (Prof. Sarah)</span><span>350 DH</span></div>
+          <div style="display:flex; justify-content:space-between;"><span>Frais Inscription Annuelle</span><span>100 DH</span></div>
+          <div style="display:flex; justify-content:space-between;"><span>Manuel Cambridge English</span><span>120 DH</span></div>
+          <div style="border-top:1px dashed #94a3b8; margin:6px 0;"></div>
+          <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:13px; color:#047857;"><span>TOTAL NET :</span><span>570 DH</span></div>
+          <div style="display:flex; justify-content:space-between; font-size:11px;"><span>Payé (Espèces) :</span><span>600 DH</span></div>
+          <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold; color:#b45309;"><span>Monnaie à rendre :</span><span>30 DH</span></div>
+          <div style="border-top:1px dashed #94a3b8; margin:6px 0;"></div>
+          <div style="text-align:center; font-size:9.5px; color:#64748b;">Fin Abonnement : 19/10/2026 (12 séances)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features table of Express -->
+    <table style="width:100%; border-collapse:collapse; font-size:13px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden;">
+      <thead>
+        <tr style="background:#f1f5f9; text-align:left; color:#0B3D6E; border-bottom:2px solid #cbd5e1;">
+          <th style="padding:10px 14px;">الخاصية في الشاشة</th>
+          <th style="padding:10px 14px;">كيف تعمل وما هو دورها ؟</th>
+          <th style="padding:10px 14px;">الأثر المالي والتربوي</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 14px; font-weight:700;">🏫 Classes & Groupes</td>
+          <td style="padding:10px 14px;">اختيار الفوج المحدد (مثلاً : 2Bac PC Groupe A) مع عرض اسم الأستاذ والقاعة والتوقيت.</td>
+          <td style="padding:10px 14px; color:#047857; font-weight:700;">تسجيل فوري، تثبيت المقعد، وحساب أجرة الأستاذ.</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9; background:#fcfdfe;">
+          <td style="padding:10px 14px; font-weight:700;">⏳ En Attente de Groupe</td>
+          <td style="padding:10px 14px;">يُستخدم عندما يكون التلميذ يريد مادة معينة لم يكتمل نصاب فوجها بعد (تحديد الفوج لاحقاً).</td>
+          <td style="padding:10px 14px; color:#b45309; font-weight:700;">استلام واجب التسجيل، ووضع التلميذ في لائحة الانتظار دون ربطه بأستاذ.</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 14px; font-weight:700;">⚖️ Prorata Temporis</td>
+          <td style="padding:10px 14px;">تفعيل زر الحساب النسبي إذا دخل التلميذ في منتصف الشهر. السيستيم يقسم واجب الشهر على الحصص المتبقية.</td>
+          <td style="padding:10px 14px; color:#1d4ed8; font-weight:700;">عدالة في الأداء، وترحيل المبلغ المتبقي للشهر القادم تلقائياً.</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9; background:#fcfdfe;">
+          <td style="padding:10px 14px; font-weight:700;">🛡️ Frais d'Inscription</td>
+          <td style="padding:10px 14px;">إمكانية إلغاء التأشير على رسوم التسجيل (Exonération) للقدامى أو في حالات الإعفاء الاستثنائية.</td>
+          <td style="padding:10px 14px; color:#be123c; font-weight:700;">مرونة تامة مع الاحتفاظ بالسجل المالي المدقق.</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 14px; font-weight:700;">📖 Manuels & Livres</td>
+          <td style="padding:10px 14px;">إضافة المقررات المدرسية (Cambridge, Oxford...) مباشرة داخل وصل التسجيل السريع بضغطة زر.</td>
+          <td style="padding:10px 14px; color:#047857; font-weight:700;">خصم فوري من المخزون، ودخول المبلغ لصندوق اليومية مباشرة.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr style="border:none; border-top:1.5px dashed #cbd5e1; margin:36px 0;">
+
+  <!-- ================================================================= -->
+  <!-- CHAPITRE 3 : CALCUL DU PRORATA ET DATE DE FIN                     -->
+  <!-- ================================================================= -->
+  <section id="ch-calc-student" style="margin-bottom:46px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:#8b5cf6; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px;">3</div>
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">
+          طريقة حساب واجب التلميذ والحساب النسبي (Prorata Temporis & Échéances)
+        </h2>
+        <div style="font-size:13px; color:#64748b;">Algorithmes précis de calcul proratisé, report sur le mois suivant et projection calendaire de la date de fin</div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:20px;">
+      
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:18px;">
+        <h4 style="margin:0 0 10px 0; color:#0B3D6E; font-size:15px;">1. واجب التسجيل السنوي (Frais de Dossier)</h4>
+        <p style="font-size:13px; color:#334155; margin:0 0 8px 0;">
+          - يؤدى مرة واحدة في أول تسجيل خلال الموسم الدراسي (مثلاً : 40 درهم للدعم المدرسي أو 100 درهم للغات الحية).
+        </p>
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px; font-size:12.5px; color:#166534; font-weight:700;">
+          ✓ يدخل بنسبة 100% لمداخيل المعهد ولا تُطبق عليه أية نسبة للأستاذ.
+        </div>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:18px;">
+        <h4 style="margin:0 0 10px 0; color:#0B3D6E; font-size:15px;">2. خوارزمية الحساب النسبي (Prorata)</h4>
+        <p style="font-size:13px; color:#334155; margin:0 0 8px 0;">
+          إذا تسجل التلميذ في وسط الشهر (مثلاً يوم 18 أكتوبر)، يطبق النظام المعادلة التالية :
+        </p>
+        <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:10px; font-family:monospace; font-size:12px; color:#0f172a;">
+          المبلغ المستحق للشهر الحالي = (واجب الشهر ÷ إجمالي حصص الشهر) × الحصص المتبقية<br>
+          المبلغ المؤجل للشهر القادم (Report) = واجب الشهر - المبلغ المستحق للشهر الحالي
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Practical Numerical Example Card -->
+    <div style="background:linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border:1.5px solid #d8b4fe; border-radius:14px; padding:20px;">
+      <h4 style="margin:0 0 10px 0; color:#6b21a8; font-size:15px; font-weight:800;">
+        💡 مثال تطبيقي دقيق (فوج 300 درهم / شهر بمعدل 12 حصة في الشهر) :
+      </h4>
+      <div style="font-size:13.5px; color:#4c1d95; line-height:1.7;">
+        - تسجل التلميذ وبقي في الشهر <strong>4 حصص فقط</strong> من أصل 12 حصة :<br>
+        - ثمن الحصة الواحدة = $300 \div 12 = \mathbf{25 \text{ DH}}$<br>
+        - <strong>المبلغ المستحق للشهر الحالي</strong> = $4 \times 25 = \mathbf{100 \text{ DH}}$<br>
+        - <strong>المبلغ المؤجل تلقائياً للشهر الموالي (Report)</strong> = $300 - 100 = \mathbf{200 \text{ DH}}$<br>
+        - عند حلول الشهر القادم، التلميذ يؤدي فقط $300 - 200 = \mathbf{100 \text{ DH}}$ لإكمال واجبه.
+      </div>
+    </div>
+
+    <div style="margin-top:20px; font-size:13.5px; line-height:1.7;">
+      <h4 style="color:#0B3D6E; margin-bottom:6px;">3. كيف تُحسب تاريخ نهاية الاشتراك (Date de Fin d'Abonnement) بدقة ؟</h4>
+      <p style="margin-top:0;">
+        النظام <strong>لا يضيف 30 يوماً بشكل عشوائي</strong>، بل يعتمد على <em>خوارزمية الإسقاط الأسبوعي (Weekly Projection Engine)</em> :
+      </p>
+      <div style="background:#fff; border:1px solid #cbd5e1; border-radius:10px; padding:14px;">
+        <ol style="margin:0 0 0 20px; padding:0;">
+          <li>يقوم النظام بقراءة أيام الفوج الفعلية المحددة في النظام (مثلاً : الإثنين، الأربعاء، الجمعة).</li>
+          <li>يعد الحصص المؤداة (مثلاً 12 حصة في حالة الأداء الكامل، أو 6 حصص في حالة دفع النصف كـ acompte).</li>
+          <li>ينطلق من تاريخ بداية التسجيل ويتقدم يوماً بيوم، وفي كل مرة يصادف فيها يوماً من أيام الحصص ينقص حصة حتى الوصول إلى الحصة الأخيرة تماماً.</li>
+          <li>ذلك اليوم هو تاريخ انتهاء الاشتراك الرسمي (Date de Fin).</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <hr style="border:none; border-top:1.5px dashed #cbd5e1; margin:36px 0;">
+
+  <!-- ================================================================= -->
+  <!-- CHAPITRE 4 : PAUSE, REPRISE & TRANSFERT                           -->
+  <!-- ================================================================= -->
+  <section id="ch-pause-transfer" style="margin-bottom:46px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:#ea580c; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px;">4</div>
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">
+          تجميد الاشتراك، الاستئناف، وتحويل الفوج (Pause, Reprise & Transfert)
+        </h2>
+        <div style="font-size:13px; color:#64748b;">Procédures opérationnelles pour les imprévus d'élèves : gel d'abonnement pour voyage/maladie et partage équitable lors d'un transfert de classe</div>
+      </div>
+    </div>
+
+    <!-- 3 columns for 3 advanced features -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap:16px;">
+      
+      <!-- Card 1: Pause -->
+      <div style="background:#fff; border:1.5px solid #fed7aa; border-radius:12px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,0.02);">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="font-size:22px;">⏸️</span>
+          <h4 style="margin:0; color:#c2410c; font-size:15px; font-weight:800;">تجميد الاشتراك (Mettre en Pause)</h4>
+        </div>
+        <p style="font-size:13px; color:#475569; margin:0 0 10px 0;">
+          في حال مرض التلميذ أو سفره، تضغط الإدارة على زر <code>[⏸️ Geler / Pause]</code> في صفحة <code>/enrollments</code> :
+        </p>
+        <ul style="margin:0 0 0 16px; padding:0; font-size:12.5px; color:#334155; line-height:1.6;">
+          <li>يقوم النظام بحساب الحصص المتبقية التي لم يستفد منها التلميذ حتى تاريخ التجميد.</li>
+          <li>يتم حفظ هذه الحصص في رصيد التلميذ (Séances en réserve).</li>
+          <li>يتوقف عداد الأيام لحماية حق التلميذ وحق المعهد.</li>
+        </ul>
+      </div>
+
+      <!-- Card 2: Resume -->
+      <div style="background:#fff; border:1.5px solid #bbf7d0; border-radius:12px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,0.02);">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="font-size:22px;">▶️</span>
+          <h4 style="margin:0; color:#15803d; font-size:15px; font-weight:800;">استئناف الاشتراك (Reprise d'Abonnement)</h4>
+        </div>
+        <p style="font-size:13px; color:#475569; margin:0 0 10px 0;">
+          عند عودة التلميذ، تضغط الإدارة على زر <code>[▶️ Reprendre]</code> :
+        </p>
+        <ul style="margin:0 0 0 16px; padding:0; font-size:12.5px; color:#334155; line-height:1.6;">
+          <li>تحديد تاريخ الرجوع الفعلي.</li>
+          <li>يقوم النظام تلقائياً بترحيل الحصص المحفوظة وحساب <strong>تاريخ نهاية جديد (Nouvelle Date de Fin)</strong> ومطابقته مع أيام الحصص الفعلية.</li>
+          <li>إشعار الإدارة بالتاريخ الجديد وترحيل الاشتراك بسلاسة.</li>
+        </ul>
+      </div>
+
+      <!-- Card 3: Transfer -->
+      <div style="background:#fff; border:1.5px solid #bae6fd; border-radius:12px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,0.02);">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="font-size:22px;">🔄</span>
+          <h4 style="margin:0; color:#0369a1; font-size:15px; font-weight:800;">تحويل الفوج (Transfert de Classe)</h4>
+        </div>
+        <p style="font-size:13px; color:#475569; margin:0 0 10px 0;">
+          عند رغبة التلميذ في تغيير المادة أو الانتقال لأستاذ آخر عبر <code>[🔄 Transférer]</code> :
+        </p>
+        <ul style="margin:0 0 0 16px; padding:0; font-size:12.5px; color:#334155; line-height:1.6;">
+          <li><strong>تقسيم عادل للواجب الشهري :</strong> الأستاذ القديم يأخذ نسبته من الحصص التي حضرها التلميذ قبل التحويل.</li>
+          <li>الأستاذ الجديد يستفيد من حصته في المدة المتبقية.</li>
+          <li>رسوم التسجيل تبقى للمعهد بنسبة 100%.</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <hr style="border:none; border-top:1.5px dashed #cbd5e1; margin:36px 0;">
+
+  <!-- ================================================================= -->
+  <!-- CHAPITRE 5 : CALCUL PAIE PROFS ET NET ECOLE                       -->
+  <!-- ================================================================= -->
+  <section id="ch-calc-teacher" style="margin-bottom:46px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:#dc2626; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px;">5</div>
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">
+          طريقة حساب أجور الأساتذة وصافي أرباح المعهد (Paie Enseignants & Net École)
+        </h2>
+        <div style="font-size:13px; color:#64748b;">Règle d'or de l'Institut ILAS : distinction stricte entre scolarité partagée et revenus exclusifs de l'établissement</div>
+      </div>
+    </div>
+
+    <div style="background:#fff7ed; border-left:4px solid #ea580c; padding:14px 18px; border-radius:0 10px 10px 0; font-size:13.5px; color:#9a3412; margin-bottom:18px;">
+      <strong>⚠️ القاعدة الذهبية الرسمية :</strong> نسبة الأستاذ % تُطبق <strong>فقط وحصرياً</strong> على واجبات التمدرس الشهرية (Scolarité) بعد استخلاصها. لا يدخل في حساب أجر الأستاذ أي درهم من واجبات التسجيل السنوية (Frais d'inscription) أو مبيعات الكتب المدرسية.
+    </div>
+
+    <table style="width:100%; border-collapse:collapse; font-size:13.5px; margin:16px 0; background:#fff; border:1px solid #cbd5e1; border-radius:10px; overflow:hidden;">
+      <thead>
+        <tr style="background:#f1f5f9; text-align:left; border-bottom:2px solid #cbd5e1; color:#0B3D6E;">
+          <th style="padding:12px;">المعامل المالي</th>
+          <th style="padding:12px;">الصيغة الحسابية</th>
+          <th style="padding:12px;">مثال تطبيقي (فوج 12 تلميذ بـ 300 درهم ونسبة 50%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #e2e8f0;">
+          <td style="padding:12px; font-weight:700;">مداخيل الدراسة (Scolarité)</td>
+          <td style="padding:12px;">عدد التلاميذ المؤدين × واجب الشهر</td>
+          <td style="padding:12px; color:#0369a1; font-weight:800;">12 × 300 = 3 600 DH</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e2e8f0;">
+          <td style="padding:12px; font-weight:700;">واجبات التسجيل والتأمين</td>
+          <td style="padding:12px;">عدد الجدد × 40 DH (أو 100 DH)</td>
+          <td style="padding:12px; color:#0369a1; font-weight:800;">12 × 40 = 480 DH (100% للمعهد)</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e2e8f0; background:#fef2f2;">
+          <td style="padding:12px; font-weight:800; color:#b91c1c;">أجرة الأستاذ (50%)</td>
+          <td style="padding:12px; color:#b91c1c;">مداخيل الدراسة × 50%</td>
+          <td style="padding:12px; color:#b91c1c; font-weight:900; font-size:14px;">3 600 × 50% = 1 800 DH</td>
+        </tr>
+        <tr style="background:#f0fdf4;">
+          <td style="padding:12px; font-weight:800; color:#15803d;">صافي أرباح المعهد (Net École)</td>
+          <td style="padding:12px; color:#15803d;">(مداخيل الدراسة - أجرة الأستاذ) + واجبات التسجيل</td>
+          <td style="padding:12px; color:#15803d; font-weight:900; font-size:14px;">(3 600 - 1 800) + 480 = 2 280 DH</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:14px; font-size:13px; color:#334155;">
+      <strong>📄 ميزة طباعة الكشف الرسمي للأساتذة (`/teachers/payroll`) :</strong><br>
+      يمكن للمدير اختيار أستاذ محدد أو تحديد عدة أساتذة عبر القائمة التفاعلية <code>[Multi-Select]</code>، والضغط على <strong>[🖨️ طباعة التقرير الرسمي]</strong> لاستخراج كشف إداري رسمي في ورقة A4 أفقية مفصل فيه اسم الفوج، عدد التلاميذ، الحصص المنجزة، وصافي المبلغ المستحق للتوقيع والتسليم.
+    </div>
+  </section>
+
+  <hr style="border:none; border-top:1.5px dashed #cbd5e1; margin:36px 0;">
+
+  <!-- ================================================================= -->
+  <!-- CHAPITRE 6 : PRIMES ET AUDIT DES SECRÉTAIRES                      -->
+  <!-- ================================================================= -->
+  <section id="ch-secretary-bonus" style="margin-bottom:46px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:#047857; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px;">6</div>
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">
+          مكافآت ونسب السكرتارية وتدقيق العمليات (Primes Secrétariat & Audit Trail)
+        </h2>
+        <div style="font-size:13px; color:#64748b;">Moteur de calcul de commission sur marge nette encaissée et journal d'audit complet de toutes les opérations de l'équipe</div>
+      </div>
+    </div>
+
+    <div style="background:#ecfdf5; border-left:4px solid #10b981; padding:16px 20px; border-radius:0 12px 12px 0; margin-bottom:18px; font-size:13.5px; color:#065f46;">
+      <strong>🎯 الهدف من النظام :</strong> تحفيز الكاتبة وموظفي الاستقبال على تسجيل تلاميذ جدد عبر منحهم نسبة مئوية (مثلاً 10%) من <strong>صافي ربح المعهد</strong> عن كل تلميذ جديد، مع ربط الصرف الفعلي للمكافأة بما تم استخلاصه في الصندوق (Montant Encaissé).
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:18px; font-size:13px;">
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px;">
+        <h4 style="margin:0 0 8px 0; color:#0B3D6E; font-size:14px;">1. شروط وقواعد استحقاق المكافأة :</h4>
+        <ul style="margin:0 0 0 16px; padding:0; line-height:1.7; color:#334155;">
+          <li><strong>التلاميذ الجدد فقط (Nouveaux Élèves) :</strong> تجديد الاشتراكات (Renouvellements) لا تعطي مكافأة، لأنها ليست جهداً تسويقياً جديداً.</li>
+          <li><strong>الخصم الأولي لرسوم الملف :</strong> واجب التسجيل والتأمين يُخصم في المقام الأول ويبقى خالصاً للمعهد.</li>
+          <li><strong>استحقاق نسبي مع التسبيقات (Acomptes) :</strong> إذا دفع التلميذ تسبيقاً فقط، تأخذ الكاتبة نسبتها فقط من المبلغ المقبوض فعلياً، وعندما يُكمل التلميذ الباقي، يُفتح لها الباقي تلقائياً!</li>
+        </ul>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px;">
+        <h4 style="margin:0 0 8px 0; color:#0B3D6E; font-size:14px;">2. صيغة الحساب الرياضية :</h4>
+        <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:10px; font-family:monospace; font-size:12px; color:#0f172a; line-height:1.6;">
+          واجب الدراسة المقبوض = إجمالي المبلغ المقبوض - رسوم التسجيل<br>
+          صافي ربح المدرسة المقبوض = واجب الدراسة المقبوض - حصة الأستاذ<br>
+          <strong>مكافأة السكرتارية = صافي ربح المدرسة المقبوض × (النسبة % ÷ 100)</strong>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#fff; border:1px solid #cbd5e1; border-radius:12px; padding:16px; font-size:13px;">
+      <h4 style="margin:0 0 8px 0; color:#0B3D6E; font-size:14px;">📊 لوحة مراقبة المبيعات وتدقيق العمليات (`/users/activity`) :</h4>
+      <p style="margin:0 0 10px 0; color:#475569;">
+        تتيح هذه الصفحة للمدير أو الكاتبة نفسها متابعة مداخيل اليومية بدقة :
+      </p>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px; text-align:center;">
+        <div style="background:#f1f5f9; padding:10px; border-radius:8px;">
+          <div style="font-weight:800; color:#0B3D6E;">💵 السيولة في الصندوق</div>
+          <div style="font-size:11px; color:#64748b;">(Espèces / Cash en caisse)</div>
+        </div>
+        <div style="background:#f1f5f9; padding:10px; border-radius:8px;">
+          <div style="font-weight:800; color:#0B3D6E;">🏦 الحسابات البنكية</div>
+          <div style="font-size:11px; color:#64748b;">(Virements & Cartes)</div>
+        </div>
+        <div style="background:#f1f5f9; padding:10px; border-radius:8px;">
+          <div style="font-weight:800; color:#0B3D6E;">📚 مبيعات الكتب</div>
+          <div style="font-size:11px; color:#64748b;">(Ventes de Manuels)</div>
+        </div>
+        <div style="background:#f1f5f9; padding:10px; border-radius:8px;">
+          <div style="font-weight:800; color:#0B3D6E;">🛡️ سجل التتبع الزمني</div>
+          <div style="font-size:11px; color:#64748b;">(Audit Trail Horodaté)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr style="border:none; border-top:1.5px dashed #cbd5e1; margin:36px 0;">
+
+  <!-- ================================================================= -->
+  <!-- CHAPITRE 7 : SUIVI DES ÉCHÉANCES ET WHATSAPP                      -->
+  <!-- ================================================================= -->
+  <section id="ch-students-date" style="margin-bottom:46px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:#0284c7; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px;">7</div>
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">
+          تتبع تواريخ انتهاء الاشتراكات وتنبيهات الواتساب (Échéances & WhatsApp)
+        </h2>
+        <div style="font-size:13px; color:#64748b;">Gestion proactive des renouvellements : alertes colorées, relance WhatsApp en 1 clic et modification instantanée d'échéance</div>
+      </div>
+    </div>
+
+    <p style="font-size:13.5px; line-height:1.7; margin-top:0;">
+      صفحة <code>/students/by-date</code> تعتبر من أقوى الأدوات لمنع ضياع المداخيل ومتابعة استخلاص الواجبات في وقتها :
+    </p>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:18px;">
+      
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px;">
+        <h4 style="margin:0 0 10px 0; color:#0B3D6E; font-size:14px;">1. الفلاتر الزمنية والشارات الملونة :</h4>
+        <ul style="margin:0 0 0 16px; padding:0; font-size:12.5px; color:#334155; line-height:1.8;">
+          <li><span class="chip chip-amber" style="font-size:10px; font-weight:bold;">⚠️ Aujourd'hui</span> : التلاميذ الذين تنتهي اشتراكاتهم اليوم.</li>
+          <li><span class="chip chip-green" style="font-size:10px; font-weight:bold;">🟢 Dans X jours</span> : التلاميذ الذين تنتهي اشتراكاتهم خلال الأيام القادمة.</li>
+          <li><span class="chip chip-red" style="font-size:10px; font-weight:bold;">🔴 Expiré (Xj)</span> : اشتراكات انتهت وتتطلب استخلاصاً فورياً.</li>
+        </ul>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px;">
+        <h4 style="margin:0 0 10px 0; color:#0B3D6E; font-size:14px;">2. إرسال تذكير WhatsApp بضغطة زر :</h4>
+        <p style="font-size:12.5px; color:#334155; line-height:1.6; margin:0 0 8px 0;">
+          يوجد زران للواتساب بجانب كل تلميذ :
+        </p>
+        <ul style="margin:0 0 0 16px; padding:0; font-size:12px; color:#475569; line-height:1.6;">
+          <li><strong>[💬 WhatsApp] للتلميذ :</strong> يفتح رسالة جاهزة باسم التلميذ والمادة وتاريخ الانتهاء تدعوه للحضور للإدارة.</li>
+          <li><strong>[💬 Parent WA] للولي :</strong> يفتح رسالة مهنية موجهة للأب أو الأم لتذكيرهم بتجديد الاشتراك.</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div style="background:#f0f9ff; border:1.5px solid #7dd3fc; border-radius:12px; padding:14px; font-size:13px; color:#0369a1;">
+      <strong>📅 ميزة تغيير التاريخ المباشرة [Changer Date] :</strong><br>
+      إذا اتفقت الإدارة مع التلميذ على تمديد تاريخ الانتهاء لظرف خاص (مثلاً تأجيل حصة)، يمكن الضغط على <code>[📅 Changer Date]</code> وإدخال التاريخ الجديد مباشرة دون الحاجة لحذف أو تعديل الفاتورة القديمة.
+    </div>
+  </section>
+
+  <hr style="border:none; border-top:1.5px dashed #cbd5e1; margin:36px 0;">
+
+  <!-- ================================================================= -->
+  <!-- CHAPITRE 8 : ATTENDANCE & NOTIFICATIONS                           -->
+  <!-- ================================================================= -->
+  <section id="ch-attendance" style="margin-bottom:46px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:#16a34a; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px;">8</div>
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">
+          تتبع الحضور والغياب وإشعارات الإدارة والواتساب (Présences & Absences)
+        </h2>
+        <div style="font-size:13px; color:#64748b;">Feuille d'appel mobile pour enseignants, alertes en temps réel dans la topbar et communication WhatsApp parents</div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:18px; font-size:13.5px;">
+      
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:18px;">
+        <h4 style="margin:0 0 10px 0; color:#0B3D6E; font-size:15px;">📱 1. دور الأستاذ في القسم (`/attendance`) :</h4>
+        <ol style="margin:0 0 0 18px; padding:0; line-height:1.8; color:#334155;">
+          <li>الأستاذ يسجل دخوله من هاتفه بحسابه الخاص.</li>
+          <li>يختار فوجه الدراسي وتاريخ اليوم ليظهر له تلاميذ ذلك الفوج فقط.</li>
+          <li>يضغط على الحالات بكل بساطة :
+            <span class="chip chip-green" style="font-size:10px;">Présent 🟢</span> أو 
+            <span class="chip chip-red" style="font-size:10px;">Absent 🔴</span> أو 
+            <span class="chip chip-amber" style="font-size:10px;">Retard 🟡</span>.
+          </li>
+          <li>يضغط على <strong>[💾 Enregistrer l'appel]</strong> لحفظ الورقة.</li>
+        </ol>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:18px;">
+        <h4 style="margin:0 0 10px 0; color:#0B3D6E; font-size:15px;">🔔 2. دور الإدارة ومكتب الاستقبال :</h4>
+        <ol style="margin:0 0 0 18px; padding:0; line-height:1.8; color:#334155;">
+          <li>فور حفظ الأستاذ للغياب، يظهر إشعار فوري في أعلى شاشة الإدارة في أيقونة الجرس 🔔 بعدد الغائبين واسم الفوج.</li>
+          <li>تفتح الإدارة صفحة <code>/attendance/admin</code> للمراقبة الشاملة.</li>
+          <li>بضغطة واحدة على <code>[📲 WhatsApp]</code>، يُرسل إشعار فوري لولي الأمر يخبره بغياب ابنه عن حصة المادة وتاريخ اليوم.</li>
+        </ol>
+      </div>
+
+    </div>
+  </section>
+
+  <hr style="border:none; border-top:1.5px dashed #cbd5e1; margin:36px 0;">
+
+  <!-- ================================================================= -->
+  <!-- CHAPITRE 9 : EMPLOI DU TEMPS, SALLES ET REMPLACEMENTS             -->
+  <!-- ================================================================= -->
+  <section id="ch-schedule-rooms" style="margin-bottom:46px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:#4338ca; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px;">9</div>
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">
+          جدول الحصص الأسبوعي، القاعات، والأساتذة المعوضين (Planning & Salles)
+        </h2>
+        <div style="font-size:13px; color:#64748b;">Planning hebdomadaire interactif, détection des collisions, gestion des créneaux de rattrapage et des remplaçants</div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; font-size:13.5px; margin-bottom:18px;">
+      
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px;">
+        <h4 style="margin:0 0 8px 0; color:#0B3D6E;">🏢 1. تدبير القاعات ونظام منع التصادم (Anti-Collision) :</h4>
+        <p style="margin:0; color:#475569; font-size:13px; line-height:1.6;">
+          الجدول الأسبوعي <code>/schedule</code> يعرض خريطة تفاعلية للحصص. يمنع النظام برمجياً حجز نفس القاعة لفوجين في نفس التوقيت، أو تعيين نفس الأستاذ لفوجين مختلفين في نفس الساعة، مع إظهار تنبيه مرئي فوري.
+        </p>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px;">
+        <h4 style="margin:0 0 8px 0; color:#0B3D6E;">🔄 2. الأساتذة المعوضون وحصص الاستدراك (Remplacements) :</h4>
+        <p style="margin:0; color:#475569; font-size:13px; line-height:1.6;">
+          في حال غياب أستاذ واستدعاء أستاذ معوض (Substitute Teacher)، يوفر النظام شاشة خاصة لتسجيل اسم الأستاذ الأصلي، والأستاذ المعوض، وتاريخ الحصة، مع حفظ السجل كاملاً لضمان الشفافية المالية عند صرف الرواتب.
+        </p>
+      </div>
+
+    </div>
+
+    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:14px; font-size:13px;">
+      <strong>⚡ ميزة المزامنة التلقائية [Synchroniser depuis les Noms] :</strong><br>
+      إذا كانت أسماء الأفواج مكتوبة بالصيغة القياسية (مثلاً: <em>Anglais B1 - Samedi 16:00-18:00</em>)، بضغطة واحدة على هذا الزر يتعرف النظام تلقائياً على اليوم والساعة وينشئ الحصة في جدول التوقيت دون إدخال يدوي.
+    </div>
+  </section>
+
+  <hr style="border:none; border-top:1.5px dashed #cbd5e1; margin:36px 0;">
+
+  <!-- ================================================================= -->
+  <!-- CHAPITRE 10 : BADGES ET CERTIFICATS D'ÉTAT                        -->
+  <!-- ================================================================= -->
+  <section id="ch-badges-certs" style="margin-bottom:46px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:#b45309; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px;">10</div>
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">
+          بطاقات الطلاب الذكية والشواهد المعتمدة (Badges QR & Certificats)
+        </h2>
+        <div style="font-size:13px; color:#64748b;">Génération de cartes d'étudiants PVC format standard CR80 et délivrance d'attestations de niveau accréditées par l'État</div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:18px; font-size:13.5px;">
+      
+      <!-- Badges Info -->
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:18px;">
+        <h4 style="margin:0 0 10px 0; color:#0B3D6E; font-size:15px; display:flex; align-items:center; gap:6px;">
+          <span>🪪</span><span>بطاقة التلميذ الذكية (Carte d'Étudiant CR80)</span>
+        </h4>
+        <ul style="margin:0 0 0 18px; padding:0; line-height:1.8; color:#334155; font-size:13px;">
+          <li><strong>المقاس القياسي العالمي :</strong> حجم بطاقة الائتمان PVC الرسمي (54mm × 85.6mm) بأبعاد دقيقة جداً وجاهزة للطباعة.</li>
+          <li><strong>الوجه الأمامي (Recto) :</strong> شعار المعهد، صورة التلميذ، الاسم الكامل، الكود الأكاديمي، والمادة، ولوريل مغربي ثلاثي الألوان.</li>
+          <li><strong>الوجه الخلفي (Verso) :</strong> كود QR محلي وكود بار Code128 يعملان 100% بدون إنترنت، خاتم المعهد، والنظام الداخلي للبطاقة.</li>
+        </ul>
+      </div>
+
+      <!-- Certs Info -->
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:18px;">
+        <h4 style="margin:0 0 10px 0; color:#0B3D6E; font-size:15px; display:flex; align-items:center; gap:6px;">
+          <span>📜</span><span>الشواهد والشهادات المعتمدة (`/certificates`)</span>
+        </h4>
+        <ul style="margin:0 0 0 18px; padding:0; line-height:1.8; color:#334155; font-size:13px;">
+          <li><strong>الاعتماد القانوني :</strong> تحمل الشواهد إشارة الترخيص والاعتماد الوزاري رقم <strong>22-200/2020</strong>.</li>
+          <li><strong>أنواع الوثائق :</strong> شهادة التكوين (Formation)، شهادة المستوى اللغوي (Niveau en Langue)، وشهادة النجاح (Certificat).</li>
+          <li><strong>الميزات التقديرية :</strong> ممتاز (Très Bien)، جيد جداً (Bien)، جيد (Assez Bien)، مستوفٍ (Passable).</li>
+          <li>رقم تسلسلي فريد وتصميم ملكي مذهب مع ختم رسمي وتوقيع المدير.</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <hr style="border:none; border-top:1.5px dashed #cbd5e1; margin:36px 0;">
+
+  <!-- ================================================================= -->
+  <!-- CHAPITRE 11 : CAISSE, PAIEMENTS & FACTURATION                     -->
+  <!-- ================================================================= -->
+  <section id="ch-payments-invoices" style="margin-bottom:46px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:#0f766e; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px;">11</div>
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">
+          إدارة الصندوق، المقبوضات، والفواتير الضريبية (Caisse & Facturation)
+        </h2>
+        <div style="font-size:13px; color:#64748b;">Traçabilité des flux financiers, gestion des modes de règlement, génération de factures conformes ICE/IF et duplicatas</div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; font-size:13.5px; margin-bottom:18px;">
+      
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px;">
+        <h4 style="margin:0 0 8px 0; color:#0B3D6E;">💳 1. تسجيل المقبوضات والوصولات (`/payments`) :</h4>
+        <p style="margin:0 0 8px 0; color:#334155; font-size:13px;">
+          كل دفعة تُسجل في النظام يُنشأ لها رقم وصل رسمي غير قابل للتكرار (REC-0001).
+        </p>
+        <ul style="margin:0 0 0 16px; padding:0; font-size:12.5px; color:#475569; line-height:1.7;">
+          <li>دعم الأداء الكامل، أو التسبيقات (Acomptes) وتتبع الباقي.</li>
+          <li>دعم 4 طرق أداء : نقداً (Espèces)، تحويل بنكي (Virement)، بطاقة بنكية (Carte)، أو دفع إلكتروني.</li>
+          <li>إمكانية إعادة طباعة الوصل كـ <strong>DUPLICATA</strong> بأمان تام.</li>
+        </ul>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px;">
+        <h4 style="margin:0 0 8px 0; color:#0B3D6E;">⚖️ 2. الفواتير والبيانات الضريبية القانونية (`/invoices`) :</h4>
+        <p style="margin:0 0 8px 0; color:#334155; font-size:13px;">
+          نظام فوترة متكامل للشركات وأولياء الأمور الذين يطلبون فواتير رسمية :
+        </p>
+        <ul style="margin:0 0 0 16px; padding:0; font-size:12.5px; color:#475569; line-height:1.7;">
+          <li>تضمين المعرف الموحد للمقاولة المغربية : <strong>ICE</strong>.</li>
+          <li>المعرف الضريبي (IF)، السجل التجاري (RC)، ورقم الضريبة المهنية (Patente).</li>
+          <li>حساب اختياري للضريبة على القيمة المضافة (TVA 20% أو 0%).</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <hr style="border:none; border-top:1.5px dashed #cbd5e1; margin:36px 0;">
+
+  <!-- ================================================================= -->
+  <!-- CHAPITRE 12 : ACHATS, CHARGES & FOURNISSEURS                      -->
+  <!-- ================================================================= -->
+  <section id="ch-expenses-suppliers" style="margin-bottom:46px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:#c026d3; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px;">12</div>
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">
+          المشتريات، المصاريف التشغيلية، ودليل الموردين (Achats & Fournisseurs)
+        </h2>
+        <div style="font-size:13px; color:#64748b;">Comptabilité analytique des charges d'exploitation, répertoire complet des fournisseurs avec ICE et suivi des échéances de paiement</div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:18px; font-size:13.5px; margin-bottom:18px;">
+      
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:18px;">
+        <h4 style="margin:0 0 10px 0; color:#0B3D6E; font-size:14.5px;">📦 أ) مشتريات وتجهيزات (Achats & Matériel) :</h4>
+        <p style="margin:0 0 8px 0; color:#475569; font-size:13px;">
+          تشمل السلع واللوازم الملموسة التي يقتنيها المعهد :
+        </p>
+        <ul style="margin:0 0 0 18px; padding:0; color:#334155; font-size:12.5px; line-height:1.7;">
+          <li>الكتب والمقررات المدرسية لبيعها للتلاميذ.</li>
+          <li>لوازم المكتب والورق والأحبار وأقلام الصبورة.</li>
+          <li>تجهيزات الحواسيب والمكيفات ومكبرات الصوت.</li>
+        </ul>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:18px;">
+        <h4 style="margin:0 0 10px 0; color:#0B3D6E; font-size:14.5px;">⚡ ب) مصاريف التسيير (Charges d'Exploitation) :</h4>
+        <p style="margin:0 0 8px 0; color:#475569; font-size:13px;">
+          تشمل التكاليف الدورية اللازمة لتشغيل المعهد :
+        </p>
+        <ul style="margin:0 0 0 18px; padding:0; color:#334155; font-size:12.5px; line-height:1.7;">
+          <li>واجب كراء عمارة المعهد (Loyer).</li>
+          <li>فواتير الكهرباء والماء (Lydec / ONEE).</li>
+          <li>فواتير الإنترنت والهاتف والنظافة والصيانة الدورية.</li>
+          <li>أجور المستخدمين الثابتة ومصاريف الإشهار والدعاية.</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div style="background:#fdf4ff; border:1.5px solid #f0abfc; border-radius:12px; padding:16px; font-size:13px; color:#701a75;">
+      <strong>🏢 دليل الموردين ومقدمي الخدمات (Fournisseurs) :</strong><br>
+      يتضمن النظام دليلاً شاملاً للموردين مع حفظ بياناتهم القانونية (اسم الشركة، المسؤول، الهاتف، المدينة، والـ ICE). يحسب النظام آلياً لكل مورد : <strong>إجمالي المبالغ المفوترة</strong>، <strong>المبالغ المسددة له</strong>، و<strong>الباقي الواجب أداؤه (Dettes Fournisseurs)</strong> مع إمكانية رفع صورة الفاتورة (Fichier Joint).
+    </div>
+  </section>
+
+  <hr style="border:none; border-top:1.5px dashed #cbd5e1; margin:36px 0;">
+
+  <!-- ================================================================= -->
+  <!-- CHAPITRE 13 : MANUELS ET STOCKS                                   -->
+  <!-- ================================================================= -->
+  <section id="ch-books-stock" style="margin-bottom:46px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:#d97706; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px;">13</div>
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">
+          إدارة المخزون ومبيعات الكتب المدرسية (Manuels & Stock)
+        </h2>
+        <div style="font-size:13px; color:#64748b;">Gestion des réapprovisionnements de manuels, alertes de stock critique et encaissement direct au comptoir</div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:16px; font-size:13px;">
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px;">
+        <h4 style="margin:0 0 8px 0; color:#0B3D6E; font-size:14px;">📖 1. بطاقة الكتاب والمخزون :</h4>
+        <p style="margin:0; color:#475569; line-height:1.6;">
+          كل كتاب له كود خاص، الناشر (Cambridge, Oxford, Pearson...)، المستوى اللغوي، ثمن الشراء (Prix d'achat)، وثمن البيع للعموم، مع تحديد <strong>حد التنبيه الأدنى (Seuil d'alerte)</strong>.
+        </p>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px;">
+        <h4 style="margin:0 0 8px 0; color:#0B3D6E; font-size:14px;">🛒 2. البيع المباشر أو أثناء التسجيل :</h4>
+        <p style="margin:0; color:#475569; line-height:1.6;">
+          يمكن بيع الكتاب بالقطعة من صفحة <code>/books/sell</code> أو دمجه تلقائياً داخل فاتورة التسجيل السريع <code>/express_enrollment</code>. يخصم النظام الكمية من الرفوف ويسجل المدخول فوراً.
+        </p>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px;">
+        <h4 style="margin:0 0 8px 0; color:#0B3D6E; font-size:14px;">⚠️ 3. تنبيهات نفاد المخزون :</h4>
+        <p style="margin:0; color:#475569; line-height:1.6;">
+          عند وصول الكتاب إلى 5 نسخ أو أقل، يظهر بلون أصفر أو أحمر فاقع مع زر سريع <code>[+ Réapprovisionner]</code> لإضافة كميات جديدة بضغطة زر وتدوينها كمصروف مورد تلقائياً.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <hr style="border:none; border-top:1.5px dashed #cbd5e1; margin:36px 0;">
+
+  <!-- ================================================================= -->
+  <!-- CHAPITRE 14 : RAPPORTS ET ANALYTICS                               -->
+  <!-- ================================================================= -->
+  <section id="ch-reports-analytics" style="margin-bottom:46px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:#2563eb; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px;">14</div>
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">
+          التقارير المالية وحصيلة الأرباح الصافية (Rapports & Bilan Net)
+        </h2>
+        <div style="font-size:13px; color:#64748b;">Tableaux de bord de rentabilité globale, balance générale des recettes et dépenses, et impression du compte d'exploitation officiel</div>
+      </div>
+    </div>
+
+    <div style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:14px; padding:20px; margin-bottom:18px;">
+      <h3 style="margin:0 0 12px 0; color:#0B3D6E; font-size:16px;">📊 معادلة الحصيلة المالية الشاملة للمؤسسة (Compte de Résultat Net) :</h3>
+      
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:10px; padding:16px; font-size:14px; line-height:1.8;">
+        <div style="display:flex; justify-content:space-between; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">
+          <span>(+) مداخيل التمدرس الشهرية (Scolarité) + واجبات التسجيل والتأمين + مبيعات المقررات</span>
+          <strong style="color:#047857;">= إجمالي المداخيل (Chiffre d'Affaires Global)</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; border-bottom:1px solid #e2e8f0; padding:6px 0;">
+          <span>(-) مجموع أجور هيئة التدريس المستحقة (Masse Salariale Enseignants)</span>
+          <strong style="color:#dc2626;">- تكاليف التدريس</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; border-bottom:1px solid #e2e8f0; padding:6px 0;">
+          <span>(-) مجموع مشتريات التجهيز ومصاريف التسيير والكراء (Achats & Charges d'Exploitation)</span>
+          <strong style="color:#dc2626;">- مصاريف التسيير</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding-top:8px; font-weight:900; font-size:16px; color:#0B3D6E;">
+          <span>(=) النتيجة الصافية الحقيقية للمعهد (Bénéfice Net Réel de l'Institut)</span>
+          <span style="color:#10b981;">الربح الصافي النهائي 🇲🇦</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr style="border:none; border-top:1.5px dashed #cbd5e1; margin:36px 0;">
+
+  <!-- ================================================================= -->
+  <!-- CHAPITRE 15 : SAUVEGARDES ET SÉCURITÉ                             -->
+  <!-- ================================================================= -->
+  <section id="ch-security-backups" style="margin-bottom:46px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:#475569; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px;">15</div>
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">
+          النسخ الاحتياطي التلقائي وأمان النظام (Sauvegardes & Sécurité IP)
+        </h2>
+        <div style="font-size:13px; color:#64748b;">Protection automatisée des données, sauvegarde instantanée à chaque démarrage et pare-feu anti-intrusion avec blocage d'IP</div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; font-size:13px; margin-bottom:18px;">
+      
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:18px;">
+        <h4 style="margin:0 0 10px 0; color:#0B3D6E; font-size:14.5px;">📦 1. نظام النسخ الاحتياطي الذكي (`/settings/backups`) :</h4>
+        <ul style="margin:0 0 0 16px; padding:0; color:#334155; line-height:1.8;">
+          <li><strong>نسخ احتياطي تلقائي عند كل تشغيل :</strong> كل مرة يُشغل فيها التطبيق عبر ملف <code>demarrer.bat</code>، يتم إنشاء نسخة احتياطية مضغوطة <code>.zip</code> مؤرخة باليوم والساعة في مجلد <code>backups/</code>.</li>
+          <li><strong>تحميل قاعدة البيانات النشطة :</strong> زر <code>[📥 Télécharger la BDD Active (.db)]</code> لحفظ نسخة فورية على مفتاح USB خارجي.</li>
+          <li><strong>استرجاع البيانات الآمن (Restauration Sécurisée) :</strong> زر يسمح باسترجاع نسخة سابقة مع <em>أخذ نسخة أمان احتياطية تلقائية للقاعدة الحالية قبل بدء الاسترجاع لحمايتك من أي خطأ!</em></li>
+        </ul>
+      </div>
+
+      <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; padding:18px;">
+        <h4 style="margin:0 0 10px 0; color:#0B3D6E; font-size:14.5px;">🛡️ 2. جدار الحماية ومراقبة محاولات الدخول (`/settings/security`) :</h4>
+        <ul style="margin:0 0 0 16px; padding:0; color:#334155; line-height:1.8;">
+          <li><strong>الحماية من الهجمات التكرارية (Anti-Brute Force) :</strong> يقوم النظام بحساب محاولات الدخول الفاشلة وتسجيل عنوان الـ IP ووقت المحاولة.</li>
+          <li><strong>الحظر التلقائي :</strong> بعد 5 محاولات خاطئة متتالية يتم حظر الـ IP لحماية بيانات المعهد من التجسس أو التخمين.</li>
+          <li>لوحة تحكم للمدير تمكنه من رفع الحظر بضغطة زر واحدة <code>[🔓 Débloquer]</code>.</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <hr style="border:none; border-top:1.5px dashed #cbd5e1; margin:36px 0;">
+
+  <!-- ================================================================= -->
+  <!-- CHAPITRE 16 : IMPORTATION EXCEL MASSIVE                           -->
+  <!-- ================================================================= -->
+  <section id="ch-excel-migration" style="margin-bottom:30px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:#059669; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px;">16</div>
+      <div>
+        <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">
+          الاستيراد الشامل لبيانات الإكسيل (Importation Excel Massive)
+        </h2>
+        <div style="font-size:13px; color:#64748b;">Migration rapide d'anciens fichiers d'élèves, d'enseignants et de classes via modèles Excel pré-remplis (.xlsx)</div>
+      </div>
+    </div>
+
+    <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:18px; font-size:13.5px; color:#065f46;">
+      <p style="margin:0 0 10px 0;">
+        من صفحة <code>/import</code>، يمكنك استيراد مئات التلاميذ والأساتذة والأفواج في ثوانٍ معدودة عبر مرحلتين سهلتين :
+      </p>
+      <ol style="margin:0 0 0 20px; padding:0; line-height:1.8;">
+        <li><strong>المرحلة 1 : تحميل القوالب الجاهزة (.xlsx) :</strong>
+          <br>تحميل "النموذج الشامل Tout-en-Un" الذي يحتوي على 3 صفحات (Élèves + Profs + Classes) وملؤها بالبيانات المطلوبة.
+        </li>
+        <li><strong>المرحلة 2 : رفع الملف وبدء الاستيراد :</strong>
+          <br>رفع ملف الإكسيل والضغط على استيراد. يقوم النظام بالتعرف الآلي على الأعمدة، توليد الأرقام المدرسية (Codes ETU...) تلقائياً، وتفادي تكرار المسجلين مسبقاً مع تقديم تقرير نهائي مدقق لعدد السجلات المضافة.
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- OFFICIAL FOOTER -->
+  <div style="margin-top:40px; padding-top:24px; border-top:2px dashed #cbd5e1; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; font-size:12px; color:#64748b;">
+    <div>
+      <strong>Institut Les Sages ILAS</strong> · Lot Nora N10, Deroua · Tél : 05 22 53 22 17 / 06 60 29 11 55
+    </div>
+    <div>
+      Document Officiel d'Exploitation · Système Intégré de Gestion Scolaire V3.0
+    </div>
+  </div>
+
+</div>
+
+<!-- ================================================================= -->
+<!-- STYLES D'IMPRESSION A4 ET OPTIMISATIONS                           -->
+<!-- ================================================================= -->
+<style>
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm;
+  }
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 10.5pt !important;
+    line-height: 1.4 !important;
+  }
+  .no-print, .sidebar, .topbar, .sidebar-backdrop {
+    display: none !important;
+  }
+  .main, .content {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .guide-container {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+  section {
+    page-break-inside: avoid;
+  }
+  table {
+    page-break-inside: avoid;
+    font-size: 9pt !important;
+  }
+  a {
+    text-decoration: none !important;
+    color: #000 !important;
+  }
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,220 @@
+<!-- ========================================================================= -->
+<!-- MODAL: DATE DE PROMESSE / ACCORD DE REGLEMENT DU SOLDE (DATE X)           -->
+<!-- ========================================================================= -->
+<div id="promiseModal" style="display:none; position:fixed; z-index:10000; inset:0; background:rgba(15,23,42,0.65); align-items:center; justify-content:center; backdrop-filter:blur(3px);">
+  <div style="background:#fff; width:95%; max-width:500px; border-radius:16px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); overflow:hidden; border:1px solid #cbd5e1;">
+    
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg, #3730a3 0%, #4f46e5 100%); color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:20px;">🤝</span>
+        <div>
+          <strong style="font-size:15px; display:block;">Accord de Promesse de Paiement (موعد الوعد بالأداء)</strong>
+          <span style="font-size:11px; opacity:0.9;">Protection Anti-Rappel automatique avant cette date X</span>
+        </div>
+      </div>
+      <button type="button" onclick="closePromiseModal()" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer; line-height:1;">&times;</button>
+    </div>
+
+    <!-- Body -->
+    <form id="promiseForm" onsubmit="submitPromiseModal(event)">
+      <div style="padding:18px 20px;">
+        <!-- Student & Solde Info Box -->
+        <div style="background:#f5f3ff; border:1.5px solid #ddd6fe; border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <div style="font-size:11px; font-weight:700; color:#6d28d9; text-transform:uppercase;">Élève concerné</div>
+              <div id="promiseStudentName" style="font-size:14.5px; font-weight:800; color:#1e1b4b; margin-top:2px;">-</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:10.5px; font-weight:700; color:#6d28d9; text-transform:uppercase;">Solde restant</div>
+              <div id="promiseBalanceDisplay" style="font-size:15px; font-weight:900; color:#dc2626; margin-top:2px;">- DH</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Date X Field -->
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-size:12px; font-weight:800; color:#1e293b; margin-bottom:4px;">
+            📅 Date promise pour régler le reste (Date X) :
+          </label>
+          <input type="date" name="promise_date" id="modalPromiseDateInput" style="width:100%; padding:9px 12px; border-radius:8px; border:1.5px solid #6366f1; font-size:14px; font-weight:700; color:#312e81; box-sizing:border-box;">
+        </div>
+
+        <!-- Quick Addition Shortcuts -->
+        <div style="margin-bottom:14px;">
+          <div style="font-size:11px; font-weight:700; color:#64748b; margin-bottom:6px;">Raccourcis rapides :</div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-outline btn-xs" onclick="addDaysToPromise(3)" style="padding:3px 8px; font-weight:700;">+3 jours</button>
+            <button type="button" class="btn btn-outline btn-xs" onclick="addDaysToPromise(5)" style="padding:3px 8px; font-weight:700;">+5 jours</button>
+            <button type="button" class="btn btn-outline btn-xs" onclick="addDaysToPromise(7)" style="padding:3px 8px; font-weight:700;">+7 jours (1 sem.)</button>
+            <button type="button" class="btn btn-outline btn-xs" onclick="setEndOfMonthPromise()" style="padding:3px 8px; font-weight:700;">Fin du mois</button>
+            <button type="button" class="btn btn-outline btn-xs" onclick="setFifthNextMonthPromise()" style="padding:3px 8px; font-weight:700;">Le 5 du mois prochain</button>
+          </div>
+        </div>
+
+        <!-- Note Field -->
+        <div style="margin-bottom:8px;">
+          <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:4px;">
+            📝 Note / Accord verbal (ex: Le père a promis de passer) :
+          </label>
+          <input type="text" name="promise_note" id="modalPromiseNoteInput" placeholder="Ex: Le père passera régler le reste à la date convenue..." style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid #cbd5e1; font-size:12.5px; box-sizing:border-box;">
+        </div>
+
+        <div style="background:#eff6ff; border-left:3.5px solid #3b82f6; padding:8px 12px; border-radius:6px; font-size:11.5px; color:#1e40af; line-height:1.4; margin-top:10px;">
+          🛡️ <strong>Règle Anti-Relance :</strong> Cet élève ne recevra <strong>aucun message de rappel avant la date X</strong>, et sera <strong>automatiquement exclu de la sélection groupée ("Sélectionner tout")</strong>.
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="background:#f8fafc; border-top:1px solid #e2e8f0; padding:12px 18px; display:flex; justify-content:space-between; align-items:center;">
+        <button type="button" onclick="clearPromiseAgreement()" class="btn btn-outline btn-sm" style="color:#ef4444; border-color:#fca5a5; font-weight:700; font-size:11px;">
+          🗑️ Supprimer l'accord
+        </button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" onclick="closePromiseModal()" class="btn btn-outline btn-sm" style="font-weight:700;">
+            Annuler
+          </button>
+          <button type="submit" id="btnSavePromise" class="btn btn-primary btn-sm" style="background:#4f46e5; border-color:#4f46e5; font-weight:800; padding:6px 16px;">
+            💾 Enregistrer l'accord
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+if (typeof activePromiseEnrollmentId === 'undefined') {
+  var activePromiseEnrollmentId = null;
+}
+
+function openPromiseModal(eid, currentIso, currentNote, studentName, balance) {
+  activePromiseEnrollmentId = eid;
+  const nameEl = document.getElementById('promiseStudentName');
+  const balEl = document.getElementById('promiseBalanceDisplay');
+  const dateInput = document.getElementById('modalPromiseDateInput');
+  const noteInput = document.getElementById('modalPromiseNoteInput');
+
+  if (nameEl) nameEl.innerText = studentName || 'Élève';
+  if (balEl) balEl.innerText = (balance ? Math.round(balance) : '0') + ' DH';
+  if (dateInput) dateInput.value = currentIso || '';
+  if (noteInput) noteInput.value = currentNote || '';
+
+  const modal = document.getElementById('promiseModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closePromiseModal() {
+  const modal = document.getElementById('promiseModal');
+  if (modal) modal.style.display = 'none';
+  activePromiseEnrollmentId = null;
+}
+
+function addDaysToPromise(days) {
+  const input = document.getElementById('modalPromiseDateInput');
+  let d = new Date();
+  if (input && input.value) {
+    const parsed = new Date(input.value);
+    if (!isNaN(parsed.getTime())) d = parsed;
+  }
+  d.setDate(d.getDate() + days);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  if (input) input.value = `${yyyy}-${mm}-${dd}`;
+}
+
+function setEndOfMonthPromise() {
+  const input = document.getElementById('modalPromiseDateInput');
+  const now = new Date();
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const yyyy = lastDay.getFullYear();
+  const mm = String(lastDay.getMonth() + 1).padStart(2, '0');
+  const dd = String(lastDay.getDate()).padStart(2, '0');
+  if (input) input.value = `${yyyy}-${mm}-${dd}`;
+}
+
+function setFifthNextMonthPromise() {
+  const input = document.getElementById('modalPromiseDateInput');
+  const now = new Date();
+  const nextMonthFifth = new Date(now.getFullYear(), now.getMonth() + 1, 5);
+  const yyyy = nextMonthFifth.getFullYear();
+  const mm = String(nextMonthFifth.getMonth() + 1).padStart(2, '0');
+  const dd = String(nextMonthFifth.getDate()).padStart(2, '0');
+  if (input) input.value = `${yyyy}-${mm}-${dd}`;
+}
+
+async function submitPromiseModal(e) {
+  if (e) e.preventDefault();
+  if (!activePromiseEnrollmentId) return;
+
+  const btn = document.getElementById('btnSavePromise');
+  const origText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = 'Enregistrement...';
+  }
+
+  const dateVal = document.getElementById('modalPromiseDateInput').value;
+  const noteVal = document.getElementById('modalPromiseNoteInput').value;
+
+  try {
+    const formData = new FormData();
+    formData.append('promise_date', dateVal);
+    formData.append('promise_note', noteVal);
+
+    const resp = await fetch(`/api/enrollments/${activePromiseEnrollmentId}/update-promise-date`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+    const res = await resp.json();
+    if (res.success) {
+      closePromiseModal();
+      window.location.reload();
+    } else {
+      alert('Erreur: ' + (res.error || 'Impossible de mettre à jour la promesse'));
+    }
+  } catch (err) {
+    alert('Erreur réseau : ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
+  }
+}
+
+async function clearPromiseAgreement() {
+  if (!activePromiseEnrollmentId) return;
+  if (!confirm("Voulez-vous vraiment supprimer cet accord de promesse ? L'élève pourra de nouveau recevoir des rappels.")) {
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('promise_date', '');
+    formData.append('promise_note', '');
+
+    const resp = await fetch(`/api/enrollments/${activePromiseEnrollmentId}/update-promise-date`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+    const res = await resp.json();
+    if (res.success) {
+      closePromiseModal();
+      window.location.reload();
+    } else {
+      alert('Erreur: ' + (res.error || 'Impossible de supprimer l\'accord'));
+    }
+  } catch (err) {
+    alert('Erreur réseau : ' + err.message);
+  }
+}
+</script>

@@ -1,0 +1,3092 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Borne de Pointage Express — Institut ILAS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+<style>
+  :root {
+    --bg-dark: #071220;
+    --card-dark: #0d1e35;
+    --card-border: #1e3a5f;
+    --primary: #1f6feb;
+    --primary-glow: rgba(31, 111, 235, 0.4);
+    --gold: #f59e0b;
+    --emerald: #10b981;
+    --emerald-glow: rgba(16, 185, 129, 0.4);
+    --rose: #ef4444;
+    --rose-glow: rgba(239, 68, 68, 0.4);
+    --text-light: #f8fafc;
+    --text-muted: #94a3b8;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+  }
+
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    background: radial-gradient(circle at 50% 20%, #0d233e 0%, #050b14 100%);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    color: var(--text-light);
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 20px;
+  }
+
+  .ar {
+    font-family: 'Alexandria', sans-serif;
+  }
+
+  /* Top Navigation & Status Bar */
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    background: rgba(13, 30, 53, 0.65);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 10px 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    flex-shrink: 0;
+  }
+
+  .brand-zone {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .brand-zone > div:last-child {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .brand-logo-badge {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 15px var(--primary-glow);
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .brand-title {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    color: #ffffff;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .brand-sub {
+    font-size: 10.5px;
+    color: var(--gold);
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .clock-zone {
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .digital-clock {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #ffffff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    line-height: 1.1;
+  }
+
+  .digital-date {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+
+  .top-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    justify-content: flex-end;
+    flex: 1;
+  }
+
+  .kiosk-badge-stat {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #34d399;
+    padding: 7px 12px;
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .btn-icon {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    transition: all 0.2s;
+  }
+
+  .btn-icon:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: translateY(-2px);
+  }
+
+  /* Main Center Stage */
+  .center-stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 4px 0;
+  }
+
+  .kiosk-card {
+    width: 100%;
+    max-width: 880px;
+    min-width: 0;
+    overflow: visible;
+    background: rgba(13, 30, 53, 0.88);
+    backdrop-filter: blur(16px);
+    border: 1.5px solid var(--card-border);
+    border-radius: 24px;
+    padding: 24px 28px;
+    text-align: center;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .kiosk-card.has-result {
+    overflow: hidden;
+  }
+
+  /* Scan Radar Animation (Waiting State) */
+  .radar-container {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Compact radar and prompts when typing/searching to leave maximum room for dropdown */
+  .kiosk-card.search-active .radar-container {
+    height: 0;
+    width: 0;
+    margin: 0 auto;
+    opacity: 0;
+    transform: scale(0.4);
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .kiosk-card.search-active .kiosk-prompt-fr {
+    font-size: 19px;
+    margin-bottom: 2px;
+  }
+
+  .kiosk-card.search-active .kiosk-prompt-ar {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  .radar-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+    opacity: 0.8;
+    animation: radarPulse 2s ease-out infinite;
+  }
+
+  .radar-ring:nth-child(2) {
+    animation-delay: 0.6s;
+  }
+
+  .radar-ring:nth-child(3) {
+    animation-delay: 1.2s;
+  }
+
+  @keyframes radarPulse {
+    0% { transform: scale(0.4); opacity: 1; }
+    100% { transform: scale(1.3); opacity: 0; }
+  }
+
+  .radar-core {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1f6feb 0%, #0B3D6E 100%);
+    box-shadow: 0 0 30px var(--primary-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .kiosk-prompt-fr {
+    font-size: 24px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.4px;
+    margin-bottom: 6px;
+    word-break: break-word;
+  }
+
+  .kiosk-prompt-ar {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 20px;
+    word-break: break-word;
+  }
+
+  .scan-input-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 540px;
+    margin: 0 auto;
+  }
+
+  .scan-input-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    color: #64748b;
+    pointer-events: none;
+    z-index: 2;
+    transition: color 0.2s;
+  }
+
+  .scan-clear-btn {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    border: none;
+    color: #cbd5e1;
+    font-size: 13px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+    transition: all 0.2s;
+  }
+
+  .scan-clear-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+  }
+
+  .scan-input {
+    width: 100%;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: left;
+    padding: 0 46px 0 50px;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .scan-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 30px var(--primary-glow);
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  .scan-input:focus + .scan-input-icon {
+    color: #38bdf8;
+  }
+
+  .scan-input::placeholder {
+    color: #64748b;
+    font-weight: 500;
+    font-size: 14.5px;
+  }
+
+  /* Autocomplete Dropdown */
+  .autocomplete-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: rgba(8, 20, 38, 0.98);
+    backdrop-filter: blur(24px);
+    border: 2px solid #38bdf8;
+    border-radius: 18px;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.92), 0 0 35px rgba(56, 189, 248, 0.35);
+    max-height: 330px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 99999 !important;
+    display: none;
+    text-align: left;
+    scrollbar-width: thin;
+    scrollbar-color: #1e3a8a transparent;
+  }
+
+  .autocomplete-dropdown::-webkit-scrollbar {
+    width: 6px;
+  }
+  .autocomplete-dropdown::-webkit-scrollbar-thumb {
+    background: #1e3a8a;
+    border-radius: 10px;
+  }
+
+  .ac-list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .ac-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .ac-item:last-child {
+    border-bottom: none;
+  }
+
+  .ac-item:hover, .ac-item.selected {
+    background: rgba(31, 111, 235, 0.35);
+    border-left: 4px solid #38bdf8;
+  }
+
+  .ac-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    color: #ffffff;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .ac-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .ac-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .ac-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+    min-width: 0;
+  }
+
+  .ac-name {
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  .ac-code-badge {
+    background: rgba(31, 111, 235, 0.35);
+    border: 1px solid #3b82f6;
+    color: #93c5fd;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-family: monospace;
+    flex-shrink: 0;
+  }
+
+  .ac-sub {
+    font-size: 11.5px;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ac-courses {
+    font-size: 11px;
+    color: #38bdf8;
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ac-empty {
+    padding: 18px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13.5px;
+  }
+
+  /* Result State (Success or Warning) */
+  .result-view {
+    display: none;
+    width: 100%;
+    min-width: 0;
+    animation: slideInUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes slideInUp {
+    from { opacity: 0; transform: translateY(15px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* Student Profile Header in Result View */
+  .student-header-zone {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-align: left;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    width: 100%;
+    min-width: 0;
+  }
+
+  .student-avatar-wrap {
+    width: 76px;
+    height: 76px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    position: relative;
+    padding: 3px;
+    background: linear-gradient(135deg, var(--emerald) 0%, #047857 100%);
+    box-shadow: 0 0 24px var(--emerald-glow);
+  }
+
+  .student-avatar-wrap.warning {
+    background: linear-gradient(135deg, var(--rose) 0%, #b91c1c 100%);
+    box-shadow: 0 0 24px var(--rose-glow);
+  }
+
+  .student-avatar-wrap.caution {
+    background: linear-gradient(135deg, var(--gold) 0%, #d97706 100%);
+    box-shadow: 0 0 24px rgba(245, 158, 11, 0.4);
+  }
+
+  .student-avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #0f172a;
+    border: 2px solid #ffffff;
+  }
+
+  .student-avatar-fallback {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 800;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+  }
+
+  .student-header-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .student-name-display {
+    font-size: 22px;
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1.2;
+    margin-bottom: 6px;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .student-meta-badges-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .student-tag-pill {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 3px 9px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 100%;
+    word-break: break-word;
+  }
+
+  .student-tag-pill.code {
+    background: rgba(31, 111, 235, 0.25);
+    border-color: #3b82f6;
+    color: #93c5fd;
+    font-family: monospace;
+  }
+
+  /* Gatekeeper Access Verdict Banner */
+  .gate-verdict-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 13px 16px;
+    border-radius: 16px;
+    margin-bottom: 14px;
+    text-align: left;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .gate-verdict-banner.success {
+    background: linear-gradient(135deg, rgba(6, 95, 70, 0.95) 0%, rgba(4, 120, 87, 0.95) 100%);
+    color: #ffffff;
+    border: 2px solid #34d399;
+    box-shadow: 0 6px 20px var(--emerald-glow);
+  }
+
+  .gate-verdict-banner.warning {
+    background: linear-gradient(135deg, rgba(180, 83, 9, 0.95) 0%, rgba(146, 64, 14, 0.95) 100%);
+    color: #ffffff;
+    border: 2px solid #fbbf24;
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+  }
+
+  .gate-verdict-banner.danger {
+    background: linear-gradient(135deg, rgba(185, 28, 28, 0.95) 0%, rgba(153, 27, 27, 0.95) 100%);
+    color: #ffffff;
+    border: 2px solid #f87171;
+    box-shadow: 0 6px 20px var(--rose-glow);
+  }
+
+  .gate-verdict-banner.info {
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.95) 0%, rgba(30, 64, 175, 0.95) 100%);
+    color: #ffffff;
+    border: 2px solid #60a5fa;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+  }
+
+  .gate-verdict-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .gate-verdict-icon {
+    font-size: 30px;
+    line-height: 1;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+    flex-shrink: 0;
+  }
+
+  .gate-verdict-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .gate-verdict-main-fr {
+    font-size: 15.5px;
+    font-weight: 900;
+    letter-spacing: 0.3px;
+    line-height: 1.25;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .gate-verdict-main-ar {
+    font-size: 13.5px;
+    font-weight: 800;
+    opacity: 0.95;
+    line-height: 1.3;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .gate-verdict-advice {
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.92;
+    margin-top: 2px;
+    line-height: 1.35;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .gate-verdict-right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .gate-station-tag {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .gate-time-stamp {
+    font-family: monospace;
+    font-size: 12.5px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  /* 3 Pillars Section — Strict minmax(0, 1fr) so children never blow out width */
+  .pillars-container {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+    text-align: left;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .pillar-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 16px;
+    padding: 13px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .pillar-card.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .pillar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    padding-bottom: 7px;
+    min-width: 0;
+  }
+
+  .pillar-title {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex: 1;
+    word-break: break-word;
+  }
+
+  .pillar-badge {
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .pillar-badge.success {
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid #10b981;
+    color: #34d399;
+  }
+
+  .pillar-badge.danger {
+    background: rgba(239, 68, 68, 0.25);
+    border: 1.5px solid #ef4444;
+    color: #fca5a5;
+  }
+
+  .pillar-badge.warning {
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid #f59e0b;
+    color: #fde68a;
+  }
+
+  .pillar-badge.info {
+    background: rgba(31, 111, 235, 0.25);
+    border: 1px solid #3b82f6;
+    color: #93c5fd;
+  }
+
+  .info-data-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 12px;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    min-width: 0;
+    width: 100%;
+  }
+
+  .info-data-row:last-child {
+    border-bottom: none;
+  }
+
+  .info-label {
+    color: #94a3b8;
+    font-weight: 500;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .info-val {
+    color: #ffffff;
+    font-weight: 700;
+    text-align: right;
+    min-width: 0;
+    flex: 1;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .balance-tag-ok {
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid #10b981;
+    color: #34d399;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 800;
+    display: inline-block;
+  }
+
+  .balance-tag-debt {
+    background: rgba(239, 68, 68, 0.25);
+    border: 1.5px solid #ef4444;
+    color: #fca5a5;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 800;
+    display: inline-block;
+  }
+
+  /* Enrolled Courses List in Pillar 1 */
+  .enrolled-courses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 115px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #1e3a8a transparent;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .enrolled-course-item {
+    font-size: 11.5px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    padding: 6px 9px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .ec-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .ec-title {
+    font-weight: 700;
+    color: #ffffff;
+    font-size: 11.5px;
+    line-height: 1.3;
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .ec-debt-tag {
+    flex-shrink: 0;
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    padding: 1px 6px;
+    border-radius: 5px;
+    white-space: nowrap;
+  }
+
+  .ec-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    font-size: 10.5px;
+    color: #94a3b8;
+    min-width: 0;
+  }
+
+  .ec-meta-pill {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  /* Schedule Slots Windows in Pillar 3 — Strict minmax(0, 1fr) */
+  .slots-timeline-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .slot-window-box {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    transition: all 0.2s;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .slot-window-box.active-current {
+    background: rgba(16, 185, 129, 0.14);
+    border: 1.5px solid #10b981;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+  }
+
+  .slot-window-box.active-next {
+    background: rgba(31, 111, 235, 0.14);
+    border: 1.5px solid #38bdf8;
+  }
+
+  .slot-window-box.active-prev {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    opacity: 0.8;
+  }
+
+  .slot-window-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    min-width: 0;
+  }
+
+  .slot-window-box.active-current .slot-window-header {
+    color: #34d399;
+  }
+
+  .slot-window-box.active-next .slot-window-header {
+    color: #38bdf8;
+  }
+
+  .slot-status-pill {
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #e2e8f0;
+    text-transform: none;
+    letter-spacing: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .slot-window-time {
+    font-size: 13px;
+    font-weight: 800;
+    color: #ffffff;
+    font-family: monospace;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .slot-window-room {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #cbd5e1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .slot-window-course {
+    font-size: 11px;
+    color: #94a3b8;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  /* Action Buttons in Result View */
+  .kiosk-actions-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .btn-kiosk-action {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+  }
+
+  .btn-kiosk-action:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: translateY(-2px);
+  }
+
+  .btn-kiosk-primary {
+    background: linear-gradient(135deg, #1f6feb 0%, #0d47a1 100%);
+    border-color: #60a5fa;
+    box-shadow: 0 4px 15px rgba(31, 111, 235, 0.4);
+  }
+
+  /* Countdown Reset Bar */
+  .reset-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #10b981, #1f6feb);
+    width: 100%;
+    transform-origin: left;
+    transition: transform linear;
+  }
+
+  /* Bottom Live Ticker */
+  .bottom-ticker-bar {
+    background: rgba(13, 30, 53, 0.65);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .ticker-label {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .ticker-stream {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .ticker-stream::-webkit-scrollbar { display: none; }
+
+  .ticker-chip {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 5px 11px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    font-size: 11.5px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .ticker-chip .t-time {
+    color: #38bdf8;
+    font-family: monospace;
+    font-weight: 700;
+  }
+
+  .ticker-chip .t-room {
+    background: #1e3a8a;
+    padding: 2px 6px;
+    border-radius: 5px;
+    font-size: 10px;
+    color: #bfdbfe;
+  }
+
+  /* Modal Camera Scanner */
+  .camera-modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .camera-wrap {
+    width: 90%;
+    max-width: 480px;
+    background: #0d1e35;
+    border-radius: 20px;
+    padding: 20px;
+    border: 1px solid var(--card-border);
+    text-align: center;
+    position: relative;
+  }
+
+  #reader {
+    width: 100%;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  @media screen and (max-width: 768px) {
+    body {
+      padding: 8px 8px;
+      gap: 10px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Top Bar Mobile: Clean single-line header */
+    .top-bar {
+      padding: 8px 12px;
+      border-radius: 14px;
+      gap: 8px;
+    }
+    .brand-zone {
+      gap: 8px;
+    }
+    .brand-logo-badge {
+      width: 34px;
+      height: 34px;
+      font-size: 16px;
+      border-radius: 8px;
+    }
+    .brand-title {
+      font-size: 13.5px;
+    }
+    .brand-sub {
+      display: none;
+    }
+    .clock-zone {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .digital-clock {
+      font-size: 15.5px;
+      letter-spacing: 0.8px;
+    }
+    .digital-date {
+      display: none;
+    }
+    .top-actions {
+      gap: 5px;
+      flex: 0 0 auto;
+    }
+    .kiosk-badge-stat {
+      padding: 4px 8px;
+      font-size: 11px;
+      border-radius: 8px;
+    }
+    .btn-icon {
+      width: 34px;
+      height: 34px;
+      font-size: 15px;
+      border-radius: 8px;
+    }
+    .btn-fullscreen {
+      display: none;
+    }
+
+    /* Center Stage & Card Mobile */
+    .center-stage {
+      padding: 0;
+      display: block;
+    }
+    .kiosk-card {
+      padding: 16px 14px;
+      border-radius: 20px;
+      max-width: 100%;
+      width: 100%;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    }
+
+    /* Radar / Idle state */
+    .radar-container {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 12px auto;
+    }
+    .radar-core {
+      width: 48px;
+      height: 48px;
+      font-size: 22px;
+    }
+    .kiosk-prompt-fr {
+      font-size: 17px;
+      line-height: 1.25;
+    }
+    .kiosk-prompt-ar {
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+    .scan-input-wrapper {
+      max-width: 100%;
+      width: 100%;
+    }
+    .scan-input {
+      height: 50px;
+      font-size: 15.5px;
+      padding: 0 38px 0 42px;
+      border-radius: 14px;
+    }
+    .scan-input::placeholder {
+      font-size: 13px;
+    }
+    .scan-input-icon {
+      left: 14px;
+      font-size: 18px;
+    }
+    .scan-clear-btn {
+      right: 10px;
+      width: 26px;
+      height: 26px;
+    }
+
+    /* Autocomplete dropdown mobile */
+    .autocomplete-dropdown {
+      top: calc(100% + 4px);
+      max-height: 260px;
+      border-radius: 14px;
+    }
+    .ac-item {
+      padding: 9px 12px;
+      gap: 10px;
+    }
+    .ac-avatar {
+      width: 36px;
+      height: 36px;
+      font-size: 13px;
+    }
+    .ac-name {
+      font-size: 13.5px;
+    }
+    .ac-code-badge {
+      font-size: 10px;
+      padding: 1px 5px;
+    }
+    .ac-sub, .ac-courses {
+      font-size: 11px;
+    }
+
+    /* Result View Mobile */
+    .student-header-zone {
+      gap: 12px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+    }
+    .student-avatar-wrap {
+      width: 64px;
+      height: 64px;
+      padding: 2px;
+    }
+    .student-avatar-fallback {
+      font-size: 24px;
+    }
+    .student-name-display {
+      font-size: 17.5px;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+    .student-meta-badges-row {
+      gap: 4px;
+    }
+    .student-tag-pill {
+      font-size: 10.5px;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+
+    /* Gate Verdict Banner Mobile */
+    .gate-verdict-banner {
+      padding: 11px 13px;
+      border-radius: 12px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .gate-verdict-left {
+      gap: 10px;
+      width: 100%;
+    }
+    .gate-verdict-icon {
+      font-size: 26px;
+    }
+    .gate-verdict-main-fr {
+      font-size: 14px;
+    }
+    .gate-verdict-main-ar {
+      font-size: 12.5px;
+    }
+    .gate-verdict-advice {
+      font-size: 11.5px;
+    }
+    .gate-verdict-right {
+      width: 100%;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 6px;
+    }
+
+    /* 3 Pillars Mobile: Single Column */
+    .pillars-container {
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 10px !important;
+      margin-bottom: 12px;
+    }
+    .pillar-card {
+      padding: 11px 13px;
+      border-radius: 14px;
+      gap: 6px;
+    }
+    .pillar-title {
+      font-size: 11px;
+    }
+    .slots-timeline-grid {
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 8px !important;
+    }
+    .slot-window-box {
+      padding: 9px 11px;
+    }
+
+    /* Actions Bar Mobile: Stacked full-width buttons */
+    .kiosk-actions-bar {
+      flex-direction: column;
+      width: 100%;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .btn-kiosk-action {
+      width: 100%;
+      justify-content: center;
+      padding: 10px;
+      font-size: 13.5px;
+      border-radius: 10px;
+    }
+
+    /* Bottom Ticker Mobile */
+    .bottom-ticker-bar {
+      padding: 8px 10px;
+      border-radius: 12px;
+      gap: 8px;
+    }
+    .ticker-label {
+      font-size: 11px;
+    }
+    .ticker-chip {
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+  }
+
+  /* Segmented Mode Selector */
+  .punch-mode-selector {
+    display: inline-flex;
+    background: rgba(13, 30, 53, 0.95);
+    border: 1.5px solid var(--card-border);
+    border-radius: 30px;
+    padding: 4px;
+    gap: 4px;
+    margin: 10px auto 16px auto;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  }
+  .mode-pill {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+  }
+  .mode-pill:hover {
+    color: #ffffff;
+  }
+  .mode-pill.active {
+    background: #1f6feb;
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(31, 111, 235, 0.4);
+  }
+  .mode-pill.in.active {
+    background: #10b981;
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);
+  }
+  .mode-pill.out.active {
+    background: #3b82f6;
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4);
+  }
+
+  /* Autocomplete Role Badges */
+  .ac-role-badge {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .ac-role-badge.teacher {
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+  }
+  .ac-role-badge.employee {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+  }
+  .ac-role-badge.student {
+    background: rgba(148, 163, 184, 0.2);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+  }
+</style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <div class="brand-zone">
+      <div class="brand-logo-badge">🪪</div>
+      <div>
+        <div class="brand-title">{{ settings.inst_name }}</div>
+        <div class="brand-sub">Borne Multi-Rôles &bullet; Élèves &bull; Profs &bull; Staff</div>
+      </div>
+    </div>
+
+    <div class="clock-zone">
+      <div class="digital-clock" id="digitalClock">12:00:00</div>
+      <div class="digital-date" id="digitalDate">Chargement...</div>
+    </div>
+
+    <div class="top-actions">
+      <!-- Native Mobile NFC Indicator -->
+      <span id="nfcStatusBadge" style="display:none; align-items:center; gap:5px; font-size:11px; font-weight:800; color:#10b981; background:rgba(16,185,129,0.15); border:1px solid #10b981; padding:5px 10px; border-radius:20px;" title="Lecteur NFC du téléphone actif (Approchez le badge)">
+        <span>📡</span>
+        <span>NFC Mobile Prêt</span>
+      </span>
+
+      <div class="kiosk-badge-stat">
+        <span>👥</span>
+        <span>Aujourd'hui : <strong id="todayCountDisplay">{{ today_scans_count }}</strong></span>
+      </div>
+
+
+      <a href="{{ url_for('staff_attendance') }}" target="_blank" class="btn-icon" title="Historique & Pointages Staff / Professeurs" style="text-decoration:none; font-size:16px;">
+        📋
+      </a>
+
+      <button type="button" class="btn-icon" id="soundBtn" onclick="toggleMute()" title="Activer/Désactiver le son">
+        🔊
+      </button>
+
+      <button type="button" class="btn-icon" onclick="openCameraModal()" title="Scanner par Caméra">
+        📷
+      </button>
+
+      <button type="button" class="btn-icon btn-fullscreen" onclick="toggleFullscreen()" title="Plein Écran (F11)">
+        ⛶
+      </button>
+
+      <a href="{{ url_for('dashboard') }}" class="btn-icon" title="Quitter vers le Dashboard" style="text-decoration:none;">
+        ✕
+      </a>
+    </div>
+  </header>
+
+  <!-- Central Stage -->
+  <main class="center-stage">
+    <div class="kiosk-card" id="kioskCard">
+
+      <!-- State 1 : Idle / Waiting to Scan -->
+      <div id="idleView">
+        <div class="radar-container">
+          <div class="radar-ring"></div>
+          <div class="radar-ring"></div>
+          <div class="radar-ring"></div>
+          <div class="radar-core">🪪</div>
+        </div>
+
+        <div class="kiosk-prompt-fr">Veuillez scanner votre badge</div>
+        <div class="kiosk-prompt-ar ar">المرجو تمرير شارتكم أمام القارئ</div>
+
+        <!-- Segmented Punch Mode Selector -->
+        <div class="punch-mode-selector" id="punchModeSelector">
+          <button type="button" class="mode-pill active" id="modeBtnAuto" onclick="setPunchMode('auto')">
+            <span class="mode-icon">⚡</span>
+            <span>Auto (Intelligent)</span>
+          </button>
+          <button type="button" class="mode-pill in" id="modeBtnIn" onclick="setPunchMode('in')">
+            <span class="mode-icon">🟢</span>
+            <span>Entrée</span>
+          </button>
+          <button type="button" class="mode-pill out" id="modeBtnOut" onclick="setPunchMode('out')">
+            <span class="mode-icon">🔵</span>
+            <span>Sortie</span>
+          </button>
+        </div>
+
+        <form id="scanForm" onsubmit="handleScanSubmit(event)" class="scan-input-wrapper">
+          <div class="scan-input-icon">🔍</div>
+          <input type="text"
+                 id="scanInput"
+                 class="scan-input"
+                 autocomplete="off"
+                 autocorrect="off"
+                 autocapitalize="off"
+                 spellcheck="false"
+                 placeholder="Taper un nom, code ou badge (Élève, Professeur, Staff)..."
+                 autofocus>
+          <button type="button" id="scanClearBtn" class="scan-clear-btn" onclick="clearSearchInput(event)" title="Effacer">✕</button>
+
+          <!-- Autocomplete Dropdown -->
+          <div id="autocompleteDropdown" class="autocomplete-dropdown">
+            <div id="autocompleteList" class="ac-list"></div>
+          </div>
+        </form>
+
+        <div style="font-size:12.5px; color:#94a3b8; margin-top:16px; display:flex; align-items:center; justify-content:center; flex-wrap:wrap; text-align:center; gap:6px; line-height:1.4; max-width:100%;">
+          <span>💡 <strong>Borne Multi-Rôles :</strong> Contrôle d'accès élève automatique • Pointage Entrée/Sortie Enseignants & Personnel</span>
+        </div>
+      </div>
+
+      <!-- State 2 : Success / Result View (Organized Comprehensive Student Dossier) -->
+      <div id="resultView" class="result-view">
+
+        <!-- Student Identity Header -->
+        <div id="studentResultZone">
+        <div class="student-header-zone">
+          <div class="student-avatar-wrap" id="avatarWrap">
+            <img id="resAvatarImg" class="student-avatar-img" src="" alt="Photo" style="display:none;">
+            <div id="resAvatarFallback" class="student-avatar-fallback">👤</div>
+          </div>
+
+          <div class="student-header-info">
+            <div class="student-name-display" id="resStudentName">Karim Bennani</div>
+            <div class="student-meta-badges-row">
+              <span class="student-tag-pill code" id="resStudentCodeBadge">🏷️ Code : ILAS001</span>
+              <span class="student-tag-pill" id="resStudentLevelBadge" style="display:none;">🎓 <span id="resStudentLevelText"></span></span>
+              <span class="student-tag-pill" id="resStudentAgeBadge" style="display:none;">🎂 <span id="resStudentAgeText"></span></span>
+              <span class="student-tag-pill" id="resStudentCinBadge" style="display:none;">🆔 <span id="resStudentCinText"></span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gatekeeper Access Verdict Banner (Prominent door check verdict) -->
+        <div class="gate-verdict-banner success" id="gateVerdictBanner">
+          <div class="gate-verdict-left">
+            <div class="gate-verdict-icon" id="resVerdictIcon">✅</div>
+            <div class="gate-verdict-titles">
+              <div class="gate-verdict-main-fr" id="resVerdictTitleFr">ACCÈS AUTORISÉ — SALLE 1</div>
+              <div class="gate-verdict-main-ar" id="resVerdictTitleAr">الدخول مسموح — القاعة 1</div>
+              <div class="gate-verdict-advice" id="resVerdictAdvice">Séance en cours : Anglais B1 (19:00 - 20:30)</div>
+            </div>
+          </div>
+          <div class="gate-verdict-right">
+            <span class="gate-station-tag">🚪 Contrôle Entrée</span>
+            <span class="gate-time-stamp" id="resVerdictTime">17:35:10</span>
+          </div>
+        </div>
+
+        <!-- 3 Pillars Dashboard (Nadra Chamila) -->
+        <div class="pillars-container">
+
+          <!-- PILIER 1 : INSCRIPTION (Wash deja inscrit) -->
+          <div class="pillar-card">
+            <div class="pillar-header">
+              <div class="pillar-title">
+                <span>📝 1. Inscription / التسجيل</span>
+              </div>
+              <span class="pillar-badge success" id="resP1Badge">Inscrit</span>
+            </div>
+
+            <div class="info-data-row">
+              <span class="info-label">Statut du dossier :</span>
+              <span class="info-val" id="resP1StatusText" style="color:#34d399;">Actif</span>
+            </div>
+            <div class="info-data-row">
+              <span class="info-label">Total formations :</span>
+              <span class="info-val" id="resP1CountText">1 formation</span>
+            </div>
+
+            <div style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; margin-top:3px;">Matières inscrites :</div>
+            <div class="enrolled-courses-list" id="resEnrollmentsList">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- PILIER 2 : PAIEMENT (Wash deja payé oula non) -->
+          <div class="pillar-card">
+            <div class="pillar-header">
+              <div class="pillar-title">
+                <span>💳 2. Paiement / واجب الأداء</span>
+              </div>
+              <span class="pillar-badge success" id="resP2Badge">À jour (0 DH)</span>
+            </div>
+
+            <div class="info-data-row">
+              <span class="info-label">Situation Financière :</span>
+              <span class="info-val" id="resP2BalanceDue">
+                <span class="balance-tag-ok">✅ À jour (0 DH)</span>
+              </span>
+            </div>
+            <div class="info-data-row">
+              <span class="info-label">Validité Abonnement :</span>
+              <span class="info-val" id="resP2EndDate">31/10/2026</span>
+            </div>
+            <div class="info-data-row">
+              <span class="info-label">État du compte :</span>
+              <span class="info-val" id="resP2Msg" style="font-size:11.5px;">Abonnement en règle</span>
+            </div>
+
+            <div class="info-data-row" style="margin-top:auto; padding-top:4px;">
+              <span class="info-label">Tuteur / Tél :</span>
+              <span class="info-val" id="resParentContactInfo" style="font-size:11.5px;">—</span>
+            </div>
+          </div>
+
+          <!-- PILIER 3 : SÉANCES DU JOUR (Wash 3andou chi class: previous, current, next) -->
+          <div class="pillar-card full-width">
+            <div class="pillar-header">
+              <div class="pillar-title">
+                <span>🕒 3. Séances du Jour (<span id="resP3DayName">Lundi</span>) / حصص اليوم</span>
+              </div>
+              <span class="pillar-badge info" id="resP3Badge">Programme du jour</span>
+            </div>
+
+            <!-- 3 Timeline Slots: Previous, Current, Next -->
+            <div class="slots-timeline-grid" id="resP3SlotsGrid">
+
+              <!-- Previous Session (Séance précédente) -->
+              <div class="slot-window-box active-prev" id="boxPrevSession">
+                <div class="slot-window-header">
+                  <span>⏱️ 1. Séance Précédente</span>
+                  <span id="prevBadgeStatus" class="slot-status-pill">Terminée</span>
+                </div>
+                <div class="slot-window-time" id="prevTime">--:--</div>
+                <div class="slot-window-room" id="prevRoom">Aucune séance passée</div>
+                <div class="slot-window-course" id="prevCourse">—</div>
+              </div>
+
+              <!-- Current Session (En cours maintenant) -->
+              <div class="slot-window-box active-current" id="boxCurrentSession">
+                <div class="slot-window-header">
+                  <span>🟢 2. En Cours Maintenant</span>
+                  <span id="currBadgeStatus" class="slot-status-pill">En direct</span>
+                </div>
+                <div class="slot-window-time" id="currTime">--:--</div>
+                <div class="slot-window-room" id="currRoom">Aucun cours en ce moment</div>
+                <div class="slot-window-course" id="currCourse">—</div>
+              </div>
+
+              <!-- Next Session (Prochaine séance) -->
+              <div class="slot-window-box active-next" id="boxNextSession">
+                <div class="slot-window-header">
+                  <span>🕒 3. Prochaine Séance</span>
+                  <span id="nextBadgeStatus" class="slot-status-pill">À venir</span>
+                </div>
+                <div class="slot-window-time" id="nextTime">--:--</div>
+                <div class="slot-window-room" id="nextRoom">Aucune séance plus tard</div>
+                <div class="slot-window-course" id="nextCourse">—</div>
+              </div>
+
+            </div>
+
+            <!-- Notice when no class today -->
+            <div id="noClassNotice" style="display:none; text-align:center; padding:12px; background:rgba(255,255,255,0.03); border-radius:10px; color:#94a3b8; font-size:13px;">
+              🗓️ <strong>Aucun cours programmé aujourd'hui pour cet élève.</strong>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Actions Bar -->
+        <div class="kiosk-actions-bar">
+          <button type="button" class="btn-kiosk-action btn-kiosk-primary" onclick="returnToIdle()">
+            <span>↵</span>
+            <span>Nouveau Pointage (Échap / Espace)</span>
+          </button>
+
+          <a href="#" id="resStudentProfileLink" target="_blank" class="btn-kiosk-action">
+            <span>👤</span>
+            <span>Fiche Complète Élève ↗</span>
+          </a>
+        </div>
+        </div><!-- /#studentResultZone -->
+
+        <!-- State 2B : Teacher & Staff Clock-in / Clock-out Result View -->
+        <div id="staffResultZone" style="display:none;">
+
+          <!-- Staff Identity Header -->
+          <div class="student-header-zone" style="margin-bottom:14px;">
+            <div class="student-avatar-wrap" id="staffAvatarWrap">
+              <img id="staffAvatarImg" class="student-avatar-img" src="" alt="Photo" style="display:none;">
+              <div id="staffAvatarFallback" class="student-avatar-fallback">👨‍🏫</div>
+            </div>
+
+            <div class="student-header-info">
+              <div class="student-name-display" id="staffNameDisplay">Pr. Nom Prénom</div>
+              <div class="student-meta-badges-row">
+                <span class="student-tag-pill" id="staffRolePill" style="background:#1e3a5f; color:#38bdf8; font-weight:700;">👨‍🏫 Professeur</span>
+                <span class="student-tag-pill code" id="staffCodeBadge">🏷️ PRF-001</span>
+                <span class="student-tag-pill" id="staffPhoneBadge" style="display:none;">📞 <span id="staffPhoneText"></span></span>
+                <span class="student-tag-pill" id="staffCinBadge" style="display:none;">🆔 <span id="staffCinText"></span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Big Punch Verdict Banner -->
+          <div class="gate-verdict-banner success" id="staffPunchBanner" style="margin-bottom:16px;">
+            <div class="gate-verdict-left">
+              <div class="gate-verdict-icon" id="staffPunchIcon" style="font-size:32px;">🟢</div>
+              <div class="gate-verdict-titles">
+                <div class="gate-verdict-main-fr" id="staffPunchTitleFr" style="font-size:20px; font-weight:800; letter-spacing:0.5px;">POINTAGE ENTRÉE VALIDÉ</div>
+                <div class="gate-verdict-main-ar ar" id="staffPunchTitleAr" style="font-size:16px; font-weight:700;">تم تسجيل الدخول بنجاح</div>
+                <div class="gate-verdict-advice" id="staffPunchAdvice" style="font-size:13px; color:#cbd5e1;">Bienvenue à l'Institut ILAS !</div>
+              </div>
+            </div>
+            <div class="gate-verdict-right">
+              <div class="gate-verdict-time" id="staffPunchTime" style="font-size:24px; font-family:'JetBrains Mono', monospace; font-weight:800;">14:30:15</div>
+              <div class="gate-verdict-time-sub">Heure Enregistrée</div>
+            </div>
+          </div>
+
+          <!-- Punch Metrics & Duration (3 Summary Cards) -->
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:16px;">
+            <div style="background:#0d1e35; border:1px solid #1e3a5f; border-radius:14px; padding:12px 16px; text-align:center;">
+              <div style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">🌅 1ère Entrée</div>
+              <div id="staffFirstInDisplay" style="font-size:18px; font-weight:800; color:#34d399; font-family:'JetBrains Mono', monospace; margin-top:4px;">08:30:00</div>
+            </div>
+            <div style="background:#0d1e35; border:1px solid #1e3a5f; border-radius:14px; padding:12px 16px; text-align:center;">
+              <div style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">🌆 Dernière Sortie</div>
+              <div id="staffLastOutDisplay" style="font-size:18px; font-weight:800; color:#60a5fa; font-family:'JetBrains Mono', monospace; margin-top:4px;">—</div>
+            </div>
+            <div style="background:#0d1e35; border:1px solid #1e3a5f; border-radius:14px; padding:12px 16px; text-align:center;">
+              <div style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">⏱️ Temps Travaillé</div>
+              <div id="staffTotalDurationDisplay" style="font-size:18px; font-weight:800; color:#fbbf24; font-family:'JetBrains Mono', monospace; margin-top:4px;">0 min</div>
+            </div>
+          </div>
+
+          <!-- Teacher Schedule Card (Only shown if teacher has classes today) -->
+          <div id="staffTeacherScheduleCard" style="background:#0d1e35; border:1px solid #1e3a5f; border-radius:16px; padding:16px 20px; margin-bottom:16px; display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <div style="font-size:13.5px; font-weight:800; color:#f8fafc; display:flex; align-items:center; gap:8px;">
+                <span>📅</span>
+                <span>Programme des Cours d'Aujourd'hui</span>
+              </div>
+              <span id="staffScheduleCountBadge" class="pillar-badge success" style="font-size:11px;">0 cours</span>
+            </div>
+            <div id="staffScheduleSlotsGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
+              <!-- Dynamic slot items -->
+            </div>
+            <div id="staffNoScheduleNotice" style="font-size:12.5px; color:#94a3b8; font-style:italic; padding:6px; display:none;">
+              Aucun cours programmé aujourd'hui dans l'emploi du temps.
+            </div>
+          </div>
+
+          <!-- Today's Punch History Timeline -->
+          <div style="background:rgba(13,30,53,0.5); border:1px dashed #1e3a5f; border-radius:14px; padding:12px 16px; margin-bottom:16px;">
+            <div style="font-size:11.5px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">
+              🕒 Pointages Enregistrés Aujourd'hui :
+            </div>
+            <div id="staffPunchesChipsContainer" style="display:flex; flex-wrap:wrap; gap:8px;">
+              <!-- Dynamic punch chips -->
+            </div>
+          </div>
+
+          <!-- Action Bar & Rectification Button -->
+          <div class="kiosk-actions-bar" style="margin-top:0;">
+            <button type="button" class="btn-kiosk-action btn-kiosk-primary" onclick="returnToIdle()">
+              <span>↵</span>
+              <span>Terminer / Nouveau Pointage (Échap)</span>
+            </button>
+            <button type="button" id="btnTogglePunchCorrection" class="btn-kiosk-action" onclick="correctLastPunch()" style="background:#1e3a5f; border-color:#38bdf8; color:#f8fafc; font-weight:700;">
+              <span id="btnTogglePunchIcon">🔄</span>
+              <span id="btnTogglePunchLabel">Rectifier en Sortie</span>
+            </button>
+          </div>
+        </div><!-- /#staffResultZone -->
+
+        <!-- Reset progress bar -->
+        <div class="reset-progress-bar" id="progressBar"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Bottom Live Ticker -->
+  <footer class="bottom-ticker-bar">
+    <div class="ticker-label">
+      <span>⚡</span>
+      <span>Derniers Passages :</span>
+    </div>
+    <div class="ticker-stream" id="tickerStream">
+      {% for att in recent_scans %}
+      <div class="ticker-chip">
+        <span class="t-time">{{ att.time }}</span>
+        <span>{{ att.student_name }}</span>
+        <span class="t-room">{{ att.room_name }}</span>
+      </div>
+      {% else %}
+      <div class="ticker-chip" style="color:#64748b;">
+        <span>En attente des premiers élèves...</span>
+      </div>
+      {% endfor %}
+    </div>
+  </footer>
+
+  <!-- Modal Camera Scanner -->
+  <div class="camera-modal" id="cameraModal">
+    <div class="camera-wrap">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="font-size:16px;">Scanner avec la Caméra</h3>
+        <button type="button" class="btn-icon" onclick="closeCameraModal()">✕</button>
+      </div>
+      <div id="reader"></div>
+      <div style="font-size:12px; color:#94a3b8; margin-top:10px;">
+        Pointez le QR code ou le code-barres face à l'objectif
+      </div>
+    </div>
+  </div>
+
+  <!-- Html5-Qrcode library for optional camera scanner -->
+  <script src="{{ url_for('static', filename='vendor/html5-qrcode.min.js') }}"></script>
+
+  <script>
+    // Audio Synthesizer (Native Web Audio API - Zero lag, no external files)
+    let audioCtx = null;
+    let isMuted = false;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      document.getElementById('soundBtn').textContent = isMuted ? '🔇' : '🔊';
+    }
+
+    // Melodic crystal-clear success chime (523Hz C5 -> 659Hz E5)
+    function playChimeSuccess() {
+      if (isMuted) return;
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        
+        // Tone 1
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(523.25, now);
+        gain1.gain.setValueAtTime(0.25, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.35);
+
+        // Tone 2 (Harmonic)
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(659.25, now + 0.12);
+        gain2.gain.setValueAtTime(0.3, now + 0.12);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.12);
+        osc2.stop(now + 0.55);
+      } catch (e) {
+        console.warn('Audio error', e);
+      }
+    }
+
+    // Warning tone (440Hz -> 330Hz)
+    // Departure Chime for Sortie (Descending 659.25Hz -> 523.25Hz)
+    function playChimeDeparture() {
+      if (isMuted) return;
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(659.25, now);
+        gain1.gain.setValueAtTime(0.28, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.35);
+
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(523.25, now + 0.14);
+        gain2.gain.setValueAtTime(0.32, now + 0.14);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.60);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.14);
+        osc2.stop(now + 0.60);
+      } catch (e) {
+        console.warn('Audio error', e);
+      }
+    }
+
+    function playChimeWarning() {
+      if (isMuted) return;
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.setValueAtTime(330, now + 0.15);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      } catch (e) {
+        console.warn('Audio error', e);
+      }
+    }
+
+    // Error tone (Low buzz 180Hz)
+    function playChimeError() {
+      if (isMuted) return;
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } catch (e) {
+        console.warn('Audio error', e);
+      }
+    }
+
+    // Live Digital Clock
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('digitalClock').textContent = `${h}:${m}:${s}`;
+
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const dateFr = now.toLocaleDateString('fr-FR', options);
+      document.getElementById('digitalDate').textContent = dateFr;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Auto-focus persistence for hardware USB scanner / keyboard
+    const scanInput = document.getElementById('scanInput');
+    const scanClearBtn = document.getElementById('scanClearBtn');
+    const autocompleteDropdown = document.getElementById('autocompleteDropdown');
+    const autocompleteList = document.getElementById('autocompleteList');
+    const kioskCard = document.getElementById('kioskCard');
+
+    let currentMatches = [];
+    let selectedSuggestionIndex = -1;
+    let searchDebounce = null;
+    let isProcessing = false;
+
+    // Multi-role Punch Mode & State
+    let currentPunchMode = 'auto'; // 'auto' | 'in' | 'out'
+    let lastStaffPunchId = null;
+    let lastStaffPunchType = null;
+
+    function setPunchMode(mode) {
+      currentPunchMode = mode || 'auto';
+      const btnAuto = document.getElementById('modeBtnAuto');
+      const btnIn = document.getElementById('modeBtnIn');
+      const btnOut = document.getElementById('modeBtnOut');
+      if (btnAuto) btnAuto.classList.toggle('active', currentPunchMode === 'auto');
+      if (btnIn) btnIn.classList.toggle('active', currentPunchMode === 'in');
+      if (btnOut) btnOut.classList.toggle('active', currentPunchMode === 'out');
+    }
+    window.setPunchMode = setPunchMode;
+
+    // Reset Timer Logic
+    let resetTimer = null;
+    let resetStartTime = 0;
+    let resetRemainingTime = 3500;
+    const DISPLAY_DURATION_MS = 3500; // 3.5 seconds snappy queue throughput
+    let isTimerPaused = false;
+
+    // --- High-Reliability Auto-Focus & Focus Lock ---
+    function keepFocus() {
+      if (isCameraOpen) return;
+      const idleView = document.getElementById('idleView');
+      if (idleView && idleView.style.display !== 'none') {
+        if (document.activeElement !== scanInput && !autocompleteDropdown.contains(document.activeElement)) {
+          scanInput.focus();
+        }
+      }
+    }
+
+    // Keep focus locked under all interactions
+    document.addEventListener('click', (e) => {
+      if (!scanInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+        hideDropdown();
+      }
+      keepFocus();
+    });
+    document.addEventListener('pointerdown', keepFocus);
+    document.addEventListener('touchstart', keepFocus);
+    window.addEventListener('focus', keepFocus);
+    window.addEventListener('blur', () => setTimeout(keepFocus, 100));
+    setInterval(keepFocus, 500); // Check every 500ms
+
+    // Fullscreen toggle
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Input Search & Autocomplete Handlers
+    scanInput.addEventListener('input', () => {
+      const q = scanInput.value.trim();
+      scanClearBtn.style.display = q ? 'flex' : 'none';
+
+      if (!q) {
+        kioskCard.classList.remove('search-active');
+        hideDropdown();
+        clearTimeout(searchDebounce);
+        return;
+      }
+
+      kioskCard.classList.add('search-active');
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => {
+        fetchSuggestions(q);
+      }, 120);
+    });
+
+    scanInput.addEventListener('focus', () => {
+      if (scanInput.value.trim()) {
+        kioskCard.classList.add('search-active');
+        if (currentMatches.length > 0) {
+          renderDropdown();
+        }
+      }
+    });
+
+    scanInput.addEventListener('keydown', (e) => {
+      if (autocompleteDropdown.style.display === 'block' && currentMatches.length > 0) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          selectedSuggestionIndex = (selectedSuggestionIndex + 1) % currentMatches.length;
+          updateSelectedSuggestion();
+          return;
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          selectedSuggestionIndex = (selectedSuggestionIndex - 1 + currentMatches.length) % currentMatches.length;
+          updateSelectedSuggestion();
+          return;
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          hideDropdown();
+          return;
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (selectedSuggestionIndex >= 0 && currentMatches[selectedSuggestionIndex]) {
+            selectStudentMatch(currentMatches[selectedSuggestionIndex].id);
+            return;
+          } else if (currentMatches.length > 0) {
+            selectStudentMatch(currentMatches[0].id);
+            return;
+          }
+        }
+      } else if (e.key === 'Escape') {
+        scanInput.value = '';
+        scanClearBtn.style.display = 'none';
+        kioskCard.classList.remove('search-active');
+        hideDropdown();
+      }
+    });
+
+    // --- Global Hardware USB NFC / Barcode Auto-Reader & Instant Queue Interceptor ---
+    let hardwareBuffer = '';
+    let lastHardwareKeyTime = 0;
+
+    window.addEventListener('keydown', (e) => {
+      const now = Date.now();
+      const resView = document.getElementById('resultView');
+      const isShowingResult = (resView && resView.style.display === 'block');
+
+      // Manual dismiss with Escape or Space
+      if (isShowingResult && (e.key === 'Escape' || e.code === 'Space')) {
+        e.preventDefault();
+        returnToIdle();
+        return;
+      }
+
+      // Enter received: from USB NFC reader or physical scanner
+      if (e.key === 'Enter') {
+        const codeToProcess = (hardwareBuffer.trim() || scanInput.value.trim());
+        if (codeToProcess) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+          hardwareBuffer = '';
+          scanInput.value = '';
+          if (isShowingResult) {
+            clearTimeout(resetTimer);
+            document.getElementById('resultView').style.display = 'none';
+            document.getElementById('idleView').style.display = 'block';
+            kioskCard.classList.remove('has-result');
+          } else {
+            hideDropdown();
+          }
+          processScan({ code: codeToProcess, punch_mode: currentPunchMode });
+          return;
+        }
+      }
+
+      // Capture printable characters from Hardware NFC Reader even when previous result is showing
+      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        if (now - lastHardwareKeyTime > 300) {
+          hardwareBuffer = '';
+        }
+        hardwareBuffer += e.key;
+        lastHardwareKeyTime = now;
+
+        // Auto-redirect to input if on idle view and focus was somehow lost
+        if (!isShowingResult && document.activeElement !== scanInput && !isCameraOpen) {
+          scanInput.focus();
+          scanInput.value += e.key;
+        }
+      }
+    }, true);
+
+    async function fetchSuggestions(query) {
+      try {
+        const resp = await fetch('{{ url_for("api_kiosk_search") }}?q=' + encodeURIComponent(query));
+        const data = await resp.json();
+        if (data.success && data.results) {
+          currentMatches = data.results;
+          renderDropdown();
+        } else {
+          currentMatches = [];
+          hideDropdown();
+        }
+      } catch (err) {
+        console.warn('Search suggestion error', err);
+      }
+    }
+
+    // Smart Positioning to prevent dropdown from being clipped or hidden by panel
+    function positionDropdown() {
+      if (!autocompleteDropdown || autocompleteDropdown.style.display !== 'block') return;
+      const rect = scanInput.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const spaceBelow = vh - rect.bottom - 16;
+      const spaceAbove = rect.top - 16;
+
+      if (spaceBelow < 220 && spaceAbove > spaceBelow) {
+        autocompleteDropdown.style.top = 'auto';
+        autocompleteDropdown.style.bottom = 'calc(100% + 8px)';
+        autocompleteDropdown.style.maxHeight = Math.min(320, Math.max(160, spaceAbove)) + 'px';
+      } else {
+        autocompleteDropdown.style.top = 'calc(100% + 8px)';
+        autocompleteDropdown.style.bottom = 'auto';
+        autocompleteDropdown.style.maxHeight = Math.min(320, Math.max(180, spaceBelow)) + 'px';
+      }
+    }
+    window.addEventListener('resize', positionDropdown);
+
+    function renderDropdown() {
+      if (currentMatches.length === 0) {
+        autocompleteList.innerHTML = '<div class="ac-empty">🔍 Aucun élève correspondant trouvé</div>';
+        autocompleteDropdown.style.display = 'block';
+        selectedSuggestionIndex = -1;
+        positionDropdown();
+        return;
+      }
+
+      selectedSuggestionIndex = -1;
+      let html = '';
+      currentMatches.forEach((s, idx) => {
+        const initials = (s.full_name || 'E').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+        const avatarHtml = s.photo_url 
+          ? `<img src="${s.photo_url}" alt="${s.full_name}">`
+          : `<span>${initials}</span>`;
+
+        const roleBadge = s.role_tag 
+          ? `<span class="ac-role-badge ${s.role_class || 'student'}">${s.role_tag}</span>` 
+          : `<span class="ac-role-badge student">🎓 Élève</span>`;
+
+        html += `
+          <div class="ac-item" data-index="${idx}" onmousedown="selectMatchCandidate(${idx})">
+            <div class="ac-avatar">${avatarHtml}</div>
+            <div class="ac-info">
+              <div class="ac-name-row">
+                <span class="ac-name">${s.full_name}</span>
+                ${roleBadge}
+                <span class="ac-code-badge">${s.code}</span>
+              </div>
+              <div class="ac-sub">
+                ${s.school_level ? s.school_level + ' &bullet; ' : ''}
+                ${s.phone ? 'Tél: ' + s.phone : (s.parent_phone ? 'Parent: ' + s.parent_phone : '')}
+              </div>
+              <div class="ac-courses">
+                ${s.person_type === 'teacher' ? '👨‍🏫 ' + (s.courses_summary || 'Enseignant') : (s.person_type === 'employee' ? '👔 ' + (s.courses_summary || 'Staff') : '📚 ' + (s.courses_summary || 'Aucun cours'))}
+              </div>
+            </div>
+            <div style="font-size:16px; color:#38bdf8; opacity:0.7;">↵</div>
+          </div>
+        `;
+      });
+
+      autocompleteList.innerHTML = html;
+      autocompleteDropdown.style.display = 'block';
+      positionDropdown();
+    }
+
+    function updateSelectedSuggestion() {
+      const items = autocompleteList.querySelectorAll('.ac-item');
+      items.forEach((item, idx) => {
+        if (idx === selectedSuggestionIndex) {
+          item.classList.add('selected');
+          item.scrollIntoView({ block: 'nearest' });
+        } else {
+          item.classList.remove('selected');
+        }
+      });
+    }
+
+    function hideDropdown() {
+      autocompleteDropdown.style.display = 'none';
+      selectedSuggestionIndex = -1;
+      currentMatches = [];
+      if (!scanInput.value.trim()) {
+        kioskCard.classList.remove('search-active');
+      }
+    }
+
+    function clearSearchInput(e) {
+      if (e) e.stopPropagation();
+      scanInput.value = '';
+      scanClearBtn.style.display = 'none';
+      kioskCard.classList.remove('search-active');
+      hideDropdown();
+      scanInput.focus();
+    }
+
+    function selectMatchCandidate(idx) {
+      const item = currentMatches[idx];
+      if (!item) return;
+      hideDropdown();
+      scanInput.value = '';
+      scanClearBtn.style.display = 'none';
+      if (item.person_type === 'teacher') {
+        processScan({ teacher_id: item.id, person_type: 'teacher', punch_mode: currentPunchMode });
+      } else if (item.person_type === 'employee') {
+        processScan({ employee_id: item.id, person_type: 'employee', punch_mode: currentPunchMode });
+      } else {
+        processScan({ student_id: item.id, person_type: 'student' });
+      }
+    }
+
+    function selectStudentMatch(studentId) {
+      hideDropdown();
+      scanInput.value = '';
+      scanClearBtn.style.display = 'none';
+      processScan({ student_id: studentId });
+    }
+
+    function handleScanSubmit(e) {
+      e.preventDefault();
+      const code = scanInput.value.trim();
+      if (!code) return;
+
+      if (currentMatches.length > 0) {
+        if (selectedSuggestionIndex >= 0 && currentMatches[selectedSuggestionIndex]) {
+          selectMatchCandidate(selectedSuggestionIndex);
+          return;
+        } else {
+          selectMatchCandidate(0);
+          return;
+        }
+      }
+
+      hideDropdown();
+      processScan({ code: code, punch_mode: currentPunchMode });
+    }
+
+    // Core Scan Requester
+    async function processScan(payload) {
+      if (isProcessing) return;
+      isProcessing = true;
+
+      try {
+        const resp = await fetch('{{ url_for("api_kiosk_scan") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await resp.json();
+
+        if (data.success) {
+          displaySuccess(data);
+        } else {
+          displayError(data.message || 'Élève ou badge non reconnu');
+        }
+      } catch (err) {
+        console.error('Scan API error', err);
+        displayError('Erreur de communication avec le serveur');
+      } finally {
+        isProcessing = false;
+      }
+    }
+
+    // Display Gatekeeper 3-Pillar Access Dossier
+    function displaySuccess(data) {
+      clearTimeout(resetTimer);
+      scanInput.value = '';
+      scanClearBtn.style.display = 'none';
+      hardwareBuffer = '';
+      clearTimeout(resetTimer);
+
+      if (data.person_type === 'teacher' || data.person_type === 'employee') {
+        document.getElementById('studentResultZone').style.display = 'none';
+        document.getElementById('staffResultZone').style.display = 'block';
+        displayStaffSuccess(data);
+        return;
+      }
+
+      document.getElementById('studentResultZone').style.display = 'block';
+      document.getElementById('staffResultZone').style.display = 'none';
+
+      const stu = data.student;
+      const verdict = data.gate_verdict || {};
+      const p1 = data.pillar1_inscription || {};
+      const p2 = data.pillar2_paiement || {};
+      const p3 = data.pillar3_seances || {};
+
+      // 1. Identity Header
+      document.getElementById('resStudentName').textContent = stu.full_name;
+      document.getElementById('resStudentCodeBadge').textContent = `🏷️ Code : ${stu.code}`;
+
+      // Level
+      const lvlEl = document.getElementById('resStudentLevelBadge');
+      if (stu.school_level) {
+        document.getElementById('resStudentLevelText').textContent = stu.school_level;
+        lvlEl.style.display = 'inline-flex';
+      } else {
+        lvlEl.style.display = 'none';
+      }
+
+      // Age / Birth date
+      const ageEl = document.getElementById('resStudentAgeBadge');
+      if (stu.age || stu.birth_date) {
+        const ageParts = [];
+        if (stu.age) ageParts.push(`${stu.age} ans`);
+        if (stu.birth_date) ageParts.push(`(${stu.birth_date})`);
+        document.getElementById('resStudentAgeText').textContent = ageParts.join(' ');
+        ageEl.style.display = 'inline-flex';
+      } else {
+        ageEl.style.display = 'none';
+      }
+
+      // CIN
+      const cinEl = document.getElementById('resStudentCinBadge');
+      if (stu.cin) {
+        document.getElementById('resStudentCinText').textContent = `CIN : ${stu.cin}`;
+        cinEl.style.display = 'inline-flex';
+      } else {
+        cinEl.style.display = 'none';
+      }
+
+      // Photo
+      const imgEl = document.getElementById('resAvatarImg');
+      const fallbackEl = document.getElementById('resAvatarFallback');
+      if (stu.photo_url) {
+        imgEl.src = stu.photo_url;
+        imgEl.style.display = 'block';
+        fallbackEl.style.display = 'none';
+      } else {
+        imgEl.style.display = 'none';
+        fallbackEl.style.display = 'flex';
+        const inits = (stu.full_name || 'E').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+        fallbackEl.textContent = inits || '👤';
+      }
+
+      // 2. Gate Verdict Banner
+      const banner = document.getElementById('gateVerdictBanner');
+      banner.className = `gate-verdict-banner ${verdict.badge_class || 'info'}`;
+      document.getElementById('resVerdictIcon').textContent = verdict.icon || 'ℹ️';
+      document.getElementById('resVerdictTitleFr').textContent = verdict.title_fr || 'CONTRÔLE ACCÈS';
+      document.getElementById('resVerdictTitleAr').textContent = verdict.title_ar || '';
+      document.getElementById('resVerdictAdvice').textContent = verdict.action_advice_fr || verdict.message_fr || '';
+      document.getElementById('resVerdictTime').textContent = data.attendance?.timestamp || new Date().toLocaleTimeString();
+
+      // Sound chime based on verdict
+      if (verdict.badge_class === 'success') {
+        playChimeSuccess();
+      } else if (verdict.badge_class === 'warning' || verdict.badge_class === 'danger') {
+        playChimeWarning();
+      } else {
+        playChimeSuccess();
+      }
+
+      // Avatar wrap glow
+      const avatarWrap = document.getElementById('avatarWrap');
+      if (verdict.badge_class === 'danger') {
+        avatarWrap.className = 'student-avatar-wrap warning';
+      } else if (verdict.badge_class === 'warning') {
+        avatarWrap.className = 'student-avatar-wrap caution';
+      } else {
+        avatarWrap.className = 'student-avatar-wrap';
+      }
+
+      // 3. Pilier 1 : Inscription
+      const p1Badge = document.getElementById('resP1Badge');
+      p1Badge.className = `pillar-badge ${p1.status_class || 'info'}`;
+      p1Badge.textContent = p1.is_enrolled ? `${p1.count} formation(s)` : 'Non inscrit';
+      document.getElementById('resP1StatusText').textContent = p1.status_text_fr || '—';
+      document.getElementById('resP1StatusText').style.color = p1.is_enrolled ? '#34d399' : '#f87171';
+      document.getElementById('resP1CountText').textContent = `${p1.count || 0} active(s)`;
+
+      const enrollListEl = document.getElementById('resEnrollmentsList');
+      if (p1.courses && p1.courses.length > 0) {
+        let ensHtml = '';
+        p1.courses.forEach(c => {
+          const debtBadge = c.balance_due > 0
+            ? `<span class="ec-debt-tag">Dû: ${c.balance_due.toFixed(0)} DH</span>`
+            : `<span class="pillar-badge success" style="font-size:10px; padding:1px 6px;">Payé</span>`;
+          ensHtml += `
+            <div class="enrolled-course-item">
+              <div class="ec-top-row">
+                <div class="ec-title" title="${c.course_name || ''}">${c.course_name}</div>
+                ${debtBadge}
+              </div>
+              <div class="ec-meta-row">
+                <span class="ec-meta-pill">🚪 ${c.room_name || 'N/A'}</span>
+                <span class="ec-meta-pill">👨‍🏫 ${c.teacher_name || 'N/A'}</span>
+              </div>
+            </div>
+          `;
+        });
+        enrollListEl.innerHTML = ensHtml;
+      } else {
+        enrollListEl.innerHTML = '<div style="color:#f87171; font-size:12px; font-style:italic; padding:4px;">Aucun cours actif enregistré</div>';
+      }
+
+      // 4. Pilier 2 : Paiement
+      const p2Badge = document.getElementById('resP2Badge');
+      p2Badge.className = `pillar-badge ${p2.status_class || 'info'}`;
+      p2Badge.textContent = p2.is_paid ? 'À jour (0 DH)' : `Reste dû: ${p2.total_balance_due.toFixed(0)} DH`;
+
+      const p2BalEl = document.getElementById('resP2BalanceDue');
+      if (p2.total_balance_due > 0) {
+        p2BalEl.innerHTML = `<span class="balance-tag-debt">⚠️ Reste dû : ${p2.total_balance_due.toFixed(0)} DH</span>`;
+      } else {
+        p2BalEl.innerHTML = `<span class="balance-tag-ok">✅ À jour (0 DH)</span>`;
+      }
+
+      document.getElementById('resP2EndDate').textContent = p2.end_date || 'Non défini';
+      document.getElementById('resP2Msg').textContent = p2.message_fr || 'Abonnement en règle';
+
+      // Parent info
+      const parentContactEl = document.getElementById('resParentContactInfo');
+      if (stu.parent_name || stu.parent_phone) {
+        const pName = stu.parent_name || 'Parent';
+        const pPhone = stu.parent_phone ? `<a href="tel:${stu.parent_phone}" style="color:#38bdf8; text-decoration:none;">${stu.parent_phone}</a>` : '';
+        parentContactEl.innerHTML = `${pName} ${pPhone ? '• ' + pPhone : ''}`;
+      } else if (stu.phone) {
+        parentContactEl.innerHTML = `Élève: <a href="tel:${stu.phone}" style="color:#38bdf8; text-decoration:none;">${stu.phone}</a>`;
+      } else {
+        parentContactEl.textContent = 'Non renseigné';
+      }
+
+      // 5. Pilier 3 : Séances du jour
+      document.getElementById('resP3DayName').textContent = p3.today_name_fr || 'Aujourd\'hui';
+      const p3Badge = document.getElementById('resP3Badge');
+      const slotsGrid = document.getElementById('resP3SlotsGrid');
+      const noClassNotice = document.getElementById('noClassNotice');
+
+      if (!p3.has_classes_today) {
+        p3Badge.className = 'pillar-badge warning';
+        p3Badge.textContent = 'Aucun cours ce jour';
+        slotsGrid.style.display = 'none';
+        noClassNotice.style.display = 'block';
+      } else {
+        p3Badge.className = 'pillar-badge success';
+        p3Badge.textContent = `${p3.all_sessions.length} séance(s) aujourd'hui`;
+        slotsGrid.style.display = 'grid';
+        noClassNotice.style.display = 'none';
+
+        // 1. Previous Session
+        const boxPrev = document.getElementById('boxPrevSession');
+        const prevCourseEl = document.getElementById('prevCourse');
+        if (p3.previous_session) {
+          boxPrev.className = 'slot-window-box active-prev';
+          document.getElementById('prevTime').textContent = `🚪 ${p3.previous_session.time_slot}`;
+          document.getElementById('prevRoom').textContent = `${p3.previous_session.room_name} • ${p3.previous_session.teacher_name}`;
+          prevCourseEl.textContent = p3.previous_session.course_name;
+          prevCourseEl.title = p3.previous_session.course_name || '';
+          document.getElementById('prevBadgeStatus').textContent = p3.previous_session.status_label_fr;
+        } else {
+          boxPrev.className = 'slot-window-box';
+          document.getElementById('prevTime').textContent = '—';
+          document.getElementById('prevRoom').textContent = 'Aucune séance passée';
+          prevCourseEl.textContent = 'Première séance de la journée';
+          prevCourseEl.title = '';
+          document.getElementById('prevBadgeStatus').textContent = 'Aucune';
+        }
+
+        // 2. Current Session
+        const boxCurr = document.getElementById('boxCurrentSession');
+        const currCourseEl = document.getElementById('currCourse');
+        if (p3.current_session) {
+          boxCurr.className = 'slot-window-box active-current';
+          document.getElementById('currTime').textContent = `🚪 ${p3.current_session.time_slot}`;
+          document.getElementById('currRoom').innerHTML = `<strong>${p3.current_session.room_name}</strong> • ${p3.current_session.teacher_name}`;
+          currCourseEl.textContent = p3.current_session.course_name;
+          currCourseEl.title = p3.current_session.course_name || '';
+          document.getElementById('currBadgeStatus').textContent = 'En cours';
+        } else {
+          boxCurr.className = 'slot-window-box';
+          document.getElementById('currTime').textContent = '—';
+          document.getElementById('currRoom').textContent = 'Aucun cours en ce moment';
+          currCourseEl.textContent = 'Pas de séance active maintenant';
+          currCourseEl.title = '';
+          document.getElementById('currBadgeStatus').textContent = 'Inactif';
+        }
+
+        // 3. Next Session
+        const boxNext = document.getElementById('boxNextSession');
+        const nextCourseEl = document.getElementById('nextCourse');
+        if (p3.next_session) {
+          boxNext.className = 'slot-window-box active-next';
+          document.getElementById('nextTime').textContent = `🚪 ${p3.next_session.time_slot}`;
+          document.getElementById('nextRoom').innerHTML = `<strong>${p3.next_session.room_name}</strong> • ${p3.next_session.teacher_name}`;
+          nextCourseEl.textContent = p3.next_session.course_name;
+          nextCourseEl.title = p3.next_session.course_name || '';
+          document.getElementById('nextBadgeStatus').textContent = p3.next_session.status_label_fr;
+        } else {
+          boxNext.className = 'slot-window-box';
+          document.getElementById('nextTime').textContent = '—';
+          document.getElementById('nextRoom').textContent = 'Aucun cours programmé plus tard';
+          nextCourseEl.textContent = 'Dernière séance de la journée';
+          nextCourseEl.title = '';
+          document.getElementById('nextBadgeStatus').textContent = 'Terminé';
+        }
+      }
+
+      // 6. Full Profile Link
+      document.getElementById('resStudentProfileLink').href = `/students/${stu.id}`;
+
+      // 7. Live Stream Ticker Update
+      const primaryRoom = p3.current_session?.room_name || p3.next_session?.room_name || p3.previous_session?.room_name || 'Bab';
+      prependTicker(stu.full_name, primaryRoom, data.attendance?.timestamp);
+
+      // Transition to Result View
+      kioskCard.classList.remove('search-active');
+      kioskCard.classList.add('has-result');
+      document.getElementById('idleView').style.display = 'none';
+      const resView = document.getElementById('resultView');
+      resView.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Smart Auto-Reset Progress Bar (8 seconds, pauses on hover)
+      startAutoResetTimer(DISPLAY_DURATION_MS);
+    }
+
+    function startAutoResetTimer(durationMs) {
+      clearTimeout(resetTimer);
+      resetRemainingTime = durationMs;
+      resetStartTime = Date.now();
+      isTimerPaused = false;
+
+      const progressBar = document.getElementById('progressBar');
+      progressBar.style.transition = 'none';
+      progressBar.style.transform = 'scaleX(1)';
+
+      setTimeout(() => {
+        progressBar.style.transition = `transform ${durationMs}ms linear`;
+        progressBar.style.transform = 'scaleX(0)';
+      }, 40);
+
+      resetTimer = setTimeout(() => {
+        returnToIdle();
+      }, durationMs);
+    }
+
+    // Hover to Pause Reset
+    kioskCard.addEventListener('mouseenter', () => {
+      const resView = document.getElementById('resultView');
+      if (resView && resView.style.display === 'block' && !isTimerPaused) {
+        clearTimeout(resetTimer);
+        const elapsed = Date.now() - resetStartTime;
+        resetRemainingTime = Math.max(1000, resetRemainingTime - elapsed);
+        isTimerPaused = true;
+        const progressBar = document.getElementById('progressBar');
+        const computedStyle = window.getComputedStyle(progressBar);
+        const transform = computedStyle.getPropertyValue('transform');
+        progressBar.style.transition = 'none';
+        progressBar.style.transform = transform;
+      }
+    });
+
+    kioskCard.addEventListener('mouseleave', () => {
+      const resView = document.getElementById('resultView');
+      if (resView && resView.style.display === 'block' && isTimerPaused) {
+        startAutoResetTimer(resetRemainingTime);
+      }
+    });
+
+    // Teacher & Staff Clock-in / Clock-out Display Engine
+    function displayStaffSuccess(data) {
+      const p = data.person || {};
+      const punch = data.punch_summary || {};
+      const sched = data.schedule_today || [];
+
+      lastStaffPunchId = punch.punch_id;
+      lastStaffPunchType = punch.punch_type;
+
+      // Identity
+      document.getElementById('staffNameDisplay').textContent = p.full_name;
+      document.getElementById('staffCodeBadge').textContent = `🏷️ ${p.code}`;
+
+      const roleEl = document.getElementById('staffRolePill');
+      roleEl.textContent = p.person_type === 'teacher' ? '👨‍🏫 Professeur' : '👔 Personnel ILAS';
+      roleEl.style.background = p.person_type === 'teacher' ? '#1e3a5f' : '#064e3b';
+      roleEl.style.color = p.person_type === 'teacher' ? '#38bdf8' : '#34d399';
+
+      const phoneEl = document.getElementById('staffPhoneBadge');
+      if (p.phone) {
+        document.getElementById('staffPhoneText').textContent = p.phone;
+        phoneEl.style.display = 'inline-flex';
+      } else {
+        phoneEl.style.display = 'none';
+      }
+
+      const cinEl = document.getElementById('staffCinBadge');
+      if (p.cin) {
+        document.getElementById('staffCinText').textContent = `CIN : ${p.cin}`;
+        cinEl.style.display = 'inline-flex';
+      } else {
+        cinEl.style.display = 'none';
+      }
+
+      // Avatar
+      const imgEl = document.getElementById('staffAvatarImg');
+      const fallbackEl = document.getElementById('staffAvatarFallback');
+      if (p.photo_url) {
+        imgEl.src = p.photo_url;
+        imgEl.style.display = 'block';
+        fallbackEl.style.display = 'none';
+      } else {
+        imgEl.style.display = 'none';
+        fallbackEl.style.display = 'flex';
+        fallbackEl.textContent = p.person_type === 'teacher' ? '👨‍🏫' : '👔';
+      }
+
+      // Verdict Banner
+      const banner = document.getElementById('staffPunchBanner');
+      banner.className = `gate-verdict-banner ${punch.badge_class || 'success'}`;
+      document.getElementById('staffPunchIcon').textContent = punch.punch_type === 'in' ? '🟢' : '🔵';
+      document.getElementById('staffPunchTitleFr').textContent = punch.punch_type_fr;
+      document.getElementById('staffPunchTitleAr').textContent = punch.punch_type_ar;
+      document.getElementById('staffPunchTime').textContent = punch.timestamp;
+
+      let adviceMsg = '';
+      if (punch.is_duplicate) {
+        banner.className = 'gate-verdict-banner warning';
+        document.getElementById('staffPunchIcon').textContent = '⚠️';
+        adviceMsg = 'Pointage déjà enregistré il y a quelques secondes (double passage ignoré)';
+        playChimeWarning();
+      } else if (punch.punch_type === 'in') {
+        adviceMsg = `Bienvenue ${p.full_name} à l'Institut ILAS ! Bonne journée d'activité.`;
+        playChimeSuccess();
+      } else {
+        adviceMsg = `Temps de travail total aujourd'hui : ${punch.total_worked_str} • Au revoir et bonne soirée !`;
+        playChimeDeparture();
+      }
+      document.getElementById('staffPunchAdvice').textContent = adviceMsg;
+
+      // 3 Metrics Display
+      document.getElementById('staffFirstInDisplay').textContent = punch.first_in || '—';
+      document.getElementById('staffLastOutDisplay').textContent = punch.last_out || (punch.punch_type === 'in' ? 'En cours...' : '—');
+      document.getElementById('staffTotalDurationDisplay').textContent = punch.total_worked_str || '0 min';
+
+      // Teacher Schedule Card
+      const schedCard = document.getElementById('staffTeacherScheduleCard');
+      if (p.person_type === 'teacher') {
+        schedCard.style.display = 'block';
+        const countBadge = document.getElementById('staffScheduleCountBadge');
+        const slotsGrid = document.getElementById('staffScheduleSlotsGrid');
+        const noSched = document.getElementById('staffNoScheduleNotice');
+
+        if (sched && sched.length > 0) {
+          countBadge.textContent = `${sched.length} cours aujourd'hui`;
+          noSched.style.display = 'none';
+          slotsGrid.style.display = 'grid';
+
+          let sHtml = '';
+          sched.forEach(s => {
+            sHtml += `
+              <div style="background:#071220; border:1px solid #1e3a5f; border-radius:12px; padding:10px 14px; display:flex; flex-direction:column; gap:6px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-weight:800; font-size:13px; color:#f8fafc;">${s.course_name}</span>
+                  <span class="pillar-badge ${s.badge_class}" style="font-size:10px; padding:2px 6px;">${s.status_fr}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8;">
+                  <span>🚪 <strong>${s.room_name}</strong></span>
+                  <span style="font-family:'JetBrains Mono', monospace; color:#38bdf8;">⏰ ${s.time_slot}</span>
+                </div>
+              </div>
+            `;
+          });
+          slotsGrid.innerHTML = sHtml;
+        } else {
+          countBadge.textContent = 'Aucun cours ce jour';
+          slotsGrid.style.display = 'none';
+          noSched.style.display = 'block';
+        }
+      } else {
+        schedCard.style.display = 'none';
+      }
+
+      // Punch History Chips
+      const chipsCont = document.getElementById('staffPunchesChipsContainer');
+      if (punch.punches_history && punch.punches_history.length > 0) {
+        let chHtml = '';
+        punch.punches_history.forEach(ph => {
+          chHtml += `
+            <span style="background:${ph.type === 'in' ? 'rgba(16,185,129,0.2)' : 'rgba(59,130,246,0.2)'}; border:1px solid ${ph.type === 'in' ? '#10b981' : '#3b82f6'}; color:#f8fafc; padding:3px 10px; border-radius:8px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:5px;">
+              ${ph.type === 'in' ? '🟢' : '🔵'} ${ph.type_label_fr} à ${ph.time}
+            </span>
+          `;
+        });
+        chipsCont.innerHTML = chHtml;
+      } else {
+        chipsCont.innerHTML = '<span style="color:#94a3b8; font-size:12px;">Premier pointage de la journée</span>';
+      }
+
+      // Rectification Button
+      const btnLabel = document.getElementById('btnTogglePunchLabel');
+      if (punch.punch_type === 'in') {
+        btnLabel.textContent = '🔄 Rectifier en SORTIE';
+      } else {
+        btnLabel.textContent = '🔄 Rectifier en ENTRÉE';
+      }
+
+      // Ticker
+      const roleName = p.person_type === 'teacher' ? 'Prof' : 'Staff';
+      prependTicker(p.full_name, `${punch.punch_type === 'in' ? '🟢 Entrée' : '🔵 Sortie'} (${roleName})`, punch.timestamp);
+
+      // Transition to Result View
+      kioskCard.classList.remove('search-active');
+      kioskCard.classList.add('has-result');
+      document.getElementById('idleView').style.display = 'none';
+      const resView = document.getElementById('resultView');
+      resView.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      startAutoResetTimer(DISPLAY_DURATION_MS);
+    }
+
+    async function correctLastPunch() {
+      if (!lastStaffPunchId) return;
+      const newType = lastStaffPunchType === 'in' ? 'out' : 'in';
+      try {
+        const resp = await fetch('/api/kiosk/toggle_punch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ punch_id: lastStaffPunchId, punch_type: newType })
+        });
+        const resData = await resp.json();
+        if (resData.success) {
+          displayStaffSuccess(resData);
+        } else {
+          alert(resData.message || 'Erreur lors de la rectification');
+        }
+      } catch (e) {
+        console.error('Error toggling punch', e);
+      }
+    }
+
+    function returnToIdle() {
+      clearTimeout(resetTimer);
+      isTimerPaused = false;
+      setPunchMode('auto');
+      lastStaffPunchId = null;
+      lastStaffPunchType = null;
+      kioskCard.classList.remove('has-result');
+      kioskCard.classList.remove('search-active');
+      document.getElementById('resultView').style.display = 'none';
+      document.getElementById('studentResultZone').style.display = 'none';
+      document.getElementById('staffResultZone').style.display = 'none';
+      document.getElementById('idleView').style.display = 'block';
+      hideDropdown();
+      scanInput.value = '';
+      scanClearBtn.style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scanInput.focus();
+    }
+
+    function displayError(msg) {
+      playChimeError();
+      scanInput.value = '';
+      scanClearBtn.style.display = 'none';
+      hideDropdown();
+      scanInput.placeholder = `❌ ${msg}`;
+      setTimeout(() => {
+        scanInput.placeholder = 'Taper un nom (ex: il, ilyass...), code ou badge...';
+      }, 2500);
+    }
+
+    function prependTicker(name, room, time) {
+      const stream = document.getElementById('tickerStream');
+      const chip = document.createElement('div');
+      chip.className = 'ticker-chip';
+      chip.innerHTML = `<span class="t-time">${time}</span><span>${name}</span><span class="t-room">${room}</span>`;
+      stream.insertBefore(chip, stream.firstChild);
+      if (stream.children.length > 8) {
+        stream.removeChild(stream.lastChild);
+      }
+    }
+
+    // Camera Modal Handler
+    let html5QrCode = null;
+    let isCameraOpen = false;
+
+    function openCameraModal() {
+      isCameraOpen = true;
+      document.getElementById('cameraModal').style.display = 'flex';
+      if (typeof Html5Qrcode !== 'undefined') {
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          (decodedText) => {
+            closeCameraModal();
+            processScan({ code: decodedText });
+          },
+          (errorMessage) => {}
+        ).catch(err => {
+          console.warn("Camera init error", err);
+        });
+      }
+    }
+
+    function closeCameraModal() {
+      isCameraOpen = false;
+      document.getElementById('cameraModal').style.display = 'none';
+      if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+          html5QrCode.clear();
+        }).catch(() => {});
+      }
+      scanInput.focus();
+    }
+
+    // --- Native Smartphone Web NFC Auto-Reader ---
+    let ndefReader = null;
+    let isNfcActive = false;
+
+    async function initWebNfc() {
+      if (!('NDEFReader' in window) || isNfcActive) return;
+      try {
+        if (!ndefReader) {
+          ndefReader = new NDEFReader();
+          ndefReader.addEventListener("reading", ({ message, serialNumber }) => {
+            let scannedCode = '';
+            for (const record of message.records) {
+              if (record.recordType === "text") {
+                const textDecoder = new TextDecoder(record.encoding || 'utf-8');
+                scannedCode = textDecoder.decode(record.data).trim();
+                break;
+              }
+            }
+            if (!scannedCode && serialNumber) {
+              scannedCode = serialNumber;
+            }
+            if (scannedCode) {
+              if (isShowingResult) {
+                clearTimeout(resetTimer);
+                document.getElementById('resultView').style.display = 'none';
+                document.getElementById('idleView').style.display = 'block';
+                isShowingResult = false;
+              }
+              processScan({ code: scannedCode });
+            }
+          });
+        }
+        await ndefReader.scan();
+        isNfcActive = true;
+        const nfcBadge = document.getElementById('nfcStatusBadge');
+        if (nfcBadge) nfcBadge.style.display = 'inline-flex';
+      } catch (err) {
+        console.log("Web NFC waiting for user gesture:", err);
+      }
+    }
+
+    if ('NDEFReader' in window) {
+      document.addEventListener('click', initWebNfc, { passive: true });
+      document.addEventListener('touchstart', initWebNfc, { passive: true });
+      setTimeout(initWebNfc, 600);
+    }
+  </script>
+</body>
+</html>

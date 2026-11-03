@@ -1,0 +1,1044 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+  .tsr-container {
+    max-width: 1350px;
+    margin: 0 auto;
+  }
+  .tsr-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .tsr-title-group h2 {
+    margin: 0;
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: #0B3D6E;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .tsr-title-group p {
+    margin: 4px 0 0 0;
+    font-size: 13px;
+    color: #64748b;
+    max-width: 820px;
+  }
+
+  /* Metric chips / tabs */
+  .tsr-stats {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .tsr-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    background: #ffffff;
+    color: #475569;
+    box-shadow: 0 1px 4px rgba(15,23,42,0.06);
+  }
+  .tsr-chip:hover {
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+  }
+  .tsr-chip.active {
+    border-color: currentColor;
+    box-shadow: 0 4px 12px rgba(15,23,42,0.12);
+  }
+  .tsr-chip .cnt {
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 11.5px;
+    font-weight: 800;
+  }
+
+  /* Filter Panel */
+  .tsr-filter-card {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 22px;
+    box-shadow: 0 2px 10px rgba(15,23,42,0.04);
+  }
+  .tsr-filter-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 12px;
+    align-items: center;
+  }
+  @media (max-width: 1024px) {
+    .tsr-filter-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 640px) {
+    .tsr-filter-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .tsr-filter-grid input[type="text"],
+  .tsr-filter-grid select,
+  .tsr-filter-grid input[type="date"] {
+    width: 100%;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    box-sizing: border-box;
+    background: #ffffff;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .tsr-filter-grid input:focus,
+  .tsr-filter-grid select:focus {
+    border-color: #1f6feb;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(31,111,235,0.12);
+  }
+
+  .tsr-filter-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+  }
+  .tsr-active-pills {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 12px;
+  }
+  .tsr-pill {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tsr-pill a {
+    color: #1d4ed8;
+    text-decoration: none;
+    font-weight: 800;
+  }
+
+  /* Request Card */
+  .tsr-card {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 10px rgba(15,23,42,0.04);
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+  }
+  .tsr-card:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 6px 24px rgba(31,111,235,0.08);
+  }
+  .tsr-card.status-pending {
+    border-left: 6px solid #f59e0b;
+  }
+  .tsr-card.status-pending.has-similar {
+    border-left: 6px solid #8b5cf6;
+    background: linear-gradient(180deg, #ffffff 0%, #faf5ff 100%);
+  }
+  .tsr-card.status-approved {
+    border-left: 6px solid #10b981;
+    background: #ffffff;
+  }
+  .tsr-card.status-rejected {
+    border-left: 6px solid #ef4444;
+    background: #ffffff;
+    opacity: 0.9;
+  }
+
+  .tsr-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .tsr-student-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .tsr-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .tsr-name-text {
+    font-size: 1.12rem;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .tsr-meta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 13px;
+    color: #475569;
+    margin-top: 6px;
+  }
+  .tsr-meta-strip span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* Similar Matches Container */
+  .tsr-similar-box {
+    background: #fffbeb;
+    border: 1.5px solid #fcd34d;
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 8px rgba(245,158,11,0.08);
+  }
+  .tsr-similar-box.match-high {
+    background: #fdf4ff;
+    border-color: #d8b4fe;
+  }
+  .tsr-similar-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed rgba(245,158,11,0.3);
+  }
+  .tsr-similar-head-title {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #92400e;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tsr-similar-box.match-high .tsr-similar-head-title {
+    color: #6b21a8;
+  }
+  .tsr-similar-item {
+    background: #ffffff;
+    border: 1px solid #fde68a;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    transition: all 0.15s ease;
+  }
+  .tsr-similar-box.match-high .tsr-similar-item {
+    border-color: #e9d5ff;
+  }
+  .tsr-similar-item:last-child {
+    margin-bottom: 0;
+  }
+  .tsr-similar-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  }
+  .tsr-item-left {
+    flex: 1;
+    min-width: 260px;
+  }
+  .tsr-item-name {
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .tsr-score-tag {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+  .tsr-score-tag.score-high {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+  }
+  .tsr-score-tag.score-med {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+  }
+  .tsr-item-meta {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .tsr-classes-list {
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 11.5px;
+  }
+  .tsr-class-tag {
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .tsr-class-tag.tag-warning {
+    background: #fef2f2;
+    color: #991b1b;
+    border-color: #fecaca;
+    font-weight: 800;
+  }
+
+  .tsr-actions-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  /* Modals */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.6);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    padding: 16px;
+  }
+  .modal-overlay.open {
+    display: flex;
+  }
+  .modal-sheet {
+    background: #ffffff;
+    border-radius: 18px;
+    max-width: 620px;
+    width: 100%;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    overflow: hidden;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-sheet-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-sheet-body {
+    padding: 20px;
+    overflow-y: auto;
+  }
+</style>
+
+<div class="tsr-container">
+  
+  <!-- REAL-TIME LIVE NOTIFICATION BANNER (if incoming request during session) -->
+  <div id="liveNewRequestBanner" style="display:none; background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:#fff; border-radius:12px; padding:12px 18px; margin-bottom:16px; box-shadow:0 6px 20px rgba(16,185,129,0.3); align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="font-size:22px;">🔔</span>
+      <div>
+        <strong style="font-size:14px;">Nouvelle demande d'élève transmise par un professeur !</strong>
+        <div style="font-size:12px; opacity:0.9;">Un professeur vient d'ajouter un élève lors de l'appel.</div>
+      </div>
+    </div>
+    <button type="button" onclick="window.location.reload()" class="btn btn-sm" style="background:#ffffff; color:#065f46; font-weight:800; border:none; border-radius:8px; padding:6px 14px;">
+      🔄 Actualiser la liste
+    </button>
+  </div>
+
+  <!-- PAGE HEADER -->
+  <div class="tsr-header">
+    <div class="tsr-title-group">
+      <h2>
+        <span>📥</span>
+        <span>{{ 'Demandes d\'Ajout d\'Élèves (Professeurs)' if lang == 'fr' else 'طلبات إضافة التلاميذ (الأساتذة)' }}</span>
+      </h2>
+      <p>
+        {{ 'Vérification et validation administrative des élèves signalés par les enseignants lors de l\'appel. Détection intelligente automatique des correspondances et doublons.' if lang == 'fr' else 'التحقق والمصادقة الإدارية على التلاميذ الجدد المقترحين من طرف الأساتذة عند تسجيل الغياب مع كشف ذكي للتلاميذ المسجلين مسبقاً.' }}
+      </p>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="background: #f0fdf4; color: #16a34a; border: 1.5px solid #bbf7d0; padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: #16a34a; display: inline-block;"></span>
+        <span>Surveillance active</span>
+      </span>
+      <a href="{{ url_for('teacher_student_requests') }}" class="btn btn-sm btn-outline" style="border-color:#cbd5e1; color:#475569;" title="Actualiser la liste">
+        🔄
+      </a>
+    </div>
+  </div>
+
+  <!-- STATUS / METRIC TABS -->
+  <div class="tsr-stats">
+    <a href="{{ url_for('teacher_student_requests', status='all', teacher_id=selected_teacher_id, course_id=selected_course_id, school_level=selected_level, date_filter=date_filter, match_filter=match_filter, q=search_q, sort_by=sort_by) }}" 
+       class="tsr-chip {{ 'active' if current_status == 'all' else '' }}"
+       style="{{ 'background:#0B3D6E; color:#fff;' if current_status == 'all' else '' }}">
+      <span>🌐 {{ 'Toutes' if lang == 'fr' else 'الكل' }}</span>
+      <span class="cnt" style="{{ 'background:rgba(255,255,255,0.25); color:#fff;' if current_status == 'all' else 'background:#f1f5f9; color:#475569;' }}">{{ counts.all }}</span>
+    </a>
+
+    <a href="{{ url_for('teacher_student_requests', status='pending', teacher_id=selected_teacher_id, course_id=selected_course_id, school_level=selected_level, date_filter=date_filter, match_filter=match_filter, q=search_q, sort_by=sort_by) }}" 
+       class="tsr-chip {{ 'active' if current_status == 'pending' else '' }}"
+       style="{{ 'background:#d97706; color:#fff;' if current_status == 'pending' else '' }}">
+      <span>⏳ {{ 'En attente' if lang == 'fr' else 'في الانتظار' }}</span>
+      <span class="cnt" style="{{ 'background:rgba(255,255,255,0.3); color:#fff;' if current_status == 'pending' else 'background:#fef3c7; color:#b45309;' }}">{{ counts.pending }}</span>
+    </a>
+
+    <a href="{{ url_for('teacher_student_requests', status=current_status, match_filter='has_matches', teacher_id=selected_teacher_id, course_id=selected_course_id, school_level=selected_level, date_filter=date_filter, q=search_q, sort_by=sort_by) }}" 
+       class="tsr-chip {{ 'active' if match_filter == 'has_matches' else '' }}"
+       style="{{ 'background:#8b5cf6; color:#fff;' if match_filter == 'has_matches' else '' }}">
+      <span>🔍 {{ 'Avec correspondances' if lang == 'fr' else 'مع تطابقات محتملة' }}</span>
+      <span class="cnt" style="{{ 'background:rgba(255,255,255,0.3); color:#fff;' if match_filter == 'has_matches' else 'background:#ede9fe; color:#6d28d9;' }}">{{ counts.with_matches }}</span>
+    </a>
+
+    <a href="{{ url_for('teacher_student_requests', status='approved', teacher_id=selected_teacher_id, course_id=selected_course_id, school_level=selected_level, date_filter=date_filter, match_filter=match_filter, q=search_q, sort_by=sort_by) }}" 
+       class="tsr-chip {{ 'active' if current_status == 'approved' else '' }}"
+       style="{{ 'background:#16a34a; color:#fff;' if current_status == 'approved' else '' }}">
+      <span>✅ {{ 'Validées & Inscrites' if lang == 'fr' else 'تمت المصادقة' }}</span>
+      <span class="cnt" style="{{ 'background:rgba(255,255,255,0.3); color:#fff;' if current_status == 'approved' else 'background:#dcfce7; color:#15803d;' }}">{{ counts.approved }}</span>
+    </a>
+
+    <a href="{{ url_for('teacher_student_requests', status='rejected', teacher_id=selected_teacher_id, course_id=selected_course_id, school_level=selected_level, date_filter=date_filter, match_filter=match_filter, q=search_q, sort_by=sort_by) }}" 
+       class="tsr-chip {{ 'active' if current_status == 'rejected' else '' }}"
+       style="{{ 'background:#dc2626; color:#fff;' if current_status == 'rejected' else '' }}">
+      <span>✕ {{ 'Refusées' if lang == 'fr' else 'مرفوضة' }}</span>
+      <span class="cnt" style="{{ 'background:rgba(255,255,255,0.3); color:#fff;' if current_status == 'rejected' else 'background:#fee2e2; color:#b91c1c;' }}">{{ counts.rejected }}</span>
+    </a>
+  </div>
+
+  <!-- MULTI-CRITERIA FILTER PANEL -->
+  <div class="tsr-filter-card">
+    <form method="get" action="{{ url_for('teacher_student_requests') }}" id="tsrFilterForm">
+      <input type="hidden" name="status" value="{{ current_status }}">
+
+      <div class="tsr-filter-grid">
+        <!-- 1. Text Search -->
+        <div>
+          <label style="display:block; font-size:11px; font-weight:800; color:#64748b; margin-bottom:4px; text-transform:uppercase;">
+            🔍 Recherche textuelle
+          </label>
+          <input type="text" name="q" value="{{ search_q }}" placeholder="Nom d'élève, tél, prof, classe, remarque...">
+        </div>
+
+        <!-- 2. Teacher -->
+        <div>
+          <label style="display:block; font-size:11px; font-weight:800; color:#64748b; margin-bottom:4px; text-transform:uppercase;">
+            👨‍🏫 Enseignant
+          </label>
+          <select name="teacher_id" onchange="this.form.submit()">
+            <option value="">— Tous les professeurs —</option>
+            {% for t_obj in teachers %}
+            <option value="{{ t_obj.id }}" {{ 'selected' if selected_teacher_id == t_obj.id else '' }}>
+              {{ t_obj.full_name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- 3. Course / Class -->
+        <div>
+          <label style="display:block; font-size:11px; font-weight:800; color:#64748b; margin-bottom:4px; text-transform:uppercase;">
+            📚 Classe / Groupe
+          </label>
+          <select name="course_id" onchange="this.form.submit()">
+            <option value="">— Toutes les classes —</option>
+            {% for c in courses %}
+            <option value="{{ c.id }}" {{ 'selected' if selected_course_id == c.id else '' }}>
+              {{ c.display_name }} ({{ c.level }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- 4. School Level -->
+        <div>
+          <label style="display:block; font-size:11px; font-weight:800; color:#64748b; margin-bottom:4px; text-transform:uppercase;">
+            🎓 Niveau Scolaire
+          </label>
+          <select name="school_level" onchange="this.form.submit()">
+            <option value="">— Tous les niveaux —</option>
+            {% for lvl in school_levels %}
+            <option value="{{ lvl }}" {{ 'selected' if selected_level == lvl else '' }}>
+              {{ lvl }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- 5. Date Filter -->
+        <div>
+          <label style="display:block; font-size:11px; font-weight:800; color:#64748b; margin-bottom:4px; text-transform:uppercase;">
+            📅 Période
+          </label>
+          <select name="date_filter" id="dateFilterSelect" onchange="onDateFilterChange(this.value)">
+            <option value="all" {{ 'selected' if date_filter == 'all' else '' }}>Toutes les dates</option>
+            <option value="today" {{ 'selected' if date_filter == 'today' else '' }}>Aujourd'hui</option>
+            <option value="yesterday" {{ 'selected' if date_filter == 'yesterday' else '' }}>Hier</option>
+            <option value="week" {{ 'selected' if date_filter == 'week' else '' }}>7 derniers jours</option>
+            <option value="month" {{ 'selected' if date_filter == 'month' else '' }}>Ce mois-ci</option>
+            <option value="custom" {{ 'selected' if date_filter == 'custom' else '' }}>Personnalisée (du / au)...</option>
+          </select>
+        </div>
+
+        <!-- 6. Custom Dates (conditional) -->
+        <div id="customDateWrap" style="display:{{ 'flex' if date_filter == 'custom' else 'none' }}; gap:6px; align-items:center;">
+          <div>
+            <label style="display:block; font-size:10px; font-weight:700; color:#64748b; margin-bottom:2px;">Du :</label>
+            <input type="date" name="date_from" value="{{ date_from }}">
+          </div>
+          <div>
+            <label style="display:block; font-size:10px; font-weight:700; color:#64748b; margin-bottom:2px;">Au :</label>
+            <input type="date" name="date_to" value="{{ date_to }}">
+          </div>
+        </div>
+
+        <!-- 7. Matches Filter -->
+        <div>
+          <label style="display:block; font-size:11px; font-weight:800; color:#64748b; margin-bottom:4px; text-transform:uppercase;">
+            🔍 Correspondances
+          </label>
+          <select name="match_filter" onchange="this.form.submit()">
+            <option value="all" {{ 'selected' if match_filter == 'all' else '' }}>Tous les élèves</option>
+            <option value="has_matches" {{ 'selected' if match_filter == 'has_matches' else '' }}>⚠️ Avec correspondances trouvées</option>
+            <option value="no_matches" {{ 'selected' if match_filter == 'no_matches' else '' }}>✨ Nouveaux sans correspondances</option>
+          </select>
+        </div>
+
+        <!-- 8. Sort By -->
+        <div>
+          <label style="display:block; font-size:11px; font-weight:800; color:#64748b; margin-bottom:4px; text-transform:uppercase;">
+            ↕️ Trier par
+          </label>
+          <select name="sort_by" onchange="this.form.submit()">
+            <option value="recent" {{ 'selected' if sort_by == 'recent' else '' }}>Plus récents d'abord</option>
+            <option value="name_asc" {{ 'selected' if sort_by == 'name_asc' else '' }}>Nom d'élève (A → Z)</option>
+            <option value="oldest" {{ 'selected' if sort_by == 'oldest' else '' }}>Plus anciens d'abord</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Action & Reset Row -->
+      <div class="tsr-filter-actions">
+        <div class="tsr-active-pills">
+          <span style="font-weight:800; color:#64748b;">Filtres actifs :</span>
+          {% if search_q %}<span class="tsr-pill">🔍 "{{ search_q }}"</span>{% endif %}
+          {% if selected_teacher_id %}
+            {% set t_curr = teachers|selectattr('id', 'equalto', selected_teacher_id)|first %}
+            <span class="tsr-pill">👨‍🏫 {{ t_curr.full_name if t_curr else 'Professeur' }}</span>
+          {% endif %}
+          {% if selected_course_id %}
+            {% set c_curr = courses|selectattr('id', 'equalto', selected_course_id)|first %}
+            <span class="tsr-pill">📚 {{ c_curr.display_name if c_curr else 'Classe' }}</span>
+          {% endif %}
+          {% if selected_level %}<span class="tsr-pill">🎓 {{ selected_level }}</span>{% endif %}
+          {% if date_filter and date_filter != 'all' %}<span class="tsr-pill">📅 {{ date_filter }}</span>{% endif %}
+          {% if match_filter and match_filter != 'all' %}<span class="tsr-pill">🔍 {{ 'Avec doublons' if match_filter=='has_matches' else 'Sans doublons' }}</span>{% endif %}
+          {% if not (search_q or selected_teacher_id or selected_course_id or selected_level or (date_filter and date_filter != 'all') or (match_filter and match_filter != 'all')) %}
+            <span style="color:#94a3b8; font-style:italic;">Aucun filtre avancé appliqué</span>
+          {% endif %}
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px;">
+          {% if search_q or selected_teacher_id or selected_course_id or selected_level or (date_filter and date_filter != 'all') or (match_filter and match_filter != 'all') or current_status != 'all' %}
+          <a href="{{ url_for('teacher_student_requests') }}" class="btn btn-sm btn-outline" style="border-color:#cbd5e1; color:#64748b;">
+            ✕ Réinitialiser
+          </a>
+          {% endif %}
+          <button type="submit" class="btn btn-sm btn-primary" style="padding: 8px 20px; font-weight:800;">
+            Appliquer les filtres
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- REQUESTS LIST -->
+  {% if requests %}
+    {% for r in requests %}
+    <div class="tsr-card status-{{ r.status }} {{ 'has-similar' if (r.status == 'pending' and r.similar_students) else '' }}">
+      
+      <!-- Card Head -->
+      <div class="tsr-card-head">
+        <div class="tsr-student-title">
+          <div class="tsr-avatar">
+            {{ r.full_name[:1].upper() if r.full_name else '?' }}
+          </div>
+          <div>
+            <div class="tsr-name-text">
+              <span>{{ r.full_name }}</span>
+              {% if r.school_level %}
+              <span style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 11.5px; font-weight: 800; padding: 2px 10px; border-radius: 8px;">
+                🎓 {{ r.school_level }}
+              </span>
+              {% endif %}
+            </div>
+
+            <div class="tsr-meta-strip">
+              <span>
+                <strong>👨‍🏫 Enseignant :</strong> 
+                {{ r.teacher.full_name if r.teacher else 'Non assigné' }}
+              </span>
+              <span>•</span>
+              <span>
+                <strong>📚 Classe souhaitée :</strong> 
+                {{ r.course.display_name if r.course else 'Non spécifiée' }}
+              </span>
+              <span>•</span>
+              <span>
+                <strong>📅 Date :</strong> 
+                {{ r.created_at.strftime('%d/%m/%Y à %H:%M') }}
+              </span>
+              {% if r.phone %}
+              <span>•</span>
+              <span>
+                <strong>📞 Tél :</strong> 
+                <a href="tel:{{ r.phone }}" style="text-decoration:none; color:#1d4ed8; font-weight:700;">{{ r.phone }}</a>
+              </span>
+              {% endif %}
+            </div>
+
+            {% if r.notes %}
+            <div style="margin-top: 8px; font-size: 12.5px; color: #475569; background: #f8fafc; padding: 6px 12px; border-radius: 8px; border-left: 3px solid #cbd5e1;">
+              💬 <strong>Remarque du professeur :</strong> <em>« {{ r.notes }} »</em>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Status Tag -->
+        <div>
+          {% if r.status == 'pending' %}
+            {% if r.similar_students %}
+            <span style="background: #fdf4ff; color: #7e22ce; border: 1.5px solid #d8b4fe; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+              ⚠️ {{ r.similar_students|length }} correspondance(s)
+            </span>
+            {% else %}
+            <span style="background: #fffbeb; color: #b45309; border: 1.5px solid #fde68a; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+              ⏳ En attente
+            </span>
+            {% endif %}
+          {% elif r.status == 'approved' %}
+          <span style="background: #f0fdf4; color: #15803d; border: 1.5px solid #bbf7d0; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+            ✅ Validé & Inscrit
+          </span>
+          {% elif r.status == 'rejected' %}
+          <span style="background: #fef2f2; color: #b91c1c; border: 1.5px solid #fecaca; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+            ✕ Refusé
+          </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- SMART SEARCH & DUPLICATE DETECTION BOX -->
+      <!-- ======================================================== -->
+      {% if r.status == 'pending' %}
+        {% if r.similar_students %}
+        <div class="tsr-similar-box {{ 'match-high' if r.similar_students[0].similarity_score >= 85 else '' }}">
+          <div class="tsr-similar-head">
+            <div class="tsr-similar-head-title">
+              <span>🔍</span>
+              <span>{{ r.similar_students|length }} élève(s) similaire(s) déjà présent(s) dans le système :</span>
+            </div>
+            <span style="font-size:11.5px; color:#6b7280;">
+              Vérifiez si cet élève est déjà inscrit dans une autre classe avant de créer un nouveau compte.
+            </span>
+          </div>
+
+          {% for m in r.similar_students %}
+          <div class="tsr-similar-item">
+            <div class="tsr-item-left">
+              <div class="tsr-item-name">
+                <span>👤 {{ m.full_name }}</span>
+                <span class="tsr-score-tag {{ 'score-high' if m.similarity_score >= 85 else 'score-med' }}">
+                  {{ m.similarity_score }}% · {{ m.similarity_reason }}
+                </span>
+                <span style="font-size:11.5px; color:#64748b;">(Code : <strong>{{ m.code }}</strong> · ID #{{ m.id }})</span>
+              </div>
+
+              <div class="tsr-item-meta">
+                <span>🎓 Niveau en base : <strong>{{ m.school_level }}</strong></span>
+                {% if m.phone %}<span>📞 Tél : <strong>{{ m.phone }}</strong></span>{% endif %}
+              </div>
+
+              <!-- Classes où cet élève est déjà inscrit -->
+              <div class="tsr-classes-list">
+                <span style="font-weight:800; color:#475569;">Classes actuelles :</span>
+                {% if m.active_courses %}
+                  {% for ac in m.active_courses %}
+                    <span class="tsr-class-tag {{ 'tag-warning' if ac.is_requested_course else '' }}">
+                      📚 {{ ac.name }} {% if ac.teacher %}(Prof. {{ ac.teacher }}){% endif %}
+                      {% if ac.is_requested_course %}
+                        <strong style="color:#b91c1c;">⚠️ DÉJÀ INSCRIT DANS CE GROUPE</strong>
+                      {% endif %}
+                    </span>
+                  {% endfor %}
+                {% else %}
+                  <span style="color:#94a3b8; font-style:italic;">Aucune classe active (Ancien élève / compte inactif)</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Action to enroll this EXISTING matched student -->
+            <div>
+              <a href="{{ url_for('express_enrollment', student_mode='exist', student_id=m.id, course_id=r.course_id or '', request_id=r.id, start_date=today_date) }}" 
+                 class="btn btn-sm btn-primary" 
+                 style="background: #1d4ed8; border-color: #1d4ed8; font-weight: 800; font-size: 12.5px; padding: 7px 14px; border-radius: 8px; box-shadow: 0 2px 8px rgba(29,78,216,0.25); display: inline-flex; align-items: center; gap: 6px;"
+                 title="Inscrire cet élève existant via Inscription Express (ID et classe pré-sélectionnés)">
+                <span>⚡</span>
+                <span>Inscrire cet élève existant</span>
+              </a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 8px 14px; font-size: 12.5px; color: #64748b; display: flex; align-items: center; gap: 8px;">
+          <span>✨</span>
+          <span>Aucune correspondance trouvée dans la base (Probablement un nouvel élève).</span>
+        </div>
+        {% endif %}
+      {% endif %}
+
+      <!-- Rejection note if rejected -->
+      {% if r.status == 'rejected' and r.rejection_reason %}
+      <div style="font-size: 12.5px; color: #b91c1c; background: #fff5f5; padding: 8px 14px; border-radius: 10px; border: 1px solid #fed7d7;">
+        ⚠️ <strong>Motif du refus :</strong> {{ r.rejection_reason }}
+      </div>
+      {% endif %}
+
+      <!-- Approved info if approved -->
+      {% if r.status == 'approved' and r.enrolled_student %}
+      <div style="font-size: 12.5px; color: #15803d; background: #f0fdf4; padding: 8px 14px; border-radius: 10px; border: 1px solid #bbf7d0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>
+          ✅ Inscrit officiellement en tant que : <strong>{{ r.enrolled_student.full_name }}</strong> (ID #{{ r.enrolled_student.id }} · {{ r.enrolled_student.code }})
+          {% if r.processed_at %} · Traité le {{ r.processed_at.strftime('%d/%m/%Y à %H:%M') }}{% endif %}
+        </div>
+        <a href="{{ url_for('student_view', sid=r.enrolled_student_id) }}" class="btn btn-xs btn-outline" style="border-color:#16a34a; color:#15803d; background:#fff; font-weight:700;">
+          👤 Voir fiche élève
+        </a>
+      </div>
+      {% endif %}
+
+      <!-- ACTIONS BAR -->
+      <div class="tsr-actions-row">
+        {% if r.status == 'pending' %}
+          <!-- 1. REGISTER AS NEW STUDENT -->
+          <a href="{{ url_for('express_enrollment', student_mode='new', request_id=r.id, full_name=r.full_name, school_level=r.school_level or '', phone=r.phone or '', course_id=r.course_id or '', start_date=today_date) }}" 
+             class="btn btn-green btn-sm" 
+             style="background: #16a34a; border-color: #16a34a; color: #ffffff; font-weight: 800; font-size: 13px; padding: 8px 18px; border-radius: 10px; box-shadow: 0 4px 12px rgba(22,163,74,0.3); display: inline-flex; align-items: center; gap: 6px;"
+             title="Ouvrir Inscription Express pour créer un nouveau dossier élève avec classe et niveau pré-remplis">
+            <span>⚡</span>
+            <span>Inscrire comme NOUVEL élève</span>
+          </a>
+
+          <!-- 2. MANUAL STUDENT PICKER (if match was missed) -->
+          <button type="button" 
+                  onclick="openManualPickerModal({{ r.id }}, '{{ r.full_name|replace("'", "\\'") }}', '{{ r.course_id or "" }}')" 
+                  class="btn btn-outline btn-sm" 
+                  style="border-color: #3b82f6; color: #1d4ed8; font-weight: 700; font-size: 12.5px; padding: 8px 14px; border-radius: 10px; background: #fff;"
+                  title="Rechercher manuellement n'importe quel élève existant dans la base">
+            <span>🔍</span>
+            <span>Lier à un autre élève existant...</span>
+          </button>
+
+          <!-- 3. REJECT BUTTON -->
+          <button type="button" 
+                  onclick="openRejectModal({{ r.id }}, '{{ r.full_name|replace("'", "\\'") }}')" 
+                  class="btn btn-outline btn-sm" 
+                  style="border-color: #ef4444; color: #ef4444; font-weight: 700; font-size: 12.5px; padding: 8px 14px; border-radius: 10px; background: #fff;">
+            <span>✕</span>
+            <span>Refuser</span>
+          </button>
+        {% endif %}
+
+        {% if cur_user and cur_user.role == 'admin' %}
+        <form method="post" action="{{ url_for('teacher_student_request_delete', req_id=r.id) }}" style="display:inline;" onsubmit="return confirm('Confirmer la suppression définitive de cette demande ?');">
+          <button type="submit" class="btn btn-xs btn-outline" style="border-color: #cbd5e1; color: #94a3b8; padding: 6px 10px; border-radius: 8px;" title="Supprimer définitivement la demande">
+            🗑️
+          </button>
+        </form>
+        {% endif %}
+      </div>
+
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="card empty" style="padding: 60px 20px; text-align: center; border-radius: 16px; background: #ffffff;">
+      <div style="font-size: 52px; margin-bottom: 14px;">📥</div>
+      <h3 style="margin: 0; color: #0B3D6E; font-size: 19px;">
+        Aucune demande d'élève trouvée
+      </h3>
+      <p style="color: #64748b; margin: 8px 0 0; font-size: 13.5px;">
+        Aucun résultat ne correspond à vos critères de recherche actuels.
+      </p>
+      <div style="margin-top:16px;">
+        <a href="{{ url_for('teacher_student_requests') }}" class="btn btn-sm btn-primary">
+          Réinitialiser tous les filtres
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+
+<!-- ======================================================== -->
+<!-- MODAL : RECHERCHE & SÉLECTION MANUELLE D'ÉLÈVE EXISTANT -->
+<!-- ======================================================== -->
+<div class="modal-overlay" id="manualPickerModal">
+  <div class="modal-sheet">
+    <div class="modal-sheet-head">
+      <h4 style="margin:0; font-size:15px; font-weight:800; color:#0B3D6E; display:flex; align-items:center; gap:8px;">
+        <span>🔍</span>
+        <span>Lier à un élève existant dans l'institut</span>
+      </h4>
+      <button type="button" onclick="closeManualPickerModal()" style="background:none; border:none; font-size:20px; color:#94a3b8; cursor:pointer;">✕</button>
+    </div>
+    
+    <div class="modal-sheet-body">
+      <p style="margin:0 0 12px 0; font-size:13px; color:#475569;">
+        Demande pour : <strong id="pickerReqStudentName" style="color:#0f172a;"></strong>
+      </p>
+
+      <div style="margin-bottom:14px;">
+        <input type="text" id="pickerSearchInput" oninput="filterManualPicker(this.value)" 
+               placeholder="Tapez le nom, prénom, code ou téléphone de l'élève..." 
+               style="width:100%; border:2px solid #3b82f6; border-radius:10px; padding:10px 14px; font-size:14px; font-weight:600; box-sizing:border-box; outline:none;">
+      </div>
+
+      <!-- Quick results list -->
+      <div id="pickerResultsContainer" style="max-height:360px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;">
+        <!-- Populated via JS -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- MODAL DE REFUS DE DEMANDE -->
+<!-- ======================================================== -->
+<div class="modal-overlay" id="rejectModal">
+  <div class="modal-sheet" style="max-width:480px;">
+    <div class="modal-sheet-head">
+      <h4 style="margin:0; font-size:15px; font-weight:800; color:#b91c1c;">
+        ✕ Refuser la proposition d'élève
+      </h4>
+      <button type="button" onclick="closeRejectModal()" style="background:none; border:none; font-size:20px; color:#94a3b8; cursor:pointer;">✕</button>
+    </div>
+    <form method="post" id="rejectForm" action="">
+      <div class="modal-sheet-body">
+        <p style="margin:0 0 12px 0; font-size:13px; color:#475569;">
+          Indiquez le motif de refus pour <strong id="rejectStudentName"></strong> :
+        </p>
+        <div style="margin-bottom:12px;">
+          <select id="quickReasonSelect" onchange="applyQuickReason(this.value)" style="width:100%; border:1.5px solid #cbd5e1; border-radius:8px; padding:8px 10px; font-size:12.5px; margin-bottom:8px;">
+            <option value="">-- Choisir un motif prédéfini (optionnel) --</option>
+            <option value="Groupe complet (effectif maximal atteint)">Groupe complet (effectif maximal atteint)</option>
+            <option value="Mauvais niveau scolaire pour cette classe">Mauvais niveau scolaire pour cette classe</option>
+            <option value="Non joignable / Informations insuffisantes">Non joignable / Informations insuffisantes</option>
+            <option value="Élève déjà inscrit dans un autre créneau">Élève déjà inscrit dans un autre créneau</option>
+          </select>
+          <textarea name="reason" id="rejectReasonText" rows="3" placeholder="Précisez le motif du refus..." style="width:100%; box-sizing:border-box; border:1.5px solid #cbd5e1; border-radius:10px; padding:10px; font-size:13px;"></textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" onclick="closeRejectModal()" class="btn btn-sm btn-outline" style="border-color:#cbd5e1; color:#64748b;">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-sm" style="background:#dc2626; color:#fff; font-weight:800; border:none; border-radius:8px; padding:8px 18px;">
+            Confirmer le refus
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // All students lookup for manual picker
+  var ALL_STUDENTS_LOOKUP = {{ students_lookup|tojson if students_lookup else '[]' }};
+  var currentPickerReqId = null;
+  var currentPickerCourseId = null;
+
+  function onDateFilterChange(val) {
+    var customWrap = document.getElementById('customDateWrap');
+    if (customWrap) {
+      customWrap.style.display = (val === 'custom') ? 'flex' : 'none';
+    }
+    if (val !== 'custom') {
+      document.getElementById('tsrFilterForm').submit();
+    }
+  }
+
+  // Reject Modal
+  function openRejectModal(reqId, studentName) {
+    var form = document.getElementById('rejectForm');
+    form.action = '/admin/teacher-student-requests/' + reqId + '/reject';
+    document.getElementById('rejectStudentName').innerText = studentName;
+    document.getElementById('rejectReasonText').value = '';
+    document.getElementById('quickReasonSelect').selectedIndex = 0;
+    document.getElementById('rejectModal').classList.add('open');
+  }
+
+  function closeRejectModal() {
+    document.getElementById('rejectModal').classList.remove('open');
+  }
+
+  function applyQuickReason(val) {
+    if (val) {
+      document.getElementById('rejectReasonText').value = val;
+    }
+  }
+
+  // Manual Picker Modal
+  function openManualPickerModal(reqId, studentName, courseId) {
+    currentPickerReqId = reqId;
+    currentPickerCourseId = courseId;
+    document.getElementById('pickerReqStudentName').innerText = studentName;
+    document.getElementById('pickerSearchInput').value = '';
+    filterManualPicker('');
+    document.getElementById('manualPickerModal').classList.add('open');
+    setTimeout(function() {
+      document.getElementById('pickerSearchInput').focus();
+    }, 100);
+  }
+
+  function closeManualPickerModal() {
+    document.getElementById('manualPickerModal').classList.remove('open');
+  }
+
+  function filterManualPicker(query) {
+    var q = (query || '').toLowerCase().trim();
+    var container = document.getElementById('pickerResultsContainer');
+    container.innerHTML = '';
+
+    var filtered = ALL_STUDENTS_LOOKUP.filter(function(s) {
+      if (!q) return true;
+      return (s.name && s.name.toLowerCase().indexOf(q) !== -1) ||
+             (s.code && s.code.toLowerCase().indexOf(q) !== -1) ||
+             (s.phone && s.phone.indexOf(q) !== -1) ||
+             (s.level && s.level.toLowerCase().indexOf(q) !== -1);
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div style="text-align:center; padding:24px; color:#94a3b8; font-size:13px;">Aucun élève trouvé avec ce nom ou numéro.</div>';
+      return;
+    }
+
+    filtered.slice(0, 20).forEach(function(s) {
+      var item = document.createElement('div');
+      item.style.cssText = 'background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; gap:10px;';
+      
+      var left = document.createElement('div');
+      left.innerHTML = '<div style="font-weight:800; font-size:13.5px; color:#0f172a;">👤 ' + s.name + ' <span style="font-size:11px; color:#64748b;">(Code: ' + s.code + ')</span></div>' +
+                       '<div style="font-size:11.5px; color:#64748b; margin-top:2px;">' +
+                       (s.level ? '🎓 ' + s.level + ' · ' : '') +
+                       (s.phone ? '📞 ' + s.phone : 'Sans téléphone') +
+                       (s.active_classes ? ' · <span style="color:#1d4ed8; font-weight:700;">📚 ' + s.active_classes + '</span>' : '') +
+                       '</div>';
+      
+      var right = document.createElement('div');
+      var btn = document.createElement('a');
+      btn.className = 'btn btn-xs btn-primary';
+      btn.style.cssText = 'font-weight:800; padding:6px 12px; border-radius:6px; background:#1d4ed8; text-decoration:none; color:#fff;';
+      btn.innerHTML = '⚡ Sélectionner';
+      btn.href = '/express_enrollment?student_mode=exist&student_id=' + s.id + '&course_id=' + (currentPickerCourseId || '') + '&request_id=' + (currentPickerReqId || '') + '&start_date={{ today_date }}';
+      right.appendChild(btn);
+
+      item.appendChild(left);
+      item.appendChild(right);
+      container.appendChild(item);
+    });
+  }
+
+  // Backdrop click to close modals
+  document.getElementById('manualPickerModal').addEventListener('click', function(e) {
+    if (e.target === this) closeManualPickerModal();
+  });
+  document.getElementById('rejectModal').addEventListener('click', function(e) {
+    if (e.target === this) closeRejectModal();
+  });
+
+  // Real-time auto-check for new requests from teachers while on this page
+  var initialPendingCount = {{ counts.pending }};
+  setInterval(function() {
+    fetch('/api/live_logins')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data || typeof data.pending_teacher_requests_count === 'undefined') return;
+        if (data.pending_teacher_requests_count > initialPendingCount) {
+          var b = document.getElementById('liveNewRequestBanner');
+          if (b) b.style.display = 'flex';
+        }
+      })
+      .catch(function() {});
+  }, 6000);
+</script>
+{% endblock %}

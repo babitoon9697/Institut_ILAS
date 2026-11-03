@@ -1,0 +1,858 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- ROOMS CUSTOM MODERN STYLES -->
+<style>
+  .rooms-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  /* KPI Cards Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+  }
+  .kpi-blue::before { background: #2563eb; }
+  .kpi-emerald::before { background: #059669; }
+  .kpi-purple::before { background: #7c3aed; }
+  .kpi-amber::before { background: #d97706; }
+
+  .kpi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .kpi-icon {
+    font-size: 18px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .kpi-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
+    margin-bottom: 6px;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+  .kpi-sub {
+    font-size: 11.5px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Form Card */
+  .room-form-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    padding: 18px 22px;
+    margin-bottom: 22px;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+  }
+  .form-title {
+    margin: 0 0 14px 0;
+    font-size: 15px;
+    font-weight: 800;
+    color: #0B3D6E;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .room-form-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 0.8fr 1.6fr auto;
+    gap: 12px;
+    align-items: flex-end;
+  }
+  .form-group {
+    margin: 0;
+  }
+  .form-group label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #334155;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .form-group .input-box {
+    position: relative;
+  }
+  .form-group .input-box input {
+    width: 100%;
+    padding: 8px 10px 8px 34px;
+    border-radius: 9px;
+    border: 1.5px solid #cbd5e1;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #f8fafc;
+    transition: all 0.2s;
+    box-sizing: border-box;
+  }
+  .form-group .input-box input:focus {
+    border-color: #2563eb;
+    background: #ffffff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+  .form-group .input-box .icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #94a3b8;
+    pointer-events: none;
+  }
+
+  /* Table Card & Modern Table */
+  .table-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+    overflow: visible;
+  }
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 16px;
+  }
+  .modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+  }
+  body.rtl .modern-table {
+    text-align: right;
+  }
+  .modern-table th {
+    background: #f8fafc;
+    padding: 12px 14px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1.5px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  .modern-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    transition: background-color 0.15s ease;
+  }
+  .modern-table tr:hover td {
+    background-color: #f8fbff;
+  }
+  .modern-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Room Cell */
+  .room-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .room-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    color: #0284c7;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #bae6fd;
+  }
+  .room-name {
+    font-weight: 800;
+    color: #0b3d6e;
+    font-size: 14px;
+    line-height: 1.25;
+  }
+  .room-id-pill {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 5px;
+    margin-top: 2px;
+    display: inline-block;
+  }
+
+  /* Capacity Pill */
+  .capacity-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 7px;
+  }
+
+  /* Status Badge */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 24px;
+    min-width: 82px;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+    box-sizing: border-box;
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+  }
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+  }
+
+  /* Actions Cluster & Modern Dropdown */
+  .actions-cell {
+    position: relative;
+    white-space: nowrap;
+    text-align: right;
+    width: 155px;
+    min-width: 155px;
+  }
+  body.rtl .actions-cell {
+    text-align: left;
+  }
+  .action-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    position: relative;
+  }
+  .btn-primary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 110px;
+    min-width: 110px;
+    max-width: 110px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 800;
+    text-decoration: none;
+    border: 1px solid #cbd5e1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-sizing: border-box;
+    text-align: center;
+    flex-shrink: 0;
+    background: #f8fafc;
+    color: #0b3d6e;
+  }
+  .btn-primary-action:hover {
+    background: #e2e8f0;
+    color: #0b3d6e;
+  }
+
+  /* Dropdown Trigger Button */
+  .btn-menu-trigger {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1.5px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    font-size: 16px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+    box-sizing: border-box;
+    flex-shrink: 0;
+  }
+  .btn-menu-trigger:hover, .btn-menu-trigger.active {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+  }
+
+  /* Floating Dropdown Menu */
+  .dropdown-menu-float {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 5px);
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 11px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
+    min-width: 200px;
+    z-index: 1000;
+    padding: 5px;
+    text-align: left;
+  }
+  body.rtl .dropdown-menu-float {
+    right: auto;
+    left: 0;
+    text-align: right;
+  }
+  .dropdown-menu-float.show {
+    display: block;
+    animation: dropdownFadeIn 0.15s ease;
+  }
+  @keyframes dropdownFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 9px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+    text-decoration: none;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: background 0.12s;
+  }
+  .dropdown-item:hover {
+    background: #f1f5f9;
+    color: #0b3d6e;
+  }
+  .dropdown-item.danger {
+    color: #dc2626;
+  }
+  .dropdown-item.danger:hover {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+  .dropdown-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 4px 0;
+  }
+  .dropdown-label {
+    font-size: 10px;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 9px 2px;
+  }
+
+  @media (max-width: 800px) {
+    .room-form-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ========================================================
+     MOBILE SAAS CARDS (PORTRAIT <= 768px)
+     ======================================================== */
+  .mobile-card-label {
+    display: none;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+
+  @media screen and (max-width: 768px) {
+    .rooms-container {
+      padding: 0 4px;
+    }
+    .modern-table thead {
+      display: none !important;
+    }
+    .modern-table, .modern-table tbody {
+      display: block !important;
+      width: 100% !important;
+    }
+    .modern-table tr {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 10px !important;
+      background: #ffffff !important;
+      border: 1.5px solid #cbd5e1 !important;
+      border-radius: 18px !important;
+      padding: 15px !important;
+      margin-bottom: 14px !important;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05) !important;
+      position: relative !important;
+      box-sizing: border-box !important;
+    }
+    .modern-table td {
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      padding: 0 !important;
+      border: none !important;
+      background: transparent !important;
+      min-width: 0 !important;
+    }
+
+    /* 1. Header: Room & ID */
+    .modern-table td.cell-room {
+      grid-column: 1 / -1 !important;
+      padding-bottom: 10px !important;
+      padding-right: 95px !important;
+      border-bottom: 1px solid #f1f5f9 !important;
+    }
+    body.rtl .modern-table td.cell-room {
+      padding-right: 0 !important;
+      padding-left: 95px !important;
+    }
+
+    /* 2. Top-Right Pinned Status */
+    .modern-table td.cell-status {
+      position: absolute !important;
+      top: 15px !important;
+      right: 15px !important;
+      text-align: right !important;
+      z-index: 2 !important;
+    }
+    body.rtl .modern-table td.cell-status {
+      right: auto !important;
+      left: 15px !important;
+      text-align: left !important;
+    }
+
+    /* 3. Middle Boxes: Capacity & Equipments */
+    .modern-table td.cell-capacity,
+    .modern-table td.cell-equipments {
+      background: #f8fafc !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 12px !important;
+      padding: 9px 11px !important;
+    }
+
+    /* 4. Footer Actions */
+    .modern-table td.cell-actions {
+      grid-column: 1 / -1 !important;
+      border-top: 1.5px solid #f1f5f9 !important;
+      padding-top: 10px !important;
+      margin-top: 2px !important;
+      width: 100% !important;
+    }
+    .modern-table td.cell-actions .action-group {
+      width: 100% !important;
+      display: flex !important;
+      gap: 8px !important;
+      align-items: center !important;
+      position: relative !important;
+    }
+    .modern-table td.cell-actions .btn-primary-action {
+      flex: 1 1 auto !important;
+      width: auto !important;
+      height: 42px !important;
+      font-size: 13.5px !important;
+      font-weight: 800 !important;
+      justify-content: center !important;
+      border-radius: 10px !important;
+    }
+    .modern-table td.cell-actions .btn-menu-trigger {
+      width: 42px !important;
+      min-width: 42px !important;
+      max-width: 42px !important;
+      height: 42px !important;
+      border-radius: 10px !important;
+      font-size: 18px !important;
+      flex-shrink: 0 !important;
+    }
+
+    .mobile-card-label {
+      display: block !important;
+    }
+  }
+
+  @media screen and (max-width: 440px) {
+    .modern-table tr {
+      grid-template-columns: 1fr !important;
+    }
+    .modern-table td.cell-capacity,
+    .modern-table td.cell-equipments {
+      grid-column: 1 / -1 !important;
+    }
+  }
+</style>
+
+<div class="rooms-container">
+
+  <!-- TOP HEADER & ACTIONS -->
+  <div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+    <div>
+      <div class="muted" style="font-size:12px">
+        <a href="{{ url_for('dashboard') }}" style="text-decoration:none; color:#2563eb; font-weight:700;">← {{ t('dashboard') }}</a>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+        <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800; letter-spacing:-0.4px;">
+          🚪 {{ 'القاعات والمختبرات' if lang=='ar' else 'Salles & Espaces Pédagogiques' }}
+        </h2>
+        <span class="status-pill active" style="padding:2px 8px; font-size:11px; background:#2563eb; color:#fff; border-radius:999px;">
+          {{ rooms|length }} {{ 'قاعة' if lang=='ar' else 'salle(s)' }}
+        </span>
+      </div>
+      <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">
+        {{ 'تنظيم الطاقة الاستيعابية، تجهيزات القاعات، وجدولة الحصص الدراسية' if lang=='ar' else 'Gestion de la capacité d\'accueil, équipements des salles et affectation aux cours' }}
+      </p>
+    </div>
+
+    <div class="flex wrap" style="gap:8px;">
+      <a class="btn btn-primary" href="{{ url_for('schedule') }}" style="background:#0B3D6E; border-color:#0B3D6E; font-weight:800; font-size:13px; padding:7px 14px; border-radius:9px; box-shadow:0 3px 10px rgba(11,61,110,0.25);">
+        🗓️ {{ 'استعمال الزمن' if lang=='ar' else 'Emploi du Temps' }}
+      </a>
+      <a class="btn btn-outline" href="{{ url_for('courses') }}" style="background:#fff; font-weight:700; font-size:13px; padding:7px 12px; border-radius:9px;">
+        📚 {{ 'الأفواج والدروس' if lang=='ar' else 'Classes & Cours' }}
+      </a>
+      <button type="button" class="btn btn-primary" onclick="resetRoomForm(); document.getElementById('roomNameInput').focus();" style="background:#2563eb; border-color:#2563eb; font-weight:800; font-size:13px; padding:7px 14px; border-radius:9px;">
+        + {{ 'قاعة جديدة' if lang=='ar' else 'Nouvelle Salle' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI SUMMARY CARDS -->
+  {% set total_capacity = rooms|map(attribute='capacity')|sum %}
+  {% set avg_capacity = (total_capacity / rooms|length)|round(0)|int if rooms|length > 0 else 0 %}
+  <div class="kpi-grid">
+    
+    <!-- 1. Total Rooms -->
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'إجمالي القاعات' if lang=='ar' else 'Espaces Disponibles' }}</span>
+        <div class="kpi-icon" style="background:#eff6ff; color:#2563eb;">🚪</div>
+      </div>
+      <div class="kpi-value">
+        {{ rooms|length }} <span style="font-size:13px; font-weight:600; color:#64748b;">{{ 'قاعة' if lang=='ar' else 'salles' }}</span>
+      </div>
+      <div class="kpi-sub" style="color:#2563eb;">
+        <span>{{ 'قاعات دراسية ومختبرات معتمدة' if lang=='ar' else 'Salles de cours et laboratoires' }}</span>
+      </div>
+    </div>
+
+    <!-- 2. Total Capacity -->
+    <div class="kpi-card kpi-emerald">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'الطاقة الاستيعابية الإجمالية' if lang=='ar' else 'Capacité Totale' }}</span>
+        <div class="kpi-icon" style="background:#ecfdf5; color:#059669;">🪑</div>
+      </div>
+      <div class="kpi-value" style="color:#047857;">
+        {{ total_capacity }} <span style="font-size:13px; font-weight:600; color:#64748b;">{{ 'مقعد' if lang=='ar' else 'places' }}</span>
+      </div>
+      <div class="kpi-sub" style="color:#047857;">
+        <span>{{ 'مقاعد دراسية متوفرة بالمعهد' if lang=='ar' else 'Places assises simultanées' }}</span>
+      </div>
+    </div>
+
+    <!-- 3. Average Capacity -->
+    <div class="kpi-card kpi-purple">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'متوسط سعة القاعة' if lang=='ar' else 'Capacité Moyenne' }}</span>
+        <div class="kpi-icon" style="background:#f5f3ff; color:#7c3aed;">📊</div>
+      </div>
+      <div class="kpi-value" style="color:#6d28d9;">
+        {{ avg_capacity }} <span style="font-size:13px; font-weight:600; color:#64748b;">{{ 'مقعد/قاعة' if lang=='ar' else 'places/salle' }}</span>
+      </div>
+      <div class="kpi-sub" style="color:#7c3aed;">
+        <span>{{ 'الحجم الأمثل للأفواج' if lang=='ar' else 'Taille idéale par groupe' }}</span>
+      </div>
+    </div>
+
+    <!-- 4. Schedule -->
+    <div class="kpi-card kpi-amber">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'الجدولة واستعمال الزمن' if lang=='ar' else 'Planning & Séances' }}</span>
+        <div class="kpi-icon" style="background:#fffbeb; color:#d97706;">🗓️</div>
+      </div>
+      <div class="kpi-value" style="font-size:19px; color:#b45309; margin:3px 0;">
+        {{ 'استعمال الزمن' if lang=='ar' else 'Planning Hebdo' }}
+      </div>
+      <div class="kpi-sub" style="color:#b45309;">
+        <a href="{{ url_for('schedule') }}" style="text-decoration:none; color:#b45309; font-weight:700;">
+          {{ 'توزيع الحصص على القاعات →' if lang=='ar' else 'Voir le planning des salles →' }}
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ADD / EDIT ROOM CARD -->
+  <div class="room-form-card" id="roomFormCard">
+    <h3 class="form-title" id="roomFormTitle">
+      ➕ {{ 'إضافة قاعة جديدة' if lang=='ar' else 'Ajouter une nouvelle salle' }}
+    </h3>
+    <form method="post" action="{{ url_for('rooms') }}" class="room-form-grid">
+      <input type="hidden" name="id" id="roomIdInput" value="">
+
+      <!-- Name -->
+      <div class="form-group">
+        <label>{{ 'اسم القاعة' if lang=='ar' else 'Nom de la salle' }} <span style="color:#ef4444;">*</span></label>
+        <div class="input-box">
+          <span class="icon">🚪</span>
+          <input type="text" name="name" id="roomNameInput" placeholder="{{ 'مثال: القاعة 1، مختبر الإعلاميات...' if lang=='ar' else 'Ex : Salle 1, Labo Informatique...' }}" required>
+        </div>
+      </div>
+
+      <!-- Capacity -->
+      <div class="form-group">
+        <label>{{ 'سعة القاعة (مقاعد)' if lang=='ar' else 'Capacité (places)' }}</label>
+        <div class="input-box">
+          <span class="icon">🪑</span>
+          <input type="number" name="capacity" id="roomCapacityInput" value="20" min="1" max="200" required>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="form-group">
+        <label>{{ 'المعدات والملاحظات' if lang=='ar' else 'Notes & Équipements' }}</label>
+        <div class="input-box">
+          <span class="icon">📝</span>
+          <input type="text" name="notes" id="roomNotesInput" placeholder="{{ 'مثال: عاكس ضوئي، مكيف، سبورة ذكية...' if lang=='ar' else 'Ex : Vidéoprojecteur, Climatisation...' }}">
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="btn btn-outline btn-sm" id="roomCancelBtn" onclick="resetRoomForm()" style="display:none; height:38px; padding:0 12px; border-radius:9px;">
+          {{ 'إلغاء' if lang=='ar' else 'Annuler' }}
+        </button>
+        <button type="submit" class="btn btn-primary btn-sm" id="roomSubmitBtn" style="background:#2563eb; border-color:#2563eb; font-weight:800; height:38px; padding:0 18px; border-radius:9px; box-shadow:0 2px 8px rgba(37,99,235,0.25);">
+          + {{ 'إضافة' if lang=='ar' else 'Ajouter' }}
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- ROOMS TABLE (ZERO SCROLL, MODERN SAAS DESIGN) -->
+  <div class="table-card">
+    {% if rooms %}
+    <div class="table-responsive">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th style="width:30%;">{{ 'القاعة والمعرف' if lang=='ar' else 'Salle & Identifiant' }}</th>
+            <th style="width:22%;">{{ 'الطاقة الاستيعابية' if lang=='ar' else 'Capacité d\'Accueil' }}</th>
+            <th style="width:26%;">{{ 'التجهيزات والملاحظات' if lang=='ar' else 'Équipements & Spécifications' }}</th>
+            <th style="width:8%; text-align:center;">{{ 'الحالة' if lang=='ar' else 'Statut' }}</th>
+            <th style="width:14%; text-align:right; min-width:155px;">{{ 'إجراءات' if lang=='ar' else 'Actions' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rooms %}
+          <tr>
+            
+            <!-- 1. Room Name & ID -->
+            <td class="cell-room">
+              <span class="mobile-card-label">{{ 'القاعة' if lang=='ar' else 'Salle' }}</span>
+              <div class="room-cell">
+                <div class="room-icon-box">🚪</div>
+                <div>
+                  <div class="room-name">{{ r.name }}</div>
+                  <span class="room-id-pill">#{{ r.id }}</span>
+                </div>
+              </div>
+            </td>
+
+            <!-- 2. Capacity -->
+            <td class="cell-capacity">
+              <span class="mobile-card-label">{{ 'الطاقة الاستيعابية' if lang=='ar' else 'Capacité' }}</span>
+              <span class="capacity-pill">
+                <span>🪑</span>
+                <span>{{ r.capacity }} {{ 'مقعد' if lang=='ar' else 'places assises' }}</span>
+              </span>
+            </td>
+
+            <!-- 3. Notes / Equipments -->
+            <td class="cell-equipments">
+              <span class="mobile-card-label">{{ 'التجهيزات' if lang=='ar' else 'Équipements' }}</span>
+              {% if r.notes %}
+                <span style="font-weight:600; color:#334155;">{{ r.notes }}</span>
+              {% else %}
+                <span class="muted" style="font-size:11.5px;">—</span>
+              {% endif %}
+            </td>
+
+            <!-- 4. Status -->
+            <td class="cell-status" style="text-align:center;">
+              <span class="status-badge">
+                <span class="status-dot"></span>
+                <span>{{ 'متاحة' if lang=='ar' else 'Disponible' }}</span>
+              </span>
+            </td>
+
+            <!-- 5. Actions Cluster (110px Primary Button + 32px Dropdown Menu) -->
+            <td class="actions-cell cell-actions">
+              <div class="action-group">
+                
+                <!-- Primary Action Button: 110px fixed width -->
+                <button type="button" class="btn-primary-action" onclick="editRoom({{ r.id }}, '{{ r.name|replace('\'', '\\\'') }}', {{ r.capacity or 20 }}, '{{ (r.notes or '')|replace('\'', '\\\'') }}')" title="Modifier cette salle">
+                  <span>✏️</span><span>{{ 'تعديل' if lang=='ar' else 'Modifier' }}</span>
+                </button>
+
+                <!-- Dropdown Trigger Button (⋮) -->
+                <button type="button" class="btn-menu-trigger" onclick="toggleActionDropdown(event, 'room-dropdown-{{ r.id }}')" title="Plus d'actions">
+                  ⋮
+                </button>
+
+                <!-- Floating Dropdown Menu -->
+                <div class="dropdown-menu-float" id="room-dropdown-{{ r.id }}">
+                  <div class="dropdown-label">{{ 'العمليات' if lang=='ar' else 'Actions salle' }}</div>
+
+                  <!-- Modifier -->
+                  <button type="button" class="dropdown-item" onclick="editRoom({{ r.id }}, '{{ r.name|replace('\'', '\\\'') }}', {{ r.capacity or 20 }}, '{{ (r.notes or '')|replace('\'', '\\\'') }}')">
+                    <span>✏️</span><span>{{ 'تعديل البيانات' if lang=='ar' else 'Modifier la salle' }}</span>
+                  </button>
+
+                  <!-- Emploi du temps -->
+                  <a class="dropdown-item" href="{{ url_for('schedule') }}">
+                    <span>🗓️</span><span>{{ 'جدول الأوقات' if lang=='ar' else 'Emploi du temps' }}</span>
+                  </a>
+
+                  <!-- Classes affectées -->
+                  <a class="dropdown-item" href="{{ url_for('courses') }}">
+                    <span>📚</span><span>{{ 'الأفواج والدروس' if lang=='ar' else 'Classes affectées' }}</span>
+                  </a>
+
+                  {% if cur_user and cur_user.role == 'admin' %}
+                  <div class="dropdown-divider"></div>
+                  <form method="post" action="{{ url_for('room_delete', rid=r.id) }}" onsubmit="return confirm('{{ 'هل أنت متأكد من حذف هذه القاعة؟' if lang=='ar' else 'Supprimer définitivement cette salle ?' }}');" style="margin:0;">
+                    <button class="dropdown-item danger" type="submit">
+                      <span>🗑️</span><span>{{ 'حذف القاعة' if lang=='ar' else 'Supprimer la salle' }}</span>
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+
+              </div>
+            </td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:45px 20px; color:#64748b;">
+      <div style="font-size:36px; margin-bottom:10px;">🚪</div>
+      <h3 style="margin:0 0 6px 0; color:#0b3d6e; font-size:16px; font-weight:800;">
+        {{ 'لا توجد أي قاعة مسجلة حالياً' if lang=='ar' else 'Aucune salle enregistrée pour le moment' }}
+      </h3>
+      <p style="margin:0 0 16px 0; font-size:12.5px;">
+        {{ 'استخدم النموذج أعلاه لإضافة قاعات ومختبرات المعهد' if lang=='ar' else 'Utilisez le formulaire ci-dessus pour configurer vos salles.' }}
+      </p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- JAVASCRIPT FOR INLINE EDIT & ACTIONS DROPDOWN -->
+<script>
+  function editRoom(id, name, capacity, notes) {
+    document.getElementById('roomIdInput').value = id;
+    document.getElementById('roomNameInput').value = name;
+    document.getElementById('roomCapacityInput').value = capacity || 20;
+    document.getElementById('roomNotesInput').value = notes || '';
+    
+    document.getElementById('roomFormTitle').innerText = '✏️ ' + (document.body.classList.contains('rtl') ? 'تعديل القاعة : ' : 'Modifier la salle : ') + name;
+    document.getElementById('roomSubmitBtn').innerText = '✓ ' + (document.body.classList.contains('rtl') ? 'حفظ' : 'Enregistrer');
+    document.getElementById('roomCancelBtn').style.display = 'inline-flex';
+    
+    document.getElementById('roomFormCard').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('roomNameInput').focus();
+  }
+
+  function resetRoomForm() {
+    document.getElementById('roomIdInput').value = '';
+    document.getElementById('roomNameInput').value = '';
+    document.getElementById('roomCapacityInput').value = '20';
+    document.getElementById('roomNotesInput').value = '';
+    
+    document.getElementById('roomFormTitle').innerText = '➕ ' + (document.body.classList.contains('rtl') ? 'إضافة قاعة جديدة' : 'Ajouter une nouvelle salle');
+    document.getElementById('roomSubmitBtn').innerText = '+ ' + (document.body.classList.contains('rtl') ? 'إضافة' : 'Ajouter');
+    document.getElementById('roomCancelBtn').style.display = 'none';
+  }
+
+  function toggleActionDropdown(event, dropdownId) {
+    event.stopPropagation();
+    if (window.openFloatingDropdown) {
+      window.openFloatingDropdown(event.currentTarget, document.getElementById(dropdownId));
+    }
+  }
+</script>
+
+{% endblock %}

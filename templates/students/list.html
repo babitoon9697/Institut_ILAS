@@ -1,0 +1,1267 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- STUDENTS CUSTOM MODERN STYLES -->
+<style>
+  .students-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  /* KPI Cards Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+  }
+  .kpi-blue::before { background: #2563eb; }
+  .kpi-emerald::before { background: #059669; }
+  .kpi-amber::before { background: #d97706; }
+  .kpi-purple::before { background: #7c3aed; }
+
+  .kpi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .kpi-icon {
+    font-size: 18px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .kpi-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
+    margin-bottom: 6px;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+  .kpi-sub {
+    font-size: 11.5px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Filters Toolbar */
+  .filter-panel {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+  }
+  .status-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+  }
+  .status-pill:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #cbd5e1;
+  }
+  .status-pill.active {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
+  }
+  .status-pill .count {
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 10.5px;
+    background: rgba(0, 0, 0, 0.08);
+    font-weight: 800;
+  }
+  .status-pill.active .count {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+  }
+
+  .filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .search-box {
+    position: relative;
+    flex: 1;
+    min-width: 240px;
+    max-width: 380px;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border-radius: 10px;
+    border: 1.5px solid #cbd5e1;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #f8fafc;
+    transition: all 0.2s;
+    box-sizing: border-box;
+  }
+  .search-box input:focus {
+    background: #ffffff;
+    border-color: #2563eb;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+  .search-box .icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #94a3b8;
+    pointer-events: none;
+  }
+
+  .filter-select {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1.5px solid #cbd5e1;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #f8fafc;
+    min-width: 150px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-select:focus {
+    border-color: #2563eb;
+    background: #fff;
+    outline: none;
+  }
+
+  .date-filter-box {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 4px 10px;
+  }
+  .date-filter-box input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 700;
+    color: #0b3d6e;
+  }
+
+  /* Table Card & Modern Table */
+  .table-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+    overflow: visible;
+  }
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 16px;
+  }
+  .modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+  }
+  body.rtl .modern-table {
+    text-align: right;
+  }
+  .modern-table th {
+    background: #f8fafc;
+    padding: 12px 14px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1.5px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  .modern-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    transition: background-color 0.15s ease;
+  }
+  .modern-table tr:hover td {
+    background-color: #f8fbff;
+  }
+  .modern-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Student Cell */
+  .student-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .student-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #1d4ed8;
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #93c5fd;
+    overflow: hidden;
+  }
+  .student-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .student-name {
+    font-weight: 800;
+    color: #0b3d6e;
+    font-size: 13.5px;
+    text-decoration: none;
+    line-height: 1.25;
+    display: block;
+    transition: color 0.15s;
+  }
+  .student-name:hover {
+    color: #2563eb;
+  }
+  .student-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 3px;
+    flex-wrap: wrap;
+  }
+  .code-pill {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 5px;
+  }
+  .age-pill {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 5px;
+  }
+  .credit-pill {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 5px;
+  }
+
+  /* Contact Cell */
+  .contact-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 12px;
+  }
+  .contact-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .wa-pill {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    transition: background 0.15s;
+  }
+  .wa-pill:hover {
+    background: #bbf7d0;
+  }
+
+  /* Level & City */
+  .level-pill {
+    background: #f8fafc;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+  .city-sub {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 2px;
+  }
+
+  /* Expiry Badges */
+  .expiry-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: 6px;
+    font-size: 10.5px;
+    font-weight: 800;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+  .expiry-green {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+  }
+  .expiry-amber {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+  }
+  .expiry-red {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+  .expiry-gray {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+  }
+
+  /* Status Badges */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 24px;
+    min-width: 82px;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .st-active {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+  }
+  .st-active .status-dot { background: #10b981; }
+  .st-inactive {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+  }
+  .st-inactive .status-dot { background: #ef4444; }
+
+  /* Actions Cluster & Modern Dropdown */
+  .actions-cell {
+    position: relative;
+    white-space: nowrap;
+    text-align: right;
+    width: 155px;
+    min-width: 155px;
+  }
+  body.rtl .actions-cell {
+    text-align: left;
+  }
+  .action-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    position: relative;
+  }
+  .btn-primary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 110px;
+    min-width: 110px;
+    max-width: 110px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 800;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-sizing: border-box;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .btn-act-renew {
+    background: #10b981;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+  }
+  .btn-act-renew:hover {
+    background: #059669;
+    color: #fff;
+  }
+  .btn-act-view {
+    background: #f1f5f9;
+    color: #0b3d6e;
+    border: 1px solid #cbd5e1;
+  }
+  .btn-act-view:hover {
+    background: #e2e8f0;
+    color: #0b3d6e;
+  }
+
+  /* Dropdown Trigger Button */
+  .btn-menu-trigger {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1.5px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    font-size: 16px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+    box-sizing: border-box;
+    flex-shrink: 0;
+  }
+  .btn-menu-trigger:hover, .btn-menu-trigger.active {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+  }
+
+  /* Floating Dropdown Menu */
+  .dropdown-menu-float {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 5px);
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 11px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
+    min-width: 200px;
+    z-index: 1000;
+    padding: 5px;
+    text-align: left;
+  }
+  body.rtl .dropdown-menu-float {
+    right: auto;
+    left: 0;
+    text-align: right;
+  }
+  .dropdown-menu-float.show {
+    display: block;
+    animation: dropdownFadeIn 0.15s ease;
+  }
+  @keyframes dropdownFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 9px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+    text-decoration: none;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: background 0.12s;
+  }
+  .dropdown-item:hover {
+    background: #f1f5f9;
+    color: #0b3d6e;
+  }
+  .dropdown-item.danger {
+    color: #dc2626;
+  }
+  .dropdown-item.danger:hover {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+  .dropdown-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 4px 0;
+  }
+  .dropdown-label {
+    font-size: 10px;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 9px 2px;
+  }
+
+  /* Mobile labels - hidden on desktop */
+  .mobile-card-label {
+    display: none;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #94a3b8;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  @media (max-width: 900px) {
+    .kpi-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 600px) {
+    .kpi-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 8px !important;
+    }
+    .kpi-card {
+      padding: 10px 12px !important;
+    }
+    .kpi-value {
+      font-size: 19px !important;
+    }
+    .filter-controls {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .search-box, .filter-select {
+      max-width: 100%;
+    }
+  }
+
+  /* Refined Mobile Card Organization */
+  @media (max-width: 768px) {
+    .mobile-card-label {
+      display: block !important;
+    }
+
+    .modern-table tr {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 10px !important;
+      background: #ffffff !important;
+      border-radius: 18px !important;
+      border: 1.5px solid #cbd5e1 !important;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
+      padding: 15px !important;
+      position: relative !important;
+      margin-bottom: 8px !important;
+    }
+
+    /* 1. Header: Student name, avatar, code */
+    .modern-table td.cell-student {
+      grid-column: 1 / -1 !important;
+      display: flex !important;
+      align-items: flex-start !important;
+      padding-bottom: 10px !important;
+      border-bottom: 1px solid #f1f5f9 !important;
+      padding-right: 90px !important;
+    }
+    body.rtl .modern-table td.cell-student {
+      padding-right: 0 !important;
+      padding-left: 90px !important;
+    }
+
+    .modern-table td.cell-student .student-avatar {
+      width: 44px !important;
+      height: 44px !important;
+      font-size: 16px !important;
+      border-radius: 12px !important;
+    }
+
+    .modern-table td.cell-student .student-name {
+      font-size: 15px !important;
+      font-weight: 800 !important;
+      color: #0b3d6e !important;
+    }
+
+    /* 2. Contacts Box */
+    .modern-table td.cell-contacts {
+      grid-column: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      background: #f8fafc !important;
+      padding: 9px 11px !important;
+      border-radius: 12px !important;
+      border: 1px solid #e2e8f0 !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 3. Level & City Box */
+    .modern-table td.cell-level {
+      grid-column: 2 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      background: #f8fafc !important;
+      padding: 9px 11px !important;
+      border-radius: 12px !important;
+      border: 1px solid #e2e8f0 !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 4. Subscription Strip */
+    .modern-table td.cell-subscription {
+      grid-column: 1 / -1 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+      background: #f0f7ff !important;
+      border: 1px solid #bfdbfe !important;
+      border-radius: 12px !important;
+      padding: 9px 12px !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 5. Status Badge (Pinned to top right) */
+    .modern-table td.cell-status {
+      position: absolute !important;
+      top: 15px !important;
+      right: 15px !important;
+      padding: 0 !important;
+      border: none !important;
+      background: transparent !important;
+      width: auto !important;
+    }
+    body.rtl .modern-table td.cell-status {
+      right: auto !important;
+      left: 15px !important;
+    }
+
+    /* 6. Action Buttons */
+    .modern-table td.cell-actions {
+      grid-column: 1 / -1 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      border-top: 1.5px solid #f1f5f9 !important;
+      padding-top: 10px !important;
+      margin-top: 2px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .modern-table .action-group {
+      width: 100% !important;
+      display: flex !important;
+      gap: 8px !important;
+    }
+
+    .modern-table .btn-primary-action {
+      flex: 1 1 auto !important;
+      height: 42px !important;
+      font-size: 14px !important;
+      font-weight: 800 !important;
+      border-radius: 12px !important;
+      justify-content: center !important;
+    }
+
+    .modern-table .btn-menu-trigger {
+      width: 42px !important;
+      min-width: 42px !important;
+      height: 42px !important;
+      border-radius: 12px !important;
+      font-size: 20px !important;
+    }
+  }
+
+  @media (max-width: 440px) {
+    .modern-table tr {
+      grid-template-columns: 1fr !important;
+    }
+    .modern-table td.cell-contacts {
+      grid-column: 1 / -1 !important;
+    }
+    .modern-table td.cell-level {
+      grid-column: 1 / -1 !important;
+    }
+  }
+</style>
+
+<div class="students-container">
+
+  <!-- TOP HEADER & ACTIONS -->
+  <div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+    <div>
+      <div class="muted" style="font-size:12px">
+        <a href="{{ url_for('dashboard') }}" style="text-decoration:none; color:#2563eb; font-weight:700;">← {{ t('dashboard') }}</a>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+        <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800; letter-spacing:-0.4px;">
+          {% if cur_user and cur_user.role == 'teacher' %}
+            👤 {{ 'تلاميذي المسجلون في فصولي' if lang=='ar' else 'Mes Élèves Inscrits' }}
+          {% else %}
+            👤 {{ 'دليل وسجل التلاميذ' if lang=='ar' else 'Répertoire des Élèves' }}
+          {% endif %}
+        </h2>
+        <span class="status-pill active" style="padding:2px 8px; font-size:11px;">
+          {{ students|length }} {{ 'تلميذ' if lang=='ar' else 'affiché(s)' }}
+        </span>
+        {% if current_teacher %}
+        <span class="status-pill" style="padding:2px 8px; font-size:11px; background:#ecfdf5; color:#047857; border-color:#a7f3d0;">
+          👨‍🏫 {{ current_teacher.full_name }}
+        </span>
+        {% endif %}
+      </div>
+      <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">
+        {% if cur_user and cur_user.role == 'teacher' %}
+          {{ 'قائمة التلاميذ المسجلين في فصولك وأفواجك الدراسية مع تتبع الحضور' if lang=='ar' else 'Élèves inscrits dans vos classes et groupes avec suivi pédagogique' }}
+        {% else %}
+          {{ 'إدارة وتتبع ملفات التلاميذ، أرقام الأولياء، تواريخ الاشتراكات والأرصدة' if lang=='ar' else 'Gestion des dossiers élèves, contacts parents, assiduité et suivi des abonnements' }}
+        {% endif %}
+      </p>
+    </div>
+
+    <!-- Quick Buttons -->
+    {% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+    <div class="flex wrap" style="gap:8px;">
+      <a class="btn btn-primary" href="{{ url_for('students_by_date') }}" style="background:#0B3D6E; border-color:#0B3D6E; font-weight:800; font-size:13px; padding:7px 14px; border-radius:9px; box-shadow:0 3px 10px rgba(11,61,110,0.25);">
+        📅 {{ 'نهاية الاشتراكات' if lang=='ar' else 'Échéances du Jour' }}
+      </a>
+      <a class="btn btn-primary" href="{{ url_for('express_enrollment') }}" style="background:#10b981; border-color:#10b981; font-weight:800; font-size:13px; padding:7px 14px; border-radius:9px; box-shadow:0 3px 10px rgba(16,185,129,0.25);">
+        ⚡ {{ 'تسجيل سريع' if lang=='ar' else 'Inscription Express' }}
+      </a>
+      <a class="btn btn-outline" href="{{ url_for('import_page') }}" style="background:#fff; font-weight:700; font-size:13px; padding:7px 12px; border-radius:9px;">
+        📥 {{ 'استيراد' if lang=='ar' else 'Importer Excel' }}
+      </a>
+      <a class="btn btn-primary" href="{{ url_for('student_form') }}" style="background:#2563eb; border-color:#2563eb; font-weight:800; font-size:13px; padding:7px 14px; border-radius:9px;">
+        + {{ 'تلميذ جديد' if lang=='ar' else 'Nouvel Élève' }}
+      </a>
+    </div>
+    {% elif cur_user and cur_user.role == 'teacher' %}
+    <div class="flex wrap" style="gap:8px;">
+      <a class="btn btn-primary" href="{{ url_for('attendance') }}" style="background:#2563eb; border-color:#2563eb; font-weight:800; font-size:13px; padding:7px 14px; border-radius:9px;">
+        📋 {{ 'ورقة تفقّد الحضور' if lang=='ar' else 'Faire l\'appel' }}
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- KPI SUMMARY STRIP -->
+  <div class="kpi-grid">
+    
+    <!-- 1. Total Count -->
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'تلاميذي' if cur_user and cur_user.role == 'teacher' else ('العدد الإجمالي' if lang=='ar' else 'Effectif Global') }}</span>
+        <div class="kpi-icon" style="background:#eff6ff; color:#2563eb;">👤</div>
+      </div>
+      <div class="kpi-value">
+        {{ total_count }} <span style="font-size:13px; font-weight:600; color:#64748b;">{{ 'تلميذ' if lang=='ar' else 'élèves' }}</span>
+      </div>
+      <div class="kpi-sub" style="color:#2563eb;">
+        <span>{{ 'مسجلون في فصولي' if cur_user and cur_user.role == 'teacher' else ('قاعدة بيانات المعهد' if lang=='ar' else 'Base de données ILAS') }}</span>
+      </div>
+    </div>
+
+    <!-- 2. Active Count -->
+    <div class="kpi-card kpi-emerald">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'التلاميذ النشطون' if lang=='ar' else 'Élèves Actifs' }}</span>
+        <div class="kpi-icon" style="background:#ecfdf5; color:#059669;">🟢</div>
+      </div>
+      <div class="kpi-value" style="color:#047857;">{{ active_count }}</div>
+      <div class="kpi-sub" style="color:#047857;">
+        <span>{{ 'دراسة جارية حالياً' if lang=='ar' else 'Inscrits & en cours d\'études' }}</span>
+      </div>
+    </div>
+
+    <!-- 3. Expiring Soon -->
+    <div class="kpi-card kpi-amber">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'اشتراكات قريبة الانتهاء' if lang=='ar' else 'Échéances Proches' }}</span>
+        <div class="kpi-icon" style="background:#fffbeb; color:#d97706;">⚠️</div>
+      </div>
+      <div class="kpi-value" style="color:#b45309;">{{ expiring_count }}</div>
+      <div class="kpi-sub" style="color:#b45309;">
+        <span>{{ 'تنتهي تحت 5 أيام أو منتهية' if lang=='ar' else 'Fin sous 5j ou expirés' }}</span>
+      </div>
+    </div>
+
+    <!-- 4. Credits / Teacher Attendance -->
+    <div class="kpi-card kpi-purple">
+      {% if cur_user and cur_user.role == 'teacher' %}
+        <div class="kpi-header">
+          <span class="kpi-label">{{ 'الغياب والحضور' if lang=='ar' else 'Pointage & Présences' }}</span>
+          <div class="kpi-icon" style="background:#f5f3ff; color:#7c3aed;">📍</div>
+        </div>
+        <div class="kpi-value" style="font-size:19px; color:#6d28d9; margin:3px 0;">
+          {{ 'تسجيل الغياب' if lang=='ar' else 'Feuille d\'appel' }}
+        </div>
+        <div class="kpi-sub" style="color:#7c3aed;">
+          <a href="{{ url_for('attendance') }}" style="color:#7c3aed; text-decoration:none; font-weight:700;">
+            {{ 'فتح ورقة الحضور →' if lang=='ar' else 'Faire le pointage →' }}
+          </a>
+        </div>
+      {% else %}
+        <div class="kpi-header">
+          <span class="kpi-label">{{ 'أرصدة وتأمينات التلاميذ' if lang=='ar' else 'Solde Crédits & Avoirs' }}</span>
+          <div class="kpi-icon" style="background:#f5f3ff; color:#7c3aed;">💎</div>
+        </div>
+        <div class="kpi-value" style="color:#6d28d9;">
+          +{{ '%.0f'|format(total_credits) }} <span style="font-size:13px; font-weight:600;">{{ settings.currency }}</span>
+        </div>
+        <div class="kpi-sub" style="color:#7c3aed;">
+          <span>{{ 'أرصدة متبقية مستحقة للتلاميذ' if lang=='ar' else 'Avoirs élèves disponibles' }}</span>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- FILTERS & SEARCH PANEL -->
+  <div class="filter-panel">
+    
+    <!-- Status & Expiration Pills -->
+    <div class="status-pills">
+      <a href="{{ url_for('students', q=q, level=level_filter) }}" class="status-pill {{ 'active' if not status_filter and not exp_filter else '' }}">
+        <span>📋</span>
+        <span>{{ 'الكل' if lang=='ar' else 'Tous les élèves' }}</span>
+      </a>
+      <a href="{{ url_for('students', status='active', q=q, level=level_filter) }}" class="status-pill {{ 'active' if status_filter=='active' and not exp_filter else '' }}">
+        <span>🟢</span>
+        <span>{{ 'النشطون فقط' if lang=='ar' else 'Actifs uniquement' }}</span>
+      </a>
+      <a href="{{ url_for('students', expiration='expiring', q=q, level=level_filter) }}" class="status-pill {{ 'active' if exp_filter=='expiring' else '' }}">
+        <span>⚠️</span>
+        <span>{{ 'قريب الانتهاء (≤ 5j)' if lang=='ar' else 'Expire sous 5j' }}</span>
+        {% if expiring_count > 0 %}
+          <span class="count" style="background:#fef3c7; color:#92400e;">{{ expiring_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{{ url_for('students', expiration='expired', q=q, level=level_filter) }}" class="status-pill {{ 'active' if exp_filter=='expired' else '' }}">
+        <span>🔴</span>
+        <span>{{ 'اشتراكات منتهية' if lang=='ar' else 'Expirés' }}</span>
+      </a>
+      <a href="{{ url_for('students', status='inactive', q=q, level=level_filter) }}" class="status-pill {{ 'active' if status_filter=='inactive' else '' }}">
+        <span>⏸️</span>
+        <span>{{ 'غير نشط' if lang=='ar' else 'Inactifs' }}</span>
+      </a>
+    </div>
+
+    <!-- Inputs Form -->
+    <form method="get" action="{{ url_for('students') }}" class="filter-controls">
+      <input type="hidden" name="status" value="{{ status_filter }}">
+      <input type="hidden" name="expiration" value="{{ exp_filter }}">
+
+      <!-- Search Input -->
+      <div class="search-box">
+        <span class="icon">🔍</span>
+        <input type="text" name="q" value="{{ q }}" placeholder="{{ 'بحث بالاسم، الكود، الهاتف، CIN...' if lang=='ar' else 'Rechercher nom, code, tél, CIN...' }}">
+      </div>
+
+      <div class="flex wrap" style="gap:8px; align-items:center;">
+        
+        <!-- Level Filter -->
+        <select name="level" onchange="this.form.submit()" class="filter-select">
+          <option value="">{{ 'جميع المستويات الدراسية' if lang=='ar' else 'Tous les niveaux' }}</option>
+          {% for lvl in levels %}
+          <option value="{{ lvl }}" {{ 'selected' if level_filter == lvl else '' }}>{{ lvl }}</option>
+          {% endfor %}
+        </select>
+
+        <!-- Date Filter Box -->
+        <div class="date-filter-box" title="{{ 'تاريخ نهاية الاشتراك' if lang=='ar' else 'Filtrer par date exacte de fin d\'abonnement' }}">
+          <span style="font-size:11.5px; font-weight:800; color:#64748b;">📅 {{ 'نهاية :' if lang=='ar' else 'Fin :' }}</span>
+          <input type="date" name="end_date" value="{{ end_date_filter or '' }}" onchange="this.form.submit()">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-sm" style="font-weight:700; padding:7px 14px; border-radius:8px;">
+          {{ 'تصفية' if lang=='ar' else 'Filtrer' }}
+        </button>
+
+        {% if q or status_filter or level_filter or exp_filter or end_date_filter %}
+        <a href="{{ url_for('students') }}" class="btn btn-outline btn-sm" style="padding:7px 10px; border-radius:8px;" title="Réinitialiser les filtres">✕</a>
+        {% endif %}
+      </div>
+    </form>
+
+  </div>
+
+  <!-- TABLE CONTAINER (ZERO SCROLL, MODERN SAAS DESIGN) -->
+  <div class="table-card">
+    {% if students %}
+    <div class="table-responsive">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th style="width:28%;">{{ 'التلميذ والكود' if lang=='ar' else 'Élève & Code' }}</th>
+            <th style="width:22%;">{{ 'بيانات الاتصال' if lang=='ar' else 'Contacts (Élève / Parent)' }}</th>
+            <th style="width:16%;">{{ 'المستوى والمدينة' if lang=='ar' else 'Niveau & Ville' }}</th>
+            <th style="width:16%;">{{ 'الاشتراك والانتهاء' if lang=='ar' else 'Abonnement & Fin' }}</th>
+            <th style="width:8%; text-align:center;">{{ 'الحالة' if lang=='ar' else 'Statut' }}</th>
+            <th style="width:10%; text-align:right; min-width:155px;">{{ 'إجراءات' if lang=='ar' else 'Actions' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in students %}
+          <tr>
+            
+            <!-- 1. Student & Code -->
+            <td class="cell-student">
+              <div class="student-cell">
+                <span class="student-avatar">
+                  {% if s.photo %}
+                    <img src="{{ url_for('static', filename='uploads/' + s.photo) }}" alt="{{ s.full_name }}">
+                  {% else %}
+                    {{ s.first_name[0]|upper }}
+                  {% endif %}
+                </span>
+                <div style="min-width:0;">
+                  <a href="{{ url_for('student_view', sid=s.id) }}" class="student-name" title="{{ s.full_name }}">
+                    {{ s.full_name }}
+                  </a>
+                  <div class="student-meta">
+                    <span class="code-pill">{{ s.code }}</span>
+                    {% if s.age is not none %}
+                      <span class="age-pill">🎂 {{ s.age }} {{ 'سنة' if lang=='ar' else 'ans' }}</span>
+                    {% endif %}
+                    {% if s.cin %}
+                      <span style="font-size:10.5px; color:#64748b;">CIN: {{ s.cin }}</span>
+                    {% endif %}
+                    {% if s.dynamic_credit_balance > 0 %}
+                      <span class="credit-pill" title="Avoir disponible">+{{ '%.0f'|format(s.dynamic_credit_balance) }} DH</span>
+                    {% endif %}
+                    {% set student_debt = (s.active_enrollments | map(attribute='balance') | sum) if s.active_enrollments else 0 %}
+                    {% if student_debt and student_debt > 0 %}
+                      <span class="badge" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:10.5px; font-weight:800; padding:1px 6px; border-radius:4px; cursor:pointer;" onclick="openMultiPayModal({{ s.id }}, '{{ s.full_name|replace('\'', '\\\'') }}')" title="Cliquer pour encaisser / solder le solde">
+                        ⚠️ Reste: {{ '%.0f'|format(student_debt) }} DH
+                      </span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- 2. Contacts -->
+            <td class="cell-contacts">
+              <div class="mobile-card-label">📞 {{ 'الاتصال' if lang=='ar' else 'Contacts' }}</div>
+              <div class="contact-cell">
+                {% if s.phone %}
+                  <div class="contact-row">
+                    <span style="color:#64748b;">📱</span>
+                    <a href="tel:{{ s.phone }}" style="color:#0f172a; text-decoration:none; font-weight:700;">{{ s.phone }}</a>
+                  </div>
+                {% endif %}
+                {% if s.parent_phone %}
+                  <div class="contact-row">
+                    <span style="color:#64748b;">👨‍👩‍👧</span>
+                    <a href="tel:{{ s.parent_phone }}" style="color:#0f172a; text-decoration:none; font-weight:700;">{{ s.parent_phone }}</a>
+                    {% set p_clean = s.parent_phone|replace(' ', '')|replace('-', '')|replace('+212', '') %}
+                    {% set wa_num = p_clean[1:] if p_clean.startswith('0') else p_clean %}
+                    <a href="https://wa.me/212{{ wa_num }}?text=Bonjour,%20Institut%20ILAS%20vous%20contacte%20concernant%20{{ s.first_name }}" target="_blank" class="wa-pill" title="WhatsApp Parent">
+                      💬 WA
+                    </a>
+                  </div>
+                {% endif %}
+                {% if not s.phone and not s.parent_phone %}
+                  <span class="muted" style="font-size:11px;">—</span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- 3. Level & City -->
+            <td class="cell-level">
+              <div class="mobile-card-label">🏷️ {{ 'المستوى والمدينة' if lang=='ar' else 'Niveau & Ville' }}</div>
+              <div>
+                {% if s.school_level %}
+                  <span class="level-pill">{{ s.school_level }}</span>
+                {% else %}
+                  <span class="muted" style="font-size:11px;">—</span>
+                {% endif %}
+                <div class="city-sub">
+                  📍 {{ s.city or 'Deroua' }}
+                </div>
+              </div>
+            </td>
+
+            <!-- 4. Subscription End Date -->
+            <td class="cell-subscription">
+              <div class="mobile-card-label" style="margin-bottom:0;">📅 {{ 'الاشتراك' if lang=='ar' else 'Abonnement' }}</div>
+              <div style="display:flex; align-items:center; justify-content:space-between; width:100%; flex-wrap:wrap; gap:6px;">
+                {% if s.end_date %}
+                  {% set rem = s.days_remaining %}
+                  <div style="font-size:12.5px; font-weight:750; color:#1e293b; display:inline-flex; align-items:center; gap:5px;">
+                    <span>Fin : {{ s.end_date.strftime('%d/%m/%Y') }}</span>
+                  </div>
+                  {% if rem is not none and rem > 5 %}
+                    <span class="expiry-badge expiry-green" title="Fin d'inscription">
+                      🟢 {{ rem }}j {{ 'متبقية' if lang=='ar' else 'restants' }}
+                    </span>
+                  {% elif rem is not none and rem >= 0 %}
+                    <span class="expiry-badge expiry-amber" title="Expire très bientôt">
+                      ⚠️ {{ 'ينتهي خلال' if lang=='ar' else 'Expire sous' }} {{ rem }}j
+                    </span>
+                  {% else %}
+                    <span class="expiry-badge expiry-red" title="Abonnement expiré">
+                      🔴 {{ 'منتهي منذ' if lang=='ar' else 'Expiré (' + (rem|abs)|string + 'j)' }}
+                    </span>
+                  {% endif %}
+                {% else %}
+                  <span class="expiry-badge expiry-gray">{{ 'بدون اشتراك' if lang=='ar' else 'Sans inscription' }}</span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- 5. Status Badge -->
+            <td class="cell-status" style="text-align:center;">
+              {% if s.status == 'active' %}
+                <span class="status-badge st-active"><span class="status-dot"></span>{{ 'نشط' if lang=='ar' else 'Actif' }}</span>
+              {% else %}
+                <span class="status-badge st-inactive"><span class="status-dot"></span>{{ 'غير نشط' if lang=='ar' else 'Inactif' }}</span>
+              {% endif %}
+            </td>
+
+            <!-- 6. Actions Cluster (110px Primary Button + 32px Dropdown Menu) -->
+            <td class="actions-cell cell-actions">
+              <div class="action-group">
+                
+                <!-- Primary Action Button -->
+                {% if cur_user and cur_user.role == 'teacher' %}
+                  <a class="btn-primary-action btn-act-view" href="{{ url_for('student_view', sid=s.id) }}" title="Consulter la fiche">
+                    <span>👁️</span><span>{{ 'ملف' if lang=='ar' else 'Fiche' }}</span>
+                  </a>
+                {% elif s.active_enrollment %}
+                  <a class="btn-primary-action btn-act-renew" href="{{ url_for('enrollment_renew', eid=s.active_enrollment.id) }}" title="Renouveler l'abonnement">
+                    <span>🔄</span><span>{{ 'تجديد' if lang=='ar' else 'Renouveler' }}</span>
+                  </a>
+                {% else %}
+                  <a class="btn-primary-action btn-act-view" href="{{ url_for('student_view', sid=s.id) }}" title="Voir le dossier complet">
+                    <span>👁️</span><span>{{ 'ملف' if lang=='ar' else 'Dossier' }}</span>
+                  </a>
+                {% endif %}
+
+                <!-- Dropdown Trigger Button (⋮) -->
+                <button type="button" class="btn-menu-trigger" onclick="toggleActionDropdown(event, 'stu-dropdown-{{ s.id }}')" title="Plus d'actions">
+                  ⋮
+                </button>
+
+                <!-- Floating Dropdown Menu -->
+                <div class="dropdown-menu-float" id="stu-dropdown-{{ s.id }}">
+                  <div class="dropdown-label">{{ 'العمليات' if lang=='ar' else 'Actions dossier' }}</div>
+
+                  <!-- Dossier Complet -->
+                  <a class="dropdown-item" href="{{ url_for('student_view', sid=s.id) }}">
+                    <span>👁️</span><span>{{ 'الملف الكامل' if lang=='ar' else 'Dossier complet' }}</span>
+                  </a>
+
+                  {% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+                  <!-- Modifier -->
+                  <a class="dropdown-item" href="{{ url_for('student_form', sid=s.id) }}">
+                    <span>✏️</span><span>{{ 'تعديل البيانات' if lang=='ar' else 'Modifier l\'élève' }}</span>
+                  </a>
+
+                  <!-- Paiement Multi-classes / Solder -->
+                  <button type="button" class="dropdown-item" onclick="openMultiPayModal({{ s.id }}, '{{ s.full_name|replace('\'', '\\\'') }}')" style="font-weight:700; color:#047857; background:#f0fdf4;">
+                    <span>💵</span><span>{{ 'تسجيل أداء / تصفية الحساب' if lang=='ar' else 'Nouveau paiement / Solder' }}</span>
+                  </button>
+                  <a class="dropdown-item" href="{{ url_for('payment_new', student_id=s.id) }}" style="font-size:11.5px; color:#64748b;">
+                    <span>🧾</span><span>{{ 'نموذج الدفع المفصل' if lang=='ar' else 'Formulaire de paiement' }}</span>
+                  </a>
+
+                  <!-- Inscription / Renouvellement -->
+                  {% if s.active_enrollment %}
+                  <a class="dropdown-item" href="{{ url_for('enrollment_renew', eid=s.active_enrollment.id) }}">
+                    <span>🔄</span><span>{{ 'تجديد الاشتراك' if lang=='ar' else 'Renouveler abonnement' }}</span>
+                  </a>
+                  {% else %}
+                  <a class="dropdown-item" href="{{ url_for('express_enrollment') }}">
+                    <span>⚡</span><span>{{ 'تسجيل جديد' if lang=='ar' else 'Inscrire l\'élève' }}</span>
+                  </a>
+                  {% endif %}
+
+                  <!-- Badge Print -->
+                  <a class="dropdown-item" href="{{ url_for('badges') }}">
+                    <span>🪪</span><span>{{ 'بطاقة التلميذ' if lang=='ar' else 'Badge scolaire' }}</span>
+                  </a>
+
+                  <!-- Emploi du Temps Individuel (Mini-form: WhatsApp ou Imprimer) -->
+                  <a class="dropdown-item" href="javascript:void(0)" onclick="openStudentTimetableModal({{ s.id }});">
+                    <span>📅</span><span style="font-weight:700; color:#059669;">{{ 'جدول الحصص (واتساب / طباعة)' if lang=='ar' else 'Emploi du temps (WhatsApp / Imprimer)' }}</span>
+                  </a>
+
+                  <!-- Attestation -->
+                  <a class="dropdown-item" href="{{ url_for('certificates') }}">
+                    <span>📜</span><span>{{ 'شهادة مدرسية' if lang=='ar' else 'Attestation scolarité' }}</span>
+                  </a>
+                  {% endif %}
+
+                  {% if s.parent_phone %}
+                  {% set p_clean = s.parent_phone|replace(' ', '')|replace('-', '')|replace('+212', '') %}
+                  {% set wa_num = p_clean[1:] if p_clean.startswith('0') else p_clean %}
+                  <a class="dropdown-item" href="https://wa.me/212{{ wa_num }}?text=Bonjour,%20Institut%20ILAS%20vous%20contacte%20concernant%20{{ s.first_name }}" target="_blank">
+                    <span>💬</span><span>{{ 'واتساب الولي' if lang=='ar' else 'WhatsApp parent' }}</span>
+                  </a>
+                  {% endif %}
+
+                  {% if cur_user and cur_user.role == 'admin' %}
+                  <div class="dropdown-divider"></div>
+                  <form method="post" action="{{ url_for('student_delete', sid=s.id) }}" onsubmit="return confirm('{{ 'هل أنت متأكد من حذف أو أرشفت هذا التلميذ؟' if lang=='ar' else 'Désactiver ou supprimer cet élève ?' }}');" style="margin:0;">
+                    <button class="dropdown-item danger" type="submit">
+                      <span>🗑️</span><span>{{ 'حذف أو أرشفة' if lang=='ar' else 'Supprimer / Archiver' }}</span>
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+
+              </div>
+            </td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:45px 20px; color:#64748b;">
+      <div style="font-size:36px; margin-bottom:10px;">👤</div>
+      <h3 style="margin:0 0 6px 0; color:#0b3d6e; font-size:16px; font-weight:800;">
+        {{ 'لا يوجد أي تلميذ مطابق لشروط البحث' if lang=='ar' else 'Aucun élève trouvé avec ces critères' }}
+      </h3>
+      <p style="margin:0 0 16px 0; font-size:12.5px;">
+        {{ 'يرجى مراجعة كلمات البحث أو تصفير الفلاتر' if lang=='ar' else 'Veuillez modifier vos termes de recherche ou réinitialiser les filtres.' }}
+      </p>
+      <div class="flex" style="justify-content:center; gap:8px;">
+        {% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+        <a class="btn btn-primary btn-sm" href="{{ url_for('student_form') }}" style="background:#2563eb; border-color:#2563eb; font-weight:700;">
+          + {{ 'تلميذ جديد' if lang=='ar' else 'Créer un élève' }}
+        </a>
+        {% endif %}
+        <a class="btn btn-outline btn-sm" href="{{ url_for('students') }}">
+          {{ 'تصفير الفلاتر' if lang=='ar' else 'Réinitialiser les filtres' }}
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- JAVASCRIPT FOR ACTIONS DROPDOWN -->
+<script>
+  function toggleActionDropdown(event, dropdownId) {
+    event.stopPropagation();
+    if (window.openFloatingDropdown) {
+      window.openFloatingDropdown(event.currentTarget, document.getElementById(dropdownId));
+    }
+  }
+</script>
+
+{% include 'students/_timetable_whatsapp_modal.html' %}
+{% include 'payments/_multi_pay_modal.html' %}
+
+{% endblock %}

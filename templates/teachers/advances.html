@@ -1,0 +1,1012 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- TEACHER ADVANCES STYLES -->
+<style>
+  .advances-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  /* KPI Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+  }
+  .kpi-rose::before { background: #dc2626; }
+  .kpi-purple::before { background: #7c3aed; }
+  .kpi-blue::before { background: #0B3D6E; }
+  .kpi-emerald::before { background: #059669; }
+
+  .kpi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .kpi-icon {
+    font-size: 18px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .kpi-value {
+    font-size: 24px;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1.1;
+    margin-bottom: 6px;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+  .kpi-sub {
+    font-size: 11.5px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Filters Toolbar */
+  .filter-panel {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+  }
+  .search-box {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border-radius: 10px;
+    border: 1.5px solid #cbd5e1;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #f8fafc;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    height: 38px;
+  }
+  .search-box input:focus {
+    background: #ffffff;
+    border-color: #0B3D6E;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(11, 61, 110, 0.12);
+  }
+  .search-box .icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #94a3b8;
+    pointer-events: none;
+  }
+  body.rtl .search-box input {
+    padding: 8px 36px 8px 12px;
+  }
+  body.rtl .search-box .icon {
+    left: auto;
+    right: 11px;
+  }
+
+  /* Table Card & Modern Table */
+  .table-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+    overflow: visible;
+  }
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 16px;
+  }
+  .modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+  }
+  body.rtl .modern-table {
+    text-align: right;
+  }
+  .modern-table th {
+    background: #f8fafc;
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1.5px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  .modern-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    transition: background-color 0.15s ease;
+  }
+  .modern-table tr:hover td {
+    background-color: #f8fbff;
+  }
+  .modern-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Teacher Cell */
+  .teacher-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .teacher-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+    color: #3730a3;
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #a5b4fc;
+  }
+  .wa-pill {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    transition: background 0.15s;
+  }
+  .wa-pill:hover {
+    background: #bbf7d0;
+  }
+
+  /* Actions Cluster & Modern Dropdown */
+  .actions-cell {
+    position: relative;
+    white-space: nowrap;
+    text-align: right;
+    width: 155px;
+    min-width: 155px;
+  }
+  body.rtl .actions-cell {
+    text-align: left;
+  }
+  .action-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    position: relative;
+  }
+  .btn-primary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 110px;
+    min-width: 110px;
+    max-width: 110px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 800;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-sizing: border-box;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .btn-act-blue {
+    background: #0B3D6E;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(11, 61, 110, 0.25);
+  }
+  .btn-act-blue:hover {
+    background: #082d52;
+    color: #fff;
+  }
+
+  .btn-menu-trigger {
+    width: 32px;
+    min-width: 32px;
+    max-width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+    flex-shrink: 0;
+  }
+  .btn-menu-trigger:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    border-color: #94a3b8;
+  }
+
+  /* Floating Dropdown */
+  .dropdown-menu-float {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 1050;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 10px 28px -4px rgba(15, 23, 42, 0.18), 0 4px 10px -2px rgba(15, 23, 42, 0.08);
+    min-width: 220px;
+    padding: 6px;
+    display: none;
+    text-align: left;
+  }
+  body.rtl .dropdown-menu-float {
+    right: auto;
+    left: 0;
+    text-align: right;
+  }
+  .dropdown-menu-float.show {
+    display: block;
+    animation: fadeInMenu 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes fadeInMenu {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .dropdown-item-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #334155;
+    text-decoration: none;
+    transition: background 0.15s;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    box-sizing: border-box;
+    text-align: inherit;
+  }
+  .dropdown-item-link:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+  .dropdown-item-link.text-danger {
+    color: #dc2626;
+  }
+  .dropdown-item-link.text-danger:hover {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+  .dropdown-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 4px 0;
+  }
+
+  /* ========================================================
+     MOBILE SAAS CARDS (PORTRAIT <= 768px)
+     ======================================================== */
+  .mobile-card-label {
+    display: none;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+
+  @media screen and (max-width: 768px) {
+    .advances-container {
+      padding: 0 4px;
+    }
+    .kpi-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 10px !important;
+    }
+    .modern-table thead {
+      display: none !important;
+    }
+    .modern-table, .modern-table tbody {
+      display: block !important;
+      width: 100% !important;
+    }
+    .modern-table tr {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 10px !important;
+      background: #ffffff !important;
+      border: 1.5px solid #cbd5e1 !important;
+      border-radius: 18px !important;
+      padding: 15px !important;
+      margin-bottom: 14px !important;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05) !important;
+      position: relative !important;
+      box-sizing: border-box !important;
+    }
+    .modern-table td {
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      padding: 0 !important;
+      border: none !important;
+      background: transparent !important;
+      min-width: 0 !important;
+    }
+
+    /* 1. Header: Receipt & Date */
+    .modern-table td.cell-receipt {
+      grid-column: 1 / -1 !important;
+      padding-bottom: 10px !important;
+      padding-right: 95px !important;
+      border-bottom: 1px solid #f1f5f9 !important;
+    }
+    body.rtl .modern-table td.cell-receipt {
+      padding-right: 0 !important;
+      padding-left: 95px !important;
+    }
+
+    /* 2. Top-Right Pinned Amount */
+    .modern-table td.cell-amount {
+      position: absolute !important;
+      top: 15px !important;
+      right: 15px !important;
+      text-align: right !important;
+      align-items: flex-end !important;
+      background: #fef2f2 !important;
+      border: 1.5px solid #fecaca !important;
+      border-radius: 12px !important;
+      padding: 6px 12px !important;
+      z-index: 2 !important;
+    }
+    body.rtl .modern-table td.cell-amount {
+      right: auto !important;
+      left: 15px !important;
+      text-align: left !important;
+      align-items: flex-start !important;
+    }
+
+    /* 3. Middle Boxes: Period & Teacher & Motif */
+    .modern-table td.cell-period,
+    .modern-table td.cell-teacher {
+      background: #f8fafc !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 12px !important;
+      padding: 9px 11px !important;
+    }
+
+    .modern-table td.cell-motif {
+      grid-column: 1 / -1 !important;
+      background: #f1f5f9 !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 10px !important;
+      padding: 8px 11px !important;
+    }
+
+    /* 4. Footer Actions */
+    .modern-table td.cell-actions {
+      grid-column: 1 / -1 !important;
+      border-top: 1.5px solid #f1f5f9 !important;
+      padding-top: 10px !important;
+      margin-top: 2px !important;
+      width: 100% !important;
+    }
+    .modern-table td.cell-actions .action-group {
+      width: 100% !important;
+      display: flex !important;
+      gap: 8px !important;
+      align-items: center !important;
+      position: relative !important;
+    }
+    .modern-table td.cell-actions .btn-primary-action {
+      flex: 1 1 auto !important;
+      width: auto !important;
+      height: 42px !important;
+      font-size: 13.5px !important;
+      font-weight: 800 !important;
+      justify-content: center !important;
+      border-radius: 10px !important;
+    }
+    .modern-table td.cell-actions .btn-menu-trigger {
+      width: 42px !important;
+      min-width: 42px !important;
+      max-width: 42px !important;
+      height: 42px !important;
+      border-radius: 10px !important;
+      font-size: 18px !important;
+      flex-shrink: 0 !important;
+    }
+
+    .mobile-card-label {
+      display: block !important;
+    }
+  }
+
+  @media screen and (max-width: 440px) {
+    .kpi-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .modern-table tr {
+      grid-template-columns: 1fr !important;
+    }
+    .modern-table td.cell-period,
+    .modern-table td.cell-teacher {
+      grid-column: 1 / -1 !important;
+    }
+  }
+</style>
+
+<div class="advances-container">
+
+  <!-- TOP HEADER & CONTROLS -->
+  <div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+    <div>
+      <div class="muted" style="font-size:12px">
+        <a href="{{ url_for('teachers') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ 'الأساتذة' if lang=='ar' else 'Enseignants' }}</a>
+        <span style="margin:0 5px; color:#cbd5e1;">•</span>
+        <a href="{{ url_for('teachers_payroll', month=req_month) }}" style="text-decoration:none; color:#7c3aed; font-weight:700;">💰 {{ 'كشف الأجور' if lang=='ar' else 'Rapport de Paie' }}</a>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+        <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:900;">
+          💸 {{ 'سجل التسبيقات على أجور الأساتذة' if lang=='ar' else 'Avances sur Salaires des Enseignants' }}
+        </h2>
+        <span class="chip" style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;">
+          SALARY ADVANCES
+        </span>
+      </div>
+      <p class="muted" style="margin:3px 0 0 0; font-size:12.5px;">
+        {{ 'إدارة وتتبع التسبيقات الممنوحة للأساتذة مع الخصم التلقائي من مستحقات الشهر والربط المالي' if lang=='ar' else 'Gestion et traçabilité des avances accordées aux enseignants avec déduction automatique sur la paie du mois.' }}
+      </p>
+    </div>
+
+    <div class="flex wrap" style="gap:8px;">
+      <button type="button" class="btn btn-primary" onclick="openAdvanceModal()" style="background:#059669; border-color:#059669; font-weight:800; font-size:12.5px; padding:7px 15px; border-radius:9px; box-shadow:0 3px 10px rgba(5,150,105,0.25); display:inline-flex; align-items:center; gap:6px;">
+        💸 <span>{{ '+ تسجيل تسبيق جديد' if lang=='ar' else '+ Accorder une Avance' }}</span>
+      </button>
+      <a class="btn btn-outline" href="{{ url_for('teachers_payroll', month=req_month) }}" style="font-weight:700; font-size:12.5px; padding:7px 13px; border-radius:9px; border-color:#cbd5e1; color:#334155; display:inline-flex; align-items:center; gap:6px;">
+        💰 <span>{{ 'كشف الأجور الشهري' if lang=='ar' else 'Voir le Rapport de Paie' }}</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- COMPACT FILTER BAR -->
+  <div class="filter-panel">
+    <form method="GET" action="{{ url_for('teacher_advances') }}">
+      <div style="display:flex; align-items:flex-end; flex-wrap:wrap; gap:14px;">
+        
+        <!-- Month Filter -->
+        <div style="min-width:170px;">
+          <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">
+            📅 {{ 'شهر الاستحقاق' if lang=='ar' else 'Mois d\'imputation' }}
+          </label>
+          <input type="month" name="month" value="{{ req_month }}" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:7px 12px; font-weight:700; color:#0B3D6E; height:38px; width:100%; box-sizing:border-box;">
+        </div>
+
+        <!-- Teacher Filter -->
+        <div style="min-width:220px; flex:1;">
+          <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">
+            👨‍🏫 {{ 'الأستاذ' if lang=='ar' else 'Enseignant' }}
+          </label>
+          <select name="teacher_id" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:7px 12px; font-weight:700; color:#0B3D6E; height:38px; width:100%; box-sizing:border-box;">
+            <option value="">{{ 'جميع الأساتذة' if lang=='ar' else 'Tous les enseignants' }}</option>
+            {% for t in all_teachers %}
+            <option value="{{ t.id }}" {% if selected_teacher_id == t.id %}selected{% endif %}>Prof. {{ t.full_name }} ({{ t.specialty or 'Général' }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Text Search Box -->
+        <div class="search-box">
+          <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">
+            🔍 {{ 'بحث سريع' if lang=='ar' else 'Recherche' }}
+          </label>
+          <div style="position:relative;">
+            <span class="icon">🔍</span>
+            <input type="text" name="q" value="{{ search_q }}" placeholder="{{ 'رقم الوصل، ملاحظات، مرجع...' if lang=='ar' else 'N° reçu, réf, motif, notes...' }}">
+          </div>
+        </div>
+
+        <!-- Submit & Reset -->
+        <div style="display:flex; gap:8px;">
+          <button type="submit" class="btn btn-primary" style="background:#0B3D6E; border-color:#0B3D6E; font-weight:800; border-radius:10px; padding:8px 18px; font-size:13px; height:38px; display:inline-flex; align-items:center; gap:6px;">
+            🔍 <span>{{ 'تصفية' if lang=='ar' else 'Filtrer' }}</span>
+          </button>
+          {% if req_month or selected_teacher_id or search_q %}
+          <a href="{{ url_for('teacher_advances') }}" class="btn btn-light" style="font-weight:700; border-radius:10px; padding:8px 12px; height:38px; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; border:1px solid #cbd5e1;" title="{{ 'إعادة ضبط' if lang=='ar' else 'Réinitialiser' }}">
+            🔄
+          </a>
+          {% endif %}
+        </div>
+
+      </div>
+    </form>
+  </div>
+
+  <!-- STAT CARDS (4 Modern SaaS Cards) -->
+  <div class="kpi-grid">
+    <!-- 1. Total Avances Versées -->
+    <div class="kpi-card kpi-rose">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'مجموع التسبيقات الممنوحة' if lang=='ar' else 'Total Avances Versées' }}</span>
+        <div class="kpi-icon" style="background:#fef2f2; color:#dc2626;">💸</div>
+      </div>
+      <div class="kpi-value" style="color:#dc2626;">
+        -{{ '%.2f'|format(total_amount) }} <span style="font-size:13px; font-weight:700;">{{ settings.currency }}</span>
+      </div>
+      <div class="kpi-sub" style="color:#dc2626; font-weight:700;">
+        <span>✓</span> {{ 'Déduite automatiquement de la paie' if lang=='fr' else 'تخصم تلقائياً من كشف الأجور' }}
+      </div>
+    </div>
+
+    <!-- 2. Enseignants Bénéficiaires -->
+    <div class="kpi-card kpi-purple">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'الأساتذة المستفيدون' if lang=='ar' else 'Enseignants Bénéficiaires' }}</span>
+        <div class="kpi-icon" style="background:#f5f3ff; color:#7c3aed;">👨‍🏫</div>
+      </div>
+      <div class="kpi-value" style="color:#6d28d9;">
+        {{ teacher_count }} <span style="font-size:13px; font-weight:700; color:#64748b;">prof(s)</span>
+      </div>
+      <div class="kpi-sub" style="color:#6d28d9;">
+        <span>📊</span> {{ 'Sur la période sélectionnée' if lang=='fr' else 'خلال الفترة المحددة' }}
+      </div>
+    </div>
+
+    <!-- 3. Nombre de Versements -->
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'إجمالي العمليات' if lang=='ar' else 'Nombre de Versements' }}</span>
+        <div class="kpi-icon" style="background:#eff6ff; color:#0B3D6E;">📄</div>
+      </div>
+      <div class="kpi-value" style="color:#0B3D6E;">
+        {{ advances|length }} <span style="font-size:13px; font-weight:700; color:#64748b;">reçu(s)</span>
+      </div>
+      <div class="kpi-sub" style="color:#0B3D6E; font-weight:700;">
+        <span>✓</span> {{ 'Reçus de décharge archivés' if lang=='fr' else 'وصولات تسليم رسمية مسجلة' }}
+      </div>
+    </div>
+
+    <!-- 4. Synchronisation Caisse -->
+    {% set synced_count = advances|selectattr('expense_id')|list|length %}
+    <div class="kpi-card kpi-emerald" style="background:#f0fdf4; border-color:#86efac;">
+      <div class="kpi-header">
+        <span class="kpi-label" style="color:#166534;">{{ 'الربط مع الصندوق' if lang=='ar' else 'Synchronisation Caisse' }}</span>
+        <div class="kpi-icon" style="background:#dcfce7; color:#059669;">💼</div>
+      </div>
+      <div class="kpi-value" style="color:#047857;">
+        {{ synced_count }} / {{ advances|length }}
+      </div>
+      <div class="kpi-sub" style="color:#166534; font-weight:700;">
+        <span>✓</span> {{ 'Comptabilisées en charges directes' if lang=='fr' else 'مقيدة تلقائياً كمصاريف في الصندوق' }}
+      </div>
+    </div>
+  </div>
+
+  <!-- ADVANCES MODERN TABLE -->
+  <div class="table-card">
+    {% if advances %}
+    <div class="table-responsive">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th style="padding-left:20px;">{{ 'رقم الوصل & التاريخ' if lang=='ar' else 'Reçu & Date' }}</th>
+            <th style="text-align:center;">{{ 'شهر الخصم & الصندوق' if lang=='ar' else 'Mois & Liaison' }}</th>
+            <th>{{ 'الأستاذ & التخصص' if lang=='ar' else 'Enseignant & Contact' }}</th>
+            <th style="text-align:center;">{{ 'مبلغ التسبيق' if lang=='ar' else 'Montant Avance' }}</th>
+            <th>{{ 'الملاحظات & المرجع' if lang=='ar' else 'Motif & Référence' }}</th>
+            <th class="actions-cell" style="padding-right:20px;">{{ 'إجراءات' if lang=='ar' else 'Actions' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in advances %}
+          <tr>
+            <!-- 1. Receipt No & Date -->
+            <td class="cell-receipt" style="padding-left:20px;">
+              <span class="mobile-card-label">{{ 'وصل التسبيق' if lang=='ar' else 'Reçu d\'avance' }}</span>
+              <div style="font-weight:900; color:#0B3D6E; font-family:monospace; font-size:12.5px; display:flex; align-items:center; gap:6px;">
+                <span>📄</span>
+                <span>{{ a.receipt_no }}</span>
+              </div>
+              <div style="font-size:11.5px; color:#64748b; margin-top:2px; display:flex; align-items:center; gap:6px;">
+                <span>📆 {{ a.date.strftime('%d/%m/%Y') if a.date else '—' }}</span>
+                <span>•</span>
+                <span class="chip" style="background:#f1f5f9; color:#475569; font-size:10px; font-weight:800; border:1px solid #e2e8f0; padding:1px 5px; border-radius:4px;">
+                  {{ a.payment_method or 'Espèces' }}
+                </span>
+              </div>
+            </td>
+
+            <!-- 2. Period Month & Cashbox Sync -->
+            <td class="cell-period" style="text-align:center;">
+              <span class="mobile-card-label">{{ 'الشهر المستحق' if lang=='ar' else 'Période' }}</span>
+              <span class="chip" style="background:#ede9fe; color:#6d28d9; border:1px solid #ddd6fe; font-weight:800; font-size:11px; padding:2px 8px; border-radius:6px; display:inline-block; margin-bottom:4px;">
+                📅 {{ a.period_month }}
+              </span>
+              <div>
+                {% if a.expense_id %}
+                <span class="chip" style="background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;" title="Enregistré comme dépense dans la caisse">
+                  ✓ Caisse
+                </span>
+                {% else %}
+                <span class="chip" style="background:#f8fafc; color:#64748b; border:1px solid #e2e8f0; font-size:10px; font-weight:700; padding:1px 6px; border-radius:4px;">
+                  Interne Paie
+                </span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- 3. Teacher Identity -->
+            <td class="cell-teacher">
+              <span class="mobile-card-label">{{ 'الأستاذ' if lang=='ar' else 'Enseignant' }}</span>
+              <div class="teacher-cell">
+                <div class="teacher-avatar">
+                  {{ a.teacher.full_name[:1]|upper if a.teacher else 'P' }}
+                </div>
+                <div>
+                  <div style="font-weight:800; color:#0B3D6E; font-size:13.5px;">
+                    Prof. {{ a.teacher.full_name if a.teacher else 'Inconnu' }}
+                  </div>
+                  <div style="font-size:11px; color:#64748b; margin-top:2px; display:flex; align-items:center; gap:6px;">
+                    <span>📚 {{ a.teacher.specialty if a.teacher and a.teacher.specialty else 'Général' }}</span>
+                    {% if a.teacher and a.teacher.phone %}
+                    <span>•</span>
+                    <a href="https://wa.me/{{ a.teacher.phone|replace(' ', '')|replace('-', '') }}" target="_blank" class="wa-pill" title="WhatsApp direct">
+                      <span>💬</span> {{ a.teacher.phone }}
+                    </a>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- 4. Amount -->
+            <td class="cell-amount" style="text-align:center; background:#fff5f5;">
+              <div style="font-weight:900; color:#dc2626; font-size:15px;">
+                -{{ '%.2f'|format(a.amount) }} <small style="font-size:11px;">{{ settings.currency }}</small>
+              </div>
+              <div style="font-size:10px; color:#991b1b; font-weight:700; text-transform:uppercase; margin-top:1px;">
+                {{ 'خصم من الأجر' if lang=='ar' else 'Déduit sur paie' }}
+              </div>
+            </td>
+
+            <!-- 5. Motif & Reference -->
+            <td class="cell-motif" style="color:#334155; font-size:12px; max-width:220px;">
+              <span class="mobile-card-label">{{ 'البيان والملاحظات' if lang=='ar' else 'Motif & Notes' }}</span>
+              <div>{{ a.notes or '—' }}</div>
+              {% if a.reference_no %}
+              <div style="font-size:10.5px; color:#64748b; margin-top:2px; font-family:monospace;">
+                Réf: <strong>{{ a.reference_no }}</strong>
+              </div>
+              {% endif %}
+            </td>
+
+            <!-- 6. Actions (Standardized 110px Button + ⋮ Dropdown Menu) -->
+            <td class="actions-cell cell-actions" style="padding-right:20px;">
+              <div class="action-group">
+                <!-- Primary Action: 110px Reçu -->
+                <a href="{{ url_for('teacher_advance_receipt', aid=a.id) }}" target="_blank" class="btn-primary-action btn-act-blue" title="{{ 'طباعة وصل التسليم الرسمي' if lang=='ar' else 'Imprimer le Reçu d\'Avance' }}">
+                  🖨️ <span>{{ 'reçu' if lang=='fr' else 'وصل التسليم' }}</span>
+                </a>
+
+                <!-- Menu Trigger: 32px -->
+                <button type="button" class="btn-menu-trigger" onclick="toggleActionMenu(event, 'menu-adv-{{ a.id }}')" title="{{ 'خيارات إضافية' if lang=='ar' else 'Options' }}">
+                  ⋮
+                </button>
+
+                <!-- Floating Dropdown Menu -->
+                <div id="menu-adv-{{ a.id }}" class="dropdown-menu-float">
+                  <a href="{{ url_for('teacher_advance_receipt', aid=a.id) }}" target="_blank" class="dropdown-item-link">
+                    <span>🖨️</span>
+                    <span>{{ 'طباعة وصل التسليم' if lang=='ar' else 'Imprimer le Reçu' }}</span>
+                  </a>
+                  <a href="{{ url_for('teachers_payroll', month=a.period_month) }}" class="dropdown-item-link">
+                    <span>💰</span>
+                    <span>{{ 'كشف أجور هذا الشهر' if lang=='ar' else 'Rapport de Paie du mois' }}</span>
+                  </a>
+                  {% if a.teacher_id %}
+                  <div class="dropdown-divider"></div>
+                  <a href="{{ url_for('teacher_student_lists', teacher_ids=a.teacher_id, month=a.period_month) }}" class="dropdown-item-link">
+                    <span>📜</span>
+                    <span>{{ 'تلاميذ الأستاذ' if lang=='ar' else 'Élèves de l\'enseignant' }}</span>
+                  </a>
+                  <a href="{{ url_for('teacher_form', tid=a.teacher_id) }}" class="dropdown-item-link">
+                    <span>👤</span>
+                    <span>{{ 'ملف الأستاذ' if lang=='ar' else 'Fiche enseignant' }}</span>
+                  </a>
+                  {% endif %}
+                  <div class="dropdown-divider"></div>
+                  <form method="POST" action="{{ url_for('teacher_advance_delete', aid=a.id) }}" onsubmit="return confirm('{{ 'هل أنت متأكد من حذف هذا التسبيق واسترجاع مستحقات الأستاذ؟' if lang=='ar' else 'Êtes-vous sûr de vouloir supprimer cette avance et rétablir le montant dans la paie de l\'enseignant ?' }}');" style="margin:0;">
+                    <button type="submit" class="dropdown-item-link text-danger">
+                      <span>🗑️</span>
+                      <span>{{ 'حذف هذا التسبيق' if lang=='ar' else 'Supprimer l\'avance' }}</span>
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        
+        <!-- Table Footers -->
+        <tfoot>
+          <tr style="background:#f8fafc; font-weight:800; border-top:1.5px solid #cbd5e1;">
+            <td colspan="3" style="padding:12px 20px; text-align:right; color:#0B3D6E; font-size:13px;">
+              {{ 'مجموع التسبيقات المخصومة' if lang=='ar' else 'TOTAL DES AVANCES DÉDUITES' }} :
+            </td>
+            <td style="padding:12px 10px; text-align:center; color:#dc2626; font-size:16px; background:#fef2f2;">
+              -{{ '%.2f'|format(total_amount) }} {{ settings.currency }}
+            </td>
+            <td colspan="2" style="padding:12px 20px; text-align:right; color:#64748b; font-size:12px;">
+              {{ advances|length }} {{ 'عملية تسبيق' if lang=='ar' else 'opération(s)' }} · {{ teacher_count }} {{ 'أستاذ مستفيد' if lang=='ar' else 'enseignant(s)' }}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty p-5" style="text-align:center; padding:50px 20px; color:#64748b;">
+      <div style="font-size:36px; margin-bottom:10px;">💸</div>
+      <h3 style="margin:0 0 6px 0; color:#0B3D6E;">{{ 'لا توجد تسبيقات مسجلة' if lang=='ar' else 'Aucune avance enregistrée' }}</h3>
+      <p style="margin:0; font-size:13px;">{{ 'لم يتم منح أي تسبيق على الراتب مطابق لمعايير البحث.' if lang=='ar' else 'Aucune avance sur salaire n\'a été enregistrée pour les filtres sélectionnés.' }}</p>
+      <button type="button" class="btn btn-primary" onclick="openAdvanceModal()" style="margin-top:14px; font-weight:800; background:#059669; border-color:#059669; border-radius:9px; padding:8px 18px;">
+        + {{ 'تسجيل تسبيق جديد الآن' if lang=='ar' else 'Accorder une Avance Maintenant' }}
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- MODAL: ACCORDER UNE AVANCE SUR SALAIRE -->
+<div id="advanceModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:2000; align-items:center; justify-content:center; backdrop-filter:blur(3px);">
+  <div style="background:#fff; border-radius:16px; width:94%; max-width:540px; box-shadow:0 20px 40px rgba(0,0,0,0.25); overflow:hidden; border:1px solid #cbd5e1; animation:fadeInMenu 0.2s ease;">
+    
+    <!-- Modal Header -->
+    <div style="background:linear-gradient(135deg, #0B3D6E 0%, #1e40af 100%); color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:20px;">💸</span>
+        <h3 style="margin:0; font-size:16px; font-weight:800;">
+          {{ 'تسجيل تسبيق على الراتب للأستاذ' if lang=='ar' else 'Accorder une Avance sur Salaire' }}
+        </h3>
+      </div>
+      <button type="button" onclick="closeAdvanceModal()" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer; font-weight:800; line-height:1;">&times;</button>
+    </div>
+
+    <!-- Modal Form -->
+    <form method="POST" action="{{ url_for('teacher_advance_new') }}" style="padding:20px 22px;">
+      
+      <!-- Teacher Selection -->
+      <div class="mb-3">
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:5px; text-transform:uppercase;">
+          👨‍🏫 {{ 'اختيار الأستاذ المستفيد' if lang=='ar' else 'Enseignant Bénéficiaire' }} <span style="color:#dc2626;">*</span>
+        </label>
+        <select name="teacher_id" id="modalTeacherSelect" required class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; width:100%; font-weight:700; color:#0B3D6E; box-sizing:border-box;">
+          <option value="">-- {{ 'اختر الأستاذ...' if lang=='ar' else 'Sélectionnez un enseignant...' }} --</option>
+          {% for t in all_teachers %}
+          <option value="{{ t.id }}" {% if selected_teacher_id == t.id %}selected{% endif %}>
+            Prof. {{ t.full_name }} ({{ t.specialty or 'Général' }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Amount & Imputation Month (2 columns) -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;" class="mb-3">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:5px; text-transform:uppercase;">
+            💰 {{ 'مبلغ التسبيق (درهم)' if lang=='ar' else 'Montant de l\'Avance (DH)' }} <span style="color:#dc2626;">*</span>
+          </label>
+          <input type="number" step="0.01" min="0.01" name="amount" id="modalAmount" required placeholder="Ex: 500" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; width:100%; font-weight:900; font-size:15px; color:#dc2626; box-sizing:border-box;">
+        </div>
+
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:5px; text-transform:uppercase;">
+            📅 {{ 'شهر الخصم من الأجر' if lang=='ar' else 'Mois d\'imputation' }} <span style="color:#dc2626;">*</span>
+          </label>
+          <input type="month" name="period_month" id="modalPeriodMonth" value="{{ req_month or '' }}" required class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; width:100%; font-weight:700; color:#0B3D6E; box-sizing:border-box;">
+        </div>
+      </div>
+
+      <!-- Transaction Date & Payment Method (2 columns) -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;" class="mb-3">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:5px; text-transform:uppercase;">
+            📆 {{ 'تاريخ الصرف الفعلي' if lang=='ar' else 'Date de Versement' }} <span style="color:#dc2626;">*</span>
+          </label>
+          <input type="date" name="date" id="modalDate" required class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; width:100%; font-weight:600; box-sizing:border-box;">
+        </div>
+
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:5px; text-transform:uppercase;">
+            💳 {{ 'طريقة الدفع' if lang=='ar' else 'Mode de Paiement' }}
+          </label>
+          <select name="payment_method" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; width:100%; font-weight:600; box-sizing:border-box;">
+            <option value="Espèces" selected>💵 Espèces (Cash)</option>
+            <option value="Virement bancaire">🏦 Virement bancaire</option>
+            <option value="Chèque">📑 Chèque</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Reference & Notes -->
+      <div class="mb-3">
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:5px; text-transform:uppercase;">
+          📝 {{ 'رقم الشيك أو المرجع' if lang=='ar' else 'Référence (N° Chèque / Virement)' }}
+        </label>
+        <input type="text" name="reference_no" placeholder="{{ 'اختياري: رقم التحويل أو الشيك...' if lang=='ar' else 'Ex: Chèque n° 458921 / Virement BMCE' }}" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; width:100%; font-size:12.5px; box-sizing:border-box;">
+      </div>
+
+      <div class="mb-3">
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:5px; text-transform:uppercase;">
+          💬 {{ 'ملاحظات / سبب التسبيق' if lang=='ar' else 'Motif / Remarques' }}
+        </label>
+        <textarea name="notes" rows="2" placeholder="{{ 'اختياري: دواعي التسبيق أو توضيحات إضافية...' if lang=='ar' else 'Ex: Avance exceptionnelle accordée à la demande de l\'enseignant...' }}" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; width:100%; font-size:12.5px; box-sizing:border-box;"></textarea>
+      </div>
+
+      <!-- Checkboxes: Expense sync & Print immediately -->
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; margin-bottom:18px;">
+        <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:#1e293b; cursor:pointer; margin-bottom:6px;">
+          <input type="checkbox" name="sync_expense" value="1" checked style="width:16px; height:16px; accent-color:#059669;">
+          <span>💼 {{ 'تسجيل العملية تلقائياً كمصروف في الصندوق (Dépense Caisse)' if lang=='ar' else 'Synchroniser avec la caisse (Enregistrer comme dépense)' }}</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:#1e293b; cursor:pointer;">
+          <input type="checkbox" name="print_after" value="1" checked style="width:16px; height:16px; accent-color:#059669;">
+          <span>🖨️ {{ 'فتح وصل التسليم للطباعة مباشرة بعد الحفظ' if lang=='ar' else 'Ouvrir le reçu de versement immédiatement après validation' }}</span>
+        </label>
+      </div>
+
+      <!-- Modal Actions -->
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" onclick="closeAdvanceModal()" class="btn btn-light" style="font-weight:700; border-radius:9px; padding:8px 16px; border:1px solid #cbd5e1;">
+          {{ 'إلغاء' if lang=='ar' else 'Annuler' }}
+        </button>
+        <button type="submit" class="btn btn-primary" style="background:#059669; border-color:#059669; font-weight:800; border-radius:9px; padding:8px 20px; box-shadow:0 3px 8px rgba(5,150,105,0.3);">
+          ✓ {{ 'تأكيد وصرف التسبيق' if lang=='ar' else 'Valider le Versement' }}
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<!-- SCRIPTS: DROPDOWNS & MODALS -->
+<script>
+  // Smart Action Menu Toggle with Auto-Repositioning
+  function toggleActionMenu(event, menuId) {
+    event.stopPropagation();
+    if (window.openFloatingDropdown) {
+      window.openFloatingDropdown(event.currentTarget, document.getElementById(menuId));
+    }
+  }
+
+  // Advance Modal Handlers
+  function openAdvanceModal(teacherId) {
+    const modal = document.getElementById('advanceModal');
+    modal.style.display = 'flex';
+    
+    if (teacherId) {
+      const select = document.getElementById('modalTeacherSelect');
+      if (select) select.value = teacherId;
+    }
+    
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('modalDate');
+    if (dateInput && !dateInput.value) {
+      dateInput.value = today;
+    }
+
+    const periodInput = document.getElementById('modalPeriodMonth');
+    if (periodInput && !periodInput.value) {
+      periodInput.value = "{{ req_month }}" || today.substring(0, 7);
+    }
+
+    setTimeout(() => {
+      const amtInput = document.getElementById('modalAmount');
+      if (amtInput) amtInput.focus();
+    }, 100);
+  }
+
+  function closeAdvanceModal() {
+    document.getElementById('advanceModal').style.display = 'none';
+  }
+
+  // Global Outside Click & ESC Key Listeners
+  document.addEventListener('click', function(e) {
+    // Close action dropdown menus
+    if (!e.target.closest('.action-group')) {
+      document.querySelectorAll('.dropdown-menu-float').forEach(m => {
+        m.classList.remove('show');
+      });
+    }
+
+    // Close modal if background clicked
+    const advModal = document.getElementById('advanceModal');
+    if (e.target === advModal) {
+      closeAdvanceModal();
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.dropdown-menu-float').forEach(m => m.classList.remove('show'));
+      closeAdvanceModal();
+    }
+  });
+</script>
+
+{% endblock %}

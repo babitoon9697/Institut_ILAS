@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <title>Prospectus Tarifs Officiels — {{ title_suffix_fr }} — Institut ILAS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800;900&family=Space+Grotesk:wght@700;800&family=Tajawal:wght@700;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ========================================================
+       PAGE SIZING & PRINT MEDIA SETUP
+       ======================================================== */
+    {% if print_format == 'a5_duo' or orient == 'landscape' %}
+      @page {
+        size: A4 landscape;
+        margin: 5mm 6mm;
+      }
+    {% elif print_format == 'a5' %}
+      @page {
+        size: A5 portrait;
+        margin: 4mm 5mm;
+      }
+    {% elif print_format == 'a4' %}
+      @page {
+        size: A4 portrait;
+        margin: 7mm 8mm;
+      }
+    {% else %}
+      @page {
+        size: 80mm auto;
+        margin: 0;
+      }
+    {% endif %}
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Cairo", Tahoma, Arial, sans-serif;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .page-break-avoid {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+    }
+
+    /* ========================================================
+       BARRE D'OUTILS DE CONTRÔLE (NO-PRINT)
+       ======================================================== */
+    .print-toolbar {
+      background: #ffffff;
+      border-bottom: 2px solid #cbd5e1;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+      padding: 9px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 2000;
+    }
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 13px;
+      font-size: 12px;
+      font-weight: 800;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      border: 1.5px solid transparent;
+      font-family: inherit;
+    }
+    .btn-primary-action {
+      background: #0B3D6E;
+      color: #ffffff;
+    }
+    .btn-primary-action:hover {
+      background: #082d52;
+    }
+    .btn-success-action {
+      background: #059669;
+      color: #ffffff;
+    }
+    .btn-success-action:hover {
+      background: #047857;
+    }
+    .btn-fmt {
+      background: #f1f5f9;
+      color: #334155;
+      border-color: #cbd5e1;
+    }
+    .btn-fmt.active {
+      background: #0B3D6E;
+      color: #ffffff;
+      border-color: #0B3D6E;
+    }
+    .btn-fmt:hover:not(.active) {
+      background: #e2e8f0;
+    }
+
+    /* MODAL CHOIX MULTI-CLASSES SUR PRINT */
+    #classesPickerModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 3000;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+    }
+    .modal-dialog-box {
+      background: #ffffff;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+    .modal-hdr {
+      background: #0B3D6E;
+      color: #ffffff;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-body {
+      padding: 16px 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-ftr {
+      padding: 12px 18px;
+      border-top: 1px solid #e2e8f0;
+      background: #f8fafc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ========================================================
+       STRUCTURE CONTENEUR DES PAGES
+       ======================================================== */
+    .viewport-container {
+      padding: 14px;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* A4 PAYSAGE DUO (2 FLYERS A5 CÔTE À CÔTE) */
+    {% if print_format == 'a5_duo' or orient == 'landscape' %}
+    .duo-wrapper {
+      width: 285mm;
+      max-width: 285mm;
+      height: 198mm;
+      max-height: 198mm;
+      display: flex;
+      justify-content: space-between;
+      align-items: stretch;
+      gap: 5mm;
+      background: transparent;
+      margin: 0 auto;
+    }
+    .flyer-box {
+      width: calc(50% - 2.5mm);
+      height: 198mm;
+      max-height: 198mm;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      padding: 3.5mm 4mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      position: relative;
+    }
+    .duo-separator {
+      border-right: 1.5px dashed #94a3b8;
+      height: 100%;
+      position: relative;
+    }
+    .duo-separator::after {
+      content: "✂️";
+      position: absolute;
+      top: 50%;
+      left: -9px;
+      transform: translateY(-50%);
+      background: #fff;
+      font-size: 11px;
+      padding: 2px 0;
+    }
+    @media print {
+      .viewport-container { padding: 0 !important; }
+      .duo-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        gap: 5mm !important;
+        margin: 0 !important;
+      }
+      .flyer-box {
+        box-shadow: none !important;
+        border: 1px solid #94a3b8 !important;
+      }
+    }
+    {% elif print_format == 'a5' %}
+    /* A5 PORTRAIT SOLO */
+    .solo-a5-wrapper {
+      width: 138mm;
+      max-width: 138mm;
+      height: 200mm;
+      max-height: 200mm;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      padding: 4mm 4.5mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin: 0 auto;
+    }
+    @media print {
+      .viewport-container { padding: 0 !important; }
+      .solo-a5-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+      }
+    }
+    {% elif print_format == 'a4' %}
+    /* A4 PLEIN PORTRAIT */
+    .a4-wrapper {
+      width: 100%;
+      max-width: 840px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 16px 20px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    }
+    @media print {
+      .viewport-container { padding: 0 !important; }
+      .a4-wrapper {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+      }
+    }
+    {% endif %}
+
+    /* ========================================================
+       DESIGN MODERNE & BILINGUE DU FLYER / CATALOGUE
+       ======================================================== */
+    .prospectus-hdr {
+      border-bottom: 2px solid #0B3D6E;
+      padding-bottom: 3.5px;
+      margin-bottom: 3.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .brand-logo-pill {
+      background: #0B3D6E;
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 13px;
+      padding: 2.5px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .brand-text-col {
+      line-height: 1.15;
+    }
+    .brand-fr-title {
+      font-size: 10.5px;
+      font-weight: 900;
+      color: #0B3D6E;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .brand-ar-title {
+      font-size: 9.5px;
+      font-weight: 800;
+      color: #047857;
+      direction: rtl;
+    }
+    .contacts-col {
+      text-align: right;
+      font-size: 7.5px;
+      line-height: 1.25;
+      color: #334155;
+    }
+    .contacts-phone {
+      font-weight: 900;
+      color: #0B3D6E;
+      font-size: 8px;
+    }
+
+    /* BANDEAU TITRE PRINCIPAL BILINGUE */
+    .main-title-ribbon {
+      background: linear-gradient(135deg, #0B3D6E 0%, #1e40af 100%);
+      color: #ffffff;
+      padding: 3.5px 8px;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .title-ribbon-fr {
+      font-size: 8.5px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .title-ribbon-ar {
+      font-size: 9px;
+      font-weight: 800;
+      direction: rtl;
+      color: #fef08a;
+    }
+
+    /* BANDEAU CLASSE SPÉCIFIQUE (SI SINGLE CLASS) */
+    .single-class-hero {
+      background: linear-gradient(90deg, #ecfdf5 0%, #d1fae5 100%);
+      border: 1.5px solid #10b981;
+      border-radius: 5px;
+      padding: 4px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .class-hero-fr {
+      font-size: 10px;
+      font-weight: 900;
+      color: #065f46;
+      text-transform: uppercase;
+    }
+    .class-hero-ar {
+      font-size: 10px;
+      font-weight: 800;
+      color: #047857;
+      direction: rtl;
+    }
+
+    /* CARTES DES CLASSES / NIVEAUX */
+    .class-block {
+      border: 1.2px solid #cbd5e1;
+      border-radius: 4px;
+      margin-bottom: 3.5px;
+      background: #ffffff;
+      overflow: hidden;
+    }
+    .class-block-hdr {
+      padding: 2.5px 6px;
+      font-size: 8px;
+      font-weight: 900;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #e0f2fe;
+      color: #0369a1;
+      border-bottom: 1px solid #bae6fd;
+    }
+    .hdr-lang {
+      background: #e0f2fe;
+      color: #0369a1;
+      border-bottom: 1px solid #bae6fd;
+    }
+    .hdr-college {
+      background: #dcfce7;
+      color: #15803d;
+      border-bottom: 1px solid #bbf7d0;
+    }
+    .hdr-lycee {
+      background: #fef3c7;
+      color: #b45309;
+      border-bottom: 1px solid #fde68a;
+    }
+    .hdr-primaire {
+      background: #ede9fe;
+      color: #6d28d9;
+      border-bottom: 1px solid #ddd6fe;
+    }
+
+    /* TABLE DES MATIÈRES COMPACTE ET ATTRACTIVE */
+    .tariffs-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 7.8px;
+    }
+    .tariffs-table th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 7px;
+      padding: 2px 4px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+    }
+    .tariffs-table td {
+      padding: 2px 4px;
+      border-bottom: 0.5px dashed #e2e8f0;
+      vertical-align: middle;
+    }
+    .tariffs-table tr:last-child td {
+      border-bottom: none;
+    }
+    .subject-title-fr {
+      font-weight: 800;
+      color: #0f172a;
+      display: inline-block;
+    }
+    .subject-title-ar {
+      color: #059669;
+      font-weight: 700;
+      font-size: 7.5px;
+      margin-left: 3px;
+      display: inline-block;
+      direction: rtl;
+    }
+    .schedule-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      background: #f1f5f9;
+      color: #334155;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 6.8px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .price-pill {
+      font-weight: 900;
+      color: #047857;
+      font-size: 8.5px;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .price-cycle-sub {
+      font-size: 6.5px;
+      color: #64748b;
+      font-weight: 700;
+      display: block;
+      margin-top: -1px;
+    }
+
+    /* BANDEAU FRAIS D'INSCRIPTION */
+    .reg-strip {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 3px;
+      padding: 2.5px 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 7.5px;
+      color: #92400e;
+      margin-top: 2px;
+      margin-bottom: 3px;
+    }
+    .reg-strip strong {
+      color: #78350f;
+      font-weight: 900;
+    }
+
+    /* FOOTER DU FLYER */
+    .prospectus-ftr {
+      border-top: 1.5px solid #0B3D6E;
+      padding-top: 2.5px;
+      margin-top: 1px;
+    }
+    .advantages-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 7.2px;
+      font-weight: 800;
+      color: #0B3D6E;
+      margin-bottom: 1.5px;
+      text-align: center;
+    }
+    .advantages-row span {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .footer-address-line {
+      font-size: 6.8px;
+      color: #64748b;
+      text-align: center;
+      line-height: 1.25;
+    }
+    .footer-address-line strong {
+      color: #1e293b;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== BARRE D'OUTILS NO-PRINT ==================== -->
+  <div class="print-toolbar no-print">
+    <div class="toolbar-left">
+      <button onclick="window.print()" class="btn-action btn-primary-action" title="Lancer l'impression (Ctrl+P)">
+        🖨️ Imprimer Immédiatement (طباعة)
+      </button>
+
+      <button type="button" onclick="openClassPicker()" class="btn-action btn-success-action" title="Choisir une classe ou plusieurs classes">
+        🎯 Choisir Classe(s) / تحديد الفصول
+        {% if selected_classes %}
+          <span style="background:#fff; color:#047857; padding:1px 6px; border-radius:10px; font-size:10px; margin-left:2px;">{{ selected_classes|length }}</span>
+        {% endif %}
+      </button>
+
+      <span style="border-left: 2px solid #cbd5e1; height: 22px; margin: 0 3px;"></span>
+
+      <!-- FORMAT SELECTORS -->
+      <a href="?fmt=a5_duo&orient=landscape{% for l in selected_classes %}&levels={{ l|urlencode }}{% endfor %}{% if cat %}&cat={{ cat }}{% endif %}"
+         class="btn-action btn-fmt {{ 'active' if print_format == 'a5_duo' else '' }}"
+         title="2 Flyers A5 sur A4 Paysage (Économie de papier)">
+        📑 2x A5 sur A4 (Duo)
+      </a>
+
+      <a href="?fmt=a5&orient=portrait{% for l in selected_classes %}&levels={{ l|urlencode }}{% endfor %}{% if cat %}&cat={{ cat }}{% endif %}"
+         class="btn-action btn-fmt {{ 'active' if print_format == 'a5' else '' }}"
+         title="Flyer A5 Portrait Solo">
+        📄 A5 Solo
+      </a>
+
+      <a href="?fmt=a4&orient=portrait{% for l in selected_classes %}&levels={{ l|urlencode }}{% endfor %}{% if cat %}&cat={{ cat }}{% endif %}"
+         class="btn-action btn-fmt {{ 'active' if print_format == 'a4' else '' }}"
+         title="Catalogue format A4">
+        📋 A4 Standard
+      </a>
+
+      <a href="?fmt=80mm{% for l in selected_classes %}&levels={{ l|urlencode }}{% endfor %}{% if cat %}&cat={{ cat }}{% endif %}"
+         class="btn-action btn-fmt {{ 'active' if print_format == '80mm' else '' }}"
+         title="Ticket thermique 80mm">
+        🎟️ Ticket 80mm
+      </a>
+    </div>
+
+    <div class="toolbar-right">
+      <span style="font-size:11px; font-weight:700; color:#475569;">
+        Affichage : <strong style="color:#0B3D6E;">{{ title_suffix_fr }}</strong>
+      </span>
+      <a href="/tariffs" class="btn-action btn-fmt" style="margin-left:6px;">← Retour aux Tarifs</a>
+    </div>
+  </div>
+
+
+  <!-- ==================== MODAL DE SÉLECTION MULTI-CLASSES (NO-PRINT) ==================== -->
+  <div id="classesPickerModal" class="no-print">
+    <div class="modal-dialog-box">
+      <div class="modal-hdr">
+        <div>
+          <h3 style="margin:0; font-size:15px; font-weight:900;">🎯 Sélectionner les Classes à Imprimer</h3>
+          <p style="margin:2px 0 0 0; font-size:11px; opacity:0.9; direction:rtl;">اختر فصلاً واحداً أو عدة فصول لطباعتها في وثيقة واحدة</p>
+        </div>
+        <button type="button" onclick="closeClassPicker()" style="background:transparent; border:none; color:#fff; font-size:22px; cursor:pointer;">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #e2e8f0;">
+          <div style="font-size:12px; font-weight:700; color:#475569;">
+            Sélection rapide :
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button type="button" onclick="selectAllClasses(true)" class="btn-action btn-fmt" style="padding:4px 8px; font-size:11px;">✅ Tout cocher</button>
+            <button type="button" onclick="selectAllClasses(false)" class="btn-action btn-fmt" style="padding:4px 8px; font-size:11px;">❌ Tout décocher</button>
+            <button type="button" onclick="selectCycleClasses('college')" class="btn-action btn-fmt" style="padding:4px 8px; font-size:11px;">🎓 Collège seul</button>
+            <button type="button" onclick="selectCycleClasses('lycee')" class="btn-action btn-fmt" style="padding:4px 8px; font-size:11px;">🎓 Lycée seul</button>
+            <button type="button" onclick="selectCycleClasses('langue')" class="btn-action btn-fmt" style="padding:4px 8px; font-size:11px;">🌍 Langues</button>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:10px;">
+          {% for c in available_classes %}
+          <label style="display:flex; align-items:flex-start; gap:8px; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:8px; cursor:pointer; background:#f8fafc; transition:all 0.15s ease;"
+                 onmouseover="this.style.borderColor='#0B3D6E'" onmouseout="this.style.borderColor='#cbd5e1'">
+            <input type="checkbox" name="modal_class_choice" value="{{ c.id }}" data-cycle="{{ c.cycle }}"
+                   {% if not selected_classes or c.id in selected_classes %}checked{% endif %}
+                   style="margin-top:3px; width:16px; height:16px; cursor:pointer;">
+            <div style="flex:1;">
+              <div style="font-weight:800; color:#0B3D6E; font-size:12px;">{{ c.label_fr }}</div>
+              <div style="font-size:11px; color:#059669; font-weight:700; direction:rtl; text-align:right;">{{ c.label_ar }}</div>
+              <span style="font-size:10px; color:#64748b; background:#e2e8f0; padding:1px 6px; border-radius:4px;">{{ c.count }} formules</span>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="modal-ftr">
+        <button type="button" onclick="closeClassPicker()" class="btn-action btn-fmt">Annuler / إلغاء</button>
+        <button type="button" onclick="applyClassPicker()" class="btn-action btn-success-action" style="padding:8px 20px; font-size:13px;">
+          ✅ Appliquer & Générer le Prospectus (تطبيق)
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ==================== MACRO DU CONTENU DU PROSPECTUS ==================== -->
+  {% macro render_prospectus_content(is_compact=false) %}
+    <!-- 1. HEADER ILAS BILINGUE -->
+    <div class="prospectus-hdr">
+      <div class="brand-group">
+        <span class="brand-logo-pill">ILAS</span>
+        <div class="brand-text-col">
+          <div class="brand-fr-title">INSTITUT PRIVÉ DE LANGUES LES SAGES</div>
+          <div class="brand-ar-title">المعهد الخاص للغات والدروس التوجيهية الحكماء</div>
+          <div style="font-size:6.8px; color:#64748b;">Langues & Soutien Scolaire · Autorisation N° 22-200/2020 · رخصة وزارة التربية الوطنية</div>
+        </div>
+      </div>
+      <div class="contacts-col">
+        <div>📞 <span class="contacts-phone">06 60 29 11 55</span> / 06 70 38 48 73</div>
+        <div>💬 WhatsApp: <strong>06 60 29 11 55</strong> · الدروة Deroua</div>
+      </div>
+    </div>
+
+    <!-- 2. BANDEAU D'ACCROCHE OFFICIELLE -->
+    <div class="main-title-ribbon">
+      <span class="title-ribbon-fr">🏷️ Tarifs Officiels & Inscriptions Ouvertes</span>
+      <span class="title-ribbon-ar">التسعيرات الرسمية والتسجيل مفتوح · 2025 / 2026</span>
+    </div>
+
+    <!-- 3. BANDEAU DE CLASSE UNIQUE (SI UNE SEULE CLASSE SÉLECTIONNÉE) -->
+    {% if is_single_class and grouped_classes %}
+      {% set single = grouped_classes[0] %}
+      <div class="single-class-hero">
+        <div class="class-hero-fr">🎓 {{ single.name_fr }}</div>
+        <div class="class-hero-ar">⭐ {{ single.name_ar }}</div>
+      </div>
+    {% endif %}
+
+    <!-- 4. CONTENU GROUPÉ PAR CLASSE / NIVEAU -->
+    {% for grp in grouped_classes %}
+      <div class="class-block page-break-avoid">
+        {% if not is_single_class %}
+        <div class="class-block-hdr {% if grp.cycle=='langue' %}hdr-lang{% elif grp.cycle=='college' %}hdr-college{% elif grp.cycle=='lycee' %}hdr-lycee{% else %}hdr-primaire{% endif %}">
+          <span style="font-weight:900;">📚 {{ grp.name_fr }}</span>
+          <span style="font-weight:800; direction:rtl;">{{ grp.name_ar }} 🎓</span>
+        </div>
+        {% endif %}
+
+        <table class="tariffs-table">
+          <thead>
+            <tr>
+              <th style="width:48%;">Matière & Formule · المادة</th>
+              <th style="width:28%;">Rythme & Durée · التوقيت</th>
+              <th style="width:24%; text-align:right;">Tarif · الثمن</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in grp.tariffs %}
+            <tr>
+              <td>
+                <span style="font-size:9px; margin-right:2px;">{{ item.subject_ico }}</span>
+                <span class="subject-title-fr">{{ item.subject_fr }}</span>
+                <span class="subject-title-ar">{{ item.subject_ar }}</span>
+              </td>
+              <td>
+                <span class="schedule-pill">
+                  ⏱️ {{ item.schedule_fr }}
+                </span>
+              </td>
+              <td class="price-pill">
+                {{ '%.0f'|format(item.price) }} DH
+                <span class="price-cycle-sub">{{ item.cycle_fr }} · {{ item.cycle_ar }}</span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endfor %}
+
+    <!-- 5. BANDEAU COURS PARTICULIERS VIP (OPTIONNEL COMPACT) -->
+    <div style="border:1px solid #e9d5ff; background:#faf5ff; border-radius:3px; padding:2px 5px; margin-top:2px; margin-bottom:3px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="font-size:7.2px; font-weight:800; color:#6b21a8;">
+        ⭐ Cours Particuliers VIP (1-to-1 فردي بالساعة): <span style="color:#581c87; font-weight:900;">250 DH / h</span>
+      </div>
+      <div style="font-size:7px; color:#7e22ce; font-weight:700;">
+        Packs 15h, 30h & 60h disponibles · أساتذة مخصصون
+      </div>
+    </div>
+
+    <!-- 6. BANDEAU FRAIS D'INSCRIPTION BILINGUE -->
+    <div class="reg-strip">
+      <div>
+        <strong>⚡ واجب التسجيل السنوي : {{ '%.0f'|format(reg_fee) }} درهم • Frais d'inscription : {{ '%.0f'|format(reg_fee) }} DH / an</strong>
+        <span style="font-size:6.8px; margin-left:3px;">(تأمين مدرسي وبطاقة التلميذ شاملة · Assurance scolaire & carte incluses)</span>
+      </div>
+      <div style="font-weight:900; font-size:7.2px; color:#b45309; text-transform:uppercase;">Places Limitées · مقاعد محدودة</div>
+    </div>
+
+    <!-- 7. FOOTER AVANTAGES & ADRESSE -->
+    <div class="prospectus-ftr">
+      <div class="advantages-row">
+        <span>👥 أفواج مصغرة (8-12) • Petits groupes</span>
+        <span>👨‍🏫 أساتذة أكفاء • Profs qualifiés</span>
+        <span>📈 مواكبة فردية • Suivi rigoureux</span>
+        <span>📜 شواهد معتمدة • Attestations</span>
+      </div>
+      <div class="footer-address-line">
+        📍 <strong>المعهد:</strong> تجزئة نورا، رقم 10، مخلوف (قرب مقهى ريان)، الدروة · 
+        🌐 <strong>www.les-sages-ilas.ma</strong> · Tél: <strong>06 60 29 11 55 / 06 70 38 48 73</strong>
+      </div>
+    </div>
+  {% endmacro %}
+
+
+  <!-- ==================== AFFICHAGE SELON FORMAT ==================== -->
+  <div class="viewport-container">
+
+    {% if print_format == 'a5_duo' or orient == 'landscape' %}
+      <!-- 2 FLYERS A5 SUR 1 FEUILLE A4 EN PAYSAGE (DUO) -->
+      <div class="duo-wrapper">
+        <div class="flyer-box">
+          {{ render_prospectus_content(is_compact=true) }}
+        </div>
+
+        <div class="duo-separator"></div>
+
+        <div class="flyer-box">
+          {{ render_prospectus_content(is_compact=true) }}
+        </div>
+      </div>
+
+    {% elif print_format == 'a5' %}
+      <!-- FLYER A5 PORTRAIT SOLO -->
+      <div class="solo-a5-wrapper">
+        {{ render_prospectus_content(is_compact=false) }}
+      </div>
+
+    {% elif print_format == 'a4' %}
+      <!-- FORMAT A4 STANDARD PLEIN -->
+      <div class="a4-wrapper">
+        {{ render_prospectus_content(is_compact=false) }}
+      </div>
+
+    {% else %}
+      <!-- ================= FORMAT TICKET THERMIQUE 80MM (MODERN PURE B&W) ================= -->
+      <div style="width:72mm; max-width:72mm; margin:0 auto; padding:4mm 2.5mm; background:#ffffff; color:#000000; font-family:'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, Arial, sans-serif; font-size:10px; line-height:1.25; box-shadow:0 4px 18px rgba(0,0,0,0.1);">
+        
+        <!-- En-tête officiel avec Logo ILAS Pur Noir et Blanc -->
+        <div style="text-align:center; padding-bottom:2px;">
+          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAC+AQAAAAAzFWSTAAAFgElEQVR4nO1aPW7kNhT+SAkeFYuMShdBrCIHcJlu5ih7hL3Bqky5R/BJEhUuUvoISpAiTQAlcCEvpGHwHkmJ0pASuUZcmTBmRiN+8/5/+GShkLrk8vIpHYJ0SP8mVIY3oXJ5EyrqTaigToY030ClSYcgHdKO51QIHnch+er677NKpfK8B8A1Y2IXIpZ8CGRDGhW1zxZWkH+v9bEHKYEiDfISwxcWkJ81oSTGAFRpkHM6Y/dRMOGaYsxjTCPdiywqkmVyHGMJuU+HfEiH4K0gzf9PZUiHRC35ekjbJkJ6cZtOJU+GyCwZkqebskiNfXT7bGFNpUyHVOkQpEPOMRjlrkZFLPlaxkQ6RKZDkA55TIcU6ZCoJZNdDEvIQxQZ5a5fY6wvXn0YiVkyatc75HUaE86qMIoceKGXef01fVJCxlGZK84fUOcVxJ/45gJaAb+lyTIC+BoF+cXt1FWdRIXrwqr+fFYDMqV6epnXFFLcqh2TsiVD+gjGlG0EdTAOKbJcfOdb5ZNlwEl/MAd7lUDFQOp9yLCuvdK5Gco2y7amSWDMIuXuab9fdQOtC9mh2ACnLqoz6uaxiWjGVQdyGHx2aXEwvkYfahz3xW9nNRfUGNzLlAa2pMA8y92yZwNEcSCXIsL6ju7PQLEE3PU+8ckraF24fA2rEAsMoVw/kuXCfDHNGKr9ECMS9dzhiGYJ6aKUIPf6t8tVIpJ7jF3vlM6X3iPltUdI9yJ0qmgXypYATu1Gy3dtK0l6+95chPr9bsG5BG4Md/uaaOy+AoLheZACMyccWU9KMfyg4HFL2qbDkrI+LckWrMLh0uJ2UvSzZayO7PZqrnxWZiZQepNlgx8XMQbI2Rx7vn82s2NNJQ8ny3ry1ooHSASZGobQQUQaTym5Hi/t58tJaumtD/xKSmeWVO+xCyUJKtWmimXT+YVDdG9kTQKPC8b8LnaBQK2dywos40+V7IlPBLF+4vdKKvNn44+k0meXShEMSnewc3Ehfj/rmbpmmfjhTmnWUygorSfd0MuDQ8XvYt1a/s7GD3dW8JiyxVF1tvS1OhAniNqH9Gx/zRgVEf/8rUWJwnrfDdtf2ksZ8VhAkIJM4QvvblAhn+7fcw9Tm8s8ZqD0QfNDawieQnVQWjEz7mHsYLsM+77jug0ZpqH46SgBth4lcxm+mBhTvPEgK43cGkGIpTCSM21LTPscea3KDBhkqUlkIa8kEiYstTogCzyTQvKohyIwgTxSRgvoWPfeNixB/n7JcyAfScdxh+USkEwG+BjqRfNl2BSzYbVnX9lF+z1FgFkDycJSZ4E2qTNCujeltuF2I+tkEkl/HPO3gcTX4h++73q5pN2cK0JZ7Pe1BaTmqdkY8V6lHkUqI7XApzHSTaYGbi9H/obFaViUsCVHt4QraxCtcA8V3vt54B2tCSAJHOq77U78QYflg/Xb2c4eKtqJjheWhY9xgxPXG/WoF7RNGTOICeI1i6YycAB/5V8dHCob49oR9T25GTlaD0ibJrZiskZToWMNdbM/WuUvl1Fj0yjinPZQRbqb68C1xozPH+lA0QB3pMJMGk35U6X59pksXwF/8oMz2ft0PPKMZcqGI77wtlFQ5OTD1sjO/pDAYYqzQl52FHbUBhvmoJFqQ2Fk308/rL4rTboIPtkUtW6iZ3NUUps98A8HDVXUj/Tp4h5GnugtWCqKKb/YknHWDUlAFOdx5Nww1vrUaJVpra/XSXF3r81gunxQq0Dzqy9BKlOXV5uHZjldP+IlYBW1EEIbpljvWTKmz7h6lmSj+rQ9h6FelAsJ53lN7bxNRac8vqbkSPKLnTm/0yBR5v4JwHe7BzC+TS7D3RuAT9hmzIan7eE6fn8fQacumYzAOyR1fYPG/gOKo10pOlir8gAAAABJRU5ErkJggg==" style="max-width:44mm; height:auto; display:block; margin:0 auto 3px auto;" alt="ILAS">
+          <div style="font-family:'Space Grotesk', 'Plus Jakarta Sans', sans-serif; font-size:13px; font-weight:900; letter-spacing:0.6px; text-transform:uppercase; color:#000; line-height:1.1;">
+            {{ settings.inst_name }}
+          </div>
+          <div style="font-size:8px; font-weight:800; text-transform:uppercase; color:#000; letter-spacing:0.3px; margin-top:2px;">
+            {{ settings.inst_tagline }}
+          </div>
+          <div style="font-size:8px; font-weight:700; color:#000; margin-top:1.5px;">
+            Tél: {{ settings.inst_phone or '06 60 29 11 55' }} · {{ settings.inst_city or 'Deroua' }}
+          </div>
+        </div>
+
+        <!-- Titre Inversé Bilingue -->
+        <div style="background:#000000; color:#ffffff; font-size:10.5px; font-weight:900; letter-spacing:0.6px; text-transform:uppercase; text-align:center; padding:4px 2px; margin:7px 0 3px 0; border-radius:2px;">
+          [ {{ title_suffix_fr|upper }} ]
+        </div>
+        {% if title_suffix_ar %}
+        <div style="text-align:center; font-family:'Tajawal', sans-serif; font-size:10px; font-weight:800; direction:rtl; color:#000; margin-bottom:5px;">
+          {{ title_suffix_ar }}
+        </div>
+        {% endif %}
+
+        <!-- Meta Info -->
+        <div style="border:1.5px solid #000; border-radius:3px; padding:3.5px 6px; margin-bottom:7px; font-size:8.5px;">
+          <div style="display:flex; justify-content:space-between; padding:1px 0; border-bottom:1px dashed #000;">
+            <span style="font-size:7.5px; font-weight:800; text-transform:uppercase;">Année Scolaire</span>
+            <span style="font-weight:900; text-align:right;">{{ settings.school_year or '2025/2026' }}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:1px 0;">
+            <span style="font-size:7.5px; font-weight:800; text-transform:uppercase;">Date d'Émission</span>
+            <span style="font-weight:900; text-align:right;">{{ today.strftime('%d/%m/%Y') }}</span>
+          </div>
+        </div>
+
+        <!-- Groupes & Tarifs -->
+        {% for grp in grouped_classes %}
+          <div style="background:#000000; color:#ffffff; display:flex; justify-content:space-between; align-items:center; padding:3px 6px; margin-top:8px; margin-bottom:5px; border-radius:2px;">
+            <span style="font-size:9.5px; font-weight:900; letter-spacing:0.4px; text-transform:uppercase;">&gt;&gt; {{ grp.name_fr }}</span>
+            <span style="font-size:7.5px; font-weight:900; background:#ffffff; color:#000000; padding:0 4px; border-radius:2px;">TARIFS</span>
+          </div>
+
+          {% for item in grp.tariffs %}
+          <div style="border-left:3.5px solid #000000; padding:3.5px 0 4px 6px; margin-bottom:4.5px; border-bottom:1px dashed #000000; display:flex; justify-content:space-between; align-items:flex-start; gap:6px;">
+            <div style="flex:1;">
+              <div style="font-size:10.5px; font-weight:900; color:#000000; line-height:1.2;">
+                {{ item.subject_fr }}
+              </div>
+              {% if item.subject_ar %}
+              <div style="font-family:'Tajawal', sans-serif; font-size:9px; font-weight:800; direction:rtl; color:#000000; margin-top:1px;">
+                {{ item.subject_ar }}
+              </div>
+              {% endif %}
+              {% if item.schedule_fr %}
+              <div style="font-size:7.5px; font-weight:800; color:#000; margin-top:2px;">
+                ⏱️ {{ item.schedule_fr }}
+              </div>
+              {% endif %}
+            </div>
+
+            <div style="text-align:right; white-space:nowrap;">
+              <span style="background:#000000; color:#ffffff; font-size:11px; font-weight:900; padding:1.5px 5px; border-radius:2px; display:inline-block; letter-spacing:0.2px;">
+                {{ '%.0f'|format(item.price) }} DH
+              </span>
+              <div style="font-size:7.5px; font-weight:800; text-transform:uppercase; color:#000; margin-top:1.5px;">
+                {{ item.cycle_fr }}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% endfor %}
+
+        <!-- Frais d'inscription -->
+        <div style="border:2px solid #000000; border-radius:4px; padding:5px 6px; margin-top:8px; text-align:center; background:#ffffff;">
+          <div style="font-size:10px; font-weight:900; letter-spacing:0.3px; text-transform:uppercase;">
+            Frais d'Inscription : {{ '%.0f'|format(reg_fee) }} DH
+          </div>
+          <div style="font-family:'Tajawal', sans-serif; font-size:9.5px; font-weight:800; direction:rtl; margin-top:1px;">
+            واجب التسجيل السنوي للتأمين والملف
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align:center; margin-top:9px; padding-top:6px; border-top:1.5px dashed #000000; font-size:8px; font-weight:800; line-height:1.35;">
+          <div style="font-weight:900; font-size:9px;">{{ settings.inst_name }}</div>
+          <div>شكراً لثقتكم · Merci de votre confiance</div>
+          <div style="margin-top:2px; font-size:7.5px;">Autorisation Ministérielle N° 22-200/2020</div>
+        </div>
+
+      </div>
+    {% endif %}
+
+  </div>
+
+  <!-- SCRIPT MODAL ET NAVIGATION SUR PRINT -->
+  <script>
+    function openClassPicker() {
+      document.getElementById('classesPickerModal').style.display = 'flex';
+    }
+
+    function closeClassPicker() {
+      document.getElementById('classesPickerModal').style.display = 'none';
+    }
+
+    function selectAllClasses(checked) {
+      var cbs = document.querySelectorAll('input[name="modal_class_choice"]');
+      cbs.forEach(function(cb) { cb.checked = checked; });
+    }
+
+    function selectCycleClasses(cycle) {
+      selectAllClasses(false);
+      var cbs = document.querySelectorAll('input[name="modal_class_choice"]');
+      cbs.forEach(function(cb) {
+        if (cb.getAttribute('data-cycle') === cycle) {
+          cb.checked = true;
+        }
+      });
+    }
+
+    function applyClassPicker() {
+      var cbs = document.querySelectorAll('input[name="modal_class_choice"]:checked');
+      var selected = [];
+      cbs.forEach(function(cb) { selected.push(cb.value); });
+      
+      var urlParams = new URLSearchParams(window.location.search);
+      urlParams.delete('levels');
+      urlParams.delete('level');
+      urlParams.delete('lang');
+      urlParams.delete('ids');
+      urlParams.delete('cat');
+
+      if (selected.length === 0) {
+        alert('⚠️ Veuillez sélectionner au moins une classe.');
+        return;
+      }
+
+      // Add each selected level
+      selected.forEach(function(lvl) {
+        urlParams.append('levels', lvl);
+      });
+
+      window.location.search = urlParams.toString();
+    }
+
+    // Close on outside click
+    window.onclick = function(e) {
+      var m = document.getElementById('classesPickerModal');
+      if (e.target === m) closeClassPicker();
+    };
+  </script>
+
+</body>
+</html>

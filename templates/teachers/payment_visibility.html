@@ -1,0 +1,852 @@
+{% extends 'base.html' %}
+{% set title = ('إظهار مستحقات الأساتذة' if lang == 'ar' else 'Visibilité des Paiements Enseignants') %}
+{% block content %}
+
+<style>
+  .vis-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  
+  /* Modern Top Tabs */
+  .vis-tabs-nav {
+    display: flex;
+    gap: 8px;
+    background: #f1f5f9;
+    padding: 6px;
+    border-radius: 14px;
+    border: 1px solid #cbd5e1;
+    margin-bottom: 20px;
+  }
+  .vis-tab-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 800;
+    text-decoration: none;
+    color: #475569;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .vis-tab-btn:hover {
+    color: #0B3D6E;
+    background: rgba(255,255,255,0.6);
+  }
+  .vis-tab-btn.active {
+    background: #ffffff;
+    color: #0B3D6E;
+    box-shadow: 0 2px 8px rgba(11,61,110,0.12);
+  }
+  .vis-tab-btn .badge-pill {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 12px;
+    background: #e2e8f0;
+    color: #334155;
+  }
+  .vis-tab-btn.active .badge-pill {
+    background: #0B3D6E;
+    color: #ffffff;
+  }
+
+  /* Month Selection Cards Strip */
+  .month-cards-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .month-card-item {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px 12px;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  .month-card-item:hover {
+    border-color: #94a3b8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  }
+  .month-card-item.selected {
+    border-color: #0B3D6E;
+    background: #f0f7ff;
+    box-shadow: 0 0 0 2px #0B3D6E;
+  }
+  .month-card-name {
+    font-size: 13px;
+    font-weight: 800;
+    color: #1e293b;
+  }
+  .month-card-item.selected .month-card-name {
+    color: #0B3D6E;
+  }
+  .month-card-stat {
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .stat-active {
+    color: #15803d;
+  }
+  .stat-zero {
+    color: #94a3b8;
+  }
+
+  /* Action Bar */
+  .action-bar-card {
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+  }
+
+  /* Table styling */
+  .table-vis-wrap {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #cbd5e1;
+    overflow-x: auto;
+    box-shadow: 0 4px 16px rgba(15,23,42,0.04);
+  }
+  .table-vis {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+  }
+  .table-vis th {
+    background: #f8fafc;
+    padding: 12px 14px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+    text-align: left;
+  }
+  body.rtl .table-vis th {
+    text-align: right;
+  }
+  .table-vis td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .table-vis tr:hover td {
+    background: #fbfdff;
+  }
+
+  /* Matrix table specific */
+  .matrix-cell-th {
+    text-align: center !important;
+    min-width: 60px;
+    padding: 8px 4px !important;
+  }
+  .matrix-cell-td {
+    text-align: center;
+    padding: 8px 4px !important;
+  }
+
+  /* Toggle Switch */
+  .tpv-switch {
+    position: relative;
+    display: inline-block;
+    width: 38px;
+    height: 22px;
+    vertical-align: middle;
+  }
+  .tpv-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .tpv-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #cbd5e1;
+    transition: .25s ease;
+    border-radius: 22px;
+  }
+  .tpv-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .25s ease;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  }
+  input:checked + .tpv-slider {
+    background-color: #16a34a;
+  }
+  input:checked + .tpv-slider:before {
+    transform: translateX(16px);
+  }
+  .tpv-switch.loading .tpv-slider {
+    opacity: 0.5;
+  }
+
+  /* Notification Toast */
+  #tpvToast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    background: #0B3D6E;
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    display: none;
+    align-items: center;
+    gap: 10px;
+    animation: slideUpToast 0.25s ease;
+  }
+  body.rtl #tpvToast {
+    right: auto;
+    left: 24px;
+  }
+  @keyframes slideUpToast {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .sticky-col {
+    position: sticky;
+    left: 0;
+    background: #ffffff;
+    z-index: 2;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.03);
+  }
+  body.rtl .sticky-col {
+    left: auto;
+    right: 0;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.03);
+  }
+
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .vis-tabs-nav {
+      flex-direction: column;
+      gap: 6px;
+      padding: 6px;
+    }
+    .vis-tab-btn {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 12.5px;
+    }
+    .month-cards-strip {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .month-card-item {
+      padding: 8px 6px;
+    }
+    .month-card-name {
+      font-size: 11.5px;
+    }
+    .month-card-stat {
+      font-size: 10px;
+    }
+    .action-bar-card {
+      padding: 12px;
+    }
+    .action-bar-card > div {
+      width: 100%;
+    }
+    .table-vis th, .table-vis td {
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+  }
+</style>
+
+<div class="vis-container">
+
+  <!-- TOP HEADER -->
+  <div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+    <div>
+      <div class="muted" style="font-size:12px">
+        <a href="{{ url_for('teachers_payroll') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ 'كشف أجور الأساتذة' if lang=='ar' else 'Paie des Enseignants' }}</a>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+        <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:900;">
+          👁️ {{ 'إظهار وتفعيل كشوفات الأجور للأساتذة' if lang=='ar' else 'Affichage & Visibilité des Paiements Enseignants' }}
+        </h2>
+        <span class="chip" style="background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; font-size:11.5px; font-weight:800; padding:2px 8px; border-radius:6px;">
+          ESPACE PROF
+        </span>
+      </div>
+      <p class="muted" style="margin:3px 0 0 0; font-size:12.5px;">
+        {{ 'تحكم كامل في الشهور التي يحق لكل أستاذ الاطلاع على مستحقاته فيها. لا يظهر أي شهر للأستاذ إلا إذا تم تفعيله هنا.' if lang=='ar' else 'Définissez précisément les mois accessibles par chaque enseignant dans son portail. Par défaut, aucun paiement n\'est visible tant qu\'il n\'a pas été publié ici.' }}
+      </p>
+    </div>
+
+    <!-- Right Controls: Year selector & Teacher Preview -->
+    <div class="flex wrap" style="gap:8px; align-items:center;">
+      <div style="display:flex; align-items:center; gap:6px; background:#fff; padding:4px 10px; border-radius:10px; border:1px solid #cbd5e1;">
+        <span style="font-size:12px; font-weight:800; color:#64748b;">📅 {{ 'السنة' if lang=='ar' else 'Année' }}:</span>
+        <select onchange="location.href='?year=' + this.value + '&month={{ selected_month }}&tab={{ active_tab }}'" style="border:none; font-weight:900; color:#0B3D6E; background:transparent; cursor:pointer; font-size:13px; outline:none;">
+          {% for y in available_years %}
+            <option value="{{ y }}" {{ 'selected' if y == year else '' }}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <a href="{{ url_for('teacher_my_payments') }}" target="_blank" class="btn btn-outline" style="background:#fff; border-color:#0B3D6E; color:#0B3D6E; font-weight:800; font-size:12.5px; padding:7px 14px; border-radius:9px; display:inline-flex; align-items:center; gap:6px;">
+        <span>🔍</span>
+        <span>{{ 'معاينة شاشة الأستاذ' if lang=='ar' else 'Aperçu Vue Enseignant' }}</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- NAVIGATION TABS -->
+  <div class="vis-tabs-nav">
+    <button type="button" class="vis-tab-btn {{ 'active' if active_tab == 'fast' else '' }}" onclick="switchVisTab('fast')">
+      <span>⚡</span>
+      <span>{{ 'الإجراء السريع (تفعيل شهر لمجموعة أساتذة)' if lang=='ar' else 'Action Rapide (Publication par Mois)' }}</span>
+      <span class="badge-pill">{{ teachers|length }} {{ 'أستاذ' if lang=='ar' else 'profs' }}</span>
+    </button>
+    <button type="button" class="vis-tab-btn {{ 'active' if active_tab == 'matrix' else '' }}" onclick="switchVisTab('matrix')">
+      <span>🗓️</span>
+      <span>{{ 'الجدول السنوي الكامل (يناير - دجنبر)' if lang=='ar' else 'Matrice Annuelle (Janvier - Décembre)' }}</span>
+      <span class="badge-pill">12 {{ 'شهراً' if lang=='ar' else 'mois' }}</span>
+    </button>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 1: ACTION RAPIDE / PUBLICATION PAR MOIS                           -->
+  <!-- ===================================================================== -->
+  <div id="tabFastContent" style="display: {{ 'block' if active_tab == 'fast' else 'none' }};">
+    
+    <!-- 1. MONTH PICKER STRIP -->
+    <div style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:12px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">
+        1. {{ 'اختر الشهر المستهدف للعملية' if lang=='ar' else 'Choisissez le mois cible pour l\'action rapide' }} :
+      </span>
+      <span style="font-size:12px; font-weight:700; color:#0B3D6E;">
+        {{ year }}
+      </span>
+    </div>
+
+    <div class="month-cards-strip">
+      {% for m_num, m_fr, m_ar in months_list %}
+        {% set act_count = month_visible_counts.get(m_num, 0) %}
+        <a href="?year={{ year }}&month={{ m_num }}&tab=fast" class="month-card-item {{ 'selected' if m_num == selected_month else '' }}">
+          <div class="month-card-name">{{ m_ar if lang=='ar' else m_fr }}</div>
+          <div class="month-card-stat {{ 'stat-active' if act_count > 0 else 'stat-zero' }}">
+            {% if act_count > 0 %}
+              🟢 {{ act_count }}/{{ teachers|length }} {{ 'مفعّل' if lang=='ar' else 'actifs' }}
+            {% else %}
+              ⚪ 0/{{ teachers|length }}
+            {% endif %}
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+
+    <!-- 2. ACTION CONTROLS & BATCH FORM -->
+    <form method="POST" id="batchForm" action="{{ url_for('teacher_payment_visibility') }}">
+      <input type="hidden" name="action" value="batch_visibility">
+      <input type="hidden" name="year" value="{{ year }}">
+      <input type="hidden" name="target_month" id="targetMonthInput" value="{{ selected_month }}">
+      <input type="hidden" name="action_type" id="actionTypeInput" value="show">
+
+      {% set sel_month_info = months_list[selected_month - 1] %}
+      {% set sel_month_name = sel_month_info[2] if lang=='ar' else sel_month_info[1] %}
+      {% set cur_vis_count = month_visible_counts.get(selected_month, 0) %}
+
+      <div class="action-bar-card">
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+          <div>
+            <div style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">
+              {{ 'الشهر المحدد حالياً' if lang=='ar' else 'Mois sélectionné' }}
+            </div>
+            <div style="font-size:18px; font-weight:900; color:#0B3D6E;">
+              📅 {{ sel_month_name }} {{ year }}
+              <span class="chip" style="font-size:11px; font-weight:800; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; margin-left:6px;">
+                {{ cur_vis_count }} / {{ teachers|length }} {{ 'أستاذ يمكنه رؤية هذا الشهر' if lang=='ar' else 'ont accès' }}
+              </span>
+            </div>
+          </div>
+          
+          <div style="height:32px; width:1px; background:#cbd5e1; margin:0 4px;" class="hide-mobile"></div>
+
+          <!-- Live Search Input -->
+          <div style="position:relative; min-width:240px;">
+            <input type="text" id="teacherSearchInput" onkeyup="filterFastTable()" placeholder="{{ 'بحث بالاسم أو المادة...' if lang=='ar' else 'Filtrer par nom ou matière...' }}" class="form-control" style="padding:7px 12px 7px 32px; border-radius:10px; border:1.5px solid #cbd5e1; font-size:12.5px; width:100%; box-sizing:border-box;">
+            <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:14px; color:#94a3b8;">🔍</span>
+          </div>
+
+          <div style="font-size:12px; font-weight:800; color:#475569;">
+            <span id="selectedCountBadge" class="chip chip-blue" style="font-size:11px; padding:2px 8px;">0</span> {{ 'أستاذ محدد' if lang=='ar' else 'sélectionné(s)' }}
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <!-- Show for selected -->
+          <button type="button" onclick="submitBatch('show')" class="btn btn-primary" style="background:#15803d; border-color:#15803d; font-weight:800; font-size:13px; padding:8px 16px; border-radius:10px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 3px 10px rgba(21,128,61,0.25);">
+            <span>👁️</span>
+            <span>{{ 'إظهار ' ~ sel_month_name ~ ' للمحددين' if lang=='ar' else 'Afficher ' ~ sel_month_name ~ ' pour les profs cochés' }}</span>
+          </button>
+
+          <!-- Hide for selected -->
+          <button type="button" onclick="submitBatch('hide')" class="btn btn-outline" style="border-color:#dc2626; color:#dc2626; font-weight:800; font-size:13px; padding:8px 14px; border-radius:10px; background:#fff; display:inline-flex; align-items:center; gap:6px;">
+            <span>🚫</span>
+            <span>{{ 'إخفاء للمحددين' if lang=='ar' else 'Masquer pour les cochés' }}</span>
+          </button>
+
+          <!-- Show All / Hide All dropdown -->
+          <button type="button" onclick="submitBatch('show_all')" class="btn btn-outline" style="border-color:#cbd5e1; color:#334155; font-weight:700; font-size:12.5px; padding:8px 12px; border-radius:10px; background:#fff;" title="Afficher pour tous les enseignants actifs">
+            ⚡ {{ 'إظهار للجميع' if lang=='ar' else 'Afficher pour Tous' }}
+          </button>
+
+          <button type="button" onclick="submitBatch('hide_all')" class="btn btn-outline" style="border-color:#cbd5e1; color:#64748b; font-weight:700; font-size:12.5px; padding:8px 12px; border-radius:10px; background:#fff;" title="Masquer pour tous les enseignants">
+            🔒 {{ 'إخفاء للجميع' if lang=='ar' else 'Masquer pour Tous' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- TEACHERS LIST TABLE -->
+      <div class="table-vis-wrap">
+        <table class="table-vis" id="fastTeachersTable">
+          <thead>
+            <tr>
+              <th style="width:40px; text-align:center;">
+                <input type="checkbox" id="selectAllFast" onchange="toggleSelectAll(this.checked)" style="width:17px; height:17px; cursor:pointer;">
+              </th>
+              <th style="width:50px;">#</th>
+              <th>{{ 'الأستاذ' if lang=='ar' else 'Enseignant' }}</th>
+              <th>{{ 'المادة / التخصص' if lang=='ar' else 'Spécialité / Matière' }}</th>
+              <th>{{ 'الهاتف' if lang=='ar' else 'Téléphone' }}</th>
+              <th style="text-align:center;">{{ 'الحالة لشهر ' ~ sel_month_name if lang=='ar' else 'Statut pour ' ~ sel_month_name }}</th>
+              <th style="text-align:center; width:130px;">{{ 'تبديل فوري' if lang=='ar' else 'Action Directe' }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in teachers %}
+              {% set is_vis = vis_map.get((t.id, selected_month), False) %}
+              <tr class="teacher-row" data-name="{{ t.full_name|lower }}" data-subject="{{ (t.specialty or '')|lower }}">
+                <td style="text-align:center;">
+                  <input type="checkbox" name="teacher_ids" value="{{ t.id }}" class="teacher-checkbox" onchange="updateSelectedCount()" style="width:17px; height:17px; cursor:pointer;">
+                </td>
+                <td class="muted" style="font-weight:700; font-size:12px;">{{ t.code or ('#' ~ t.id) }}</td>
+                <td>
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <img src="{{ t.avatar_url }}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; border:1.5px solid #cbd5e1;">
+                    <div>
+                      <div style="font-weight:800; color:#0B3D6E; font-size:13.5px;">{{ t.full_name }}</div>
+                      <div class="muted" style="font-size:11px;">{{ t.contract_type or 'Vacation' }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="chip chip-blue" style="font-size:11px; font-weight:700;">
+                    {{ t.primary_matiere or t.specialty or '—' }}
+                  </span>
+                </td>
+                <td class="muted" style="font-size:12px;">{{ t.phone or '—' }}</td>
+                <td style="text-align:center;" id="badge_cell_{{ t.id }}_{{ selected_month }}">
+                  {% if is_vis %}
+                    <span class="chip" style="background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; font-weight:800; font-size:11.5px; padding:3px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:5px;">
+                      👁️ {{ 'متاح للعرض' if lang=='ar' else 'Visible pour l\'enseignant' }}
+                    </span>
+                  {% else %}
+                    <span class="chip" style="background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1; font-weight:700; font-size:11.5px; padding:3px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:5px;">
+                      🔒 {{ 'محجوب / غير ظاهر' if lang=='ar' else 'Masqué (Non visible)' }}
+                    </span>
+                  {% endif %}
+                </td>
+                <td style="text-align:center;">
+                  <label class="tpv-switch">
+                    <input type="checkbox" class="tpv-toggle" data-teacher-id="{{ t.id }}" data-year="{{ year }}" data-month="{{ selected_month }}" {{ 'checked' if is_vis else '' }} onchange="onToggleChange(this)">
+                    <span class="tpv-slider"></span>
+                  </label>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </form>
+  </div>
+
+
+  <!-- ===================================================================== -->
+  <!-- TAB 2: MATRICE ANNUELLE (JANVIER - DÉCEMBRE)                          -->
+  <!-- ===================================================================== -->
+  <div id="tabMatrixContent" style="display: {{ 'block' if active_tab == 'matrix' else 'none' }};">
+
+    <!-- Filter & Guidance Strip -->
+    <div class="action-bar-card" style="margin-bottom:14px;">
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div>
+          <div style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">
+            {{ 'الجدول السنوي التفاعلي' if lang=='ar' else 'Matrice Annuelle Interactive' }}
+          </div>
+          <div style="font-size:16px; font-weight:900; color:#0B3D6E;">
+            🗓️ {{ 'كافة شهور سنة ' ~ year if lang=='ar' else 'Tous les mois de l\'année ' ~ year }}
+          </div>
+        </div>
+        
+        <div style="position:relative; min-width:240px;">
+          <input type="text" id="matrixSearchInput" onkeyup="filterMatrixTable()" placeholder="{{ 'بحث في الجدول السنوي...' if lang=='ar' else 'Filtrer les enseignants...' }}" class="form-control" style="padding:7px 12px 7px 32px; border-radius:10px; border:1.5px solid #cbd5e1; font-size:12.5px; width:100%; box-sizing:border-box;">
+          <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:14px; color:#94a3b8;">🔍</span>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; align-items:center;">
+        <span class="muted" style="font-size:12px;">
+          💡 {{ 'التغيير يحفظ فورياً بمجرد النقر على المفتاح' if lang=='ar' else 'Enregistrement instantané automatique au clic' }}
+        </span>
+        <button type="button" onclick="document.getElementById('matrixFormFallback').submit()" class="btn btn-outline" style="border-color:#cbd5e1; font-weight:700; font-size:12px; padding:6px 12px; border-radius:8px; background:#fff;">
+          💾 {{ 'حفظ يدوي احتياطي' if lang=='ar' else 'Sauvegarder la matrice' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- MATRIX TABLE FORM -->
+    <form method="POST" id="matrixFormFallback" action="{{ url_for('teacher_payment_visibility') }}">
+      <input type="hidden" name="action" value="matrix_save">
+      <input type="hidden" name="year" value="{{ year }}">
+
+      <div class="table-vis-wrap">
+        <table class="table-vis" id="matrixTable">
+          <thead>
+            <tr>
+              <th class="sticky-col" style="min-width:220px;">
+                {{ 'الأستاذ' if lang=='ar' else 'Enseignant' }}
+              </th>
+              {% for m_num, m_fr, m_ar in months_list %}
+                <th class="matrix-cell-th">
+                  <div style="font-weight:900; color:#0B3D6E;">{{ m_fr[:3]|capitalize }}</div>
+                  <div style="font-size:9.5px; color:#64748b;">{{ '%02d' % m_num }}</div>
+                  <div style="margin-top:3px;">
+                    <button type="button" onclick="quickToggleMonthColumn({{ m_num }})" style="background:none; border:none; cursor:pointer; font-size:11px; color:#1f6feb; padding:1px;" title="{{ 'تبديل هذا الشهر للجميع' if lang=='ar' else 'Basculer ce mois pour tous' }}">
+                      ⚡
+                    </button>
+                  </div>
+                </th>
+              {% endfor %}
+              <th style="text-align:center; min-width:90px;">
+                {{ 'المجموع' if lang=='ar' else 'Actifs' }}
+              </th>
+              <th style="text-align:center; min-width:110px;">
+                {{ 'إجراء سريع' if lang=='ar' else 'Actions' }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in teachers %}
+              {% set act_months = teacher_visible_counts.get(t.id, 0) %}
+              <tr class="matrix-row" data-name="{{ t.full_name|lower }}" data-subject="{{ (t.specialty or '')|lower }}">
+                <td class="sticky-col">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <img src="{{ t.avatar_url }}" style="width:28px; height:28px; border-radius:50%; object-fit:cover;">
+                    <div style="overflow:hidden;">
+                      <div style="font-weight:800; color:#0B3D6E; font-size:12.5px; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">{{ t.full_name }}</div>
+                      <div class="muted" style="font-size:10.5px;">{{ t.primary_matiere or t.specialty or '—' }}</div>
+                    </div>
+                  </div>
+                </td>
+
+                {% for m_num, _, _ in months_list %}
+                  {% set is_vis = vis_map.get((t.id, m_num), False) %}
+                  <td class="matrix-cell-td">
+                    <label class="tpv-switch" style="transform:scale(0.85); transform-origin:center;">
+                      <input type="checkbox" name="cell_{{ t.id }}_{{ m_num }}" class="tpv-toggle matrix-col-{{ m_num }} matrix-row-t-{{ t.id }}" data-teacher-id="{{ t.id }}" data-year="{{ year }}" data-month="{{ m_num }}" {{ 'checked' if is_vis else '' }} onchange="onToggleChange(this)">
+                      <span class="tpv-slider"></span>
+                    </label>
+                  </td>
+                {% endfor %}
+
+                <td style="text-align:center;">
+                  <span id="teacher_total_badge_{{ t.id }}" class="chip {{ 'chip-green' if act_months > 0 else 'chip-gray' }}" style="font-size:11px; font-weight:800; padding:2px 7px;">
+                    {{ act_months }} / 12
+                  </span>
+                </td>
+
+                <td style="text-align:center;">
+                  <div style="display:flex; gap:4px; justify-content:center;">
+                    <button type="button" onclick="setTeacherAllMonths({{ t.id }}, true)" class="btn btn-outline" style="padding:2px 6px; font-size:10.5px; font-weight:800; border-color:#cbd5e1; color:#15803d; background:#fff;" title="Activer tous les mois">
+                      ✓ {{ 'الكل' if lang=='ar' else 'Tous' }}
+                    </button>
+                    <button type="button" onclick="setTeacherAllMonths({{ t.id }}, false)" class="btn btn-outline" style="padding:2px 6px; font-size:10.5px; font-weight:800; border-color:#cbd5e1; color:#dc2626; background:#fff;" title="Désactiver tous les mois">
+                      ✗ {{ 'إلغاء' if lang=='ar' else 'Aucun' }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<!-- TOAST FEEDBACK NOTIFICATION -->
+<div id="tpvToast">
+  <span id="tpvToastIcon">✅</span>
+  <span id="tpvToastMsg">Modification enregistrée</span>
+</div>
+
+<script>
+  function switchVisTab(tabKey) {
+    document.querySelectorAll('.vis-tab-btn').forEach(b => b.classList.remove('active'));
+    if (tabKey === 'fast') {
+      document.querySelectorAll('.vis-tab-btn')[0].classList.add('active');
+      document.getElementById('tabFastContent').style.display = 'block';
+      document.getElementById('tabMatrixContent').style.display = 'none';
+    } else {
+      document.querySelectorAll('.vis-tab-btn')[1].classList.add('active');
+      document.getElementById('tabFastContent').style.display = 'none';
+      document.getElementById('tabMatrixContent').style.display = 'block';
+    }
+    // Update URL query state without reload
+    const url = new URL(window.location);
+    url.searchParams.set('tab', tabKey);
+    window.history.replaceState({}, '', url);
+  }
+
+  function toggleSelectAll(checked) {
+    document.querySelectorAll('.teacher-checkbox').forEach(cb => {
+      // Only check visible rows if filtered
+      const row = cb.closest('tr');
+      if (row.style.display !== 'none') {
+        cb.checked = checked;
+      }
+    });
+    updateSelectedCount();
+  }
+
+  function updateSelectedCount() {
+    const checkedBoxes = document.querySelectorAll('.teacher-checkbox:checked');
+    const count = checkedBoxes.length;
+    const badge = document.getElementById('selectedCountBadge');
+    if (badge) badge.innerText = count;
+  }
+
+  function submitBatch(actionType) {
+    const checkedBoxes = document.querySelectorAll('.teacher-checkbox:checked');
+    if ((actionType === 'show' || actionType === 'hide') && checkedBoxes.length === 0) {
+      alert("{{ 'يرجى تحديد أستاذ واحد على الأقل عبر تفعيل المربع' if lang=='ar' else 'Veuillez cocher au moins un enseignant.' }}");
+      return;
+    }
+
+    // Try smooth AJAX batch first
+    const teacherIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+    const year = parseInt("{{ year }}");
+    const month = parseInt("{{ selected_month }}");
+
+    fetch("{{ url_for('teacher_payment_visibility_batch_ajax') }}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        year: year,
+        month: month,
+        action_type: actionType,
+        teacher_ids: teacherIds
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast("✓ " + (data.visible ? "Mois activé avec succès" : "Mois masqué avec succès") + " (" + data.count + " enseignants)");
+        // Reload fast tab to sync all states
+        setTimeout(() => {
+          location.reload();
+        }, 600);
+      } else {
+        // Fallback to form submit
+        document.getElementById('actionTypeInput').value = actionType;
+        document.getElementById('batchForm').submit();
+      }
+    })
+    .catch(() => {
+      document.getElementById('actionTypeInput').value = actionType;
+      document.getElementById('batchForm').submit();
+    });
+  }
+
+  function onToggleChange(input) {
+    const teacherId = input.getAttribute('data-teacher-id');
+    const year = input.getAttribute('data-year');
+    const month = input.getAttribute('data-month');
+    const isVisible = input.checked;
+
+    const parentSwitch = input.closest('.tpv-switch');
+    if (parentSwitch) parentSwitch.classList.add('loading');
+
+    fetch("{{ url_for('teacher_payment_visibility_toggle') }}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        teacher_id: teacherId,
+        year: year,
+        month: month,
+        visible: isVisible
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (parentSwitch) parentSwitch.classList.remove('loading');
+      if (data.success) {
+        // Update badge in fast table if present
+        const badgeCell = document.getElementById('badge_cell_' + teacherId + '_' + month);
+        if (badgeCell) {
+          if (data.is_visible) {
+            badgeCell.innerHTML = '<span class="chip" style="background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; font-weight:800; font-size:11.5px; padding:3px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:5px;">👁️ {{ "متاح للعرض" if lang=="ar" else "Visible pour l\'enseignant" }}</span>';
+          } else {
+            badgeCell.innerHTML = '<span class="chip" style="background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1; font-weight:700; font-size:11.5px; padding:3px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:5px;">🔒 {{ "محجوب / غير ظاهر" if lang=="ar" else "Masqué (Non visible)" }}</span>';
+          }
+        }
+
+        // Update teacher total badge in matrix table
+        const teacherTotalBadge = document.getElementById('teacher_total_badge_' + teacherId);
+        if (teacherTotalBadge) {
+          teacherTotalBadge.innerText = data.teacher_count + ' / 12';
+          if (data.teacher_count > 0) {
+            teacherTotalBadge.className = 'chip chip-green';
+          } else {
+            teacherTotalBadge.className = 'chip chip-gray';
+          }
+        }
+
+        // Also sync any other checkbox on screen (e.g. across tabs)
+        document.querySelectorAll('.tpv-toggle[data-teacher-id="' + teacherId + '"][data-month="' + month + '"]').forEach(el => {
+          if (el !== input) el.checked = data.is_visible;
+        });
+
+        const statusMsg = data.is_visible 
+          ? ("✓ " + data.month_name + " activé pour " + data.teacher_name)
+          : ("🔒 " + data.month_name + " masqué pour " + data.teacher_name);
+        showToast(statusMsg);
+      } else {
+        input.checked = !isVisible;
+        showToast("Erreur: " + (data.error || "Impossible d'enregistrer"), "⚠️");
+      }
+    })
+    .catch(() => {
+      if (parentSwitch) parentSwitch.classList.remove('loading');
+      input.checked = !isVisible;
+      showToast("Erreur de connexion", "⚠️");
+    });
+  }
+
+  function quickToggleMonthColumn(monthNum) {
+    const inputs = document.querySelectorAll('.matrix-col-' + monthNum);
+    if (!inputs.length) return;
+    const anyChecked = Array.from(inputs).some(i => i.checked);
+    const targetState = !anyChecked; // if any checked, uncheck all, else check all
+
+    const teacherIds = Array.from(inputs).map(i => parseInt(i.getAttribute('data-teacher-id')));
+    const year = parseInt("{{ year }}");
+
+    fetch("{{ url_for('teacher_payment_visibility_batch_ajax') }}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        year: year,
+        month: monthNum,
+        action_type: targetState ? 'show_all' : 'hide_all',
+        teacher_ids: teacherIds
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        inputs.forEach(i => i.checked = targetState);
+        showToast("✓ Mois de " + data.month_name + (targetState ? " activé pour tous" : " masqué pour tous"));
+        setTimeout(() => location.reload(), 600);
+      }
+    });
+  }
+
+  function setTeacherAllMonths(teacherId, enable) {
+    const rowInputs = document.querySelectorAll('.matrix-row-t-' + teacherId);
+    rowInputs.forEach(input => {
+      if (input.checked !== enable) {
+        input.checked = enable;
+        onToggleChange(input);
+      }
+    });
+  }
+
+  function filterFastTable() {
+    const q = document.getElementById('teacherSearchInput').value.toLowerCase();
+    document.querySelectorAll('#fastTeachersTable .teacher-row').forEach(row => {
+      const name = row.getAttribute('data-name') || '';
+      const subject = row.getAttribute('data-subject') || '';
+      if (name.includes(q) || subject.includes(q)) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  function filterMatrixTable() {
+    const q = document.getElementById('matrixSearchInput').value.toLowerCase();
+    document.querySelectorAll('#matrixTable .matrix-row').forEach(row => {
+      const name = row.getAttribute('data-name') || '';
+      const subject = row.getAttribute('data-subject') || '';
+      if (name.includes(q) || subject.includes(q)) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  let toastTimer = null;
+  function showToast(msg, icon) {
+    const toast = document.getElementById('tpvToast');
+    const toastMsg = document.getElementById('tpvToastMsg');
+    const toastIcon = document.getElementById('tpvToastIcon');
+    if (!toast) return;
+    toastMsg.innerText = msg;
+    if (icon) toastIcon.innerText = icon;
+    else toastIcon.innerText = "✅";
+    toast.style.display = 'flex';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toast.style.display = 'none';
+    }, 2800);
+  }
+</script>
+
+{% endblock %}

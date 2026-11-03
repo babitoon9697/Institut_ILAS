@@ -1,0 +1,1029 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ 'التحليل المالي والخزينة الفعلية' if lang=='ar' else 'Trésorerie Analytics & Cash Réel' }} - Institut ILAS{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="padding: 16px 20px; max-width: 1440px; margin: 0 auto;">
+
+  {# Include the Finance Hub Tabs #}
+  {% include '_hub_tabs.html' %}
+
+  <!-- Top Page Header -->
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:20px; background:#ffffff; padding:16px 20px; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(15,23,42,0.04);">
+    <div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:24px;">📊</span>
+        <h1 style="font-size:20px; font-weight:800; color:#0f172a; margin:0;">
+          {{ 'التحليل المالي والخزينة الفعلية' if lang=='ar' else 'Trésorerie Analytics & Position Bancaire Réelle' }}
+        </h1>
+        {% if is_inherited %}
+        <span class="badge" style="background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; font-weight:800; font-size:11px; padding:4px 10px; border-radius:8px;">
+          🔄 {{ 'رصيد منقول تلقائياً من الشهر السابق (Report N-1)' if lang=='ar' else 'Report Automatique du Mois Précédent' }}
+        </span>
+        {% else %}
+        <span class="badge" style="background:#dcfce7; color:#15803d; border:1px solid #86efac; font-weight:800; font-size:11px; padding:4px 10px; border-radius:8px;">
+          ✓ {{ 'نقطة رصيد بنكي حقيقي مثبت' if lang=='ar' else 'Pointage Bancaire Réel Validé' }}
+        </span>
+        {% endif %}
+      </div>
+      <p style="font-size:12.5px; color:#64748b; margin:4px 0 0 0;">
+        {{ 'حساب الأرباح والخزينة معتمد حصرياً على السيولة الحقيقية في البنك والصندوق مع تفصيل دقيق لكل درهم خرج أو مازال مطلوباً' if lang=='ar' else 'Analyse financière concrète : Cash réel en banque, encaissements réels, décaissements effectués et engagements restants avec traçabilité intégrale.' }}
+      </p>
+    </div>
+
+    <!-- Month Selector & Edit Bank Cash Button -->
+    <div style="display:flex; align-items:center; gap:10px;">
+      <form method="get" action="{{ url_for('finance_tresorerie_analytics') }}" style="display:flex; align-items:center; gap:6px;">
+        <input type="month" name="month" value="{{ req_month }}" class="form-control" style="font-weight:700; font-size:13px; padding:6px 10px; border-radius:8px; border:1.5px solid #cbd5e1;" onchange="this.form.submit()">
+      </form>
+      <button type="button" class="btn btn-primary" onclick="openBankCashModal()" style="display:inline-flex; align-items:center; gap:6px; background:#0B3D6E; border-color:#0B3D6E; font-weight:700; font-size:12.5px; padding:7px 14px; border-radius:8px; box-shadow:0 2px 6px rgba(11,61,110,0.2);">
+        <span>🏦</span>
+        <span>{{ 'تعديل رصيد البنك الفعلي' if lang=='ar' else 'Mettre à jour le Solde Bancaire' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       HERO BANNER : LE CALCUL DES BÉNÉFICES RÉELS
+       ========================================== -->
+  <div style="background: linear-gradient(135deg, #ffffff 0%, {{ '#f0fdf4' if is_positive else '#fef2f2' }} 100%); border: 2px solid {{ '#86efac' if is_positive else '#fca5a5' }}; border-radius: 14px; padding: 20px 24px; margin-bottom: 22px; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+      
+      <!-- Left side: The Exact Equation -->
+      <div style="flex:1; min-width:320px;">
+        <div style="font-size:11.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:{{ '#15803d' if is_positive else '#b91c1c' }}; margin-bottom:6px;">
+          {{ 'معادلة الربح والخزينة الصافية الحقيقية' if lang=='ar' else 'Équation Décisionnelle : Trésorerie Nette & Bénéfice Réel' }}
+        </div>
+        
+        <!-- The Equation Visual -->
+        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:10px; font-size:15px; font-weight:800;">
+          <!-- 1. Real Cash -->
+          <div style="background:#ffffff; padding:8px 14px; border-radius:10px; border:1.5px solid #cbd5e1; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+            <div style="font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase;">🏦 {{ 'الفلوس الحقيقية في البنك' if lang=='ar' else 'Cash Réel en Banque' }}</div>
+            <div style="font-size:19px; color:#0f172a; font-weight:900;">+{{ '{:,.0f}'.format(real_bank_cash) }} <span style="font-size:12px; font-weight:700;">DH</span></div>
+          </div>
+
+          <span style="font-size:20px; color:#94a3b8; font-weight:900;">−</span>
+
+          <!-- 2. Remaining Commitments -->
+          <div onclick="switchAnalyticsTab('tab1'); scrollToTabs();" style="cursor:pointer; background:#ffffff; padding:8px 14px; border-radius:10px; border:1.5px solid #fecaca; box-shadow:0 1px 3px rgba(0,0,0,0.05); transition:all 0.2s;" onmouseover="this.style.borderColor='#ef4444';" onmouseout="this.style.borderColor='#fecaca';">
+            <div style="font-size:10px; color:#b91c1c; font-weight:700; text-transform:uppercase;">⏳ {{ 'لي مازال خاصو يتخلص' if lang=='ar' else 'Engagements Restants' }} 🔍</div>
+            <div style="font-size:19px; color:#dc2626; font-weight:900;">-{{ '{:,.0f}'.format(total_commitments_remaining) }} <span style="font-size:12px; font-weight:700;">DH</span></div>
+          </div>
+
+          <span style="font-size:20px; color:#94a3b8; font-weight:900;">=</span>
+
+          <!-- 3. Net Profit / Cash Cushion -->
+          <div style="background:{{ '#dcfce7' if is_positive else '#fee2e2' }}; padding:8px 18px; border-radius:10px; border:2px solid {{ '#22c55e' if is_positive else '#ef4444' }}; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+            <div style="font-size:10px; color:{{ '#15803d' if is_positive else '#991b1b' }}; font-weight:800; text-transform:uppercase;">
+              {{ 'الربح الصافي الحقيقي الفائض' if lang=='ar' else 'Bénéfice Net Réel en Caisse' }}
+            </div>
+            <div style="font-size:22px; color:{{ '#15803d' if is_positive else '#dc2626' }}; font-weight:900;">
+              {{ '+' if net_disponible > 0 else '' }}{{ '{:,.0f}'.format(net_disponible) }} <span style="font-size:13px; font-weight:800;">DH</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:11.5px; color:#64748b; margin-top:8px;">
+          💡 <strong>{{ 'الخلاصة المباشرة' if lang=='ar' else 'Diagnostic' }} :</strong>
+          {% if is_positive %}
+            {{ 'بعد أداء جميع الأساتذة المتبقين والموظفين والكراء والضرائب، تتبقى في البنك سيولة صافية وفائضة قدرها' if lang=='ar' else 'Après règlement de la totalité des profs restants, des employés et des loyers, il reste dans votre compte bancaire une trésorerie excédentaire nette de' }}
+            <strong style="color:#15803d;">+{{ '{:,.0f}'.format(net_disponible) }} DH</strong> !
+          {% else %}
+            {{ 'المصاريف المتبقية تفوق الرصيد الفعلي الموجود حالياً في البنك بـ' if lang=='ar' else 'Les charges restantes à régler dépassent le cash disponible en banque de' }}
+            <strong style="color:#b91c1c;">{{ '{:,.0f}'.format(net_disponible|abs) }} DH</strong>.
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Right side: Pointage / Rollover Info -->
+      {% if is_inherited %}
+      <div style="background:#f0f9ff; border:1.5px solid #bae6fd; border-radius:10px; padding:12px 16px; text-align:{{ 'left' if lang=='ar' else 'right' }}; min-width:260px;">
+        <div style="font-size:11px; color:#0369a1; font-weight:800; text-transform:uppercase;">
+          🔄 {{ 'رصيد البداية المنقول تلقائياً' if lang=='ar' else 'Report Automatique (Report à nouveau)' }}
+        </div>
+        <div style="font-size:14px; font-weight:800; color:#0f172a; margin:3px 0;">
+          {{ 'منقول من فائض' if lang=='ar' else 'Reporté du Net' }} : <strong>{{ inherited_from_month }}</strong>
+        </div>
+        <div style="font-size:11px; color:#0369a1; line-height:1.4;">
+          {{ '{:,.0f}'.format(inherited_meta.prev_cash) }} DH ({{ inherited_from_month }}) − {{ '{:,.0f}'.format(inherited_meta.prev_commitments) }} DH (Dettes) = <strong>+{{ '{:,.0f}'.format(solde_initial_reporte) }} DH</strong>
+        </div>
+        <div style="margin-top:6px; font-size:10.5px; color:#64748b; border-top:1px dashed #cbd5e1; padding-top:4px;">
+          + {{ 'مقبوضات هذا الشهر' if lang=='ar' else 'Encaissé ce mois' }} : +{{ '{:,.0f}'.format(total_in) }} DH
+        </div>
+      </div>
+      {% else %}
+      <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px; text-align:{{ 'left' if lang=='ar' else 'right' }}; min-width:240px;">
+        <div style="font-size:11px; color:#64748b; font-weight:700;">{{ 'آخر إشهاد للرصيد البنكي' if lang=='ar' else 'Dernier Pointage Bancaire' }}</div>
+        <div style="font-size:14px; font-weight:800; color:#0f172a; margin:2px 0;">📅 {{ real_bank_date }}</div>
+        <div style="font-size:11px; color:#64748b;">{{ 'من طرف' if lang=='ar' else 'Par' }} : <strong>{{ real_bank_by }}</strong></div>
+        <div style="margin-top:6px; font-size:10px; color:#94a3b8; border-top:1px dashed #cbd5e1; padding-top:4px;">
+          {{ 'مقارنة مع رقم السيستيم النظري (122,185 DH)' if lang=='ar' else 'Écart vs théorique sur papier (122,185 DH)' }} : <strong style="color:#64748b;">-{{ '{:,.0f}'.format(theoretical_gap) }} DH</strong>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <!-- ==========================================
+       4 KEY ANALYTICS CARDS (Interactive & SaaS Grade)
+       ========================================== -->
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:14px; margin-bottom:22px;">
+    
+    <!-- CARD 1 : Solde Réel en Banque / Report -->
+    <div style="background:#ffffff; border-radius:12px; border:1.5px solid #cbd5e1; padding:16px 18px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+        <div style="font-size:11.5px; font-weight:800; text-transform:uppercase; color:#64748b;">
+          🏦 {{ 'الرصيد الفعلي في البنك' if lang=='ar' else 'Solde Réel en Banque' }}
+        </div>
+        {% if is_inherited %}
+          <span style="background:#e0f2fe; color:#0369a1; font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px;">🔄 {{ 'منقول N-1' if lang=='ar' else 'Reporté N-1' }}</span>
+        {% else %}
+          <span style="background:#f1f5f9; color:#475569; font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px;">{{ 'الواقع' if lang=='ar' else 'Pointage Réel' }}</span>
+        {% endif %}
+      </div>
+      <div style="font-size:24px; font-weight:900; color:#0f172a; margin-bottom:4px;">
+        {{ '{:,.0f}'.format(real_bank_cash) }} <span style="font-size:13px; font-weight:700;">DH</span>
+      </div>
+      <div style="font-size:11px; color:#64748b;">
+        {% if is_inherited %}
+          {{ 'رصيد منقول (+{:,.0f}) + المداخيل (+{:,.0f}) − المصاريف (-{:,.0f})'.format(solde_initial_reporte, total_in, total_out) }}
+        {% else %}
+          {{ 'السيولة الحقيقية المثبتة لدى المؤسسة حالياً' if lang=='ar' else 'Disponibilité physique et bancaire constatée' }}
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- CARD 2 : Total Encaissé Réel (Lmadkhoul) -->
+    <div onclick="switchAnalyticsTab('tab3'); scrollToTabs();" style="cursor:pointer; background:#ffffff; border-radius:12px; border:1.5px solid #cbd5e1; padding:16px 18px; box-shadow:0 1px 3px rgba(0,0,0,0.03); transition:all 0.2s;" onmouseover="this.style.borderColor='#0284c7';" onmouseout="this.style.borderColor='#cbd5e1';">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+        <div style="font-size:11.5px; font-weight:800; text-transform:uppercase; color:#0369a1;">
+          📥 {{ 'المدخول الفعلي (أكتوبر)' if lang=='ar' else 'Total Encaissé Réel' }}
+        </div>
+        <span style="background:#e0f2fe; color:#0284c7; font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px;">{{ recent_payments|length }}+ {{ 'أداء' if lang=='ar' else 'paiements' }}</span>
+      </div>
+      <div style="font-size:24px; font-weight:900; color:#0284c7; margin-bottom:4px;">
+        +{{ '{:,.0f}'.format(total_in) }} <span style="font-size:13px; font-weight:700;">DH</span>
+      </div>
+      <div style="font-size:11px; color:#64748b;">
+        💵 Espèces: <strong>{{ '{:,.0f}'.format(in_cash) }}</strong> | 🏦 Banque: <strong>{{ '{:,.0f}'.format(in_bank) }} DH</strong>
+      </div>
+    </div>
+
+    <!-- CARD 3 : Total Déjà Décaissé (Li kherjou) - CLICKABLE FOR DETAILS -->
+    <div onclick="switchAnalyticsTab('tab2'); scrollToTabs();" style="cursor:pointer; background:#ffffff; border-radius:12px; border:1.5px solid #cbd5e1; padding:16px 18px; box-shadow:0 1px 3px rgba(0,0,0,0.03); transition:all 0.2s;" onmouseover="this.style.borderColor='#d97706'; this.style.boxShadow='0 4px 12px rgba(217,119,6,0.12)';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.03)';">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+        <div style="font-size:11.5px; font-weight:800; text-transform:uppercase; color:#b45309;">
+          📤 {{ 'لي خرجو ديجا من الصندوق' if lang=='ar' else 'Décaissements Réalisés' }}
+        </div>
+        <span style="background:#fef3c7; color:#b45309; font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px;">{{ all_month_expenses|length }} {{ 'عملية' if lang=='ar' else 'opérations' }}</span>
+      </div>
+      <div style="font-size:24px; font-weight:900; color:#d97706; margin-bottom:4px;">
+        -{{ '{:,.0f}'.format(total_out) }} <span style="font-size:13px; font-weight:700;">DH</span>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; font-size:10.5px;">
+        <span class="badge" style="background:#fef3c7; color:#92400e;">👨‍🏫 Salaires: {{ '{:,.0f}'.format(total_dec_salaires_profs + total_dec_salaires_staff) }} DH</span>
+        <span class="badge" style="background:#fef3c7; color:#92400e;">💸 Avances: {{ '{:,.0f}'.format(total_dec_avances_profs + total_dec_avances_staff) }} DH</span>
+        <span class="badge" style="background:#fef3c7; color:#92400e;">🏠 Locaux: {{ '{:,.0f}'.format(total_dec_locaux) }} DH</span>
+        <span class="badge" style="background:#fef3c7; color:#92400e;">📦 Achats: {{ '{:,.0f}'.format(total_dec_achats_divers) }} DH</span>
+      </div>
+      <div style="margin-top:8px; font-size:11px; font-weight:800; color:#b45309; display:flex; align-items:center; gap:4px;">
+        <span>🔍 {{ 'اضغط لمعرفة تفاصيل كل درهم خرج' if lang=='ar' else 'Cliquer pour voir le détail de chaque dirham sorti' }} &rarr;</span>
+      </div>
+    </div>
+
+    <!-- CARD 4 : Engagements Restants à Payer - CLICKABLE FOR DETAILS -->
+    <div onclick="switchAnalyticsTab('tab1'); scrollToTabs();" style="cursor:pointer; background:#ffffff; border-radius:12px; border:1.5px solid #fecaca; padding:16px 18px; box-shadow:0 1px 3px rgba(0,0,0,0.03); transition:all 0.2s;" onmouseover="this.style.borderColor='#ef4444'; this.style.boxShadow='0 4px 12px rgba(239,68,68,0.12)';" onmouseout="this.style.borderColor='#fecaca'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.03)';">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+        <div style="font-size:11.5px; font-weight:800; text-transform:uppercase; color:#b91c1c;">
+          ⏳ {{ 'لي مازال خاصو يخرج' if lang=='ar' else 'Engagements Restants' }}
+        </div>
+        <span style="background:#fee2e2; color:#b91c1c; font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px;">{{ 'واجب الأداء' if lang=='ar' else 'À Payer' }}</span>
+      </div>
+      <div style="font-size:24px; font-weight:900; color:#dc2626; margin-bottom:4px;">
+        -{{ '{:,.0f}'.format(total_commitments_remaining) }} <span style="font-size:13px; font-weight:700;">DH</span>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; font-size:10.5px;">
+        <span class="badge" style="background:#fee2e2; color:#991b1b;">👨‍🏫 Profs: {{ '{:,.0f}'.format(total_profs_remaining) }} DH</span>
+        <span class="badge" style="background:#fee2e2; color:#991b1b;">👥 Staff: {{ '{:,.0f}'.format(total_staff_all_remaining) }} DH</span>
+        <span class="badge" style="background:#fee2e2; color:#991b1b;">🏠 Locaux: {{ '{:,.0f}'.format(pending_operating) }} DH</span>
+      </div>
+      <div style="margin-top:8px; font-size:11px; font-weight:800; color:#dc2626; display:flex; align-items:center; gap:4px;">
+        <span>🔍 {{ 'اضغط لمعرفة تفاصيل كل واجب للأداء' if lang=='ar' else 'Cliquer pour voir le détail complet des dettes' }} &rarr;</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==========================================
+       TABS : 3 DETAILED ACTIONABLE SECTIONS
+       ========================================== -->
+  <div id="tabsSection" style="background:#ffffff; border-radius:14px; border:1px solid #e2e8f0; padding:18px 20px; box-shadow:0 1px 3px rgba(15,23,42,0.04);">
+    
+    <!-- Tab Navigation Pills -->
+    <div style="display:flex; gap:8px; border-bottom:1.5px solid #e2e8f0; padding-bottom:12px; margin-bottom:18px; flex-wrap:wrap;">
+      <button type="button" class="btn btn-sm active" id="tabBtn1" onclick="switchAnalyticsTab('tab1')" style="font-weight:800; padding:8px 16px; border-radius:8px; background:#dc2626; color:#ffffff; border-color:#dc2626;">
+        🔴 1. {{ 'لي مازال خاصو يتخلص (الالتزامات)' if lang=='ar' else 'Ce qui reste à payer (Engagements)' }} ({{ '{:,.0f}'.format(total_commitments_remaining) }} DH)
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" id="tabBtn2" onclick="switchAnalyticsTab('tab2')" style="font-weight:800; padding:8px 16px; border-radius:8px;">
+        📤 2. {{ 'لي خرجو ديجا من الصندوق بالتفصيل' if lang=='ar' else 'Ce qui est déjà sorti (Détail complet)' }} ({{ '{:,.0f}'.format(total_out) }} DH)
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" id="tabBtn3" onclick="switchAnalyticsTab('tab3')" style="font-weight:800; padding:8px 16px; border-radius:8px;">
+        📥 3. {{ 'المدخول وسندات القبض الأخيرة' if lang=='ar' else 'Encaissements Récents' }} ({{ '{:,.0f}'.format(total_in) }} DH)
+      </button>
+    </div>
+
+    <!-- =========================================================================
+         TAB 1 : CE QUI RESTE À PAYER (ENGAGEMENTS RESTANTS)
+         ========================================================================= -->
+    <div id="analyticsTab1">
+      
+      <!-- SUBSECTION A : PROFESSEURS RESTANTS -->
+      <div style="margin-bottom:28px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+          <div>
+            <h3 style="font-size:15.5px; font-weight:800; color:#0f172a; margin:0; display:flex; align-items:center; gap:8px;">
+              <span>👨‍🏫</span>
+              <span>{{ 'أجور الأساتذة المتبقية للأداء' if lang=='ar' else 'Salaires Enseignants Restants à Régler' }}</span>
+              <span class="badge" style="background:#fee2e2; color:#dc2626; font-size:12px; font-weight:900; border:1px solid #fca5a5;">
+                -{{ '{:,.2f}'.format(total_profs_remaining) }} DH
+              </span>
+            </h3>
+            <div style="font-size:11.5px; color:#64748b; margin-top:2px;">
+              {{ 'كل أستاذ يمكن الضغط على زر "التفاصيل" لمشاهدة المجموعات، عدد التلاميذ، النسبة المئوية ومداخيل الحصص' if lang=='ar' else 'Cliquez sur "Détails" pour afficher pour chaque enseignant les groupes, le nombre d’élèves, le taux et les avances déduites.' }}
+            </div>
+          </div>
+          <span style="font-size:11.5px; color:#64748b; font-weight:700;">{{ profs_pending|length }} {{ 'أساتذة ينتظرون مستحقاتهم' if lang=='ar' else 'enseignants en attente' }}</span>
+        </div>
+
+        <div style="border:1px solid #e2e8f0; border-radius:10px; overflow:hidden;">
+          <table class="table table-hover" style="margin:0; font-size:12.5px;">
+            <thead style="background:#f8fafc; font-size:11.5px; text-transform:uppercase; color:#475569;">
+              <tr>
+                <th style="width:250px;">{{ 'الأستاذ / التخصص' if lang=='ar' else 'Enseignant' }}</th>
+                <th>{{ 'المجموعات وعدد التلاميذ' if lang=='ar' else 'Groupes / Classes & Effectif' }}</th>
+                <th style="text-align:right; width:130px;">{{ 'المستحق الخام' if lang=='ar' else 'Brut Dû' }}</th>
+                <th style="text-align:right; width:130px;">{{ 'التسبيقات المقتطعة' if lang=='ar' else 'Avances Déduites' }}</th>
+                <th style="text-align:right; width:150px; color:#dc2626;">{{ 'الصافي الباقي للأداء' if lang=='ar' else 'Net Restant à Verser' }}</th>
+                <th style="text-align:center; width:140px;">{{ 'إجراء' if lang=='ar' else 'Action' }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in profs_pending %}
+              <tr style="background:#ffffff; border-bottom:1px solid #f1f5f9;">
+                <td style="font-weight:800; color:#0f172a;">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span>👨‍🏫</span>
+                    <span>{{ p.name }}</span>
+                    {% if p.comp_label %}
+                      <span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:10px;">{{ p.comp_label }}</span>
+                    {% endif %}
+                  </div>
+                </td>
+                <td style="font-size:11.5px; color:#475569;">
+                  {% if p.details %}
+                    {% for d in p.details %}
+                      <span style="display:inline-block; background:#f1f5f9; padding:2px 6px; border-radius:4px; margin:2px 2px;">
+                        <strong>{{ d.course }}</strong> ({{ d.students }} él. • {{ d.value }}% = {{ '{:,.0f}'.format(d.earned) }} DH)
+                      </span>
+                    {% endfor %}
+                  {% else %}
+                    <span style="color:#94a3b8;">{{ p.groups_count }} groupe(s)</span>
+                  {% endif %}
+                </td>
+                <td style="text-align:right; font-family:monospace; font-weight:700;">{{ '{:,.2f}'.format(p.earned) }} DH</td>
+                <td style="text-align:right; font-family:monospace; color:#b45309; font-weight:700;">
+                  {% if p.advances > 0 %}
+                    <span style="background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px;">
+                      -{{ '{:,.2f}'.format(p.advances) }} DH
+                    </span>
+                  {% else %}
+                    <span style="color:#94a3b8;">—</span>
+                  {% endif %}
+                </td>
+                <td style="text-align:right; font-family:monospace; font-weight:900; color:#dc2626; background:#fef2f2; font-size:13px;">
+                  -{{ '{:,.2f}'.format(p.net_remaining) }} DH
+                </td>
+                <td style="text-align:center;">
+                  <div style="display:inline-flex; gap:4px;">
+                    <button type="button" class="btn btn-xs btn-outline-secondary" onclick="toggleTeacherDetail('prof-det-{{ loop.index }}')" style="font-size:11px; padding:2px 8px; font-weight:700; border-radius:6px;">
+                      🔍 {{ 'التفاصيل' if lang=='ar' else 'Détail' }}
+                    </button>
+                    <a href="{{ url_for('teachers_payroll') }}?month={{ req_month }}" class="btn btn-xs btn-outline-primary" style="font-size:11px; padding:2px 8px; font-weight:700; border-radius:6px;">
+                      💵 {{ 'صرف' if lang=='ar' else 'Payer' }}
+                    </a>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Expandable Teacher Detail Row -->
+              <tr id="prof-det-{{ loop.index }}" style="display:none; background:#f8fafc;">
+                <td colspan="6" style="padding:14px 18px; border-bottom:2px solid #e2e8f0;">
+                  <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:12px 14px;">
+                    <div style="font-weight:800; font-size:12px; color:#0f172a; margin-bottom:8px; display:flex; justify-content:space-between;">
+                      <span>📋 {{ 'تفصيل احتساب مستحقات' if lang=='ar' else 'Détail du calcul des groupes' }} : <strong>{{ p.name }}</strong></span>
+                      <span style="color:#64748b;">Mois : {{ month_label }}</span>
+                    </div>
+
+                    <!-- Groups detail table -->
+                    {% if p.details %}
+                    <table class="table table-bordered table-sm" style="font-size:11.5px; margin-bottom:10px;">
+                      <thead style="background:#f1f5f9;">
+                        <tr>
+                          <th>{{ 'المجموعة / المادة' if lang=='ar' else 'Matière / Groupe' }}</th>
+                          <th style="text-align:center;">{{ 'نوع الحساب والنسبة' if lang=='ar' else 'Tarification & Taux' }}</th>
+                          <th style="text-align:center;">{{ 'عدد التلاميذ' if lang=='ar' else 'Élèves' }}</th>
+                          <th style="text-align:right;">{{ 'مداخيل المجموعة' if lang=='ar' else 'CA Généré' }}</th>
+                          <th style="text-align:right;">{{ 'نصيب الأستاذ الخام' if lang=='ar' else 'Part Enseignant (Brut)' }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for d in p.details %}
+                        <tr>
+                          <td style="font-weight:700;">{{ d.course }}</td>
+                          <td style="text-align:center;">{{ d.type }} ({{ d.value }}%)</td>
+                          <td style="text-align:center; font-weight:700;">{{ d.students }} él.</td>
+                          <td style="text-align:right; font-family:monospace;">{{ '{:,.2f}'.format(d.revenue or 0.0) }} DH</td>
+                          <td style="text-align:right; font-family:monospace; font-weight:800; color:#0369a1;">+{{ '{:,.2f}'.format(d.earned or 0.0) }} DH</td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                    {% endif %}
+
+                    <!-- Advances list if any -->
+                    {% if p.advances_items %}
+                    <div style="background:#fffbeb; border:1px solid #fef3c7; border-radius:6px; padding:8px 10px; margin-bottom:8px; font-size:11.5px;">
+                      <strong style="color:#92400e;">💸 {{ 'التسبيقات المستلمة خلال الشهر وتم اقتطاعها' if lang=='ar' else 'Avances déduites ce mois' }} :</strong>
+                      <ul style="margin:4px 0 0 0; padding-left:18px; color:#b45309;">
+                        {% for adv in p.advances_items %}
+                          <li>
+                            📅 {{ adv.date.strftime('%d/%m/%Y') if adv.date else '' }} :
+                            <strong>-{{ '{:,.2f}'.format(adv.amount or 0.0) }} DH</strong>
+                            ({{ adv.payment_method or 'Espèces' }}) - Reçu N° {{ adv.receipt_no or ('ADV-%04d' % adv.id) }}
+                          </li>
+                        {% endfor %}
+                      </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- Summary equation -->
+                    <div style="display:flex; justify-content:flex-end; gap:12px; font-size:12px; font-weight:800; padding-top:6px; border-top:1px dashed #cbd5e1;">
+                      <span style="color:#0f172a;">Brut : +{{ '{:,.2f}'.format(p.earned) }} DH</span>
+                      <span style="color:#b45309;">− Avances : -{{ '{:,.2f}'.format(p.advances) }} DH</span>
+                      <span style="color:#dc2626;">= Net à verser : -{{ '{:,.2f}'.format(p.net_remaining) }} DH</span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot style="background:#f1f5f9; font-weight:900; font-size:12px;">
+              <tr>
+                <td colspan="4" style="text-align:right;">{{ 'مجموع أجور الأساتذة المتبقية' if lang=='ar' else 'TOTAL SALAIRES ENSEIGNANTS RESTANTS' }} :</td>
+                <td style="text-align:right; font-family:monospace; color:#dc2626; font-size:13.5px; background:#fee2e2;">
+                  -{{ '{:,.2f}'.format(total_profs_remaining) }} DH
+                </td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- SUBSECTION B : STAFF & PRIMES RESTANTS -->
+      <div style="margin-bottom:28px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+          <div>
+            <h3 style="font-size:15.5px; font-weight:800; color:#0f172a; margin:0; display:flex; align-items:center; gap:8px;">
+              <span>👥</span>
+              <span>{{ 'مستحقات الموظفين والبريمات المتبقية' if lang=='ar' else 'Salaires Staff & Primes Restantes' }}</span>
+              <span class="badge" style="background:#f3e8ff; color:#7c3aed; font-size:12px; font-weight:900; border:1px solid #d8b4fe;">
+                -{{ '{:,.2f}'.format(total_staff_all_remaining) }} DH
+              </span>
+            </h3>
+            <div style="font-size:11.5px; color:#64748b; margin-top:2px;">
+              {{ 'الأجر الأساسي المتبقي' if lang=='ar' else 'Salaires de base' }} : <strong>{{ '{:,.0f}'.format(total_staff_base_remaining) }} DH</strong> | 
+              {{ 'عمولات تسجيل التلاميذ (Primes)' if lang=='ar' else 'Commissions Inscriptions (Primes)' }} : <strong>{{ '{:,.0f}'.format(total_staff_primes) }} DH</strong>
+            </div>
+          </div>
+        </div>
+
+        <div style="border:1px solid #e2e8f0; border-radius:10px; overflow:hidden;">
+          <table class="table table-hover" style="margin:0; font-size:12.5px;">
+            <thead style="background:#f8fafc; font-size:11.5px; text-transform:uppercase; color:#475569;">
+              <tr>
+                <th style="width:250px;">{{ 'الموظف / المنصب' if lang=='ar' else 'Employé / Poste' }}</th>
+                <th>{{ 'البيان والتفاصيل' if lang=='ar' else 'Désignation & Précisions' }}</th>
+                <th style="text-align:right; width:130px;">{{ 'الصالير الأساسي' if lang=='ar' else 'Base Initiale' }}</th>
+                <th style="text-align:right; width:130px;">{{ 'التسبيقات المقتطعة' if lang=='ar' else 'Avances Déduites' }}</th>
+                <th style="text-align:right; width:150px; color:#7c3aed;">{{ 'الصافي المتبقي' if lang=='ar' else 'Reste Net à Donner' }}</th>
+                <th style="text-align:center; width:140px;">{{ 'إجراء' if lang=='ar' else 'Action' }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Base salaries pending -->
+              {% for s in staff_pending %}
+              <tr style="background:#ffffff; border-bottom:1px solid #f1f5f9;">
+                <td style="font-weight:800; color:#0f172a;">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span>👤</span>
+                    <span>{{ s.name }}</span>
+                  </div>
+                </td>
+                <td style="font-size:11.5px; color:#64748b;">
+                  {{ s.role }}
+                  {% if s.advances_items %}
+                    • <span class="badge" style="background:#fef3c7; color:#92400e;">{{ s.advances_items|length }} avances déduites</span>
+                  {% endif %}
+                </td>
+                <td style="text-align:right; font-family:monospace; font-weight:700;">{{ '{:,.2f}'.format(s.base) }} DH</td>
+                <td style="text-align:right; font-family:monospace; color:#b45309; font-weight:700;">
+                  {% if s.advances > 0 %}
+                    -{{ '{:,.2f}'.format(s.advances) }} DH
+                  {% else %}
+                    <span style="color:#94a3b8;">—</span>
+                  {% endif %}
+                </td>
+                <td style="text-align:right; font-family:monospace; font-weight:900; color:#7c3aed; background:#faf5ff; font-size:13px;">
+                  -{{ '{:,.2f}'.format(s.net_remaining) }} DH
+                </td>
+                <td style="text-align:center;">
+                  <div style="display:inline-flex; gap:4px;">
+                    {% if s.advances_items %}
+                    <button type="button" class="btn btn-xs btn-outline-secondary" onclick="toggleTeacherDetail('staff-adv-{{ loop.index }}')" style="font-size:11px; padding:2px 8px; font-weight:700; border-radius:6px;">
+                      🔍 {{ 'التسبيقات' if lang=='ar' else 'Avances' }}
+                    </button>
+                    {% endif %}
+                    <a href="{{ url_for('employees_payroll') }}?month={{ req_month }}" class="btn btn-xs btn-outline-primary" style="font-size:11px; padding:2px 8px; font-weight:700; border-radius:6px;">
+                      💵 {{ 'صرف' if lang=='ar' else 'Payer' }}
+                    </a>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Expandable Staff Advances Details -->
+              {% if s.advances_items %}
+              <tr id="staff-adv-{{ loop.index }}" style="display:none; background:#f8fafc;">
+                <td colspan="6" style="padding:12px 18px; border-bottom:2px solid #e2e8f0;">
+                  <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:10px 14px;">
+                    <div style="font-weight:800; font-size:12px; color:#0f172a; margin-bottom:6px;">
+                      💸 {{ 'قائمة التسبيقات المقتطعة للموظف(ة)' if lang=='ar' else 'Liste des avances déduites sur salaire' }} : <strong>{{ s.name }}</strong>
+                    </div>
+                    <table class="table table-sm table-bordered" style="margin:0; font-size:11.5px;">
+                      <thead style="background:#f1f5f9;">
+                        <tr>
+                          <th>{{ 'التاريخ' if lang=='ar' else 'Date' }}</th>
+                          <th>{{ 'رقم الوصل' if lang=='ar' else 'Reçu N°' }}</th>
+                          <th>{{ 'طريقة الصرف' if lang=='ar' else 'Mode' }}</th>
+                          <th style="text-align:right;">{{ 'المبلغ المقتطع' if lang=='ar' else 'Montant Déduit' }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for a in s.advances_items %}
+                        <tr>
+                          <td style="font-family:monospace;">{{ a.date.strftime('%d/%m/%Y') if a.date else '' }}</td>
+                          <td style="font-weight:700;">{{ a.receipt_no or ('ADV-%04d' % a.id) }}</td>
+                          <td><span class="badge" style="background:#f1f5f9; color:#334155;">{{ a.payment_method or 'Espèces' }}</span></td>
+                          <td style="text-align:right; font-family:monospace; font-weight:800; color:#b45309;">-{{ '{:,.2f}'.format(a.amount or 0.0) }} DH</td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+
+              <!-- Primes & Commissions Staff -->
+              {% for pr in primes_detail %}
+              <tr style="background:#faf5ff; border-bottom:1px solid #ede9fe;">
+                <td style="font-weight:800; color:#7c3aed;">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span>🏆</span>
+                    <span>{{ pr.name }}</span>
+                    <span class="badge" style="background:#ede9fe; color:#6b21a8; font-size:10px;">{{ pr.count }} inscriptions</span>
+                  </div>
+                </td>
+                <td style="font-size:11.5px; color:#6b21a8; font-weight:700;">
+                  {{ 'عمولة بريم تسجيل التلاميذ الجدد لشهر أكتوبر' if lang=='ar' else 'Commissions sur inscriptions élèves réalisées' }}
+                </td>
+                <td style="text-align:right; font-family:monospace; color:#94a3b8;">—</td>
+                <td style="text-align:right; font-family:monospace; color:#94a3b8;">—</td>
+                <td style="text-align:right; font-family:monospace; font-weight:900; color:#7c3aed; background:#ede9fe; font-size:13px;">
+                  -{{ '{:,.2f}'.format(pr.amount) }} DH
+                </td>
+                <td style="text-align:center;">
+                  <button type="button" class="btn btn-xs btn-outline-secondary" onclick="toggleTeacherDetail('prime-det-{{ loop.index }}')" style="font-size:11px; padding:2px 8px; font-weight:700; border-radius:6px;">
+                    🔍 {{ 'التسجيلات' if lang=='ar' else 'Élèves' }} ({{ pr.count }})
+                  </button>
+                </td>
+              </tr>
+
+              <!-- Expandable Primes Enrollment List -->
+              <tr id="prime-det-{{ loop.index }}" style="display:none; background:#f5f3ff;">
+                <td colspan="6" style="padding:12px 18px; border-bottom:2px solid #ddd6fe;">
+                  <div style="background:#ffffff; border:1px solid #d8b4fe; border-radius:8px; padding:10px 14px; max-height:260px; overflow-y:auto;">
+                    <div style="font-weight:800; font-size:12px; color:#6b21a8; margin-bottom:6px;">
+                      📋 {{ 'قائمة التلاميذ المسجلين ومبالغ العمولات' if lang=='ar' else 'Détail des commissions élèves générées' }} : <strong>{{ pr.name }}</strong> (Total: {{ '{:,.2f}'.format(pr.amount) }} DH)
+                    </div>
+                    <table class="table table-sm table-striped" style="margin:0; font-size:11px;">
+                      <thead style="background:#f5f3ff;">
+                        <tr>
+                          <th>{{ 'التلميذ' if lang=='ar' else 'Élève' }}</th>
+                          <th>{{ 'الفوج / العرض' if lang=='ar' else 'Pack / Cours' }}</th>
+                          <th style="text-align:center;">{{ 'تاريخ التسجيل' if lang=='ar' else 'Date' }}</th>
+                          <th style="text-align:right;">{{ 'قيمة البريم' if lang=='ar' else 'Prime Dûe' }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for item in pr.enrollments %}
+                        <tr>
+                          <td style="font-weight:700;">{{ item.student_name }}</td>
+                          <td style="color:#64748b;">{{ item.course_name }}</td>
+                          <td style="text-align:center; font-family:monospace;">{{ item.enroll_date }}</td>
+                          <td style="text-align:right; font-family:monospace; font-weight:800; color:#7c3aed;">+{{ '{:,.2f}'.format(item.bonus_earned) }} DH</td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot style="background:#f1f5f9; font-weight:900; font-size:12px;">
+              <tr>
+                <td colspan="4" style="text-align:right;">{{ 'مجموع مستحقات الموظفين والبريمات المتبقية' if lang=='ar' else 'TOTAL STAFF & PRIMES RESTANTS' }} :</td>
+                <td style="text-align:right; font-family:monospace; color:#7c3aed; font-size:13.5px; background:#ede9fe;">
+                  -{{ '{:,.2f}'.format(total_staff_all_remaining) }} DH
+                </td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- SUBSECTION C : CHARGES LOCAUX RESTANTES -->
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+          <div>
+            <h3 style="font-size:15.5px; font-weight:800; color:#0f172a; margin:0; display:flex; align-items:center; gap:8px;">
+              <span>🏠</span>
+              <span>{{ 'مصاريف المحل والمقر المتبقية' if lang=='ar' else 'Charges Fixes Locaux & Exploitation Restantes' }}</span>
+              <span class="badge" style="background:#fef3c7; color:#b45309; font-size:12px; font-weight:900; border:1px solid #fde68a;">
+                -{{ '{:,.2f}'.format(pending_operating) }} DH
+              </span>
+            </h3>
+            <div style="font-size:11.5px; color:#64748b; margin-top:2px;">
+              (Budget: {{ '{:,.0f}'.format(cur_operating_fixes) }} DH | Réglé ce mois: -{{ '{:,.0f}'.format(validated_operating_amount) }} DH)
+            </div>
+          </div>
+        </div>
+
+        <div style="border:1px solid #e2e8f0; border-radius:10px; overflow:hidden;">
+          <table class="table table-hover table-striped" style="margin:0; font-size:12.5px;">
+            <thead style="background:#f8fafc; font-size:11.5px; text-transform:uppercase; color:#475569;">
+              <tr>
+                <th>{{ 'بند المصروف' if lang=='ar' else 'Poste de Charge' }}</th>
+                <th>{{ 'النوع' if lang=='ar' else 'Catégorie' }}</th>
+                <th style="text-align:right; width:150px;">{{ 'الميزانية الشهرية' if lang=='ar' else 'Budget Prévu' }}</th>
+                <th style="text-align:center; width:130px;">{{ 'الحالة' if lang=='ar' else 'Statut' }}</th>
+                <th style="text-align:right; width:160px; color:#d97706;">{{ 'المبلغ المتبقي للأداء' if lang=='ar' else 'Reste à Régler' }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for rc in other_fixed_rcs %}
+              {% set is_pending = ('loyer' in (rc.title or '').lower() or 'taxe' in (rc.title or '').lower()) %}
+              <tr>
+                <td style="font-weight:800; color:#0f172a;">{{ rc.title }}</td>
+                <td style="font-size:11.5px; color:#64748b;">{{ rc.category }}</td>
+                <td style="text-align:right; font-family:monospace; font-weight:700;">{{ '{:,.2f}'.format(rc.amount or 0.0) }} DH</td>
+                <td style="text-align:center;">
+                  {% if is_pending %}
+                    <span class="badge" style="background:#fee2e2; color:#dc2626; font-size:10.5px; font-weight:800;">⏳ En attente</span>
+                  {% else %}
+                    <span class="badge" style="background:#dcfce7; color:#15803d; font-size:10.5px; font-weight:800;">✓ Déjà Payé</span>
+                  {% endif %}
+                </td>
+                <td style="text-align:right; font-family:monospace; font-weight:900; color:{{ '#d97706' if is_pending else '#10b981' }};">
+                  {% if is_pending %}
+                    -{{ '{:,.2f}'.format(rc.amount or 0.0) }} DH
+                  {% else %}
+                    <span style="color:#059669; font-size:11px;">0.00 DH</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot style="background:#f1f5f9; font-weight:900; font-size:12px;">
+              <tr>
+                <td colspan="4" style="text-align:right;">{{ 'مجموع مصاريف المحل المتبقية' if lang=='ar' else 'TOTAL CHARGES LOCAUX RESTANTES' }} :</td>
+                <td style="text-align:right; font-family:monospace; color:#d97706; font-size:13.5px; background:#fef3c7;">
+                  -{{ '{:,.2f}'.format(pending_operating) }} DH
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- =========================================================================
+         TAB 2 : CE QUI EST DÉJÀ SORTI (DÉCAISSEMENTS RÉALISÉS)
+         ========================================================================= -->
+    <div id="analyticsTab2" style="display:none;">
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+        <div>
+          <h3 style="font-size:16px; font-weight:800; color:#0f172a; margin:0; display:flex; align-items:center; gap:8px;">
+            <span>📤</span>
+            <span>{{ 'المبالغ المصروفة والمسددة فعلياً خلال هذا الشهر (أكتوبر 2026)' if lang=='ar' else 'Décaissements Réalisés & Dépenses Sorties (Octobre 2026)' }}</span>
+            <span class="badge" style="background:#fef3c7; color:#b45309; font-size:12px; font-weight:900; border:1px solid #fde68a;">
+              -{{ '{:,.2f}'.format(total_out) }} DH
+            </span>
+          </h3>
+          <div style="font-size:11.5px; color:#64748b; margin-top:2px;">
+            {{ 'تفصيل شامل وشفاف لكل درهم خرج من حسابات المؤسسة مقسم إلى 6 أصناف مع إمكانية التصفية' if lang=='ar' else 'Détail exhaustif de chaque dépense sortie des comptes : Salaires payés, avances données, factures locales et achats.' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- 6 CATEGORIES SUMMARY CARDS -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:10px; margin-bottom:16px;">
+        
+        <!-- Cat 1: Salaires Profs -->
+        <div onclick="filterExpenseCategory('prof_salary')" style="cursor:pointer; background:#f0fdf4; border:1.5px solid #86efac; border-radius:10px; padding:10px 12px; transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+          <div style="font-size:10.5px; font-weight:800; color:#15803d; text-transform:uppercase;">👨‍🏫 {{ 'أجور أساتذة مسددة' if lang=='ar' else 'Salaires Profs Payés' }}</div>
+          <div style="font-size:18px; font-weight:900; color:#15803d; margin:2px 0;">-{{ '{:,.0f}'.format(total_dec_salaires_profs) }} DH</div>
+          <div style="font-size:10px; color:#166534;">{{ decaissements_salaires_profs|length }} salaire (Prof. Bouchra)</div>
+        </div>
+
+        <!-- Cat 2: Salaires Staff -->
+        <div onclick="filterExpenseCategory('staff_salary')" style="cursor:pointer; background:#faf5ff; border:1.5px solid #d8b4fe; border-radius:10px; padding:10px 12px; transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+          <div style="font-size:10.5px; font-weight:800; color:#7c3aed; text-transform:uppercase;">👥 {{ 'أجور موظفين مسددة' if lang=='ar' else 'Salaires Staff Payés' }}</div>
+          <div style="font-size:18px; font-weight:900; color:#7c3aed; margin:2px 0;">-{{ '{:,.0f}'.format(total_dec_salaires_staff) }} DH</div>
+          <div style="font-size:10px; color:#6b21a8;">{{ decaissements_salaires_staff|length }} employés (Marsoul, Zhor, etc.)</div>
+        </div>
+
+        <!-- Cat 3: Avances Profs -->
+        <div onclick="filterExpenseCategory('prof_advance')" style="cursor:pointer; background:#fef3c7; border:1.5px solid #fde68a; border-radius:10px; padding:10px 12px; transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+          <div style="font-size:10.5px; font-weight:800; color:#b45309; text-transform:uppercase;">💸 {{ 'تسبيقات الأساتذة' if lang=='ar' else 'Avances Profs' }}</div>
+          <div style="font-size:18px; font-weight:900; color:#b45309; margin:2px 0;">-{{ '{:,.0f}'.format(total_dec_avances_profs) }} DH</div>
+          <div style="font-size:10px; color:#92400e;">{{ decaissements_avances_profs|length }} avances données</div>
+        </div>
+
+        <!-- Cat 4: Avances Staff -->
+        <div onclick="filterExpenseCategory('staff_advance')" style="cursor:pointer; background:#fff7ed; border:1.5px solid #fed7aa; border-radius:10px; padding:10px 12px; transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+          <div style="font-size:10.5px; font-weight:800; color:#c2410c; text-transform:uppercase;">💸 {{ 'تسبيقات الموظفين' if lang=='ar' else 'Avances Staff' }}</div>
+          <div style="font-size:18px; font-weight:900; color:#c2410c; margin:2px 0;">-{{ '{:,.0f}'.format(total_dec_avances_staff) }} DH</div>
+          <div style="font-size:10px; color:#9a3412;">{{ decaissements_avances_staff|length }} avances (Iliass, Hajar)</div>
+        </div>
+
+        <!-- Cat 5: Locaux & Charges fixes -->
+        <div onclick="filterExpenseCategory('locaux')" style="cursor:pointer; background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:10px; padding:10px 12px; transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+          <div style="font-size:10.5px; font-weight:800; color:#1d4ed8; text-transform:uppercase;">🏠 {{ 'فواتير ومصاريف المقر' if lang=='ar' else 'Charges Locaux Réglées' }}</div>
+          <div style="font-size:18px; font-weight:900; color:#1d4ed8; margin:2px 0;">-{{ '{:,.0f}'.format(total_dec_locaux) }} DH</div>
+          <div style="font-size:10px; color:#1e40af;">Eau/Elec (800) + Wifi/Mobile (600)</div>
+        </div>
+
+        <!-- Cat 6: Achats & Divers -->
+        <div onclick="filterExpenseCategory('achats')" style="cursor:pointer; background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:10px; padding:10px 12px; transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+          <div style="font-size:10.5px; font-weight:800; color:#475569; text-transform:uppercase;">📦 {{ 'مشتريات ومصاريف عامة' if lang=='ar' else 'Achats & Matériel' }}</div>
+          <div style="font-size:18px; font-weight:900; color:#475569; margin:2px 0;">-{{ '{:,.0f}'.format(total_dec_achats_divers) }} DH</div>
+          <div style="font-size:10px; color:#64748b;">Matériel info (980) + Divers (996)</div>
+        </div>
+
+      </div>
+
+      <!-- Quick Filter Pills -->
+      <div style="display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; align-items:center;">
+        <span style="font-size:11.5px; font-weight:800; color:#475569; margin-right:4px;">{{ 'تصفية حسب الصنف' if lang=='ar' else 'Filtrer par' }} :</span>
+        <button type="button" class="btn btn-xs btn-primary exp-filter-btn" id="filter-all" onclick="filterExpenseCategory('all')" style="font-weight:700; border-radius:6px; padding:3px 10px;">
+          {{ 'الكل' if lang=='ar' else 'Tous' }} ({{ all_month_expenses|length }} - {{ '{:,.0f}'.format(total_out) }} DH)
+        </button>
+        <button type="button" class="btn btn-xs btn-outline-secondary exp-filter-btn" id="filter-salaires" onclick="filterExpenseCategory('salaires')" style="font-weight:700; border-radius:6px; padding:3px 10px;">
+          👨‍🏫 {{ 'الأجور الصافية المسددة' if lang=='ar' else 'Salaires Payés' }} ({{ decaissements_salaires_profs|length + decaissements_salaires_staff|length }} - {{ '{:,.0f}'.format(total_dec_salaires_profs + total_dec_salaires_staff) }} DH)
+        </button>
+        <button type="button" class="btn btn-xs btn-outline-secondary exp-filter-btn" id="filter-avances" onclick="filterExpenseCategory('avances')" style="font-weight:700; border-radius:6px; padding:3px 10px;">
+          💸 {{ 'التسبيقات المصروفة' if lang=='ar' else 'Avances Salaires' }} ({{ decaissements_avances_profs|length + decaissements_avances_staff|length }} - {{ '{:,.0f}'.format(total_dec_avances_profs + total_dec_avances_staff) }} DH)
+        </button>
+        <button type="button" class="btn btn-xs btn-outline-secondary exp-filter-btn" id="filter-locaux" onclick="filterExpenseCategory('locaux')" style="font-weight:700; border-radius:6px; padding:3px 10px;">
+          🏠 {{ 'المقر والفواتير' if lang=='ar' else 'Charges Locaux' }} ({{ decaissements_locaux|length }} - {{ '{:,.0f}'.format(total_dec_locaux) }} DH)
+        </button>
+        <button type="button" class="btn btn-xs btn-outline-secondary exp-filter-btn" id="filter-achats" onclick="filterExpenseCategory('achats')" style="font-weight:700; border-radius:6px; padding:3px 10px;">
+          📦 {{ 'المشتريات والتجهيز' if lang=='ar' else 'Achats & Divers' }} ({{ decaissements_achats_divers|length }} - {{ '{:,.0f}'.format(total_dec_achats_divers) }} DH)
+        </button>
+      </div>
+
+      <!-- FULL TABLE OF ALL MONTH EXPENSES -->
+      <div style="border:1px solid #e2e8f0; border-radius:10px; overflow:hidden;">
+        <table class="table table-hover table-striped" style="margin:0; font-size:12px;" id="expensesTable">
+          <thead style="background:#f8fafc; font-size:11px; text-transform:uppercase; color:#475569;">
+            <tr>
+              <th style="width:90px;">{{ 'التاريخ' if lang=='ar' else 'Date' }}</th>
+              <th style="width:70px;">{{ 'الرقم' if lang=='ar' else 'N°' }}</th>
+              <th>{{ 'البيان والمستفيد' if lang=='ar' else 'Désignation & Bénéficiaire' }}</th>
+              <th>{{ 'الصنف' if lang=='ar' else 'Catégorie' }}</th>
+              <th style="width:130px;">{{ 'طريقة الأداء' if lang=='ar' else 'Mode' }}</th>
+              <th style="text-align:right; width:140px;">{{ 'المبلغ المصروف' if lang=='ar' else 'Montant Sorti' }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for exp in all_month_expenses %}
+            {% set row_group = exp.analytics_group or 'achats' %}
+
+            <tr class="expense-row" data-group="{{ row_group }}">
+              <td style="font-family:monospace; color:#64748b;">{{ exp.date.strftime('%d/%m/%Y') if exp.date else '' }}</td>
+              <td style="font-family:monospace; font-weight:700; color:#94a3b8;">#{{ exp.id }}</td>
+              <td style="font-weight:700; color:#0f172a;">
+                <div>
+                  {% if 'prof' in row_group %}
+                    👨‍🏫
+                  {% elif 'staff' in row_group %}
+                    👥
+                  {% elif 'locaux' in row_group %}
+                    🏠
+                  {% else %}
+                    📦
+                  {% endif %}
+                  {{ exp.description }}
+                </div>
+              </td>
+              <td>
+                <span class="badge" style="font-size:10.5px; font-weight:700; 
+                  {% if 'salary' in row_group %}background:#dcfce7; color:#15803d;
+                  {% elif 'advance' in row_group %}background:#fef3c7; color:#b45309;
+                  {% elif 'locaux' in row_group %}background:#e0f2fe; color:#0369a1;
+                  {% else %}background:#f1f5f9; color:#475569;{% endif %}">
+                  {{ exp.category }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" style="background:#f1f5f9; color:#334155; font-size:10.5px; font-weight:700;">
+                  {{ exp.payment_method or 'Espèces' }}
+                </span>
+              </td>
+              <td style="text-align:right; font-family:monospace; font-weight:800; color:#b45309; font-size:12.5px;">
+                -{{ '{:,.2f}'.format(exp.amount or 0.0) }} DH
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot style="background:#f1f5f9; font-weight:900; font-size:12px;">
+            <tr>
+              <td colspan="5" style="text-align:right;">{{ 'مجموع المصاريف والتسبيقات المسددة' if lang=='ar' else 'TOTAL DÉCAISSEMENTS RÉALISÉS' }} :</td>
+              <td style="text-align:right; font-family:monospace; color:#b45309; font-size:13px; background:#fef3c7;">
+                -{{ '{:,.2f}'.format(total_out) }} DH
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         TAB 3 : CE QUI EST RENTRÉ (ENCAISSEMENTS)
+         ========================================================================= -->
+    <div id="analyticsTab3" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="font-size:15px; font-weight:800; color:#0f172a; margin:0;">
+          📥 {{ 'المدفوعات والمبالغ المحصلة فعلياً من التلاميذ' if lang=='ar' else 'Encaissements & Règlements Élèves Reçus' }}
+        </h3>
+        <span style="font-size:12px; font-weight:800; color:#0284c7;">Total: +{{ '{:,.2f}'.format(total_in) }} DH</span>
+      </div>
+
+      <div style="border:1px solid #e2e8f0; border-radius:10px; overflow:hidden;">
+        <table class="table table-hover table-striped" style="margin:0; font-size:12px;">
+          <thead style="background:#f8fafc; font-size:11px; text-transform:uppercase; color:#475569;">
+            <tr>
+              <th>{{ 'رقم الوصل' if lang=='ar' else 'N° Reçu' }}</th>
+              <th>{{ 'التاريخ' if lang=='ar' else 'Date' }}</th>
+              <th>{{ 'التلميذ' if lang=='ar' else 'Élève' }}</th>
+              <th>{{ 'المادة / البيان' if lang=='ar' else 'Cours / Objet' }}</th>
+              <th>{{ 'طريقة الأداء' if lang=='ar' else 'Mode' }}</th>
+              <th style="text-align:right;">{{ 'المبلغ المقبوض' if lang=='ar' else 'Montant Encaissé' }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in recent_payments %}
+            <tr>
+              <td style="font-family:monospace; font-weight:700; color:#0369a1;">{{ p.receipt or ('REC-%04d' % p.id) }}</td>
+              <td style="font-family:monospace; color:#64748b;">{{ p.date.strftime('%d/%m/%Y') if p.date else '' }}</td>
+              <td style="font-weight:700; color:#0f172a;">{{ p.student.full_name if p.student else 'Comptoir Libre' }}</td>
+              <td style="color:#64748b; font-size:11.5px;">{{ p.courses_description or p.note or 'Scolarité' }}</td>
+              <td>
+                <span class="badge" style="background:{{ '#dcfce7' if (p.method or '').lower() == 'cash' else '#e0f2fe' }}; color:{{ '#15803d' if (p.method or '').lower() == 'cash' else '#0369a1' }}; font-weight:800;">
+                  {{ 'كاش' if (p.method or '').lower() == 'cash' else 'بنك / تحويل' }}
+                </span>
+              </td>
+              <td style="text-align:right; font-family:monospace; font-weight:900; color:#059669;">
+                +{{ '{:,.2f}'.format(p.amount) }} DH
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot style="background:#f1f5f9; font-weight:900; font-size:12px;">
+            <tr>
+              <td colspan="5" style="text-align:right;">{{ 'مجموع المقبوضات' if lang=='ar' else 'TOTAL ENCAISSEMENTS' }} :</td>
+              <td style="text-align:right; font-family:monospace; color:#059669; font-size:13px; background:#dcfce7;">
+                +{{ '{:,.2f}'.format(total_in) }} DH
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ==========================================
+     MODAL : UPDATE REAL BANK CASH IN 5 SECONDS
+     ========================================== -->
+<div class="modal fade" id="bankCashModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:420px;">
+    <div class="modal-content" style="border-radius:14px; border:none; box-shadow:0 12px 35px rgba(0,0,0,0.15);">
+      <form method="post" action="{{ url_for('update_real_bank_cash') }}">
+        <input type="hidden" name="month" value="{{ req_month }}">
+        
+        <div class="modal-header" style="background:#0B3D6E; color:#ffffff; border-radius:14px 14px 0 0; padding:16px 20px;">
+          <h5 class="modal-title" style="font-size:15px; font-weight:800; display:flex; align-items:center; gap:8px; margin:0;">
+            <span>🏦</span>
+            <span>{{ 'تعديل الرصيد الفعلي في البنك' if lang=='ar' else 'Mettre à jour le Solde Bancaire Réel' }}</span>
+          </h5>
+          <button type="button" class="close text-white" onclick="closeBankCashModal()" style="opacity:0.85;">&times;</button>
+        </div>
+
+        <div class="modal-body" style="padding:20px;">
+          <div style="font-size:12px; color:#64748b; margin-bottom:14px; line-height:1.4;">
+            {{ 'أدخل الرصيد المالي الحقيقي الموجود حالياً في حساب البنك أو الصندوق، وسيتم تحديث جميع حسابات الأرباح بناءً عليه مباشرة.' if lang=='ar' else 'Saisissez le solde bancaire ou caisse réellement disponible aujourd’hui. Tous les calculs d’excédent et d’analytics seront mis à jour instantanément.' }}
+          </div>
+
+          <div class="form-group" style="margin-bottom:14px;">
+            <label style="font-size:11.5px; font-weight:800; color:#334155; text-transform:uppercase;">
+              {{ 'المبلغ الحقيقي الحالي (DH)' if lang=='ar' else 'Montant Réel en Banque (DH)' }} *
+            </label>
+            <div style="position:relative;">
+              <input type="number" step="any" name="amount" value="{{ real_bank_cash }}" required class="form-control" style="font-size:18px; font-weight:900; color:#0f172a; padding:10px 14px; border-radius:8px; border:2px solid #0B3D6E;">
+              <span style="position:absolute; right:14px; top:12px; font-weight:800; color:#64748b;">DH</span>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:6px;">
+            <label style="font-size:11.5px; font-weight:800; color:#334155; text-transform:uppercase;">
+              {{ 'ملاحظات (اختياري)' if lang=='ar' else 'Note / Référence (Optionnel)' }}
+            </label>
+            <input type="text" name="note" placeholder="Ex: Solde compte CIH après pointage" class="form-control" style="font-size:12.5px; border-radius:8px; border:1.5px solid #cbd5e1;">
+          </div>
+        </div>
+
+        <div class="modal-footer" style="background:#f8fafc; border-top:1px solid #e2e8f0; border-radius:0 0 14px 14px; padding:12px 20px;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="closeBankCashModal()" style="font-weight:700; border-radius:6px;">{{ 'إلغاء' if lang=='ar' else 'Annuler' }}</button>
+          <button type="submit" class="btn btn-primary btn-sm" style="background:#0B3D6E; border-color:#0B3D6E; font-weight:800; border-radius:6px; padding:6px 16px;">
+            ✓ {{ 'حفظ وتحديث الحسابات' if lang=='ar' else 'Valider & Mettre à jour' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchAnalyticsTab(tabId) {
+  document.getElementById('analyticsTab1').style.display = 'none';
+  document.getElementById('analyticsTab2').style.display = 'none';
+  document.getElementById('analyticsTab3').style.display = 'none';
+
+  var b1 = document.getElementById('tabBtn1');
+  var b2 = document.getElementById('tabBtn2');
+  var b3 = document.getElementById('tabBtn3');
+
+  b1.className = 'btn btn-sm btn-outline-secondary';
+  b1.style.background = '';
+  b1.style.color = '';
+  b1.style.borderColor = '';
+
+  b2.className = 'btn btn-sm btn-outline-secondary';
+  b2.style.background = '';
+  b2.style.color = '';
+  b2.style.borderColor = '';
+
+  b3.className = 'btn btn-sm btn-outline-secondary';
+  b3.style.background = '';
+  b3.style.color = '';
+  b3.style.borderColor = '';
+
+  if (tabId === 'tab1') {
+    document.getElementById('analyticsTab1').style.display = 'block';
+    b1.className = 'btn btn-sm active';
+    b1.style.background = '#dc2626';
+    b1.style.color = '#ffffff';
+    b1.style.borderColor = '#dc2626';
+  } else if (tabId === 'tab2') {
+    document.getElementById('analyticsTab2').style.display = 'block';
+    b2.className = 'btn btn-sm active';
+    b2.style.background = '#d97706';
+    b2.style.color = '#ffffff';
+    b2.style.borderColor = '#d97706';
+  } else if (tabId === 'tab3') {
+    document.getElementById('analyticsTab3').style.display = 'block';
+    b3.className = 'btn btn-sm active';
+    b3.style.background = '#0284c7';
+    b3.style.color = '#ffffff';
+    b3.style.borderColor = '#0284c7';
+  }
+}
+
+function scrollToTabs() {
+  var el = document.getElementById('tabsSection');
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function toggleTeacherDetail(rowId) {
+  var el = document.getElementById(rowId);
+  if (!el) return;
+  if (el.style.display === 'none' || el.style.display === '') {
+    el.style.display = 'table-row';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function filterExpenseCategory(cat) {
+  var rows = document.querySelectorAll('.expense-row');
+  var btns = document.querySelectorAll('.exp-filter-btn');
+  btns.forEach(function(b) {
+    b.className = 'btn btn-xs btn-outline-secondary exp-filter-btn';
+  });
+
+  rows.forEach(function(r) {
+    var grp = r.getAttribute('data-group');
+    if (cat === 'all') {
+      r.style.display = '';
+    } else if (cat === 'salaires') {
+      if (grp === 'prof_salary' || grp === 'staff_salary') {
+        r.style.display = '';
+      } else {
+        r.style.display = 'none';
+      }
+    } else if (cat === 'avances') {
+      if (grp === 'prof_advance' || grp === 'staff_advance') {
+        r.style.display = '';
+      } else {
+        r.style.display = 'none';
+      }
+    } else if (cat === 'locaux') {
+      if (grp === 'locaux') {
+        r.style.display = '';
+      } else {
+        r.style.display = 'none';
+      }
+    } else if (cat === 'achats') {
+      if (grp === 'achats') {
+        r.style.display = '';
+      } else {
+        r.style.display = 'none';
+      }
+    } else {
+      if (grp === cat) {
+        r.style.display = '';
+      } else {
+        r.style.display = 'none';
+      }
+    }
+  });
+
+  if (cat === 'all') {
+    var b = document.getElementById('filter-all');
+    if (b) b.className = 'btn btn-xs btn-primary exp-filter-btn';
+  } else if (cat === 'salaires' || cat === 'prof_salary' || cat === 'staff_salary') {
+    var b = document.getElementById('filter-salaires');
+    if (b) b.className = 'btn btn-xs btn-primary exp-filter-btn';
+  } else if (cat === 'avances' || cat === 'prof_advance' || cat === 'staff_advance') {
+    var b = document.getElementById('filter-avances');
+    if (b) b.className = 'btn btn-xs btn-primary exp-filter-btn';
+  } else if (cat === 'locaux') {
+    var b = document.getElementById('filter-locaux');
+    if (b) b.className = 'btn btn-xs btn-primary exp-filter-btn';
+  } else if (cat === 'achats') {
+    var b = document.getElementById('filter-achats');
+    if (b) b.className = 'btn btn-xs btn-primary exp-filter-btn';
+  }
+}
+
+function openBankCashModal() {
+  $('#bankCashModal').modal('show');
+}
+function closeBankCashModal() {
+  $('#bankCashModal').modal('hide');
+}
+</script>
+{% endblock %}

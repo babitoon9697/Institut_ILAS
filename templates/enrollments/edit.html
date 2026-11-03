@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex between wrap mb-3">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('enrollments') }}">← {{ t('enrollments') }}</a></div>
+    <h2 class="mt-0 mb-0" style="font-size:22px">✏️ Modifier l'inscription / Changement de Groupe & Dates</h2>
+    <div class="muted">Élève : <strong>{{ e.student.full_name }}</strong> ({{ e.student.code }})</div>
+  </div>
+</div>
+
+<form method="post" class="max-w">
+  <!-- ===== Changement de groupe / cours ===== -->
+  <div class="form-section">
+    <div class="sec-head">
+      <span class="sec-ico">📚</span>
+      <div><h3>1. Cours & Groupe (تغيير المجموعة أو المادة)</h3><p>Transférer l'élève vers un autre groupe ou changer le cours</p></div>
+    </div>
+    <div class="sec-body">
+      <div class="field full">
+        <label>Cours / Groupe de l'élève <span class="req">*</span></label>
+        <div class="input-field has-ico">
+          <span class="f-ico">📖</span>
+          <select name="course_id" required>
+            {% for c in courses %}
+            <option value="{{ c.id }}" {{ 'selected' if c.id == e.course_id }}>
+              {{ c.display_name }} ({{ c.price }} {{ settings.currency }} / mois)
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modification des Dates d'inscription ===== -->
+  <div class="form-section">
+    <div class="sec-head">
+      <span class="sec-ico">📅</span>
+      <div><h3>2. Modification des Dates (تعديل تاريخ البداية وتاريخ الأداء القادم)</h3><p>Corriger la date de début d'inscription ou la date de fin / prochain paiement</p></div>
+    </div>
+    <div class="sec-body">
+      <div class="form-row">
+        <div class="field">
+          <label>Date de début d'inscription (تاريخ بداية الاشتراك)</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📅</span>
+            <input type="date" name="enroll_date" value="{{ e.enroll_date.strftime('%Y-%m-%d') if e.enroll_date else '' }}" style="font-weight:700; color:#0B3D6E;">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Date de prochain paiement / Expiration (تاريخ الأداء القادم)</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🏁</span>
+            <input type="date" name="custom_end_date" value="{{ e.end_date.strftime('%Y-%m-%d') if e.end_date else '' }}" style="font-weight:700; color:#C8102E;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Répartition des séances & Prix ===== -->
+  <div class="form-section">
+    <div class="sec-head">
+      <span class="sec-ico">⏱️</span>
+      <div><h3>3. Ajustement des Séances & Tarifs (تعديل السعر وعدد الحصص)</h3><p>Changer le montant facturé ou le nombre de séances</p></div>
+    </div>
+    <div class="sec-body">
+      <div class="form-row">
+        <div class="field">
+          <label>Prix du cours ({{ settings.currency }})</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">💵</span>
+            <input type="number" step="0.01" name="monthly_price" value="{{ e.monthly_price }}">
+          </div>
+        </div>
+        <div class="field">
+          <label>Prix Facturé au تلميذ ({{ settings.currency }})</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">💰</span>
+            <input type="number" step="0.01" name="calculated_price" value="{{ e.calculated_price }}">
+          </div>
+        </div>
+        {% set is_tri = e.course and e.course.billing_cycle in ('3months', 'trimestriel', '3 mois') %}
+        {% set is_annual = e.course and e.course.billing_cycle in ('annual', 'annuel', '12months') %}
+        <div class="field">
+          <label>
+            {% if is_tri %}
+            Total séances de la période/3 mois (إجمالي حصص الدورة/3 أشهر)
+            {% elif is_annual %}
+            Total séances de l'année (إجمالي حصص السنة/12 شهر)
+            {% else %}
+            Total séances du mois (إجمالي حصص الشهر)
+            {% endif %}
+          </label>
+          <div class="input-field has-ico">
+            <span class="f-ico">⏱️</span>
+            <input type="number" name="total_sessions_month" value="{{ e.total_sessions_month }}">
+          </div>
+        </div>
+        <div class="field">
+          <label>
+            {% if is_tri %}
+            Séances consommées ce trimestre (الحصص المستهلكة بالدورة)
+            {% elif is_annual %}
+            Séances consommées cette année (الحصص المستهلكة بالسنة)
+            {% else %}
+            Séances suivies ce mois (الحصص المتبقية/المحسوبة)
+            {% endif %}
+          </label>
+          <div class="input-field has-ico">
+            <span class="f-ico">✅</span>
+            <input type="number" name="attended_sessions_month" value="{{ e.attended_sessions_month }}">
+          </div>
+        </div>
+        <div class="field">
+          <label>Statut de l'inscription</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🟢</span>
+            <select name="status">
+              <option value="active" {{ 'selected' if e.status=='active' }}>🟢 Actif (نشيط)</option>
+              <option value="completed" {{ 'selected' if e.status=='completed' }}>Terminé (مكتمل)</option>
+              <option value="dropped" {{ 'selected' if e.status=='dropped' }}>Abandonné (موقوف)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field full">
+          <label>Remarques / Notes</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📝</span>
+            <input name="notes" value="{{ e.notes or '' }}">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">{{ t('save') }}</button>
+    <a class="btn btn-outline" href="{{ url_for('enrollments') }}">{{ t('cancel') }}</a>
+  </div>
+</form>
+{% endblock %}

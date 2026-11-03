@@ -1,0 +1,1144 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+/* ============================================================
+   ATTESTATIONS & CERTIFICATES STUDIO MODERN STYLING
+   ============================================================ */
+.cert-studio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+/* KPI Summary Cards Grid */
+.cert-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.cert-kpi-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1.5px solid #e2e8f0;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  cursor: pointer;
+  position: relative;
+}
+.cert-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+  border-color: #cbd5e1;
+}
+.cert-kpi-card.active-filter {
+  border-color: #1f6feb;
+  background: #f8fafc;
+  box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.2);
+}
+.cert-kpi-ico {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.cert-kpi-info h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+.cert-kpi-info p {
+  margin: 2px 0 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* Issuance Studio Form Panel */
+.cert-form-panel {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1.5px solid #cbd5e1;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  margin-bottom: 24px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cert-form-header {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cert-form-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+/* Document Type Large Visual Cards */
+.doc-type-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.doc-type-card {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  user-select: none;
+}
+.doc-type-card:hover {
+  border-color: #93c5fd;
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+.doc-type-card.active {
+  border-color: #1f6feb;
+  background: #eff6ff;
+  box-shadow: 0 4px 14px rgba(31, 111, 235, 0.15);
+}
+.doc-type-card .icon {
+  font-size: 26px;
+  line-height: 1;
+}
+.doc-type-card .title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+.doc-type-card.active .title {
+  color: #1d4ed8;
+}
+.doc-type-card .desc {
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* Beneficiary Segmented Tabs */
+.recipient-type-tabs {
+  display: inline-flex;
+  gap: 4px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  flex-wrap: wrap;
+}
+.rec-tab {
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.rec-tab:hover {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.5);
+}
+.rec-tab.active {
+  background: #ffffff;
+  color: #0B3D6E;
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+/* Registry Toolbar */
+.registry-toolbar {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1.5px solid #e2e8f0;
+  padding: 12px 16px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.reg-search-wrap {
+  flex: 1;
+  min-width: 260px;
+  position: relative;
+}
+.reg-search-input {
+  width: 100%;
+  height: 38px;
+  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  padding: 0 34px 0 36px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  background: #ffffff;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+.reg-search-input:focus {
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.15);
+}
+.reg-search-ico {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 14px;
+  pointer-events: none;
+}
+.reg-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 14px;
+  cursor: pointer;
+  display: none;
+}
+body.rtl .reg-search-input {
+  padding: 0 36px 0 34px;
+}
+body.rtl .reg-search-ico {
+  left: auto;
+  right: 12px;
+}
+body.rtl .reg-search-clear {
+  right: auto;
+  left: 10px;
+}
+
+.type-filter-group {
+  display: inline-flex;
+  gap: 4px;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 9px;
+  border: 1px solid #cbd5e1;
+}
+.type-filter-btn {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.type-filter-btn.active {
+  background: #ffffff;
+  color: #0B3D6E;
+  font-weight: 800;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+</style>
+
+<!-- PAGE HEADER -->
+<div class="cert-studio-header">
+  <div>
+    <div class="muted" style="font-size:12px; margin-bottom:4px;">
+      <a href="{{ url_for('dashboard') }}" style="color:#64748b; text-decoration:none;">← {{ t('dashboard') }}</a>
+    </div>
+    <h2 style="margin:0; font-size:24px; color:#0B3D6E; font-weight:800; display:flex; align-items:center; gap:8px;">
+      <span>📜</span>
+      <span>{{ 'استوديو الشواهد والشهادات الرسمية' if lang=='ar' else 'Studio des Attestations & Certificats' }}</span>
+    </h2>
+    <p style="margin:4px 0 0 0; color:#64748b; font-size:13px;">
+      {{ 'توليد، توثيق برمز QR الذكي وسجل رسمي للطباعة (لغات، تدريب، وعمل)' if lang=='ar' else 'Délivrance officielle, certification sécurisée par QR Code et registre des attestations' }}
+    </p>
+  </div>
+
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <!-- Toggle Form Button -->
+    <button type="button" id="btnToggleStudio" class="btn btn-primary" onclick="toggleIssuanceStudio()" 
+            style="background:linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%); border:none; padding:9px 18px; font-weight:800; border-radius:10px; box-shadow:0 3px 12px rgba(31,111,235,0.3); display:inline-flex; align-items:center; gap:6px;">
+      <span id="btnStudioIco">➕</span>
+      <span id="btnStudioText">{{ 'إصدار شهادة جديدة' if lang=='ar' else 'Délivrer une Attestation' }}</span>
+    </button>
+
+    <!-- Public Verification Portal -->
+    <a href="{{ url_for('verify_portal') }}" target="_blank" class="btn btn-outline" 
+       style="background:#ffffff; border-color:#cbd5e1; color:#0B3D6E; font-weight:700; padding:8px 14px; border-radius:10px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;"
+       title="Ouvrir le portail public de vérification par QR Code">
+      <span>🌐</span>
+      <span>{{ 'بوابة التحقق' if lang=='ar' else 'Portail Vérification' }}</span>
+    </a>
+  </div>
+</div>
+
+<!-- KPI SUMMARY CARDS -->
+<div class="cert-kpi-grid">
+  <!-- Card 1: Total -->
+  <div class="cert-kpi-card" id="kpiCardAll" onclick="filterCertificatesByType('all')">
+    <div class="cert-kpi-ico" style="background:#eff6ff; color:#1f6feb;">📜</div>
+    <div class="cert-kpi-info">
+      <h3>{{ total_certs }}</h3>
+      <p>{{ 'إجمالي الشواهد الصادرة' if lang=='ar' else 'Total documents délivrés' }}</p>
+    </div>
+  </div>
+
+  <!-- Card 2: Langues -->
+  <div class="cert-kpi-card" id="kpiCardLang" onclick="filterCertificatesByType('langue')">
+    <div class="cert-kpi-ico" style="background:#e0f2fe; color:#0284c7;">🗣️</div>
+    <div class="cert-kpi-info">
+      <h3 style="color:#0284c7;">{{ lang_count }}</h3>
+      <p>{{ 'شواهد اللغات (CECRL)' if lang=='ar' else 'Attestations de Langue' }}</p>
+    </div>
+  </div>
+
+  <!-- Card 3: Stage -->
+  <div class="cert-kpi-card" id="kpiCardStage" onclick="filterCertificatesByType('stage')">
+    <div class="cert-kpi-ico" style="background:#f0fdf4; color:#16a34a;">🎓</div>
+    <div class="cert-kpi-info">
+      <h3 style="color:#16a34a;">{{ stage_count }}</h3>
+      <p>{{ 'شواهد التدريب (Stage)' if lang=='ar' else 'Attestations de Stage' }}</p>
+    </div>
+  </div>
+
+  <!-- Card 4: Travail -->
+  <div class="cert-kpi-card" id="kpiCardTravail" onclick="filterCertificatesByType('travail')">
+    <div class="cert-kpi-ico" style="background:#faf5ff; color:#7c3aed;">💼</div>
+    <div class="cert-kpi-info">
+      <h3 style="color:#7c3aed;">{{ travail_count }}</h3>
+      <p>{{ 'شواهد العمل (Travail)' if lang=='ar' else 'Attestations de Travail' }}</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ISSUANCE STUDIO (COLLAPSIBLE ACCORDION PANEL)
+     ============================================================ -->
+<div id="issuanceStudio" class="cert-form-panel" style="display:none;">
+  <div class="cert-form-header">
+    <div class="cert-form-title">
+      <span>✍️</span>
+      <span>{{ 'إصدار وثيقة أو شهادة رسمية جديدة' if lang=='ar' else 'Délivrer une Nouvelle Attestation Officielle' }}</span>
+    </div>
+    <button type="button" onclick="toggleIssuanceStudio()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; width:28px; height:28px; border-radius:8px; cursor:pointer; font-weight:700;">✕</button>
+  </div>
+
+  <div style="padding:20px;">
+    <!-- Step 1: Select Document Type -->
+    <div style="font-size:12.5px; font-weight:800; color:#475569; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">
+      1. {{ 'اختر نوع الوثيقة الرسمية' if lang=='ar' else 'Type de Document à Établir' }} :
+    </div>
+    <div class="doc-type-selector">
+      <div class="doc-type-card active" onclick="switchCertDocType('Attestation de Niveau en Langue', this)">
+        <div class="icon">🗣️</div>
+        <div>
+          <div class="title">Attestation de Langue</div>
+          <div class="desc">Pour les élèves et stagiaires linguistiques (CECRL)</div>
+        </div>
+      </div>
+
+      <div class="doc-type-card" onclick="switchCertDocType('Attestation de Stage', this)">
+        <div class="icon">🎓</div>
+        <div>
+          <div class="title">Attestation de Stage</div>
+          <div class="desc">Pour les stagiaires accueillis à l'Institut</div>
+        </div>
+      </div>
+
+      <div class="doc-type-card" onclick="switchCertDocType('Attestation de Travail', this)">
+        <div class="icon">💼</div>
+        <div>
+          <div class="title">Attestation de Travail</div>
+          <div class="desc">Pour les enseignants et membres du personnel</div>
+        </div>
+      </div>
+    </div>
+
+    <form method="post" action="{{ url_for('certificate_new') }}" id="certForm">
+      <!-- Hidden Document Type -->
+      <input type="hidden" name="cert_type" id="hiddenCertType" value="Attestation de Niveau en Langue">
+      <input type="hidden" name="recipient_type" id="hiddenRecType" value="student">
+
+      <!-- Step 2: Beneficiary Selection Tabs -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12.5px; font-weight:800; color:#475569; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">
+          2. {{ 'تحديد فئة المستفيد' if lang=='ar' else 'Bénéficiaire du Document' }} :
+        </div>
+        <div class="recipient-type-tabs">
+          <button type="button" class="rec-tab active" id="tabStudent" onclick="switchRecTab('student')">
+            <span>👤</span><span>Élève</span>
+          </button>
+          <button type="button" class="rec-tab" id="tabTeacher" onclick="switchRecTab('teacher')">
+            <span>👨‍🏫</span><span>Enseignant</span>
+          </button>
+          <button type="button" class="rec-tab" id="tabEmployee" onclick="switchRecTab('employee')">
+            <span>👥</span><span>Employé / Staff</span>
+          </button>
+          <button type="button" class="rec-tab" id="tabCustom" onclick="switchRecTab('custom')">
+            <span>✍️</span><span>Saisie Libre</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Fields Grid -->
+      <div class="form-row">
+        <!-- Student Picker -->
+        <div class="field" id="boxStudent">
+          <label>Élève bénéficiaire <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">👤</span>
+            <select name="student_id" id="selectStudent" onchange="syncStudentData(this)">
+              <option value="">-- Choisir un élève --</option>
+              {% for s in students %}
+              <option value="{{ s.id }}" data-cin="{{ s.cin or '' }}" data-name="{{ s.full_name }}" data-code="{{ s.code }}" data-birth="{{ s.birth_date or '' }}" data-city="{{ s.city or '' }}">{{ s.full_name }} ({{ s.code }})</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Teacher Picker -->
+        <div class="field" id="boxTeacher" style="display:none;">
+          <label>Enseignant bénéficiaire <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">👨‍🏫</span>
+            <select name="teacher_id" id="selectTeacher" onchange="syncTeacherData(this)">
+              <option value="">-- Choisir un enseignant --</option>
+              {% for t in teachers %}
+              <option value="{{ t.id }}" data-cin="{{ t.cin or '' }}" data-name="{{ t.full_name }}" data-specialty="{{ t.specialty or '' }}" data-hire="{{ t.hire_date or '' }}">{{ t.full_name }} ({{ t.code }})</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Employee Picker -->
+        <div class="field" id="boxEmployee" style="display:none;">
+          <label>Employé / Staff bénéficiaire <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">👥</span>
+            <select name="employee_id" id="selectEmployee" onchange="syncEmployeeData(this)">
+              <option value="">-- Choisir un employé --</option>
+              {% for e in employees %}
+              <option value="{{ e.id }}" data-cin="{{ e.cin or '' }}" data-cnss="{{ e.cnss_no or '' }}" data-job="{{ e.job_title or '' }}" data-dept="{{ e.department or '' }}" data-name="{{ e.full_name }}" data-hire="{{ e.hire_date or '' }}">{{ e.full_name }} ({{ e.job_title or 'Staff' }})</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Manual Name -->
+        <div class="field" id="boxManualName" style="display:none;">
+          <label>Nom et Prénom du Bénéficiaire <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">✍️</span>
+            <input type="text" name="recipient_name" id="inRecipientName" placeholder="Ex: Mohamed Alami">
+          </div>
+        </div>
+
+        <!-- Student ID / Code -->
+        <div class="field" id="boxStudentCode">
+          <label>ID / Code Élève</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🆔</span>
+            <input type="text" name="student_code" id="inStudentCode" placeholder="Ex: ETU-2024-001">
+          </div>
+        </div>
+
+        <!-- CIN -->
+        <div class="field">
+          <label>N° CIN</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🪪</span>
+            <input type="text" name="cin" id="inCin" placeholder="Ex: AB123456">
+          </div>
+        </div>
+
+        <!-- Birth Date (Langues) -->
+        <div class="field" id="boxBirthDate">
+          <label>Date de Naissance</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🎂</span>
+            <input type="date" name="birth_date" id="inBirthDate">
+          </div>
+        </div>
+
+        <!-- Birth City (Langues) -->
+        <div class="field" id="boxBirthCity">
+          <label>Ville de Naissance</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📍</span>
+            <input type="text" name="birth_city" id="inBirthCity" placeholder="Ex: Casablanca / Deroua">
+          </div>
+        </div>
+
+        <!-- CNSS (Visible for Travail) -->
+        <div class="field" id="boxCnss" style="display:none;">
+          <label>N° CNSS (Optionnel)</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🏥</span>
+            <input type="text" name="cnss_no" id="inCnss" placeholder="Ex: 123456789">
+          </div>
+        </div>
+
+        <!-- Course Picker (Visible for Langues) -->
+        <div class="field" id="boxCourse">
+          <label>Cours / Formation liée</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📚</span>
+            <select name="course_id" id="certCourseSelect" onchange="autoDetectCertInfo(this)">
+              <option value="">-- Optionnel / Sélectionner un cours --</option>
+              {% for c in courses %}
+              <option value="{{ c.id }}" data-category="{{ c.category }}" data-language="{{ c.language }}" data-level="{{ c.level }}" data-name="{{ c.display_name }}">
+                {{ c.display_name }} ({{ c.level or 'Général' }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Level CECRL (Langues) -->
+        <div class="field" id="boxLevel">
+          <label>Niveau CECRL Certifié</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🎯</span>
+            <select name="level" id="selectLevel">
+              <option value="A1">A1 — Débutant / Introductif</option>
+              <option value="A2">A2 — Intermédiaire Usuel</option>
+              <option value="B1">B1 — Niveau Seuil</option>
+              <option value="B2" selected>B2 — Niveau Avancé / Indépendant</option>
+              <option value="C1">C1 — Niveau Autonome</option>
+              <option value="C2">C2 — Niveau Maîtrise</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Intitulé Formation -->
+        <div class="field" id="boxTitle">
+          <label id="lblTitle">Intitulé de la Formation</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🏷️</span>
+            <input type="text" name="title" id="certTitleInput" placeholder="Ex : Formation Intensive en Langue Anglaise - Niveau B2" value="Formation en Langues Vivantes">
+          </div>
+        </div>
+
+        <!-- Job Title (Travail / Stage) -->
+        <div class="field" id="boxJobTitle" style="display:none;">
+          <label id="lblJobTitle">Poste / Fonction Occupée</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">💼</span>
+            <input type="text" name="job_title" id="inJobTitle" placeholder="Ex : Enseignant(e) d'Anglais / Secrétaire Polyvalente">
+          </div>
+        </div>
+
+        <!-- Department -->
+        <div class="field" id="boxDepartment" style="display:none;">
+          <label>Service / Département</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🏢</span>
+            <input type="text" name="department" id="inDepartment" placeholder="Ex : Pôle Pédagogique / Direction">
+          </div>
+        </div>
+
+        <!-- Start Date -->
+        <div class="field" id="boxStartDate" style="display:none;">
+          <label id="lblStartDate">Date de Début (Embauche / Stage)</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📅</span>
+            <input type="date" name="start_date" id="inStartDate">
+          </div>
+        </div>
+
+        <!-- End Date -->
+        <div class="field" id="boxEndDate" style="display:none;">
+          <label id="lblEndDate">Date de Fin (Laisser vide si en cours)</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📅</span>
+            <input type="date" name="end_date" id="inEndDate">
+          </div>
+        </div>
+
+        <!-- Issue Date -->
+        <div class="field">
+          <label>Date de Délivrance</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📅</span>
+            <input type="date" name="issue_date" value="{{ today }}">
+          </div>
+        </div>
+
+        <!-- Mention (Langues) -->
+        <div class="field" id="boxMention">
+          <label>Mention / Appréciation</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">⭐</span>
+            <select name="mention">
+              <option value="Très Bien">Très Bien (ممتاز)</option>
+              <option value="Bien">Bien (جيد جداً)</option>
+              <option value="Assez Bien">Assez Bien (جيد)</option>
+              <option value="Passable">Passable (مستوفٍ)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Language Skills & Scores (Langues Only) -->
+      <div id="boxLanguageSkills" style="margin-top:16px; background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:12px; padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+          <div>
+            <h4 style="margin:0; font-size:14px; color:#0B3D6E; font-weight:800;">🎯 Évaluation des 4 Compétences Linguistiques (Notes / 100)</h4>
+            <p style="margin:2px 0 0; font-size:11.5px; color:#64748b;">Renseignez les notes sur 100. La moyenne générale est calculée automatiquement en direct.</p>
+          </div>
+          <div id="liveAverageBadge" style="background:#eff6ff; border:1px solid #93c5fd; color:#1d4ed8; padding:5px 14px; border-radius:20px; font-weight:800; font-size:13px;">
+            Moyenne : <span id="lblLiveAverage">—</span> / 100
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:12px;">
+          <div class="field">
+            <label style="font-size:12px; font-weight:700;">🎧 Listening (Compréhension orale)</label>
+            <div class="input-field has-ico">
+              <span class="f-ico">🎧</span>
+              <input type="number" name="score_listening" id="inScoreListening" min="0" max="100" step="0.5" placeholder="Note / 100" oninput="calcAverageScore()">
+            </div>
+          </div>
+          <div class="field">
+            <label style="font-size:12px; font-weight:700;">🗣️ Speaking (Expression orale)</label>
+            <div class="input-field has-ico">
+              <span class="f-ico">🗣️</span>
+              <input type="number" name="score_speaking" id="inScoreSpeaking" min="0" max="100" step="0.5" placeholder="Note / 100" oninput="calcAverageScore()">
+            </div>
+          </div>
+          <div class="field">
+            <label style="font-size:12px; font-weight:700;">📖 Reading (Lecture & Compréhension)</label>
+            <div class="input-field has-ico">
+              <span class="f-ico">📖</span>
+              <input type="number" name="score_reading" id="inScoreReading" min="0" max="100" step="0.5" placeholder="Note / 100" oninput="calcAverageScore()">
+            </div>
+          </div>
+          <div class="field">
+            <label style="font-size:12px; font-weight:700;">✍️ Writing (Production écrite)</label>
+            <div class="input-field has-ico">
+              <span class="f-ico">✍️</span>
+              <input type="number" name="score_writing" id="inScoreWriting" min="0" max="100" step="0.5" placeholder="Note / 100" oninput="calcAverageScore()">
+            </div>
+          </div>
+          <div class="field">
+            <label style="font-size:12px; font-weight:700;">🏆 Score Global / 100</label>
+            <div class="input-field has-ico">
+              <span class="f-ico">⭐</span>
+              <input type="number" name="overall_score" id="inScoreOverall" min="0" max="100" step="0.5" placeholder="Calculé auto" style="font-weight:800; color:#0B3D6E; background:#fef3c7;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px; display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" class="btn btn-outline" onclick="toggleIssuanceStudio()" style="font-weight:700;">
+          {{ 'إلغاء' if lang=='ar' else 'Annuler' }}
+        </button>
+        <button type="submit" class="btn btn-primary" style="padding:10px 24px; font-weight:800; background:linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%); border:none; box-shadow:0 3px 10px rgba(11,61,110,0.25);">
+          📜 {{ 'توليد وطباعة الوثيقة الرسمية' if lang=='ar' else 'Générer & Imprimer le Document Officiel' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     REGISTRY OF ISSUED CERTIFICATES (TABLE SECTION)
+     ============================================================ -->
+<div class="card">
+  <!-- Registry Toolbar -->
+  <div class="card-pad" style="border-bottom:1px solid #e2e8f0; padding-bottom:14px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+      <h3 style="margin:0; font-size:17px; color:#0B3D6E; font-weight:800; display:flex; align-items:center; gap:8px;">
+        <span>📜</span>
+        <span>{{ 'سجل الشواهد والشهادات الرسمية الممنوحة' if lang=='ar' else 'Registre des Attestations & Certificats Délivrés' }}</span>
+        <span class="chip chip-blue" style="font-size:11px; padding:2px 8px;">{{ certs|length }}</span>
+      </h3>
+
+      <!-- Document Type Filter Buttons -->
+      <div class="type-filter-group">
+        <button type="button" class="type-filter-btn active" id="fBtnAll" onclick="filterCertificatesByType('all')">
+          {{ 'الكل' if lang=='ar' else 'Tous' }}
+        </button>
+        <button type="button" class="type-filter-btn" id="fBtnLang" onclick="filterCertificatesByType('langue')">
+          🗣️ {{ 'لغات' if lang=='ar' else 'Langues' }}
+        </button>
+        <button type="button" class="type-filter-btn" id="fBtnStage" onclick="filterCertificatesByType('stage')">
+          🎓 {{ 'تدريب' if lang=='ar' else 'Stage' }}
+        </button>
+        <button type="button" class="type-filter-btn" id="fBtnTravail" onclick="filterCertificatesByType('travail')">
+          💼 {{ 'عمل' if lang=='ar' else 'Travail' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Search & Counter -->
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <div class="reg-search-wrap">
+        <span class="reg-search-ico">🔍</span>
+        <input type="text" id="certSearchInput" class="reg-search-input" 
+               placeholder="{{ 'بحث برقم الوثيقة، اسم المستفيد، رقم البطاقة الوطنية CIN أو المادة...' if lang=='ar' else 'Rechercher par N° document, nom du bénéficiaire, CIN, formation...' }}"
+               oninput="filterCertTable()" autocomplete="off">
+        <button type="button" id="certSearchClear" class="reg-search-clear" onclick="clearCertSearch()">✕</button>
+      </div>
+
+      <div style="font-size:12.5px; color:#64748b; font-weight:600;">
+        {{ 'عرض' if lang=='ar' else 'Affichage de' }} : 
+        <strong id="certVisibleCount" style="color:#0B3D6E;">{{ certs|length }}</strong> 
+        {{ 'وثيقة' if lang=='ar' else 'documents' }}
+      </div>
+    </div>
+  </div>
+
+  {% if certs %}
+  <div class="table-wrap">
+    <table id="certTable">
+      <thead>
+        <tr>
+          <th>{{ 'رقم الوثيقة' if lang=='ar' else 'N° Document' }}</th>
+          <th>{{ 'نوع الوثيقة' if lang=='ar' else 'Type de Document' }}</th>
+          <th>{{ 'المستفيد' if lang=='ar' else 'Bénéficiaire' }}</th>
+          <th>{{ 'الموضوع / الدورة' if lang=='ar' else 'Détail / Intitulé' }}</th>
+          <th>{{ 'تاريخ الإصدار' if lang=='ar' else 'Date de Délivrance' }}</th>
+          <th>{{ 'التقدير / التقييم' if lang=='ar' else 'Mention / Score' }}</th>
+          <th style="text-align:right;">{{ 'الإجراءات' if lang=='ar' else 'Actions' }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in certs %}
+        {% set ctype = (c.cert_type or '')|lower %}
+        <tr class="cert-row" 
+            data-number="{{ (c.cert_number or '')|lower }}"
+            data-name="{{ (c.beneficiary_name or '')|lower }}"
+            data-cin="{{ (c.beneficiary_cin or c.cin or '')|lower }}"
+            data-detail="{{ ((c.job_title or c.title or '') ~ ' ' ~ (c.course.display_name if c.course else ''))|lower }}"
+            data-type="{% if 'travail' in ctype %}travail{% elif 'stage' in ctype %}stage{% else %}langue{% endif %}">
+          <td>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <strong style="color:#0B3D6E; font-size:13.5px; font-family:monospace;">{{ c.cert_number }}</strong>
+            </div>
+          </td>
+          <td>
+            {% if "travail" in ctype %}
+              <span class="chip" style="background:#f3e8ff; color:#7c3aed; font-weight:800; border:1px solid #e9d5ff;">💼 Travail</span>
+            {% elif "stage" in ctype %}
+              <span class="chip" style="background:#ecfdf5; color:#059669; font-weight:800; border:1px solid #a7f3d0;">🎓 Stage</span>
+            {% else %}
+              <span class="chip chip-blue" style="font-weight:800; border:1px solid #bfdbfe;">🗣️ Langue</span>
+            {% endif %}
+          </td>
+          <td>
+            <strong style="font-size:14px; color:#0f172a; display:block;">{{ c.beneficiary_name }}</strong>
+            {% if c.beneficiary_cin or c.cin %}
+              <div style="font-size:11px; color:#64748b; font-weight:600;">🪪 CIN : {{ c.beneficiary_cin or c.cin }}</div>
+            {% endif %}
+          </td>
+          <td>
+            <div style="font-weight:700; color:#334155; font-size:13px;">{{ c.job_title or c.title or c.cert_type }}</div>
+            {% if c.course %}
+              <span class="badge-course-chip" style="font-size:11px; margin-top:2px;">{{ c.course.display_name }}</span>
+            {% endif %}
+          </td>
+          <td style="font-size:13px; font-weight:600; color:#475569;">
+            {{ c.issue_date }}
+          </td>
+          <td>
+            {% if "travail" in ctype or "stage" in ctype %}
+              <span class="chip chip-gray" style="font-size:11px; font-weight:700;">✓ Certifié conforme</span>
+            {% else %}
+              <span class="chip chip-green" style="font-size:11.5px; font-weight:800;">
+                ⭐ {{ c.mention or 'Très Bien' }}
+                {% if c.overall_score and c.overall_score > 0 %}
+                  <small style="font-weight:700; opacity:0.85;">({{ c.overall_score }}/100)</small>
+                {% endif %}
+              </span>
+            {% endif %}
+          </td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex; justify-content:flex-end; gap:6px;">
+              <a href="{{ url_for('verify_certificate', cert_number=c.cert_number) }}" target="_blank" 
+                 class="btn btn-xs btn-outline-primary" style="font-weight:700; display:inline-flex; align-items:center; gap:4px;" 
+                 title="Ouvrir la page de vérification officielle sécurisée">
+                <span>🌐</span><span>{{ 'تحقق' if lang=='ar' else 'Vérifier' }}</span>
+              </a>
+              <a href="{{ url_for('certificate_print', cid=c.id) }}" target="_blank" 
+                 class="btn btn-xs btn-primary" style="background:#0B3D6E; border:none; font-weight:800; display:inline-flex; align-items:center; gap:4px;">
+                <span>🖨️</span><span>{{ 'طباعة' if lang=='ar' else 'Imprimer' }}</span>
+              </a>
+              {% if cur_user and cur_user.role == 'admin' %}
+              <form method="post" action="{{ url_for('certificate_delete', cid=c.id) }}" onsubmit="return confirm('Confirmer la suppression de cette attestation ?');" style="display:inline;">
+                <button type="submit" class="btn btn-xs btn-outline-danger" style="color:#ef4444; border-color:#fca5a5;" title="Supprimer">✕</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty" style="padding:48px; text-align:center;">
+    <div style="font-size:48px; margin-bottom:12px;">📜</div>
+    <h3 style="margin:0; color:#0B3D6E;">{{ 'لا توجد شواهد صادرة حتى الآن' if lang=='ar' else 'Aucune attestation délivrée' }}</h3>
+    <p style="color:#64748b; margin:6px 0 16px;">{{ 'يمكنك إصدار أول شهادة رسمية عبر النقر على الزر أعلاه.' if lang=='ar' else 'Délivrez votre première attestation officielle en utilisant le bouton ci-dessus.' }}</p>
+    <button type="button" class="btn btn-primary" onclick="toggleIssuanceStudio(true)">
+      ➕ {{ 'إصدار أول شهادة' if lang=='ar' else 'Délivrer une Attestation' }}
+    </button>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Empty state for search -->
+<div id="certNoResults" style="display:none; text-align:center; padding:40px 20px; background:#ffffff; border-radius:14px; border:1.5px dashed #cbd5e1; margin-top:16px;">
+  <div style="font-size:32px; margin-bottom:8px;">🔍</div>
+  <h4 style="margin:0 0 4px 0; font-size:15px; color:#0f172a; font-weight:800;">
+    {{ 'لا توجد وثيقة مطابقة لبحثك' if lang=='ar' else 'Aucun document trouvé' }}
+  </h4>
+  <p style="margin:0; font-size:12.5px; color:#64748b;">
+    {{ 'تحقق من الكلمات المدخلة أو الفلتر المختار' if lang=='ar' else 'Vérifiez les termes saisis ou réinitialisez le filtre de recherche.' }}
+  </p>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT: TOGGLE, DYNAMIC FIELDS, LIVE SEARCH & FILTERS
+     ============================================================ -->
+<script>
+let currentDocType = 'Attestation de Niveau en Langue';
+let currentTypeFilter = 'all';
+
+// --- Accordion Toggle ---
+function toggleIssuanceStudio(forceOpen) {
+  const panel = document.getElementById('issuanceStudio');
+  const ico = document.getElementById('btnStudioIco');
+  const txt = document.getElementById('btnStudioText');
+  const isHidden = (panel.style.display === 'none' || panel.style.display === '');
+
+  if (forceOpen === true || isHidden) {
+    panel.style.display = 'block';
+    ico.textContent = '▲';
+    txt.textContent = "{{ 'إخفاء النموذج' if lang=='ar' else 'Fermer le Panneau' }}";
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    panel.style.display = 'none';
+    ico.textContent = '➕';
+    txt.textContent = "{{ 'إصدار شهادة جديدة' if lang=='ar' else 'Délivrer une Attestation' }}";
+  }
+}
+
+// --- Switch Document Type ---
+function switchCertDocType(type, cardEl) {
+  currentDocType = type;
+  document.getElementById('hiddenCertType').value = type;
+
+  // Active card styling
+  document.querySelectorAll('.doc-type-card').forEach(c => c.classList.remove('active'));
+  if (cardEl) cardEl.classList.add('active');
+
+  const boxCourse = document.getElementById('boxCourse');
+  const boxTitle = document.getElementById('boxTitle');
+  const boxMention = document.getElementById('boxMention');
+  const boxJobTitle = document.getElementById('boxJobTitle');
+  const boxDepartment = document.getElementById('boxDepartment');
+  const boxStartDate = document.getElementById('boxStartDate');
+  const boxEndDate = document.getElementById('boxEndDate');
+  const boxCnss = document.getElementById('boxCnss');
+  const inJobTitle = document.getElementById('inJobTitle');
+
+  const boxStudentCode = document.getElementById('boxStudentCode');
+  const boxBirthDate = document.getElementById('boxBirthDate');
+  const boxBirthCity = document.getElementById('boxBirthCity');
+  const boxLevel = document.getElementById('boxLevel');
+  const boxLanguageSkills = document.getElementById('boxLanguageSkills');
+
+  if (type === 'Attestation de Travail') {
+    boxCourse.style.display = 'none';
+    boxTitle.style.display = 'none';
+    boxMention.style.display = 'none';
+    boxStudentCode.style.display = 'none';
+    boxBirthDate.style.display = 'none';
+    boxBirthCity.style.display = 'none';
+    boxLevel.style.display = 'none';
+    boxLanguageSkills.style.display = 'none';
+
+    boxJobTitle.style.display = 'block';
+    boxDepartment.style.display = 'block';
+    boxStartDate.style.display = 'block';
+    boxEndDate.style.display = 'block';
+    boxCnss.style.display = 'block';
+
+    document.getElementById('lblStartDate').textContent = "Date d'Embauche / Recrutement";
+    document.getElementById('lblEndDate').textContent = "Date de Fin de Contrat (Laisser vide si toujours en poste)";
+    document.getElementById('lblJobTitle').textContent = "Poste / Fonction Occupée";
+    inJobTitle.placeholder = "Ex : Enseignant(e) d'Anglais / Secrétaire";
+
+    // Switch default recipient tab to teacher or employee
+    switchRecTab('teacher');
+  } else if (type === 'Attestation de Stage') {
+    boxCourse.style.display = 'none';
+    boxTitle.style.display = 'none';
+    boxMention.style.display = 'none';
+    boxStudentCode.style.display = 'none';
+    boxBirthDate.style.display = 'none';
+    boxBirthCity.style.display = 'none';
+    boxLevel.style.display = 'none';
+    boxLanguageSkills.style.display = 'none';
+    boxCnss.style.display = 'none';
+
+    boxJobTitle.style.display = 'block';
+    boxDepartment.style.display = 'block';
+    boxStartDate.style.display = 'block';
+    boxEndDate.style.display = 'block';
+
+    document.getElementById('lblStartDate').textContent = "Date de Début du Stage";
+    document.getElementById('lblEndDate').textContent = "Date de Fin du Stage";
+    document.getElementById('lblJobTitle').textContent = "Intitulé du Stage / Mission";
+    inJobTitle.placeholder = "Ex : Stagiaire en Gestion / Développement Web";
+
+    switchRecTab('custom');
+  } else {
+    // Attestation de Niveau en Langue
+    boxCourse.style.display = 'block';
+    boxTitle.style.display = 'block';
+    boxMention.style.display = 'block';
+    boxStudentCode.style.display = 'block';
+    boxBirthDate.style.display = 'block';
+    boxBirthCity.style.display = 'block';
+    boxLevel.style.display = 'block';
+    boxLanguageSkills.style.display = 'block';
+
+    boxJobTitle.style.display = 'none';
+    boxDepartment.style.display = 'none';
+    boxStartDate.style.display = 'none';
+    boxEndDate.style.display = 'none';
+    boxCnss.style.display = 'none';
+
+    document.getElementById('lblTitle').textContent = "Intitulé de la Formation";
+    switchRecTab('student');
+  }
+}
+
+// --- Switch Beneficiary Tab ---
+function switchRecTab(tab) {
+  document.getElementById('hiddenRecType').value = tab;
+
+  // Active tab style
+  document.querySelectorAll('.rec-tab').forEach(b => b.classList.remove('active'));
+  const activeBtn = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+  if (activeBtn) activeBtn.classList.add('active');
+
+  const bStu = document.getElementById('boxStudent');
+  const bTeach = document.getElementById('boxTeacher');
+  const bEmp = document.getElementById('boxEmployee');
+  const bMan = document.getElementById('boxManualName');
+
+  bStu.style.display = (tab === 'student') ? 'block' : 'none';
+  bTeach.style.display = (tab === 'teacher') ? 'block' : 'none';
+  bEmp.style.display = (tab === 'employee') ? 'block' : 'none';
+  bMan.style.display = (tab === 'custom') ? 'block' : 'none';
+
+  if (tab === 'student') syncStudentData(document.getElementById('selectStudent'));
+  if (tab === 'teacher') syncTeacherData(document.getElementById('selectTeacher'));
+  if (tab === 'employee') syncEmployeeData(document.getElementById('selectEmployee'));
+}
+
+// --- Auto-Sync Beneficiary Data ---
+function syncStudentData(select) {
+  if (!select || !select.value) return;
+  const opt = select.options[select.selectedIndex];
+  if (opt) {
+    document.getElementById('inCin').value = opt.getAttribute('data-cin') || '';
+    document.getElementById('inStudentCode').value = opt.getAttribute('data-code') || '';
+    document.getElementById('inBirthDate').value = opt.getAttribute('data-birth') || '';
+    document.getElementById('inBirthCity').value = opt.getAttribute('data-city') || '';
+    document.getElementById('inRecipientName').value = opt.getAttribute('data-name') || '';
+  }
+}
+
+function syncTeacherData(select) {
+  if (!select || !select.value) return;
+  const opt = select.options[select.selectedIndex];
+  if (opt) {
+    document.getElementById('inCin').value = opt.getAttribute('data-cin') || '';
+    document.getElementById('inRecipientName').value = opt.getAttribute('data-name') || '';
+    const spec = opt.getAttribute('data-specialty') || 'Enseignant(e)';
+    document.getElementById('inJobTitle').value = "Enseignant(e) de " + spec;
+    document.getElementById('inDepartment').value = "Corps Pédagogique";
+    if (opt.getAttribute('data-hire')) {
+      document.getElementById('inStartDate').value = opt.getAttribute('data-hire');
+    }
+  }
+}
+
+function syncEmployeeData(select) {
+  if (!select || !select.value) return;
+  const opt = select.options[select.selectedIndex];
+  if (opt) {
+    document.getElementById('inCin').value = opt.getAttribute('data-cin') || '';
+    document.getElementById('inCnss').value = opt.getAttribute('data-cnss') || '';
+    document.getElementById('inRecipientName').value = opt.getAttribute('data-name') || '';
+    document.getElementById('inJobTitle').value = opt.getAttribute('data-job') || 'Employé(e)';
+    document.getElementById('inDepartment').value = opt.getAttribute('data-dept') || 'Administration';
+    if (opt.getAttribute('data-hire')) {
+      document.getElementById('inStartDate').value = opt.getAttribute('data-hire');
+    }
+  }
+}
+
+function autoDetectCertInfo(select) {
+  if (!select || !select.value) return;
+  const opt = select.options[select.selectedIndex];
+  const lang = opt.getAttribute('data-language') || '';
+  const lvl = opt.getAttribute('data-level') || 'B2';
+  const name = opt.getAttribute('data-name') || '';
+
+  if (lang) {
+    document.getElementById('certTitleInput').value = "Formation Intensive en Langue " + lang + " - Niveau " + lvl;
+  } else if (name) {
+    document.getElementById('certTitleInput').value = name;
+  }
+
+  // Set CECRL level dropdown if matched
+  const lvlSelect = document.getElementById('selectLevel');
+  for (let i = 0; i < lvlSelect.options.length; i++) {
+    if (lvl.toUpperCase().includes(lvlSelect.options[i].value)) {
+      lvlSelect.selectedIndex = i;
+      break;
+    }
+  }
+}
+
+// --- Live Average Calculation for Language Skills ---
+function calcAverageScore() {
+  const l = parseFloat(document.getElementById('inScoreListening').value) || 0;
+  const s = parseFloat(document.getElementById('inScoreSpeaking').value) || 0;
+  const r = parseFloat(document.getElementById('inScoreReading').value) || 0;
+  const w = parseFloat(document.getElementById('inScoreWriting').value) || 0;
+
+  let count = 0;
+  if (document.getElementById('inScoreListening').value) count++;
+  if (document.getElementById('inScoreSpeaking').value) count++;
+  if (document.getElementById('inScoreReading').value) count++;
+  if (document.getElementById('inScoreWriting').value) count++;
+
+  if (count > 0) {
+    const avg = ((l + s + r + w) / 4).toFixed(1);
+    document.getElementById('inScoreOverall').value = avg;
+    document.getElementById('lblLiveAverage').textContent = avg;
+  } else {
+    document.getElementById('inScoreOverall').value = '';
+    document.getElementById('lblLiveAverage').textContent = '—';
+  }
+}
+
+// ============================================================
+// REGISTRY SEARCH & TYPE FILTERING
+// ============================================================
+function filterCertificatesByType(type) {
+  currentTypeFilter = type;
+
+  // Active button styling
+  document.querySelectorAll('.type-filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.cert-kpi-card').forEach(c => c.classList.remove('active-filter'));
+
+  if (type === 'all') {
+    document.getElementById('fBtnAll').classList.add('active');
+    document.getElementById('kpiCardAll').classList.add('active-filter');
+  } else if (type === 'langue') {
+    document.getElementById('fBtnLang').classList.add('active');
+    document.getElementById('kpiCardLang').classList.add('active-filter');
+  } else if (type === 'stage') {
+    document.getElementById('fBtnStage').classList.add('active');
+    document.getElementById('kpiCardStage').classList.add('active-filter');
+  } else if (type === 'travail') {
+    document.getElementById('fBtnTravail').classList.add('active');
+    document.getElementById('kpiCardTravail').classList.add('active-filter');
+  }
+
+  filterCertTable();
+}
+
+function filterCertTable() {
+  const searchInput = document.getElementById('certSearchInput');
+  const clearBtn = document.getElementById('certSearchClear');
+  const q = (searchInput.value || '').trim().toLowerCase();
+  clearBtn.style.display = q.length > 0 ? 'block' : 'none';
+
+  const rows = document.querySelectorAll('.cert-row');
+  let visibleCount = 0;
+
+  rows.forEach(function(row) {
+    const num = row.getAttribute('data-number') || '';
+    const name = row.getAttribute('data-name') || '';
+    const cin = row.getAttribute('data-cin') || '';
+    const detail = row.getAttribute('data-detail') || '';
+    const rowType = row.getAttribute('data-type') || '';
+
+    // Search filter
+    let matchesSearch = true;
+    if (q) {
+      matchesSearch = (num.indexOf(q) !== -1 || name.indexOf(q) !== -1 || cin.indexOf(q) !== -1 || detail.indexOf(q) !== -1);
+    }
+
+    // Type filter
+    let matchesType = true;
+    if (currentTypeFilter !== 'all') {
+      matchesType = (rowType === currentTypeFilter);
+    }
+
+    const isVisible = (matchesSearch && matchesType);
+    row.style.display = isVisible ? '' : 'none';
+    if (isVisible) visibleCount++;
+  });
+
+  document.getElementById('certVisibleCount').textContent = visibleCount;
+  const noRes = document.getElementById('certNoResults');
+  if (noRes) {
+    noRes.style.display = (visibleCount === 0) ? 'block' : 'none';
+  }
+}
+
+function clearCertSearch() {
+  const inp = document.getElementById('certSearchInput');
+  inp.value = '';
+  filterCertTable();
+  inp.focus();
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,484 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex between wrap mb-3" style="align-items:center;">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('settings') }}">← {{ t('settings') }}</a></div>
+    <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; display:flex; align-items:center; gap:8px;">
+      <span>☁️</span><span>Sauvegardes Automatiques & Google Drive</span>
+    </h2>
+    <p class="muted" style="margin:2px 0 0 0; font-size:13px;">
+      Synchronisation quotidienne sur Google Drive à 22:00, exports Excel complets et copies de sécurité locales
+    </p>
+  </div>
+  <div class="flex wrap" style="gap:10px;">
+    {% if gdrive_status.token_expired %}
+    <a class="btn btn-primary" href="{{ url_for('settings_gdrive_auth') }}" style="background:#dc2626; border-color:#dc2626; font-weight:700;">
+      🔑 Reconnecter Google Drive
+    </a>
+    {% elif gdrive_status.configured %}
+    <form method="post" action="{{ url_for('settings_gdrive_sync_now') }}" style="display:inline;">
+      <button class="btn btn-primary" type="submit" style="background:#2563eb; border-color:#2563eb; font-weight:700;">
+        ☁️ Synchroniser Google Drive Maintenant
+      </button>
+    </form>
+    {% endif %}
+    <a class="btn btn-outline" href="{{ url_for('settings_backups_download_classes_excel') }}" style="border-color:#059669; color:#047857; font-weight:700; background:#ecfdf5;">
+      📋 Classes & Élèves (.xlsx)
+    </a>
+    <a class="btn btn-outline" href="{{ url_for('settings_backups_download_master_excel') }}" style="border-color:#10b981; color:#047857; font-weight:700; background:#f0fdf4;">
+      📊 Export Global (.xlsx)
+    </a>
+    <form method="post" action="{{ url_for('settings_backups_create') }}" style="display:inline;">
+      <button class="btn btn-outline" type="submit" style="border-color:#64748b; color:#334155; font-weight:700;">
+        ⚡ Sauvegarde Locale (.zip)
+      </button>
+    </form>
+    <a class="btn btn-outline" href="{{ url_for('settings_backups_download_current') }}" style="border-color:#1f6feb; color:#1f6feb; font-weight:700;">
+      📥 BDD Active (.db)
+    </a>
+  </div>
+</div>
+
+<!-- Overview Stats Cards -->
+<div class="grid grid-4 mb-3">
+  <!-- Google Drive Status Card -->
+  <div class="card stat" style="border-left: 4.5px solid {% if gdrive_status.token_expired %}#ef4444{% elif gdrive_status.configured %}#10b981{% else %}#f59e0b{% endif %};">
+    <div class="label">Compte Google Drive</div>
+    <div class="value" style="font-size:16px; font-weight:800; color:{% if gdrive_status.token_expired %}#dc2626{% elif gdrive_status.configured %}#047857{% else %}#b45309{% endif %};">
+      {% if gdrive_status.token_expired %}
+        🔴 Session Expirée
+      {% elif gdrive_status.configured %}
+        🟢 Connecté
+      {% else %}
+        ⚪ Non Connecté
+      {% endif %}
+    </div>
+    <div class="sub" style="word-break:break-all;">
+      {% if gdrive_status.token_expired %}
+        <span style="color:#dc2626; font-weight:700;">Reconnexion requise</span> · {{ gdrive_status.account_email or 'Google Drive' }}
+      {% elif gdrive_status.account_email %}
+        {{ gdrive_status.account_email }}
+      {% else %}
+        Renseignez vos identifiants ci-dessous
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Daily 22:00 Status Card -->
+  <div class="card stat" style="border-left: 4.5px solid {% if gdrive_status.today_backup_done %}#10b981{% elif gdrive_status.last_status == 'failed' %}#ef4444{% else %}#3b82f6{% endif %};">
+    <div class="label">Sauvegarde Quotidienne ({{ gdrive_status.scheduled_time }})</div>
+    <div class="value" style="font-size:16px; font-weight:800; color:{% if gdrive_status.today_backup_done %}#047857{% elif gdrive_status.last_status == 'failed' %}#dc2626{% else %}#1d4ed8{% endif %};">
+      {% if gdrive_status.today_backup_done %}
+        ✅ Effectuée Aujourd'hui
+      {% elif gdrive_status.last_status == 'failed' %}
+        ❌ Échec / Erreur
+      {% else %}
+        ⏳ En Attente ({{ gdrive_status.scheduled_time }})
+      {% endif %}
+    </div>
+    <div class="sub">
+      {% if gdrive_status.last_backup_time %}
+        Dernière : {{ gdrive_status.last_backup_time }}
+      {% else %}
+        Aucune sauvegarde Google Drive enregistrée
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Database Size Card -->
+  <div class="card stat" style="border-left: 4.5px solid #1f6feb;">
+    <div class="label">Taille de la Base Active</div>
+    <div class="value" style="color:#1f6feb;">{{ '%.2f'|format(db_size / 1024 / 1024) }} <span style="font-size:14px;">Mo</span></div>
+    <div class="sub">Emplacement local : <code>institut.db</code></div>
+  </div>
+
+  <!-- Local Backups Count -->
+  <div class="card stat" style="border-left: 4.5px solid #8b5cf6;">
+    <div class="label">Archives Sauvegardées</div>
+    <div class="value" style="color:#7c3aed;">{{ backups|length }}</div>
+    <div class="sub">Copies locales dans <code>backups/</code></div>
+  </div>
+</div>
+
+<!-- ======================================================================= -->
+<!-- GOOGLE DRIVE INTEGRATION & STATUS SECTION                               -->
+<!-- ======================================================================= -->
+<div id="gdrive" class="card card-pad mb-3" style="background:#f8fafc; border:1.5px solid #cbd5e1; padding:22px; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,0.03);">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div style="width:44px; height:44px; border-radius:10px; background:white; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,0.08); font-size:24px;">
+        ☁️
+      </div>
+      <div>
+        <h3 class="mt-0 mb-0" style="color:#0B3D6E; font-size:18px; font-weight:800;">
+          Google Drive — Synchronisation Cloud & Exports Excel
+        </h3>
+        <p class="muted" style="margin:2px 0 0 0; font-size:13px;">
+          Sauvegarde quotidienne automatique à <strong>{{ s.gdrive_backup_time or '22:00' }}</strong> vers votre compte Google Drive avec rappel de confirmation.
+        </p>
+      </div>
+    </div>
+    <div>
+      {% if gdrive_status.token_expired %}
+        <a href="{{ url_for('settings_gdrive_auth') }}" class="btn btn-sm" style="background:#dc2626; color:white; font-weight:800; border-radius:8px; padding:7px 14px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(220,38,38,0.3);">
+          🔄 Reconnecter Google Drive
+        </a>
+      {% elif gdrive_status.configured %}
+        <span class="chip" style="background:#dcfce7; color:#15803d; font-weight:800; font-size:12px; padding:6px 12px; border:1px solid #86efac;">
+          🟢 Compte Actif & Connecté
+        </span>
+      {% else %}
+        <span class="chip" style="background:#fef3c7; color:#92400e; font-weight:800; font-size:12px; padding:6px 12px; border:1px solid #fde68a;">
+          ⚪ Non Connecté
+        </span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Token Expired Alert Box -->
+  {% if gdrive_status.token_expired %}
+  <div style="background:#fff1f2; border:2px solid #f43f5e; border-radius:12px; padding:18px; margin-bottom:18px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:14px;">
+      <div style="flex:1; min-width:280px;">
+        <div style="font-size:16px; font-weight:800; color:#9f1239; display:flex; align-items:center; gap:8px;">
+          <span>⚠️</span><span>Session Google Drive Expirée (Erreur : invalid_grant)</span>
+        </div>
+        <p style="margin:6px 0 0 0; font-size:13px; color:#881337; line-height:1.5;">
+          Le jeton d'autorisation Google de <strong>{{ gdrive_status.account_email or 'votre compte' }}</strong> a expiré ou a été révoqué par Google.<br>
+          <em>Pourquoi cette erreur ?</em> Lorsque l'application est en statut <strong>"Test"</strong> sur Google Cloud Console, Google limite la validité des jetons à <strong>7 jours</strong>.<br>
+          Vos données locales et sauvegardes sur ce PC sont intactes, mais l'envoi cloud automatique est en pause jusqu'à reconnexion.
+        </p>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <a href="{{ url_for('settings_gdrive_auth') }}" class="btn btn-primary" style="background:#e11d48; border-color:#e11d48; font-weight:800; font-size:14px; padding:10px 18px; box-shadow:0 2px 8px rgba(225,29,72,0.35);">
+          🔑 Reconnecter Google Drive en 1 Clic
+        </a>
+      </div>
+    </div>
+    <div style="margin-top:14px; padding-top:12px; border-top:1px dashed #fecdd3; font-size:12.5px; color:#9f1239; line-height:1.5;">
+      <strong>🛡️ Solution définitive pour que le jeton n'expire plus jamais :</strong><br>
+      1. Ouvrez votre console : <a href="https://console.cloud.google.com/apis/credentials/consent" target="_blank" style="color:#be123c; font-weight:800; text-decoration:underline;">Google Cloud Console — Écran de consentement OAuth ↗</a> (Projet <code>institut-ilas</code>).<br>
+      2. Sous <strong>"État de publication"</strong> (Publishing status), cliquez sur <strong>"PUBLIER L'APPLICATION"</strong> et confirmez.<br>
+      3. Cliquez ensuite sur le bouton rouge ci-dessus pour reconnecter votre compte. Le jeton sera permanent !
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Connected State Card -->
+  {% if gdrive_status.configured %}
+  <div style="background:#ffffff; border:1.5px solid #bbf7d0; border-radius:12px; padding:18px; margin-bottom:18px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div>
+        <div style="font-size:12px; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Compte Google Associé</div>
+        <div style="font-size:16px; font-weight:800; color:#0f172a; margin-top:2px; display:flex; align-items:center; gap:6px;">
+          <span>📧</span><span>{{ gdrive_status.account_email or 'Compte Google Connecté' }}</span>
+        </div>
+        <div style="font-size:12.5px; color:#475569; margin-top:4px;">
+          Dossier sur Drive : <strong style="color:#1d4ed8;">📁 {{ s.gdrive_folder_name or 'Institut_ILAS_Backups' }}</strong>
+          · Sauvegarde quotidienne : <strong style="color:#059669;">Tous les soirs à {{ s.gdrive_backup_time or '22:00' }}</strong>
+          · Export Excel multi-tables : <strong style="color:#059669;">{{ 'Activé (19 feuilles)' if s.gdrive_export_excels=='1' else 'Désactivé' }}</strong>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <form method="post" action="{{ url_for('settings_gdrive_sync_now') }}" style="display:inline;">
+          <button class="btn btn-primary" type="submit" style="background:#10b981; border-color:#10b981; font-weight:700;">
+            🚀 Lancer Sauvegarde Drive
+          </button>
+        </form>
+        <form method="post" action="{{ url_for('settings_gdrive_export_excels') }}" style="display:inline;">
+          <button class="btn btn-outline" type="submit" style="border-color:#2563eb; color:#2563eb; font-weight:700; background:#eff6ff;">
+            📊 Exporter Excels sur Drive
+          </button>
+        </form>
+        <form method="post" action="{{ url_for('settings_gdrive_disconnect') }}" onsubmit="return confirm('Déconnecter votre compte Google Drive ? Les sauvegardes automatiques vers Drive seront interrompues.');" style="display:inline;">
+          <button class="btn btn-sm btn-outline-danger" type="submit" title="Déconnecter le compte">
+            🔌 Déconnecter
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Last Backup Details on Drive -->
+    <div style="margin-top:14px; padding-top:14px; border-top:1px dashed #e2e8f0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; font-size:12.5px;">
+      <div>
+        <span class="muted">Dernier statut :</span>
+        {% if gdrive_status.last_status == 'success' %}
+          <strong style="color:#10b981;">✅ Succès</strong>
+        {% elif gdrive_status.last_status == 'failed' %}
+          <strong style="color:#ef4444;">❌ Échec</strong>
+          <div style="font-size:11px; color:#ef4444;">{{ gdrive_status.last_error }}</div>
+        {% else %}
+          <span class="muted">En attente</span>
+        {% endif %}
+      </div>
+      <div>
+        <span class="muted">Date/Heure :</span>
+        <strong>{{ gdrive_status.last_backup_time or '—' }}</strong>
+      </div>
+      <div>
+        <span class="muted">Archive Base (.zip) :</span>
+        {% if gdrive_status.last_file %}
+          <strong>{{ gdrive_status.last_file }}</strong>
+          {% if gdrive_status.last_link %}
+            <a href="{{ gdrive_status.last_link }}" target="_blank" style="color:#2563eb; font-weight:700; margin-left:4px; text-decoration:none;">Ouvrir sur Drive ↗</a>
+          {% endif %}
+        {% else %}
+          <span>—</span>
+        {% endif %}
+      </div>
+      <div>
+        <span class="muted">📋 Classes & Élèves (.xlsx) :</span>
+        {% if gdrive_status.last_classes_file %}
+          <div style="font-weight:700; color:#0f172a; word-break:break-all;">{{ gdrive_status.last_classes_file }}</div>
+          {% if gdrive_status.last_classes_link %}
+            <a href="{{ gdrive_status.last_classes_link }}" target="_blank" style="color:#059669; font-weight:700; text-decoration:none;">Ouvrir sur Drive ↗</a>
+          {% endif %}
+        {% else %}
+          <span>—</span>
+        {% endif %}
+      </div>
+      <div>
+        <span class="muted">📊 Export Global (.xlsx) :</span>
+        {% if gdrive_status.last_excel_file %}
+          <div style="font-weight:700; color:#0f172a; word-break:break-all;">{{ gdrive_status.last_excel_file }}</div>
+          {% if gdrive_status.last_excel_link %}
+            <a href="{{ gdrive_status.last_excel_link }}" target="_blank" style="color:#2563eb; font-weight:700; text-decoration:none;">Ouvrir sur Drive ↗</a>
+          {% endif %}
+        {% else %}
+          <span>—</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Settings & Credentials Form -->
+  <details {% if not gdrive_status.configured or gdrive_status.token_expired %}open{% endif %} style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:16px;">
+    <summary style="font-size:14px; font-weight:800; color:#0B3D6E; cursor:pointer; user-select:none;">
+      ⚙️ Configuration des Identifiants Google Drive & Paramètres Quotidien (Cliquez pour afficher / modifier)
+    </summary>
+
+    <form method="post" action="{{ url_for('settings_gdrive_save_config') }}" enctype="multipart/form-data" style="margin-top:16px;">
+      <div class="grid grid-2" style="gap:16px;">
+        <div>
+          <label style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">
+            Méthode d'Authentification
+          </label>
+          <select name="gdrive_auth_type" id="authTypeSelect" onchange="toggleAuthFields()" style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:13px; font-weight:600;">
+            <option value="oauth2" {{ 'selected' if s.gdrive_auth_type=='oauth2' }}>Google OAuth 2.0 (Compte Utilisateur / Recommandé)</option>
+            <option value="service_account" {{ 'selected' if s.gdrive_auth_type=='service_account' }}>Compte de Service Google (JSON Clé Privée)</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">
+            Nom du Dossier sur Google Drive
+          </label>
+          <input type="text" name="gdrive_folder_name" value="{{ s.gdrive_folder_name or 'Institut_ILAS_Backups' }}" required style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:13px; font-weight:600;">
+          <small class="muted" style="font-size:11px;">Le dossier sera créé automatiquement sur votre Google Drive s'il n'existe pas.</small>
+        </div>
+      </div>
+
+      <div class="grid grid-2 mt-3" style="gap:16px;">
+        <div>
+          <label style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">
+            Heure de Sauvegarde Quotidienne Automatique
+          </label>
+          <input type="time" name="gdrive_backup_time" value="{{ s.gdrive_backup_time or '22:00' }}" required style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:13px; font-weight:600;">
+          <small class="muted" style="font-size:11px;">Par défaut : <strong>22:00</strong> chaque soir.</small>
+        </div>
+
+        <div>
+          <label style="font-size:12px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">
+            Importer fichier client_secret.json (Optionnel)
+          </label>
+          <input type="file" name="credentials_file" accept=".json" style="width:100%; padding:6px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:12px; background:#f8fafc;">
+          <small class="muted" style="font-size:11px;">Remplira automatiquement le Client ID et Client Secret.</small>
+        </div>
+      </div>
+
+      <!-- OAuth 2.0 Fields -->
+      <div id="oauthFields" style="margin-top:16px; padding:14px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px;">
+        <div style="font-size:13px; font-weight:800; color:#0369a1; margin-bottom:10px;">
+          🔑 Identifiants Google OAuth 2.0
+        </div>
+        <div class="grid grid-2" style="gap:12px;">
+          <div>
+            <label style="font-size:12px; font-weight:700; color:#0284c7; display:block; margin-bottom:4px;">Client ID</label>
+            <input type="text" name="gdrive_client_id" value="{{ s.gdrive_client_id }}" placeholder="ex: 123456789-xxxxx.apps.googleusercontent.com" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #7dd3fc; font-size:12px; font-family:monospace;">
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700; color:#0284c7; display:block; margin-bottom:4px;">Client Secret</label>
+            <input type="password" name="gdrive_client_secret" value="{{ s.gdrive_client_secret }}" placeholder="GOCSPX-xxxxxxxxxxxx" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #7dd3fc; font-size:12px; font-family:monospace;">
+          </div>
+        </div>
+
+        <div style="margin-top:10px; font-size:11.5px; color:#0369a1;">
+          URL de redirection autorisée à déclarer dans Google Cloud Console :
+          <code style="background:#e0f2fe; padding:2px 6px; border-radius:4px; font-weight:700;">http://localhost:8080/settings/gdrive/callback</code>
+        </div>
+
+        <div style="margin-top:12px; padding-top:10px; border-top:1px dashed #bae6fd;">
+          <label style="font-size:12px; font-weight:700; color:#0284c7; display:block; margin-bottom:4px;">
+            Code d'autorisation OAuth manuel (Optionnel — en cas de redirection manuelle)
+          </label>
+          <input type="text" name="manual_code" placeholder="Collez ici le code '4/0AbCd...' si la redirection directe n'a pas pu aboutir" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #7dd3fc; font-size:12px; font-family:monospace;">
+        </div>
+      </div>
+
+      <!-- Service Account Fields -->
+      <div id="serviceAccountFields" style="display:none; margin-top:16px; padding:14px; background:#fdf4ff; border:1px solid #f0abfc; border-radius:10px;">
+        <div style="font-size:13px; font-weight:800; color:#86198f; margin-bottom:6px;">
+          🤖 Compte de Service Google (JSON)
+        </div>
+        <textarea name="gdrive_service_account_json" rows="4" placeholder='Collez ici le contenu JSON complet de votre clé de compte de service...' style="width:100%; padding:8px; border-radius:6px; border:1px solid #d946ef; font-size:12px; font-family:monospace;">{{ s.gdrive_service_account_json }}</textarea>
+        <small class="muted" style="font-size:11px; display:block; margin-top:4px;">
+          N'oubliez pas de partager votre dossier Google Drive avec l'adresse email du compte de service (client_email) en droit "Éditeur".
+        </small>
+      </div>
+
+      <!-- Checkboxes Settings -->
+      <div style="margin-top:16px; display:flex; flex-direction:column; gap:8px;">
+        <label class="check" style="font-weight:700; color:#0f172a;">
+          <input type="checkbox" name="gdrive_enabled" value="1" {{ 'checked' if s.gdrive_enabled=='1' }}>
+          Activer la Sauvegarde Automatique Quotidienne vers Google Drive
+        </label>
+        <label class="check" style="font-weight:700; color:#0f172a;">
+          <input type="checkbox" name="gdrive_export_excels" value="1" {{ 'checked' if s.gdrive_export_excels=='1' }}>
+          Générer et téléverser automatiquement l'Export Excel Complet (19 feuilles de données)
+        </label>
+        <label class="check" style="font-weight:700; color:#0f172a;">
+          <input type="checkbox" name="gdrive_ask_at_22" value="1" {{ 'checked' if s.gdrive_ask_at_22=='1' }}>
+          Afficher un rappel interactif à 22:00 si la sauvegarde n'a pas encore été effectuée
+        </label>
+      </div>
+
+      <div style="margin-top:16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <button class="btn btn-primary" type="submit" style="font-weight:700;">
+          💾 Enregistrer les Paramètres
+        </button>
+        {% if s.gdrive_client_id and s.gdrive_client_secret %}
+        <a href="{{ url_for('settings_gdrive_auth') }}" class="btn btn-primary" style="background:#0284c7; border-color:#0284c7; font-weight:700;">
+          🔑 Se Connecter avec Google Drive (Autorisation OAuth)
+        </a>
+        {% endif %}
+      </div>
+    </form>
+  </details>
+
+  <!-- Step-by-Step Guide Accordion -->
+  <details style="margin-top:12px; background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:14px;">
+    <summary style="font-size:13px; font-weight:700; color:#475569; cursor:pointer;">
+      📘 Guide en 3 étapes : Comment obtenir vos identifiants Google Drive (100% Gratuit)
+    </summary>
+    <div style="font-size:12.5px; color:#334155; line-height:1.6; margin-top:12px; padding-left:8px;">
+      <p style="margin:4px 0;"><strong>Étape 1 :</strong> Rendez-vous sur la <a href="https://console.cloud.google.com" target="_blank" style="color:#1f6feb; font-weight:700;">Google Cloud Console ↗</a> avec votre compte Gmail / Google Workspace.</p>
+      <p style="margin:4px 0;"><strong>Étape 2 :</strong> Créez un nouveau projet (ex: <em>Institut-ILAS-Backup</em>), puis activez l'<strong>API Google Drive</strong> dans <em>APIs & Services > Library</em>.</p>
+      <p style="margin:4px 0;"><strong>Étape 3 :</strong> Allez dans <em>APIs & Services > Credentials</em>, cliquez sur <em>Create Credentials > OAuth client ID</em> (Type : <em>Web application</em>). Ajoutez dans les URLs de redirection :<br>
+        <code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-weight:700;">{{ request.url_root }}settings/gdrive/callback</code> et <code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-weight:700;">http://localhost:8080/settings/gdrive/callback</code>.<br>
+        Téléchargez le fichier JSON ou copiez le <strong>Client ID</strong> et <strong>Client Secret</strong> dans le formulaire ci-dessus, puis cliquez sur <strong>Enregistrer</strong> et <strong>Se Connecter avec Google Drive</strong> !
+      </p>
+    </div>
+  </details>
+</div>
+
+<!-- Restore Section Card -->
+<div class="card card-pad mb-3" style="background:#fdf4ff; border:1.5px solid #f0abfc; padding:20px; border-radius:14px;">
+  <h3 class="mt-0" style="color:#86198f; font-size:16px; display:flex; align-items:center; gap:8px;">
+    <span>🔄</span><span>Restaurer une Base de Données (استرجاع نسخة احتياطية)</span>
+  </h3>
+  <p style="font-size:13px; color:#701a75; margin-top:2px;">
+    Vous pouvez importer un fichier de sauvegarde (<strong>.zip</strong> ou <strong>.db</strong>) pour restaurer toutes les données de l'institut. 
+    <em>Une sauvegarde de sécurité de la base actuelle sera automatiquement créée avant la restauration.</em>
+  </p>
+  <form method="post" action="{{ url_for('settings_backups_restore') }}" enctype="multipart/form-data" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:12px;" onsubmit="return confirm('⚠️ ATTENTION : La base actuelle va être remplacée par cette sauvegarde. Êtes-vous certain de vouloir restaurer cette version ?');">
+    <input type="file" name="backup_file" accept=".zip,.db" required style="background:#fff; padding:8px 12px; border-radius:8px; border:1px solid #d946ef; font-size:13px; font-weight:600;">
+    <button class="btn btn-primary" type="submit" style="background:#a21caf; border-color:#a21caf; font-weight:700;">
+      🚀 Lancer la Restauration
+    </button>
+  </form>
+</div>
+
+<!-- Backups Archives List -->
+<div class="card card-pad" style="border-radius:14px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+    <h3 class="mt-0 mb-0" style="color:#0B3D6E; font-size:16px;">
+      Historique des Sauvegardes & Exports Locaux
+    </h3>
+    <span class="muted" style="font-size:12px;">Archives conservées dans <code>backups/</code></span>
+  </div>
+  {% if backups %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Fichier</th>
+          <th>Type</th>
+          <th>Date de Création</th>
+          <th style="text-align:right;">Taille</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in backups %}
+        <tr>
+          <td>
+            <div style="font-weight:700; color:#0B3D6E; font-family:monospace; font-size:13px;">{{ b.filename }}</div>
+          </td>
+          <td>
+            {% if b.is_excel %}
+              <span class="chip" style="background:#ecfdf5; color:#047857; font-size:10px; font-weight:700;">📊 Export Excel (Complet)</span>
+            {% elif b.is_zip %}
+              <span class="chip" style="background:#eff6ff; color:#1d4ed8; font-size:10px; font-weight:700;">📦 Archive BDD ZIP</span>
+            {% else %}
+              <span class="chip" style="background:#f1f5f9; color:#475569; font-size:10px; font-weight:700;">🗄️ SQLite DB</span>
+            {% endif %}
+          </td>
+          <td style="color:#475569; font-weight:600;">
+            {{ b.created_at.strftime('%d/%m/%Y à %H:%M:%S') }}
+          </td>
+          <td style="text-align:right; font-weight:700;">
+            {% if b.size > 1048576 %}
+              {{ '%.2f'|format(b.size / 1048576) }} Mo
+            {% else %}
+              {{ '%.1f'|format(b.size / 1024) }} Ko
+            {% endif %}
+          </td>
+          <td style="text-align:right;">
+            <div class="flex" style="gap:8px; justify-content:flex-end;">
+              <a class="btn btn-xs btn-primary" href="{{ url_for('settings_backups_download', filename=b.filename) }}" style="background:#1f6feb; border-color:#1f6feb;" title="Télécharger">
+                📥 Télécharger
+              </a>
+              <form method="post" action="{{ url_for('settings_backups_delete', filename=b.filename) }}" style="display:inline;" onsubmit="return confirm('Supprimer définitivement ce fichier ?');">
+                <button class="btn btn-xs btn-outline-danger" type="submit" title="Supprimer">🗑️</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty">
+    Aucune sauvegarde archivée pour le moment. Cliquez sur « Sauvegarde Locale » ou « Synchroniser Google Drive » ci-dessus.
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function toggleAuthFields() {
+  var sel = document.getElementById('authTypeSelect').value;
+  var oauth = document.getElementById('oauthFields');
+  var sa = document.getElementById('serviceAccountFields');
+  if (sel === 'service_account') {
+    oauth.style.display = 'none';
+    sa.style.display = 'block';
+  } else {
+    oauth.style.display = 'block';
+    sa.style.display = 'none';
+  }
+}
+document.addEventListener('DOMContentLoaded', toggleAuthFields);
+</script>
+{% endblock %}

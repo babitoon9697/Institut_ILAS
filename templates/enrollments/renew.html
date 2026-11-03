@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- BREADCRUMB & HEADER -->
+<div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('enrollments') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ t('enrollments') }}</a></div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+      <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800;">
+        🔄 Renouvellement d'Abonnement (تجديد الاشتراك)
+      </h2>
+      <span class="chip chip-green" style="font-size:11px; font-weight:800;">PÉRIODE SUIVANTE</span>
+    </div>
+    <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">Prolongation automatique de l'inscription pour les mois suivants avec calcul de séances et émission de reçu</p>
+  </div>
+  <a class="btn btn-outline" href="{{ url_for('enrollments') }}">Annuler</a>
+</div>
+
+<!-- BATCH RENEWAL BANNER FOR MULTI-CLASS STUDENTS -->
+{% if stu.active_enrollments|length > 1 or stu.enrollments|length > 1 %}
+<div class="card mb-3" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1.5px solid #10b981; border-radius: 12px; padding: 14px 18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow:0 2px 8px rgba(16,185,129,0.12);">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <div style="font-size:24px;">💡</div>
+    <div>
+      <div style="font-size:13.5px; font-weight:800; color:#065f46;">
+        Cet élève suit plusieurs matières / classes !
+      </div>
+      <div style="font-size:12px; color:#047857; margin-top:2px;">
+        Vous pouvez renouveler toutes ses classes en une seule fois sur un <strong>seul reçu de paiement</strong> (Reçu Unique).
+      </div>
+    </div>
+  </div>
+  <a href="{{ url_for('student_renew_batch', sid=stu.id) }}" class="btn btn-primary" style="background:#059669; border-color:#059669; font-weight:800; font-size:12.5px; padding:8px 16px; box-shadow:0 2px 8px rgba(5,150,105,0.25);">
+    ⚡ Passer au Renouvellement Groupé (Un seul reçu) →
+  </a>
+</div>
+{% endif %}
+
+<!-- STUDENT & PREVIOUS ENROLLMENT SUMMARY CARD -->
+<div class="card card-pad mb-3" style="padding:16px 20px; border-top:4px solid #10b981; background:#ffffff;">
+  <div class="flex between wrap" style="align-items:center; gap:12px;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div style="width:46px; height:46px; border-radius:50%; background:#dcfce7; color:#15803d; font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        👤
+      </div>
+      <div>
+        <div style="font-weight:800; font-size:16px; color:#0B3D6E;">{{ stu.full_name }} <span class="chip chip-blue" style="font-size:11px; font-weight:700;">{{ stu.code }}</span></div>
+        <div style="font-size:12px; color:#64748b; margin-top:2px;">
+          Cours actuel : <strong style="color:#1e293b;">{{ prev_e.course_name_display }}</strong> · Date fin actuelle : <strong style="color:#047857;">{{ prev_e.end_date.strftime('%d/%m/%Y') if prev_e.end_date else '—' }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      {% if prev_e.balance > 0 %}
+      <div style="background:#fef2f2; border:1px solid #ef4444; padding:6px 12px; border-radius:8px; display:flex; align-items:center; gap:8px;">
+        <span style="font-size:16px;">⚠️</span>
+        <div style="font-size:11.5px; font-weight:800; color:#b91c1c;">
+          Impayé précédent : {{ '%.2f'|format(prev_e.balance) }} {{ settings.currency }}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if stu.dynamic_credit_balance > 0 %}
+      <div style="background:#ecfdf5; border:1px solid #10b981; padding:6px 12px; border-radius:8px; display:flex; align-items:center; gap:8px;">
+        <span style="font-size:16px;">💳</span>
+        <div style="font-size:11.5px; font-weight:800; color:#064e3b;">
+          Avoir disponible : +{{ '%.2f'|format(stu.dynamic_credit_balance) }} {{ settings.currency }}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<form method="post" id="renewForm" style="max-width:880px;">
+  
+  <!-- 1. PÉRIODE & SÉANCES -->
+  <div class="card card-pad mb-3" style="padding:20px; border-top:4px solid #1f6feb;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+      <div style="width:28px; height:28px; border-radius:6px; background:#dbeafe; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:14px; font-weight:800;">1</div>
+      <h3 style="margin:0; font-size:15.5px; color:#0B3D6E; font-weight:800;">Durée & Calendrier du Renouvellement (المدة والمواعيد)</h3>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Date de démarrage du renouvellement <span class="req">*</span></label>
+        <div class="input-field has-ico">
+          <span class="f-ico">📅</span>
+          <input type="date" name="renew_date" id="renewDate" value="{{ default_renew_date }}" required onchange="handleRenewDateChange()" style="font-weight:700;">
+        </div>
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Durée à renouveler <span class="req">*</span></label>
+        <div class="input-field has-ico">
+          <span class="f-ico">🗓️</span>
+          <select name="duration_months" id="durationMonths" onchange="handleDurationChange()" style="font-weight:800; color:#0B3D6E; font-size:13.5px;">
+            <option value="1" {% if prev_duration == 1 %}selected{% endif %}>1 Mois (Mensuel)</option>
+            <option value="2" {% if prev_duration == 2 %}selected{% endif %}>2 Mois</option>
+            <option value="3" {% if prev_duration == 3 %}selected{% endif %}>3 Mois (Trimestriel)</option>
+            <option value="4" {% if prev_duration == 4 %}selected{% endif %}>4 Mois</option>
+            <option value="5" {% if prev_duration == 5 %}selected{% endif %}>5 Mois</option>
+            <option value="6" {% if prev_duration == 6 %}selected{% endif %}>6 Mois (Semestriel)</option>
+            <option value="9" {% if prev_duration == 9 %}selected{% endif %}>9 Mois</option>
+            <option value="10" {% if prev_duration == 10 %}selected{% endif %}>10 Mois (Année scolaire)</option>
+            <option value="12" {% if prev_duration == 12 %}selected{% endif %}>12 Mois (Annuel)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Nombre total de séances</label>
+        <div class="input-field has-ico">
+          <span class="f-ico">⏱️</span>
+          <input type="number" name="total_sessions" id="totSess" value="{{ calc.total_sessions }}" style="font-weight:700;">
+        </div>
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Séances restantes dans la période</label>
+        <div class="input-field has-ico">
+          <span class="f-ico">✅</span>
+          <input type="number" name="attended_sessions" id="remSess" value="{{ calc.remaining_sessions }}" style="font-weight:700;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. RÈGLEMENT & REÇU -->
+  <div class="card card-pad mb-3" style="padding:20px; border-top:4px solid #10b981;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+      <div style="width:28px; height:28px; border-radius:6px; background:#d1fae5; display:flex; align-items:center; justify-content:center; color:#047857; font-size:14px; font-weight:800;">2</div>
+      <h3 style="margin:0; font-size:15.5px; color:#0B3D6E; font-weight:800;">Facturation & Encaissement (الأداء والوصل)</h3>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+
+      {% if stu.dynamic_credit_balance > 0 %}
+      <div class="field" style="grid-column: 1 / -1; background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:10px 14px;">
+        <label style="display:flex; align-items:center; gap:8px; font-weight:800; color:#15803d; cursor:pointer; margin:0;">
+          <input type="checkbox" name="use_credit" id="chkUseCredit" value="1" onchange="updatePayAmountCalculation()" style="transform:scale(1.2); accent-color:#16a34a;">
+          <span>💳 Déduire l'avoir disponible de l'élève ({{ '%.2f'|format(stu.dynamic_credit_balance) }} {{ settings.currency }})</span>
+        </label>
+        <div style="font-size:11.5px; color:#166534; margin-top:4px; margin-left:26px;">
+          Si coché, l'avoir disponible sera automatiquement déduit du montant à régler aujourd'hui.
+        </div>
+      </div>
+      {% endif %}
+
+      {% if prev_e.balance > 0 %}
+      <div class="field" style="grid-column: 1 / -1; background:#fff7ed; border:1px solid #fdba74; border-radius:8px; padding:10px 14px;">
+        <label style="display:flex; align-items:center; gap:8px; font-weight:800; color:#c2410c; cursor:pointer; margin:0;">
+          <input type="checkbox" name="include_prev_balance" id="chkIncludeOldBalance" value="1" onchange="updatePayAmountCalculation()" style="transform:scale(1.2); accent-color:#ea580c;">
+          <span>⚠️ Régler également l'ancien impayé de {{ '%.2f'|format(prev_e.balance) }} {{ settings.currency }}</span>
+        </label>
+        <div style="font-size:11.5px; color:#9a3412; margin-top:4px; margin-left:26px;">
+          Ajoute l'impayé précédent au total pour solder définitivement l'ancien compte.
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Prix facturé pour le renouvellement ({{ settings.currency }})</label>
+        <div class="input-field has-ico">
+          <span class="f-ico">💰</span>
+          <input type="number" step="0.01" name="monthly_price" id="monthlyPrice" value="{{ '%.2f'|format(calc.full_price) }}" style="font-weight:800; color:#0B3D6E; font-size:15px;" oninput="updatePayAmountCalculation()">
+        </div>
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Montant encaissé aujourd'hui ({{ settings.currency }}) <span class="req">*</span></label>
+        <div class="input-field has-ico">
+          <span class="f-ico">💵</span>
+          <input type="number" step="0.01" name="payment_amount" id="payAmount" value="{{ '%.2f'|format(calc.full_price) }}" required style="font-weight:800; color:#047857; font-size:15px;">
+        </div>
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Mode de règlement</label>
+        <div class="input-field has-ico">
+          <span class="f-ico">💳</span>
+          <select name="payment_method" style="font-weight:700;">
+            <option value="cash">💵 Espèces (Cash)</option>
+            <option value="transfer">🏦 Virement bancaire</option>
+            <option value="card">💳 Carte bancaire</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Remarques (Optionnel)</label>
+        <div class="input-field has-ico">
+          <span class="f-ico">📝</span>
+          <input name="notes" placeholder="Ex : Renouvellement période validée">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBMIT -->
+  <div style="display:flex; gap:10px; margin-top:20px;">
+    <button class="btn btn-primary" type="submit" style="font-size:15px; font-weight:800; padding:12px 26px; background:#10b981; border-color:#10b981; box-shadow:0 4px 14px rgba(16,185,129,0.35);">
+      ⚡ Valider le Renouvellement & Imprimer Reçu
+    </button>
+    <a class="btn btn-outline" href="{{ url_for('enrollments') }}" style="padding:12px 18px; font-weight:700;">
+      Annuler
+    </a>
+  </div>
+
+</form>
+
+<script>
+  var baseUnitPrice = {{ unit_price|tojson }};
+  var baseUnitSessions = {{ ((calc.total_sessions / (calc.months_count or 1))|round|int)|tojson }};
+  var prevBalance = {{ (prev_e.balance or 0.0)|tojson }};
+  var studentCredit = {{ (stu.dynamic_credit_balance or 0.0)|tojson }};
+  var courseId = {{ (prev_e.course_id or 0)|tojson }};
+
+  function handleDurationChange() {
+    var dur = parseInt(document.getElementById('durationMonths').value) || 1;
+    var dt = document.getElementById('renewDate').value;
+    
+    if (courseId > 0 && dt) {
+      fetchProratedSessions(courseId, dt, dur);
+    } else {
+      var totPrice = baseUnitPrice * dur;
+      var totSess = baseUnitSessions * dur;
+      document.getElementById('monthlyPrice').value = totPrice.toFixed(2);
+      document.getElementById('totSess').value = totSess;
+      document.getElementById('remSess').value = totSess;
+      updatePayAmountCalculation();
+    }
+  }
+
+  function handleRenewDateChange() {
+    var dt = document.getElementById('renewDate').value;
+    var dur = parseInt(document.getElementById('durationMonths').value) || 1;
+    if (courseId > 0 && dt) {
+      fetchProratedSessions(courseId, dt, dur);
+    }
+  }
+
+  function fetchProratedSessions(cid, dt, dur) {
+    var url = '/api/calculate_prorated?course_id=' + cid + '&enroll_date=' + dt + '&months_count=' + dur + '&custom_unit_price=' + baseUnitPrice;
+    fetch(url)
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.full_price !== undefined) {
+          document.getElementById('monthlyPrice').value = data.full_price.toFixed(2);
+        }
+        if (data.total_sessions !== undefined) {
+          document.getElementById('totSess').value = data.total_sessions;
+        }
+        if (data.remaining_sessions !== undefined) {
+          document.getElementById('remSess').value = data.remaining_sessions;
+        }
+        updatePayAmountCalculation();
+      })
+      .catch(function(err) {
+        console.error(err);
+        var totPrice = baseUnitPrice * dur;
+        var totSess = baseUnitSessions * dur;
+        document.getElementById('monthlyPrice').value = totPrice.toFixed(2);
+        document.getElementById('totSess').value = totSess;
+        document.getElementById('remSess').value = totSess;
+        updatePayAmountCalculation();
+      });
+  }
+
+  function updatePayAmountCalculation() {
+    var pr = parseFloat(document.getElementById('monthlyPrice').value) || 0;
+    var chkOld = document.getElementById('chkIncludeOldBalance');
+    var chkCredit = document.getElementById('chkUseCredit');
+
+    var addOld = (chkOld && chkOld.checked) ? prevBalance : 0.0;
+    var deductCredit = (chkCredit && chkCredit.checked) ? studentCredit : 0.0;
+
+    var targetTotal = Math.max(0.0, pr + addOld - deductCredit);
+    document.getElementById('payAmount').value = targetTotal.toFixed(2);
+  }
+</script>
+
+{% endblock %}

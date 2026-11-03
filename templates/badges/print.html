@@ -1,0 +1,1935 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cartes d'Étudiants Paysage (CR80) - {{ settings.inst_name|default('Institut ILAS') }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+
+<!-- DYNAMIC AT-RULE PAGE SIZE (A4 Landscape vs CR80 Landscape) -->
+<style id="dynamicPageStyle">
+{% if initial_mode == 'a4' %}
+  @page {
+    size: A4 landscape;
+    margin: 0;
+  }
+{% else %}
+  @page {
+    size: 85.6mm 54mm;
+    margin: 0;
+  }
+{% endif %}
+</style>
+
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    background-color: #0b1322;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    color: #0f172a;
+    padding: 0;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ========================================================
+     STUDIO TOOLBAR (ECRAN UNIQUEMENT)
+     ======================================================== */
+  .toolbar-container {
+    background: #0f1c30;
+    border-bottom: 1.5px solid #1e3352;
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 9999;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  .toolbar-content {
+    max-width: 1240px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn-print {
+    background: linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%);
+    color: #ffffff !important;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-size: 13.5px;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(31, 111, 235, 0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+    text-decoration: none;
+  }
+  .btn-print:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(31, 111, 235, 0.55);
+  }
+
+  .btn-back {
+    background: #182840;
+    color: #cbd5e1 !important;
+    border: 1px solid #2d4566;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+  }
+  .btn-back:hover {
+    background: #233754;
+    color: #ffffff !important;
+  }
+
+  .control-group {
+    display: flex;
+    align-items: center;
+    background: #081220;
+    border: 1px solid #243954;
+    border-radius: 8px;
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .control-lbl {
+    font-size: 11px;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    padding: 0 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .toggle-opt {
+    background: transparent;
+    color: #94a3b8;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .toggle-opt:hover {
+    color: #ffffff;
+  }
+  .toggle-opt.active {
+    background: #0B3D6E;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(11, 61, 110, 0.4);
+  }
+
+  .badge-counter-pill {
+    background: rgba(197, 155, 39, 0.15);
+    border: 1px solid #c59b27;
+    color: #fce89f;
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12.5px;
+    font-weight: 800;
+  }
+
+  /* ========================================================
+     A4 CALIBRATION & DUPLEX ALIGNMENT BAR (SUBROW)
+     ======================================================== */
+  .toolbar-subrow {
+    max-width: 1240px;
+    margin: 10px auto 0 auto;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.14);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
+  }
+
+  .calib-group {
+    display: inline-flex;
+    align-items: center;
+    background: #081220;
+    border: 1px solid #243954;
+    border-radius: 8px;
+    padding: 3px 5px;
+    gap: 3px;
+  }
+
+  .calib-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #94a3b8;
+    padding: 0 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .btn-calib-step {
+    background: #182840;
+    color: #e2e8f0;
+    border: 1px solid #334e68;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 7px;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .btn-calib-step:hover {
+    background: #243b55;
+    color: #38bdf8;
+    border-color: #38bdf8;
+  }
+
+  .calib-val-badge {
+    background: #0b1a2d;
+    color: #38bdf8;
+    border: 1px solid #1e3a5f;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    font-weight: 800;
+    padding: 3px 8px;
+    min-width: 68px;
+    text-align: center;
+    user-select: none;
+  }
+
+  .btn-calib-reset {
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid #243954;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-calib-reset:hover {
+    background: #182840;
+    color: #ffffff;
+  }
+
+  /* Guide Banner for Duplex Print */
+  .a4-guide-banner {
+    background: linear-gradient(135deg, #0b2545 0%, #102e54 100%);
+    border: 1.5px solid #1e5288;
+    border-radius: 12px;
+    max-width: 1200px;
+    margin: 18px auto -15px auto;
+    padding: 14px 20px;
+    color: #f8fafc;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    position: relative;
+    z-index: 100;
+  }
+  .a4-guide-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .a4-guide-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #38bdf8;
+  }
+  .a4-guide-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 6px;
+  }
+  .a4-guide-close:hover {
+    color: #ffffff;
+  }
+  .a4-guide-body {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .guide-item {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .guide-num {
+    background: #0284c7;
+    color: #ffffff;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  /* Empty slot placeholder for batch padding */
+  .badge-card-unit.empty-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 85.6mm;
+    height: 54mm;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+  }
+  .id-card-empty-slot {
+    width: 85.6mm;
+    height: 54mm;
+    border-radius: 3.18mm;
+    border: 0.6px dashed #334e68;
+    background: rgba(255, 255, 255, 0.02);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    user-select: none;
+  }
+
+  /* ========================================================
+     STUDIO WORKSPACE
+     ======================================================== */
+  .workspace {
+    padding: 35px 20px 60px 20px;
+    margin: 0 auto;
+  }
+
+  /* ========================================================
+     MODE A4 : PLANCHE A4 PAYSAGE (3 COLONNES x 3 LIGNES = 9 BADGES)
+     ESPACEMENT EXACT DE 10mm POUR LA PLASTIFICATION
+     ======================================================== */
+  body.mode-a4 .workspace {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 35px;
+    max-width: 100%;
+    padding: 30px 10px 60px 10px;
+  }
+
+  body.mode-a4 .badge-unit-meta {
+    display: none !important;
+  }
+
+  body.mode-a4 .a4-sheet-page {
+    width: 297mm;
+    height: 209mm;
+    min-height: 209mm;
+    max-height: 210mm;
+    padding: 13.5mm 10mm;
+    display: grid !important;
+    grid-template-columns: repeat(3, 85.6mm) !important;
+    grid-template-rows: repeat(3, 54mm) !important;
+    grid-gap: 10mm 10mm !important;
+    justify-content: center !important;
+    align-content: center !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.65);
+    border-radius: 4px;
+    position: relative;
+    flex-shrink: 0;
+    overflow: hidden !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  body.mode-a4 .badge-card-unit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 85.6mm;
+    height: 54mm;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+  }
+
+  body.mode-a4 .id-card {
+    border: 0.6px dashed #94a3b8 !important;
+    box-shadow: none !important;
+    border-radius: 3.18mm !important;
+    width: 85.6mm !important;
+    height: 54mm !important;
+    box-sizing: border-box;
+  }
+
+  /* ========================================================
+     MODE CR80 : IMPRIMANTE CARTES PVC (1 BADGE PAR PAGE)
+     ======================================================== */
+  body.mode-cr80 .workspace {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+    justify-content: center;
+    max-width: 1240px;
+  }
+
+  body.mode-cr80 .a4-sheet-page {
+    display: contents !important;
+  }
+
+  body.mode-cr80 .badge-card-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  body.mode-cr80 .id-card {
+    border: none;
+    box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.12);
+    border-radius: 3.18mm;
+    width: 85.6mm;
+    height: 54mm;
+    box-sizing: border-box;
+  }
+
+  .badge-unit-meta {
+    font-size: 11px;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .badge-unit-meta span.with-photo {
+    color: #10b981;
+  }
+  .badge-unit-meta span.without-photo {
+    color: #f59e0b;
+  }
+
+  /* ========================================================
+     EXACT CR80 PHYSICAL CARD (85.6mm x 54mm) - 1 SIDE PAYSAGE
+     ======================================================== */
+  .id-card {
+    width: 85.6mm;
+    height: 54mm;
+    background: #ffffff;
+    border-radius: 3.18mm;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    user-select: none;
+    box-sizing: border-box;
+  }
+
+  /* Top Tricolor Brand Accent Line (Navy | Gold | Crimson) - 2.2mm */
+  .top-brand-accent {
+    height: 2.2mm;
+    background: linear-gradient(90deg, #0B3D6E 0%, #0B3D6E 44%, #C59B27 44%, #C59B27 74%, #C0292B 74%, #C0292B 100%);
+    position: relative;
+    z-index: 3;
+    flex-shrink: 0;
+  }
+
+  /* ========================================================
+     HEADER (Light & Modern - Minimise Ink Consumption)
+     ======================================================== */
+  .card-header {
+    height: 10.5mm;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 3.2mm;
+    border-bottom: 0.8px solid #e2e8f0;
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+  }
+
+  .header-brand-wrap {
+    display: flex;
+    align-items: center;
+    gap: 2.4mm;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .inst-logo-box {
+    width: 7.8mm;
+    height: 7.8mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .inst-logo-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .header-titles {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .inst-name-main {
+    color: #0B3D6E;
+    font-size: 6.8pt;
+    font-weight: 900;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+
+  .inst-sub-activity {
+    color: #C59B27;
+    font-size: 3.7pt;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    line-height: 1;
+    margin-top: 0.3mm;
+  }
+
+  .header-card-type {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .card-type-chip {
+    background: #f8fafc;
+    border: 0.8px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 1mm 2.2mm;
+    display: flex;
+    align-items: center;
+    gap: 1.4mm;
+  }
+
+  .card-type-title {
+    color: #0B3D6E;
+    font-size: 4.5pt;
+    font-weight: 900;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  .card-year-badge {
+    color: #C59B27;
+    font-size: 4.5pt;
+    font-weight: 800;
+    border-left: 0.8px solid #cbd5e1;
+    padding-left: 1.4mm;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ========================================================
+     CARD BODY: TWO ADAPTIVE VARIANTS (WITH PHOTO vs WITHOUT)
+     ======================================================== */
+  .card-body {
+    flex: 1;
+    display: flex;
+    padding: 2mm 3.2mm 1.5mm 3.2mm;
+    position: relative;
+    z-index: 2;
+    min-height: 0;
+    background: #ffffff;
+  }
+
+  /* --------------------------------------------------------
+     VARIANT A: WITH PHOTO
+     -------------------------------------------------------- */
+  .layout-with-photo {
+    display: flex;
+    width: 100%;
+    gap: 2.8mm;
+  }
+
+  /* Left Photo & Code Column */
+  .photo-col {
+    width: 21mm;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .photo-frame {
+    width: 21mm;
+    height: 25.5mm;
+    border-radius: 1.8mm;
+    border: 1.2px solid #C59B27;
+    background: #f8fafc;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 1.5px 4px rgba(11, 61, 110, 0.12);
+  }
+
+  .photo-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .matricule-chip-pill {
+    width: 21mm;
+    margin-top: 1mm;
+    background: #0B3D6E;
+    border-radius: 1mm;
+    padding: 0.7mm 0;
+    text-align: center;
+  }
+
+  .matricule-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 5.4pt;
+    font-weight: 800;
+    color: #fcd34d;
+    letter-spacing: 0.4px;
+    line-height: 1;
+  }
+
+  /* Right Info & Scan Column */
+  .info-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .student-name-text {
+    font-size: 8.8pt;
+    font-weight: 900;
+    color: #0B3D6E;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 0.7mm;
+  }
+
+  .meta-pills-row {
+    display: flex;
+    align-items: center;
+    gap: 1.4mm;
+    margin-top: 1mm;
+    flex-wrap: nowrap;
+  }
+
+  .level-pill {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    color: #334155;
+    border: 0.6px solid #cbd5e1;
+    border-radius: 0.8mm;
+    padding: 0.5mm 1.6mm;
+    font-size: 4.6pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 32mm;
+  }
+
+  .status-pill-ok {
+    display: inline-flex;
+    align-items: center;
+    background: #f0fdf4;
+    color: #166534;
+    border: 0.6px solid #bbf7d0;
+    border-radius: 0.8mm;
+    padding: 0.5mm 1.6mm;
+    font-size: 4.4pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* Clean Matière Tag & Schedule */
+  .course-compact-row {
+    margin-top: 1.2mm;
+    background: #f8fafc;
+    border: 0.7px solid #e2e8f0;
+    border-left: 2.2px solid #C59B27;
+    border-radius: 1mm;
+    padding: 0.8mm 1.5mm;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5mm;
+  }
+
+  .course-name-compact {
+    font-size: 5.6pt;
+    font-weight: 900;
+    color: #0B3D6E;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.1;
+  }
+
+  .course-schedule-compact {
+    font-size: 4.4pt;
+    font-weight: 700;
+    color: #64748b;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Scan Zones Bar (QR + NFC) */
+  .scan-zones-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2mm;
+    margin-top: auto;
+    padding-top: 1mm;
+  }
+
+  /* QR Code Target */
+  .qr-scan-target {
+    display: flex;
+    align-items: center;
+    gap: 1.5mm;
+    background: #ffffff;
+    border: 0.8px solid #e2e8f0;
+    border-radius: 1.2mm;
+    padding: 0.6mm 1.2mm;
+  }
+
+  .qr-img-box {
+    width: 12.5mm;
+    height: 12.5mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .qr-img-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .qr-label-stack {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.1;
+  }
+
+  .qr-txt-top {
+    font-size: 3.8pt;
+    font-weight: 900;
+    color: #0B3D6E;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+
+  .qr-txt-sub {
+    font-size: 3.2pt;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.2px;
+  }
+
+  /* --------------------------------------------------------
+     NFC TARGET ZONE (For physical NFC sticker placement)
+     -------------------------------------------------------- */
+  .nfc-target-zone {
+    width: 15mm;
+    height: 14mm;
+    border: 1.2px dashed #0B3D6E;
+    border-radius: 2mm;
+    background: rgba(11, 61, 110, 0.03);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+    text-align: center;
+    padding: 0.4mm;
+  }
+
+  .nfc-icon-svg {
+    width: 6mm;
+    height: 6mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nfc-icon-svg svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .nfc-zone-tag {
+    font-size: 3.2pt;
+    font-weight: 900;
+    color: #0B3D6E;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    line-height: 1;
+    margin-top: 0.4mm;
+  }
+
+  .nfc-zone-sub {
+    font-size: 2.8pt;
+    font-weight: 800;
+    color: #C59B27;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  /* --------------------------------------------------------
+     VARIANT B: WITHOUT PHOTO (FULL-WIDTH MODERN LAYOUT)
+     NO EMPTY GRAY HOLES - RICH & EXPANSIVE
+     -------------------------------------------------------- */
+  .layout-no-photo {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .no-photo-top-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2.5mm;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 1.2mm;
+  }
+
+  .no-photo-identity {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .no-photo-name {
+    font-size: 10.5pt;
+    font-weight: 900;
+    color: #0B3D6E;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .no-photo-meta-tags {
+    display: flex;
+    align-items: center;
+    gap: 1.8mm;
+    margin-top: 1mm;
+  }
+
+  .matricule-badge-outline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 5.6pt;
+    font-weight: 800;
+    color: #0B3D6E;
+    background: #f1f5f9;
+    border: 0.8px solid #cbd5e1;
+    padding: 0.6mm 2mm;
+    border-radius: 1mm;
+    letter-spacing: 0.4px;
+  }
+
+  .level-badge-outline {
+    font-size: 5.2pt;
+    font-weight: 800;
+    color: #0B3D6E;
+    background: rgba(197, 155, 39, 0.1);
+    border: 0.8px solid #C59B27;
+    padding: 0.6mm 2mm;
+    border-radius: 1mm;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 45mm;
+  }
+
+  /* Courses Grid for No-Photo Cards - Clean Matières */
+  .no-photo-courses-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.8mm;
+    margin: 1.2mm 0;
+  }
+
+  .no-photo-course-card {
+    background: #f8fafc;
+    border: 0.7px solid #e2e8f0;
+    border-left: 2.4px solid #0B3D6E;
+    border-radius: 1mm;
+    padding: 0.8mm 1.6mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.4mm;
+  }
+
+  .no-photo-course-title {
+    font-size: 5.8pt;
+    font-weight: 900;
+    color: #0B3D6E;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.1;
+  }
+
+  .no-photo-course-sub {
+    font-size: 4.4pt;
+    font-weight: 600;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1;
+  }
+
+  /* Bottom Row for No-Photo: QR + Center Note + NFC */
+  .no-photo-bottom-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2mm;
+    margin-top: auto;
+  }
+
+  .no-photo-center-note {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.5mm;
+  }
+
+  .security-seal-text {
+    font-size: 4.2pt;
+    font-weight: 800;
+    color: #10b981;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    display: flex;
+    align-items: center;
+    gap: 1mm;
+  }
+
+  .security-seal-text::before {
+    content: '';
+    display: inline-block;
+    width: 1.4mm;
+    height: 1.4mm;
+    background: #10b981;
+    border-radius: 50%;
+  }
+
+  .emergency-phone-txt {
+    font-size: 4pt;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.2px;
+  }
+
+  /* ========================================================
+     CARD FOOTER (Light Micro Contact Bar - 3.4mm)
+     ======================================================== */
+  .card-footer {
+    height: 3.4mm;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 3.2mm;
+    border-top: 0.6px solid #e2e8f0;
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+  }
+
+  .footer-left-txt {
+    font-size: 3.8pt;
+    font-weight: 800;
+    color: #0B3D6E;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+
+  .footer-right-txt {
+    font-size: 3.6pt;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.2px;
+  }
+
+  /* ========================================================
+     PRINT MEDIA STYLES (CR80 PVC vs PLANCHE A4)
+     ======================================================== */
+  @media print {
+    body {
+      background: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    .no-print, .toolbar-container, .toolbar-subrow, .a4-guide-banner, .badge-unit-meta {
+      display: none !important;
+    }
+
+    /* Standard CR80 PVC Mode: 1 card per page */
+    body.mode-cr80 {
+      width: 85.6mm !important;
+    }
+
+    body.mode-cr80 .workspace {
+      padding: 0 !important;
+      margin: 0 !important;
+      gap: 0 !important;
+      display: block !important;
+    }
+
+    body.mode-cr80 .a4-sheet-page {
+      display: contents !important;
+    }
+
+    body.mode-cr80 .badge-card-unit {
+      padding: 0 !important;
+      margin: 0 !important;
+      display: block !important;
+      page-break-after: avoid !important;
+      break-after: avoid !important;
+    }
+
+    body.mode-cr80 .id-card {
+      border: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      margin: 0 !important;
+      width: 85.6mm !important;
+      height: 54mm !important;
+      page-break-after: always !important;
+      break-after: page !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      box-sizing: border-box !important;
+    }
+
+    /* ======================================================
+       Mode Planche A4 Paysage : 9 Badges par feuille
+       Espacement exact de 10mm pour plastification (5mm bordure)
+       ====================================================== */
+    body.mode-a4 {
+      width: 297mm !important;
+      background: none !important;
+    }
+
+    body.mode-a4 .workspace {
+      padding: 0 !important;
+      margin: 0 auto !important;
+      gap: 0 !important;
+      display: block !important;
+      width: 297mm !important;
+    }
+
+    body.mode-a4 .a4-sheet-page {
+      width: 297mm !important;
+      height: 209mm !important;
+      min-height: 209mm !important;
+      max-height: 210mm !important;
+      padding: 13.5mm 10mm !important;
+      display: grid !important;
+      grid-template-columns: repeat(3, 85.6mm) !important;
+      grid-template-rows: repeat(3, 54mm) !important;
+      grid-gap: 10mm 10mm !important;
+      justify-content: center !important;
+      align-content: center !important;
+      box-sizing: border-box !important;
+      background: #ffffff !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      margin: 0 auto !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      page-break-after: always !important;
+      break-after: page !important;
+      overflow: hidden !important;
+    }
+
+    body.mode-a4 .a4-sheet-page:last-child {
+      page-break-after: avoid !important;
+      break-after: avoid !important;
+    }
+
+    body.mode-a4 .badge-card-unit {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 85.6mm !important;
+      height: 54mm !important;
+      box-sizing: border-box !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    body.mode-a4 .id-card {
+      border: 0.6px dashed #94a3b8 !important;
+      box-shadow: none !important;
+      border-radius: 3.18mm !important;
+      width: 85.6mm !important;
+      height: 54mm !important;
+      page-break-after: auto !important;
+      break-after: auto !important;
+      box-sizing: border-box !important;
+    }
+
+    body.mode-a4 .badge-card-unit.empty-slot {
+      visibility: hidden !important;
+    }
+  }
+</style>
+</head>
+<body id="badgeBody" class="{{ 'mode-a4' if initial_mode == 'a4' else 'mode-cr80' }}">
+
+<!-- ========================================================
+     TOP CONTROL TOOLBAR (PRINT STUDIO)
+     ======================================================== -->
+<div class="toolbar-container no-print">
+  <div class="toolbar-content">
+    <div class="toolbar-left">
+      <button class="btn-print" onclick="triggerPrint()" title="Lancer l'impression">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 6 2 18 2 18 9"></polyline>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+          <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        <span>Imprimer les Cartes</span>
+      </button>
+
+      <!-- Print Target Selector: PVC CR80 vs Planche A4 Paysage -->
+      <div class="control-group">
+        <span class="control-lbl">Support :</span>
+        <button type="button" class="toggle-opt {{ 'active' if initial_mode != 'a4' else '' }}" id="btnModeCR80" onclick="setPrintMode('cr80')">
+          🪪 Imprimante Badges (CR80)
+        </button>
+        <button type="button" class="toggle-opt {{ 'active' if initial_mode == 'a4' else '' }}" id="btnModeA4" onclick="setPrintMode('a4')">
+          📄 Planche A4 Paysage (3×3 = 9 badges · 10mm Plastification)
+        </button>
+      </div>
+
+      <!-- Filter Selector: All / With Photo / Without Photo -->
+      <div class="control-group">
+        <span class="control-lbl">Filtre :</span>
+        <button type="button" class="toggle-opt active" id="btnFilterAll" onclick="filterCardTypes('all')">
+          Tous ({{ cards|length }})
+        </button>
+        <button type="button" class="toggle-opt" id="btnFilterPhoto" onclick="filterCardTypes('with')">
+          📸 Avec photo
+        </button>
+        <button type="button" class="toggle-opt" id="btnFilterNoPhoto" onclick="filterCardTypes('without')">
+          ⚡ Sans photo
+        </button>
+      </div>
+
+      <!-- Quick Link to Verso A4 Sheet -->
+      <a href="{{ url_for('badges_print_verso') }}" target="_blank" class="toggle-opt" style="text-decoration:none; background:#1c2d44; color:#fde68a; border:1px solid #c59b27; border-radius:8px; font-weight:800; display:inline-flex; align-items:center; gap:6px; padding:6px 12px;" title="Ouvrir la planche A4 Verso standard (Règlement 20 DH)">
+        <span>📜</span>
+        <span>Planche Verso A4 (20 DH)</span>
+      </a>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div class="badge-counter-pill" id="counterPill">
+        {% if initial_mode == 'a4' %}
+          {{ cards|length }} Carte(s) · Planche A4 Paysage (3×3 = 9 badges · Espacement 10mm)
+        {% else %}
+          {{ cards|length }} Carte(s) Paysage · 1 Face (CR80 PVC)
+        {% endif %}
+      </div>
+      <a class="btn-back" href="{{ url_for('badges') }}">
+        ← Retour aux badges
+      </a>
+    </div>
+  </div>
+
+  <!-- A4 ALIGNMENT & CALIBRATION TOOLBAR (FOR DUPLEX A4 MATCHING) -->
+  <div class="toolbar-subrow" id="a4CalibBar" style="{{ 'display: flex;' if initial_mode == 'a4' else 'display: none;' }}">
+    
+    <div style="display:flex; align-items:center; gap:6px; color:#38bdf8; font-size:11.5px; font-weight:800; margin-right:4px;">
+      <span>🎯</span>
+      <span>Ajustement Recto / Verso :</span>
+    </div>
+
+    <!-- Scale Group (Taille du badge / Zoom) -->
+    <div class="calib-group" title="Ajuster la taille / échelle du Recto pour correspondre à vos Versos déjà imprimés">
+      <span class="calib-label">🔍 Échelle :</span>
+      <button type="button" class="btn-calib-step" onclick="adjustScale(-1)" title="Réduire la taille de 1%">-1%</button>
+      <button type="button" class="btn-calib-step" onclick="adjustScale(-0.5)" title="Réduire la taille de 0.5%">-0.5%</button>
+      <span class="calib-val-badge" id="dispScale" style="min-width:62px; color:#f59e0b;">100%</span>
+      <button type="button" class="btn-calib-step" onclick="adjustScale(+0.5)" title="Agrandir la taille de 0.5%">+0.5%</button>
+      <button type="button" class="btn-calib-step" onclick="adjustScale(+1)" title="Agrandir la taille de 1%">+1%</button>
+    </div>
+
+    <!-- Quick Presets for Scale -->
+    <div class="calib-group" style="padding:2px 4px; gap:4px;" title="Préréglages d'échelle rapides">
+      <span class="calib-label" style="font-size:10px;">Préréglages :</span>
+      <button type="button" class="btn-calib-step" id="preset100" onclick="setScale(100)" title="Taille 100% standard (85.6 × 54 mm)">100%</button>
+      <button type="button" class="btn-calib-step" id="preset96" onclick="setScale(96)" title="Ajuster à la zone d'impression (96%)">96%</button>
+      <button type="button" class="btn-calib-step" id="preset93" onclick="setScale(93.2)" title="Marges Chrome par défaut (93.2%)">93.2%</button>
+      <button type="button" class="btn-calib-step" id="preset90" onclick="setScale(90)" title="Réduction 10% (90%)">90%</button>
+    </div>
+
+    <!-- Calibration Group: X Axis (Left / Right) -->
+    <div class="calib-group" title="Ajuster la position horizontale (Gauche / Droite)">
+      <span class="calib-label">↔ X :</span>
+      <button type="button" class="btn-calib-step" onclick="adjustOffset('x', -1)" title="Décaler vers la gauche de 1mm">-1mm</button>
+      <button type="button" class="btn-calib-step" onclick="adjustOffset('x', -0.5)" title="Décaler vers la gauche de 0.5mm">-0.5</button>
+      <span class="calib-val-badge" id="dispOffsetX">X: +0.0 mm</span>
+      <button type="button" class="btn-calib-step" onclick="adjustOffset('x', +0.5)" title="Décaler vers la droite de 0.5mm">+0.5</button>
+      <button type="button" class="btn-calib-step" onclick="adjustOffset('x', +1)" title="Décaler vers la droite de 1mm">+1mm</button>
+    </div>
+
+    <!-- Calibration Group: Y Axis (Top / Bottom) -->
+    <div class="calib-group" title="Ajuster la position verticale (Haut / Bas)">
+      <span class="calib-label">↕ Y :</span>
+      <button type="button" class="btn-calib-step" onclick="adjustOffset('y', -1)" title="Décaler vers le haut de 1mm">-1mm</button>
+      <button type="button" class="btn-calib-step" onclick="adjustOffset('y', -0.5)" title="Décaler vers le haut de 0.5mm">-0.5</button>
+      <span class="calib-val-badge" id="dispOffsetY">Y: +0.0 mm</span>
+      <button type="button" class="btn-calib-step" onclick="adjustOffset('y', +0.5)" title="Décaler vers le bas de 0.5mm">+0.5</button>
+      <button type="button" class="btn-calib-step" onclick="adjustOffset('y', +1)" title="Décaler vers le bas de 1mm">+1mm</button>
+    </div>
+
+    <button type="button" class="btn-calib-reset" onclick="resetOffsets()" title="Réinitialiser les décalages à zéro (0.0, 0.0)">
+      ↺ Réinit (0,0)
+    </button>
+
+    <!-- Invert Columns Toggle (Duplex Left-to-Right Flip) -->
+    <button type="button" class="toggle-opt" id="btnInvertCols" onclick="toggleInvertCols()" title="Inverser les colonnes (1 ↔ 3) si la feuille Verso a été retournée horizontalement">
+      🔄 Inverser Colonnes (1 ↔ 3)
+    </button>
+
+    <!-- Invert Rows Toggle (Duplex Top-to-Bottom Flip) -->
+    <button type="button" class="toggle-opt" id="btnInvertRows" onclick="toggleInvertRows()" title="Inverser les lignes (Haut ↔ Bas) si la feuille Verso a été retournée verticalement">
+      ↕ Inverser Lignes (Haut ↔ Bas)
+    </button>
+
+    <!-- Cut Lines Toggle -->
+    <button type="button" class="toggle-opt active" id="btnToggleBorders" onclick="toggleCutBorders()" title="Afficher ou masquer les lignes de découpe en pointillés">
+      ✂️ Pointillés Découpe
+    </button>
+
+    <!-- Guide Toggle Button -->
+    <button type="button" class="toggle-opt" style="background:#0f2b48; color:#38bdf8; border:1px solid #0284c7; margin-left:auto;" onclick="toggleAlignmentGuide()" title="Voir les conseils d'alignement avec les Versos imprimés">
+      💡 Guide Alignement
+    </button>
+  </div>
+</div>
+
+<!-- ========================================================
+     A4 GUIDANCE BANNER (TIPS FOR DUPLEX PRINTING)
+     ======================================================== -->
+<div class="a4-guide-banner no-print" id="a4GuideBanner" style="{{ 'display: block;' if initial_mode == 'a4' else 'display: none;' }}">
+  <div class="a4-guide-content">
+    <div class="a4-guide-header">
+      <span style="font-size:18px;">🎯</span>
+      <strong>Guide d'Alignement Recto avec vos 10 planches Verso déjà imprimées :</strong>
+      <button type="button" class="a4-guide-close" onclick="document.getElementById('a4GuideBanner').style.display='none'" title="Fermer ce bandeau">✕</button>
+    </div>
+    <div class="a4-guide-body">
+      <div class="guide-item" style="border:1px solid #f59e0b; background:rgba(245, 158, 11, 0.12);">
+        <span class="guide-num" style="background:#f59e0b;">!</span>
+        <div>
+          <strong style="color:#fde68a;">Si le Verso imprimé est plus petit que le Recto :</strong><br>
+          Votre Verso a été imprimé avec des marges Chrome (réduction automatique). Cliquez sur le bouton <strong style="color:#fde68a;">[ 93.2% ]</strong> ou <strong style="color:#fde68a;">[ 96% ]</strong> ci-dessus pour rétrécir instantanément le Recto à la taille exacte de vos cartes Verso !
+        </div>
+      </div>
+      <div class="guide-item">
+        <span class="guide-num">1</span>
+        <div>
+          <strong>Sens d'insertion du papier Verso :</strong><br>
+          Remettez les feuilles Verso dans le bac en les <strong>retournant sur le bord court</strong> (comme une page de livre). <em>Ne les tournez pas de haut en bas</em>.
+        </div>
+      </div>
+      <div class="guide-item">
+        <span class="guide-num">2</span>
+        <div>
+          <strong>Paramètres Chrome indispensables (Ctrl+P) :</strong><br>
+          • Disposition : <strong>Paysage (Landscape)</strong><br>
+          • Marges : <strong>AUCUNE (None)</strong> ⚠️ <em>(pour respecter l'échelle choisie)</em><br>
+          • Échelle : <strong>100%</strong> dans Chrome.
+        </div>
+      </div>
+      <div class="guide-item">
+        <span class="guide-num">3</span>
+        <div>
+          <strong>Ajustement mécanique (±1mm ou ±2mm) :</strong><br>
+          Si votre imprimante décale légèrement : utilisez les boutons <strong>↔ X</strong> et <strong>↕ Y</strong> pour recaler au millimètre.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================
+     STUDIO CARDS WORKSPACE (GROUPED BY 9 FOR A4 SHEETS)
+     ======================================================== -->
+<div class="workspace" id="cardsWorkspace">
+
+{% for batch in cards|batch(9) %}
+<div class="a4-sheet-page">
+
+  {% for c in batch %}
+  {% set stu = c.student %}
+  {% set code_val = c.code_val %}
+  {% set has_photo = stu and stu.photo %}
+
+  <div class="badge-card-unit" data-has-photo="{{ 'with' if has_photo else 'without' }}">
+    
+    <!-- On-Screen Meta Label (hidden in A4 mode) -->
+    <div class="badge-unit-meta no-print">
+      <span>#{{ loop.index }} · {{ stu.full_name if stu else 'Élève' }}</span>
+      {% if has_photo %}
+        <span class="with-photo">✓ Avec photo</span>
+      {% else %}
+        <span class="without-photo">⚡ Sans photo</span>
+      {% endif %}
+    </div>
+
+    <!-- EXACT PHYSICAL CR80 CARD (85.6mm x 54mm) -->
+    <div class="id-card">
+      
+      <!-- Tricolor Brand Stripe (Navy | Gold | Crimson) -->
+      <div class="top-brand-accent"></div>
+
+      <!-- Minimal Modern Header -->
+      <div class="card-header">
+        <div class="header-brand-wrap">
+          <div class="inst-logo-box">
+            <img src="{{ url_for('static', filename='uploads/logo-ilas.png') }}" alt="ILAS" onerror="this.src='{{ url_for('static', filename='uploads/logo-ilas-bw.png') }}';">
+          </div>
+          <div class="header-titles">
+            <div class="inst-name-main">{{ settings.inst_name|default('INSTITUT ILAS') }}</div>
+            <div class="inst-sub-activity">Langues & Soutien Scolaire</div>
+          </div>
+        </div>
+
+        <div class="header-card-type">
+          <div class="card-type-chip">
+            <span class="card-type-title">CARTE ÉTUDIANT</span>
+            <span class="card-year-badge">{{ settings.school_year|default('2025/2026') }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================
+           ADAPTIVE BODY
+           ======================================================== -->
+      <div class="card-body">
+        
+        {% if has_photo %}
+        <!-- ====================================================
+             VARIANT A: WITH IDENTITY PHOTO
+             ==================================================== -->
+        <div class="layout-with-photo">
+          
+          <!-- Left Photo Column -->
+          <div class="photo-col">
+            <div class="photo-frame">
+              <img src="{{ url_for('static', filename='uploads/' ~ stu.photo) }}" alt="{{ stu.full_name }}" loading="lazy">
+            </div>
+            <div class="matricule-chip-pill">
+              <div class="matricule-num">{{ code_val }}</div>
+            </div>
+          </div>
+
+          <!-- Right Info & Scan Zones -->
+          <div class="info-col">
+            <div>
+              <div class="student-name-text" title="{{ stu.full_name }}">{{ stu.full_name }}</div>
+              
+              <div class="meta-pills-row">
+                <span class="level-pill">{{ stu.school_level or c.cursus or 'Formation Continue' }}</span>
+                <span class="status-pill-ok">● Actif</span>
+              </div>
+
+              <!-- Primary Active Matière (Clean Subject Name) -->
+              {% if c.badge_courses %}
+                {% set bc = c.badge_courses[0] %}
+                <div class="course-compact-row">
+                  <span class="course-name-compact">📚 {{ bc.matiere or bc.name }}</span>
+                  <span class="course-schedule-compact">{{ bc.schedule }}</span>
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Bottom Scan Zones Bar (QR Code + NFC Tag Target) -->
+            <div class="scan-zones-bar">
+              
+              <!-- QR Code (app.institutilas.com/etudiant/<id>) -->
+              <div class="qr-scan-target" title="Scanner pour voir la fiche étudiant en ligne">
+                <div class="qr-img-box">
+                  {% if c.qr %}
+                    <img src="{{ c.qr }}" alt="QR Code {{ code_val }}">
+                  {% endif %}
+                </div>
+                <div class="qr-label-stack">
+                  <span class="qr-txt-top">Vérification</span>
+                  <span class="qr-txt-sub">Scanner QR</span>
+                </div>
+              </div>
+
+              <!-- Designated NFC Tag Target Zone (Physical Sticker Target) -->
+              <div class="nfc-target-zone" title="Zone réservée au collage du sticker NFC">
+                <div class="nfc-icon-svg">
+                  <!-- Modern Contactless Waves SVG Icon -->
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#0B3D6E" stroke-width="2.3" stroke-linecap="round">
+                    <path d="M8.5 16.5a6 6 0 0 1 0-9"/>
+                    <path d="M12 19a9.5 9.5 0 0 1 0-14"/>
+                    <path d="M15.5 21.5a13 13 0 0 1 0-19"/>
+                    <circle cx="5" cy="12" r="1.5" fill="#0B3D6E"/>
+                  </svg>
+                </div>
+                <div class="nfc-zone-tag">POINTAGE</div>
+                <div class="nfc-zone-sub">NFC TAG</div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {% else %}
+        <!-- ====================================================
+             VARIANT B: WITHOUT PHOTO (FULL-WIDTH MODERN LAYOUT)
+             ZERO AWKWARD BLANK SPACES - RICH & EXECUTIVE
+             ==================================================== -->
+        <div class="layout-no-photo">
+          
+          <!-- Top Row: Student Name + Code & Level Pills -->
+          <div class="no-photo-top-row">
+            <div class="no-photo-identity">
+              <div class="no-photo-name" title="{{ stu.full_name }}">{{ stu.full_name }}</div>
+              <div class="no-photo-meta-tags">
+                <span class="matricule-badge-outline">{{ code_val }}</span>
+                <span class="level-badge-outline">{{ stu.school_level or c.cursus or 'Formation Générale' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Middle Row: Enrolled Courses Grid - Clean Matières -->
+          <div class="no-photo-courses-grid">
+            {% if c.badge_courses %}
+              {% for bc in c.badge_courses[:2] %}
+                <div class="no-photo-course-card">
+                  <span class="no-photo-course-title">📚 {{ bc.matiere or bc.name }}</span>
+                  <span class="no-photo-course-sub">{{ bc.schedule }}</span>
+                </div>
+              {% endfor %}
+              {% if c.badge_courses|length == 1 %}
+                <div class="no-photo-course-card" style="border-left-color: #10b981;">
+                  <span class="no-photo-course-title">Soutien & Suivi Pédagogique</span>
+                  <span class="no-photo-course-sub">Année Scolaire {{ settings.school_year|default('2025/2026') }}</span>
+                </div>
+              {% endif %}
+            {% else %}
+              <div class="no-photo-course-card">
+                <span class="no-photo-course-title">Formation Continue</span>
+                <span class="no-photo-course-sub">Institut ILAS · Casablanca</span>
+              </div>
+              <div class="no-photo-course-card" style="border-left-color: #10b981;">
+                <span class="no-photo-course-title">Suivi & Assiduité</span>
+                <span class="no-photo-course-sub">Badge Officiel Étudiant</span>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Bottom Row: QR Code + Center Security Note + NFC Target Zone -->
+          <div class="no-photo-bottom-row">
+            
+            <!-- QR Code Target -->
+            <div class="qr-scan-target" title="Scanner pour vérifier la fiche étudiant">
+              <div class="qr-img-box">
+                {% if c.qr %}
+                  <img src="{{ c.qr }}" alt="QR Code {{ code_val }}">
+                {% endif %}
+              </div>
+              <div class="qr-label-stack">
+                <span class="qr-txt-top">Vérification</span>
+                <span class="qr-txt-sub">Scanner QR</span>
+              </div>
+            </div>
+
+            <!-- Center Authentication Note -->
+            <div class="no-photo-center-note">
+              <span class="security-seal-text">Badge Authentifié</span>
+              <span class="emergency-phone-txt">Tél: {{ stu.phone or stu.parent_phone or settings.inst_phone or '+212 5 22 89 40 12' }}</span>
+            </div>
+
+            <!-- Dedicated NFC Tag Target Zone -->
+            <div class="nfc-target-zone" title="Zone réservée au collage du sticker NFC">
+              <div class="nfc-icon-svg">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#0B3D6E" stroke-width="2.3" stroke-linecap="round">
+                  <path d="M8.5 16.5a6 6 0 0 1 0-9"/>
+                  <path d="M12 19a9.5 9.5 0 0 1 0-14"/>
+                  <path d="M15.5 21.5a13 13 0 0 1 0-19"/>
+                  <circle cx="5" cy="12" r="1.5" fill="#0B3D6E"/>
+                </svg>
+              </div>
+              <div class="nfc-zone-tag">POINTAGE</div>
+              <div class="nfc-zone-sub">NFC TAG</div>
+            </div>
+
+          </div>
+
+        </div>
+        {% endif %}
+
+      </div>
+
+      <!-- Minimal Micro Contact Footer (3.4mm) -->
+      <div class="card-footer">
+        <div class="footer-left-txt">● {{ settings.inst_name|default('INSTITUT ILAS') }} · CASABLANCA</div>
+        <div class="footer-right-txt">Tél: {{ settings.inst_phone|default('+212 5 22 89 40 12') }} · www.institutilas.com</div>
+      </div>
+
+    </div>
+
+  </div>
+  {% endfor %}
+
+  {# Fill remaining slots to guarantee a complete 3x3 (9 cards) sheet geometry #}
+  {% if batch|length < 9 %}
+    {% for dummy_i in range(9 - batch|length) %}
+    <div class="badge-card-unit empty-slot" data-has-photo="without">
+      <div class="id-card-empty-slot">
+        <span class="no-print">Emplacement libre #{{ batch|length + loop.index }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  {% endif %}
+
+</div>
+{% endfor %}
+
+</div>
+
+<!-- SCRIPT DE CONTRÔLE D'IMPRESSION, CALIBRAGE DUPLEX ET FILTRES -->
+<script>
+// --- Calibration & Duplex Alignment State ---
+var currentScale = parseFloat(localStorage.getItem('recto_calib_scale') || '100');
+var currentOffsetX = parseFloat(localStorage.getItem('recto_calib_x') || '0');
+var currentOffsetY = parseFloat(localStorage.getItem('recto_calib_y') || '0');
+var isInvertCols = localStorage.getItem('recto_invert_cols') === 'true';
+var isInvertRows = localStorage.getItem('recto_invert_rows') === 'true';
+var isCutBorders = localStorage.getItem('recto_cut_borders') !== 'false';
+
+function adjustScale(delta) {
+  currentScale = Math.round((currentScale + delta) * 10) / 10;
+  if (currentScale < 70) currentScale = 70;
+  if (currentScale > 115) currentScale = 115;
+  updateCalibrationCSS();
+}
+
+function setScale(val) {
+  currentScale = parseFloat(val);
+  updateCalibrationCSS();
+}
+
+function adjustOffset(axis, delta) {
+  if (axis === 'x') {
+    currentOffsetX = Math.round((currentOffsetX + delta) * 10) / 10;
+    if (currentOffsetX < -15) currentOffsetX = -15;
+    if (currentOffsetX > 15) currentOffsetX = 15;
+  } else if (axis === 'y') {
+    currentOffsetY = Math.round((currentOffsetY + delta) * 10) / 10;
+    if (currentOffsetY < -15) currentOffsetY = -15;
+    if (currentOffsetY > 15) currentOffsetY = 15;
+  }
+  updateCalibrationCSS();
+}
+
+function resetOffsets() {
+  currentScale = 100.0;
+  currentOffsetX = 0.0;
+  currentOffsetY = 0.0;
+  isInvertCols = false;
+  if (isInvertRows) {
+    isInvertRows = false;
+    applyRowInversion(false);
+  }
+  isCutBorders = true;
+  updateCalibrationCSS();
+}
+
+function toggleInvertCols() {
+  isInvertCols = !isInvertCols;
+  updateCalibrationCSS();
+}
+
+function toggleInvertRows() {
+  isInvertRows = !isInvertRows;
+  applyRowInversion(isInvertRows);
+  updateCalibrationCSS();
+}
+
+function applyRowInversion(inverted) {
+  var sheets = document.querySelectorAll('.a4-sheet-page');
+  sheets.forEach(function(sheet) {
+    var units = Array.from(sheet.querySelectorAll('.badge-card-unit'));
+    if (units.length !== 9) return;
+
+    var isCurrentlyInverted = sheet.getAttribute('data-rows-inverted') === 'true';
+    if (isCurrentlyInverted !== inverted) {
+      // Invert rows: swap row 1 (0,1,2) with row 3 (6,7,8)
+      var newOrder = units.slice(6, 9).concat(units.slice(3, 6), units.slice(0, 3));
+      sheet.innerHTML = '';
+      newOrder.forEach(function(el) {
+        sheet.appendChild(el);
+      });
+      sheet.setAttribute('data-rows-inverted', inverted ? 'true' : 'false');
+    }
+  });
+}
+
+function toggleCutBorders() {
+  isCutBorders = !isCutBorders;
+  updateCalibrationCSS();
+}
+
+function toggleAlignmentGuide() {
+  var b = document.getElementById('a4GuideBanner');
+  if (b) {
+    b.style.display = (b.style.display === 'none') ? 'block' : 'none';
+  }
+}
+
+function updateCalibrationCSS() {
+  var style = document.getElementById('dynamicCalibStyle');
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'dynamicCalibStyle';
+    document.head.appendChild(style);
+  }
+
+  var topPad = (13.5 + currentOffsetY).toFixed(2);
+  var bottomPad = (13.5 - currentOffsetY).toFixed(2);
+  var leftPad = (10.0 + currentOffsetX).toFixed(2);
+  var rightPad = (10.0 - currentOffsetX).toFixed(2);
+  var scaleFactor = (currentScale / 100.0).toFixed(4);
+
+  var borderStyle = isCutBorders ? '0.6px dashed #94a3b8 !important;' : 'none !important;';
+  var rtlRule = isInvertCols ? 'direction: rtl !important;' : '';
+  var ltrChildRule = isInvertCols ? 'direction: ltr !important;' : '';
+
+  style.textContent = `
+    body.mode-a4 .a4-sheet-page {
+      padding-top: ${topPad}mm !important;
+      padding-bottom: ${bottomPad}mm !important;
+      padding-left: ${leftPad}mm !important;
+      padding-right: ${rightPad}mm !important;
+      transform: scale(${scaleFactor}) !important;
+      transform-origin: center center !important;
+      ${rtlRule}
+    }
+    body.mode-a4 .badge-card-unit {
+      ${ltrChildRule}
+    }
+    body.mode-a4 .id-card {
+      border: ${borderStyle}
+    }
+    @media print {
+      body.mode-a4 .a4-sheet-page {
+        padding-top: ${topPad}mm !important;
+        padding-bottom: ${bottomPad}mm !important;
+        padding-left: ${leftPad}mm !important;
+        padding-right: ${rightPad}mm !important;
+        transform: scale(${scaleFactor}) !important;
+        transform-origin: center center !important;
+        ${rtlRule}
+      }
+      body.mode-a4 .badge-card-unit {
+        ${ltrChildRule}
+      }
+      body.mode-a4 .id-card {
+        border: ${borderStyle}
+      }
+      body.mode-a4 .badge-card-unit.empty-slot {
+        visibility: hidden !important;
+      }
+    }
+  `;
+
+  var dispScale = document.getElementById('dispScale');
+  if (dispScale) dispScale.textContent = currentScale.toFixed(1) + '%';
+
+  var dispX = document.getElementById('dispOffsetX');
+  if (dispX) dispX.textContent = 'X: ' + (currentOffsetX >= 0 ? '+' : '') + currentOffsetX.toFixed(1) + ' mm';
+
+  var dispY = document.getElementById('dispOffsetY');
+  if (dispY) dispY.textContent = 'Y: ' + (currentOffsetY >= 0 ? '+' : '') + currentOffsetY.toFixed(1) + ' mm';
+
+  // Highlight active preset button if applicable
+  ['100', '96', '93.2', '90'].forEach(function(pVal) {
+    var pBtn = document.getElementById('preset' + pVal.replace('.', ''));
+    if (pBtn) {
+      if (Math.abs(currentScale - parseFloat(pVal)) < 0.25) {
+        pBtn.style.background = '#0B3D6E';
+        pBtn.style.color = '#fff';
+        pBtn.style.borderColor = '#38bdf8';
+        pBtn.style.boxShadow = '0 0 8px rgba(56, 189, 248, 0.5)';
+      } else {
+        pBtn.style.background = '';
+        pBtn.style.color = '';
+        pBtn.style.borderColor = '';
+        pBtn.style.boxShadow = '';
+      }
+    }
+  });
+
+  var btnCols = document.getElementById('btnInvertCols');
+  if (btnCols) {
+    if (isInvertCols) {
+      btnCols.classList.add('active');
+      btnCols.style.background = '#0B3D6E';
+      btnCols.style.color = '#fff';
+    } else {
+      btnCols.classList.remove('active');
+      btnCols.style.background = '';
+      btnCols.style.color = '';
+    }
+  }
+
+  var btnRows = document.getElementById('btnInvertRows');
+  if (btnRows) {
+    if (isInvertRows) {
+      btnRows.classList.add('active');
+      btnRows.style.background = '#0B3D6E';
+      btnRows.style.color = '#fff';
+    } else {
+      btnRows.classList.remove('active');
+      btnRows.style.background = '';
+      btnRows.style.color = '';
+    }
+  }
+
+  var btnBorders = document.getElementById('btnToggleBorders');
+  if (btnBorders) {
+    if (isCutBorders) {
+      btnBorders.classList.add('active');
+      btnBorders.textContent = '✂️ Pointillés : Actifs';
+      btnBorders.style.background = '#0B3D6E';
+      btnBorders.style.color = '#fff';
+    } else {
+      btnBorders.classList.remove('active');
+      btnBorders.textContent = '✂️ Pointillés : Masqués';
+      btnBorders.style.background = '';
+      btnBorders.style.color = '';
+    }
+  }
+
+  try {
+    localStorage.setItem('recto_calib_scale', currentScale);
+    localStorage.setItem('recto_calib_x', currentOffsetX);
+    localStorage.setItem('recto_calib_y', currentOffsetY);
+    localStorage.setItem('recto_invert_cols', isInvertCols ? 'true' : 'false');
+    localStorage.setItem('recto_invert_rows', isInvertRows ? 'true' : 'false');
+    localStorage.setItem('recto_cut_borders', isCutBorders ? 'true' : 'false');
+  } catch (e) {}
+}
+
+function applyDynamicPageSize(mode) {
+  var dynStyle = document.getElementById('dynamicPageStyle');
+  if (!dynStyle) return;
+  if (mode === 'a4') {
+    dynStyle.textContent = '@page { size: A4 landscape; margin: 0; }';
+  } else {
+    dynStyle.textContent = '@page { size: 85.6mm 54mm; margin: 0; }';
+  }
+}
+
+function setPrintMode(mode) {
+  var body = document.getElementById('badgeBody');
+  var btnCR80 = document.getElementById('btnModeCR80');
+  var btnA4 = document.getElementById('btnModeA4');
+  var counter = document.getElementById('counterPill');
+  var calibBar = document.getElementById('a4CalibBar');
+  var guideBanner = document.getElementById('a4GuideBanner');
+
+  if (mode === 'a4') {
+    body.classList.remove('mode-cr80');
+    body.classList.add('mode-a4');
+    btnA4.classList.add('active');
+    btnCR80.classList.remove('active');
+    applyDynamicPageSize('a4');
+    if (calibBar) calibBar.style.display = 'flex';
+    if (guideBanner) guideBanner.style.display = 'block';
+    updateCalibrationCSS();
+    if (isInvertRows) {
+      applyRowInversion(true);
+    }
+    counter.textContent = 'Planche A4 Paysage (3 colonnes × 3 lignes = 9 badges) · Espacement 10mm Plastification';
+  } else {
+    body.classList.remove('mode-a4');
+    body.classList.add('mode-cr80');
+    btnCR80.classList.add('active');
+    btnA4.classList.remove('active');
+    applyDynamicPageSize('cr80');
+    if (calibBar) calibBar.style.display = 'none';
+    if (guideBanner) guideBanner.style.display = 'none';
+    var style = document.getElementById('dynamicCalibStyle');
+    if (style) style.textContent = '';
+    counter.textContent = 'Format Badges CR80 (PVC) · 1 Face Paysage';
+  }
+}
+
+function triggerPrint() {
+  var body = document.getElementById('badgeBody');
+  var isA4 = body.classList.contains('mode-a4');
+  applyDynamicPageSize(isA4 ? 'a4' : 'cr80');
+  if (isA4) {
+    updateCalibrationCSS();
+  }
+  window.print();
+}
+
+window.addEventListener('beforeprint', function() {
+  var body = document.getElementById('badgeBody');
+  var isA4 = body.classList.contains('mode-a4');
+  applyDynamicPageSize(isA4 ? 'a4' : 'cr80');
+  if (isA4) {
+    updateCalibrationCSS();
+  }
+});
+
+// Initialize calibration on page load
+document.addEventListener('DOMContentLoaded', function() {
+  var body = document.getElementById('badgeBody');
+  var isA4 = body && body.classList.contains('mode-a4');
+  if (isA4) {
+    updateCalibrationCSS();
+    if (isInvertRows) {
+      applyRowInversion(true);
+    }
+  }
+});
+
+function filterCardTypes(type) {
+  var cards = document.querySelectorAll('.badge-card-unit:not(.empty-slot)');
+  var btnAll = document.getElementById('btnFilterAll');
+  var btnPhoto = document.getElementById('btnFilterPhoto');
+  var btnNoPhoto = document.getElementById('btnFilterNoPhoto');
+  var counter = document.getElementById('counterPill');
+
+  btnAll.classList.remove('active');
+  btnPhoto.classList.remove('active');
+  btnNoPhoto.classList.remove('active');
+
+  var visibleCount = 0;
+
+  cards.forEach(function(card) {
+    var cardHasPhoto = card.getAttribute('data-has-photo');
+    if (type === 'all') {
+      card.style.display = 'flex';
+      visibleCount++;
+    } else if (type === cardHasPhoto) {
+      card.style.display = 'flex';
+      visibleCount++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  if (type === 'all') btnAll.classList.add('active');
+  else if (type === 'with') btnPhoto.classList.add('active');
+  else if (type === 'without') btnNoPhoto.classList.add('active');
+
+  counter.textContent = visibleCount + ' Carte(s) Sélectionnée(s)';
+}
+</script>
+
+</body>
+</html>

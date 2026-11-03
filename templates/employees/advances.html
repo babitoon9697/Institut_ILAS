@@ -1,0 +1,665 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- EMPLOYEE ADVANCES STYLES -->
+<style>
+  .advances-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  /* KPI Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+  }
+  .kpi-rose::before { background: #dc2626; }
+  .kpi-purple::before { background: #7c3aed; }
+  .kpi-blue::before { background: #0B3D6E; }
+  .kpi-emerald::before { background: #059669; }
+
+  .kpi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .kpi-icon {
+    font-size: 18px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .kpi-value {
+    font-size: 24px;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1.1;
+    margin-bottom: 6px;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+  .kpi-sub {
+    font-size: 11.5px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Filters Toolbar */
+  .filter-panel {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+  }
+  .search-box {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border-radius: 10px;
+    border: 1.5px solid #cbd5e1;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #f8fafc;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    height: 38px;
+  }
+  .search-box input:focus {
+    background: #ffffff;
+    border-color: #0B3D6E;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(11, 61, 110, 0.12);
+  }
+  .search-box .icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #94a3b8;
+    pointer-events: none;
+  }
+  body.rtl .search-box input {
+    padding: 8px 36px 8px 12px;
+  }
+  body.rtl .search-box .icon {
+    left: auto;
+    right: 11px;
+  }
+
+  /* Table Card & Modern Table */
+  .table-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+    overflow: visible;
+  }
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 16px;
+  }
+  .modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+  }
+  body.rtl .modern-table {
+    text-align: right;
+  }
+  .modern-table th {
+    background: #f8fafc;
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1.5px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  .modern-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    transition: background-color 0.15s ease;
+  }
+  .modern-table tr:hover td {
+    background-color: #f8fbff;
+  }
+  .modern-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Employee Avatar */
+  .emp-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    color: #1e40af;
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #bfdbfe;
+  }
+</style>
+
+<div class="advances-container">
+
+  <!-- TOP HEADER & CONTROLS -->
+  <div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+    <div>
+      <div class="muted" style="font-size:12px">
+        <a href="{{ url_for('employees') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ 'طاقم المعهد' if lang=='ar' else 'Personnel & Employés' }}</a>
+        <span style="margin:0 5px; color:#cbd5e1;">•</span>
+        <a href="{{ url_for('employees_payroll', month=req_month) }}" style="text-decoration:none; color:#7c3aed; font-weight:700;">💼 {{ 'كشف الأجور الشهري' if lang=='ar' else 'Paie du Personnel' }}</a>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+        <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:900;">
+          💸 {{ 'سجل التسبيقات على أجور الموظفين والإدارة' if lang=='ar' else 'Avances sur Salaires du Personnel & Administration' }}
+        </h2>
+        <span class="chip" style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;">
+          STAFF ADVANCES
+        </span>
+      </div>
+      <p class="muted" style="margin:3px 0 0 0; font-size:12.5px;">
+        {{ 'إدارة وتتبع التسبيقات الممنوحة للمستخدمين والإداريين مع الخصم التلقائي من الراتب الشهري والربط المالي بالصندوق.' if lang=='ar' else 'Gestion et traçabilité des acomptes accordés au personnel et aux cadres administratifs avec déduction automatique sur le salaire du mois.' }}
+      </p>
+    </div>
+
+    <div class="flex wrap" style="gap:8px;">
+      <button type="button" class="btn btn-primary" onclick="openAdvanceModal()" style="background:#059669; border-color:#059669; font-weight:800; font-size:12.5px; padding:7px 15px; border-radius:9px; box-shadow:0 3px 10px rgba(5,150,105,0.25); display:inline-flex; align-items:center; gap:6px;">
+        💸 <span>{{ '+ صرف تسبيق جديد' if lang=='ar' else '+ Verser une Avance' }}</span>
+      </button>
+      <a class="btn btn-outline" href="{{ url_for('employees_payroll', month=req_month) }}" style="font-weight:700; font-size:12.5px; padding:7px 13px; border-radius:9px; border-color:#cbd5e1; color:#334155; display:inline-flex; align-items:center; gap:6px;">
+        💼 <span>{{ 'جدول الأجور الشهري' if lang=='ar' else 'Tableau de Paie Staff' }}</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- COMPACT FILTER BAR -->
+  <div class="filter-panel">
+    <form method="GET" action="{{ url_for('employee_advances') }}">
+      <div style="display:flex; align-items:flex-end; flex-wrap:wrap; gap:14px;">
+        
+        <!-- Month Filter -->
+        <div style="min-width:170px;">
+          <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">
+            📅 {{ 'شهر الاستحقاق' if lang=='ar' else 'Mois d\'imputation' }}
+          </label>
+          <input type="month" name="month" value="{{ req_month }}" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:7px 12px; font-weight:700; color:#0B3D6E; height:38px; width:100%; box-sizing:border-box;">
+        </div>
+
+        <!-- Employee Filter -->
+        <div style="min-width:240px; flex:1;">
+          <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">
+            👤 {{ 'الموظف / الإداري' if lang=='ar' else 'Employé / Cadre Administratif' }}
+          </label>
+          <select name="employee_id" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:7px 12px; font-weight:700; color:#0B3D6E; height:38px; width:100%; box-sizing:border-box;">
+            <option value="">{{ 'جميع الموظفين والإدارة' if lang=='ar' else 'Tous les employés & administration' }}</option>
+            {% for e in all_employees %}
+            <option value="{{ e.id }}" {% if selected_employee_id == e.id %}selected{% endif %}>
+              {{ e.full_name }} ({{ e.job_title }}) [{{ e.code }}]
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Text Search Box -->
+        <div class="search-box">
+          <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;">
+            🔍 {{ 'بحث سريع' if lang=='ar' else 'Recherche' }}
+          </label>
+          <div style="position:relative;">
+            <span class="icon">🔍</span>
+            <input type="text" name="q" value="{{ search_q }}" placeholder="{{ 'رقم الوصل، الاسم، ملاحظات...' if lang=='ar' else 'N° reçu, nom, motif, notes...' }}">
+          </div>
+        </div>
+
+        <!-- Submit & Reset -->
+        <div style="display:flex; gap:8px;">
+          <button type="submit" class="btn btn-primary" style="background:#0B3D6E; border-color:#0B3D6E; font-weight:800; border-radius:10px; padding:8px 18px; font-size:13px; height:38px; display:inline-flex; align-items:center; gap:6px;">
+            🔍 <span>{{ 'تصفية' if lang=='ar' else 'Filtrer' }}</span>
+          </button>
+          {% if req_month or selected_employee_id or search_q %}
+          <a href="{{ url_for('employee_advances') }}" class="btn btn-light" style="font-weight:700; border-radius:10px; padding:8px 12px; height:38px; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; border:1px solid #cbd5e1;" title="{{ 'إعادة ضبط' if lang=='ar' else 'Réinitialiser' }}">
+            🔄
+          </a>
+          {% endif %}
+        </div>
+
+      </div>
+    </form>
+  </div>
+
+  <!-- KPI SUMMARY CARDS -->
+  <div class="kpi-grid">
+    <!-- 1. Total Avances Versées -->
+    <div class="kpi-card kpi-rose">
+      <div>
+        <div class="kpi-header">
+          <span class="kpi-label">{{ 'إجمالي التسبيقات' if lang=='ar' else 'Total Avances Versées' }}</span>
+          <span class="kpi-icon" style="background:#fee2e2; color:#dc2626;">💸</span>
+        </div>
+        <div class="kpi-value" style="color:#dc2626;">
+          {{ "%.2f"|format(total_amount) }} <span style="font-size:14px; font-weight:700;">DH</span>
+        </div>
+      </div>
+      <div class="kpi-sub" style="color:#ef4444;">
+        <span>📉 {{ advances|length }} {{ 'عملية تسبيق' if lang=='ar' else 'avance(s) accordée(s)' }}</span>
+      </div>
+    </div>
+
+    <!-- 2. Bénéficiaires -->
+    <div class="kpi-card kpi-blue">
+      <div>
+        <div class="kpi-header">
+          <span class="kpi-label">{{ 'عدد المستفيدين' if lang=='ar' else 'Bénéficiaires' }}</span>
+          <span class="kpi-icon" style="background:#e0f2fe; color:#0369a1;">👥</span>
+        </div>
+        <div class="kpi-value" style="color:#0B3D6E;">
+          {{ employee_count }}
+        </div>
+      </div>
+      <div class="kpi-sub" style="color:#0284c7;">
+        <span>👤 {{ 'مستخدم أو إداري' if lang=='ar' else 'employé(s) / cadre(s)' }}</span>
+      </div>
+    </div>
+
+    <!-- 3. Mois concerné -->
+    <div class="kpi-card kpi-purple">
+      <div>
+        <div class="kpi-header">
+          <span class="kpi-label">{{ 'شهر الاستحقاق' if lang=='ar' else 'Mois d\'imputation' }}</span>
+          <span class="kpi-icon" style="background:#f3e8ff; color:#7e22ce;">📅</span>
+        </div>
+        <div class="kpi-value" style="font-size:20px; color:#6b21a8;">
+          {{ req_month or 'Tous les mois' }}
+        </div>
+      </div>
+      <div class="kpi-sub" style="color:#9333ea;">
+        <span>🗓️ {{ 'يخصم عند صرف الراتب' if lang=='ar' else 'Déductible du salaire mensuel' }}</span>
+      </div>
+    </div>
+
+    <!-- 4. Statut Caisse -->
+    <div class="kpi-card kpi-emerald">
+      <div>
+        <div class="kpi-header">
+          <span class="kpi-label">{{ 'التسجيل بالصندوق' if lang=='ar' else 'Impact Caisse' }}</span>
+          <span class="kpi-icon" style="background:#d1fae5; color:#047857;">🏦</span>
+        </div>
+        <div class="kpi-value" style="font-size:20px; color:#047857;">
+          Synchronisé
+        </div>
+      </div>
+      <div class="kpi-sub" style="color:#059669;">
+        <span>✓ {{ 'تسجيل خروج أموال تلقائي' if lang=='ar' else 'Sorties de caisse tracées' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADVANCES TABLE CARD -->
+  <div class="table-card">
+    <div style="padding:14px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0; font-size:15px; font-weight:800; color:#0B3D6E; display:flex; align-items:center; gap:8px;">
+        <span>📋 {{ 'قائمة التسبيقات المسجلة' if lang=='ar' else 'Historique des Avances Accordées' }}</span>
+        <span class="chip chip-gray" style="font-size:11px;">{{ advances|length }}</span>
+      </h3>
+    </div>
+
+    {% if advances %}
+    <div class="table-responsive">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th style="width:45px; text-align:center;">#</th>
+            <th>{{ 'سند الأداء' if lang=='ar' else 'N° Reçu' }}</th>
+            <th>{{ 'تاريخ الصرف' if lang=='ar' else 'Date de Paiement' }}</th>
+            <th>{{ 'المستفيد' if lang=='ar' else 'Employé / Cadre' }}</th>
+            <th>{{ 'الوظيفة والقسم' if lang=='ar' else 'Poste & Département' }}</th>
+            <th style="text-align:center;">{{ 'شهر الخصم' if lang=='ar' else 'Mois' }}</th>
+            <th style="text-align:right;">{{ 'المبلغ' if lang=='ar' else 'Montant' }}</th>
+            <th>{{ 'طريقة الدفع' if lang=='ar' else 'Mode & Réf' }}</th>
+            <th>{{ 'ملاحظات / سبب التسبيق' if lang=='ar' else 'Motif / Remarques' }}</th>
+            <th style="text-align:center;">{{ 'الحالة' if lang=='ar' else 'Statut' }}</th>
+            <th style="text-align:center; min-width:130px;">{{ 'إجراءات' if lang=='ar' else 'Actions' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for adv in advances %}
+          {% set emp = adv.employee %}
+          <tr>
+            <!-- Index -->
+            <td style="text-align:center; font-weight:700; color:#64748b;">
+              {{ loop.index }}
+            </td>
+
+            <!-- Receipt No -->
+            <td>
+              <strong style="color:#0B3D6E; font-family:monospace; font-size:12px;">
+                {{ adv.receipt_no or ('EMP-ADV-' ~ adv.id) }}
+              </strong>
+            </td>
+
+            <!-- Date -->
+            <td>
+              <span style="font-weight:700; color:#1e293b;">
+                {{ adv.date.strftime('%d/%m/%Y') }}
+              </span>
+            </td>
+
+            <!-- Employee -->
+            <td>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div class="emp-avatar">
+                  {{ (emp.first_name[0] if emp else 'E')|upper }}
+                </div>
+                <div>
+                  <strong style="font-size:13.5px; color:#0f172a;">
+                    {{ emp.full_name if emp else 'Employé inconnu' }}
+                  </strong>
+                  <div style="font-size:11px; color:#64748b; font-family:monospace;">
+                    {{ emp.code if emp else '' }}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Job Title & Dept -->
+            <td>
+              <div style="font-weight:700; color:#334155;">{{ emp.job_title if emp else '—' }}</div>
+              <div style="font-size:10.5px; color:#64748b;">{{ emp.department if emp else '' }}</div>
+            </td>
+
+            <!-- Month -->
+            <td style="text-align:center;">
+              <span class="chip chip-blue" style="font-size:11px; font-weight:800; font-family:monospace;">
+                {{ adv.period_month }}
+              </span>
+            </td>
+
+            <!-- Amount -->
+            <td style="text-align:right;">
+              <strong style="font-size:15px; color:#dc2626;">
+                {{ "%.2f"|format(adv.amount) }} <span style="font-size:11px;">DH</span>
+              </strong>
+            </td>
+
+            <!-- Payment Method -->
+            <td>
+              <span style="font-weight:700; color:#334155; font-size:12px;">
+                {{ adv.payment_method }}
+              </span>
+              {% if adv.reference_no %}
+                <div style="font-size:10.5px; color:#64748b; font-family:monospace;">
+                  Réf: {{ adv.reference_no }}
+                </div>
+              {% endif %}
+            </td>
+
+            <!-- Notes -->
+            <td style="max-width:200px;">
+              <span style="font-size:12px; color:#475569;">
+                {{ adv.notes or '—' }}
+              </span>
+            </td>
+
+            <!-- Status -->
+            <td style="text-align:center;">
+              {% if adv.status == 'deducted' %}
+                <span class="chip" style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; font-weight:800; font-size:10.5px;">
+                  ✓ {{ 'مقتطع من الراتب' if lang=='ar' else 'DÉDUIT DU SALAIRE' }}
+                </span>
+              {% elif adv.status == 'cancelled' %}
+                <span class="chip" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-weight:800; font-size:10.5px;">
+                  ✕ {{ 'ملغى' if lang=='ar' else 'ANNULÉ' }}
+                </span>
+              {% else %}
+                <span class="chip" style="background:#fffbeb; color:#b45309; border:1px solid #fde68a; font-weight:800; font-size:10.5px;">
+                  ⏳ {{ 'قيد الانتظار' if lang=='ar' else 'VERSÉ (À DÉDUIRE)' }}
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- Actions -->
+            <td style="text-align:center;">
+              <div style="display:inline-flex; align-items:center; gap:6px;">
+                <!-- Print Receipt -->
+                <a href="{{ url_for('employee_advance_receipt', aid=adv.id) }}" target="_blank" class="btn btn-xs" style="background:#0284c7; color:#fff; font-weight:800; padding:4px 8px; border-radius:6px; text-decoration:none; display:inline-flex; align-items:center; gap:4px;" title="Imprimer le reçu">
+                  🖨️ <span>Reçu</span>
+                </a>
+
+                <!-- Delete -->
+                <form method="POST" action="{{ url_for('employee_advance_delete', aid=adv.id) }}" style="display:inline; margin:0;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette avance de {{ adv.amount }} DH pour {{ emp.full_name }} ? La sortie de caisse liée sera également annulée.');">
+                  <button type="submit" class="btn btn-xs" style="background:#fee2e2; color:#dc2626; border:1px solid #fecaca; font-weight:800; padding:4px 8px; border-radius:6px;" title="Supprimer l'avance">
+                    🗑️
+                  </button>
+                </form>
+              </div>
+            </td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:50px 20px; color:#64748b;">
+      <div style="font-size:36px; margin-bottom:10px;">💸</div>
+      <h3 style="margin:0 0 6px 0; color:#0B3D6E;">{{ 'لا توجد تسبيقات مسجلة' if lang=='ar' else 'Aucune avance enregistrée' }}</h3>
+      <p style="margin:0; font-size:13px;">{{ 'لم يتم منح أي تسبيق للموظفين مطابق لمعايير البحث.' if lang=='ar' else 'Aucune avance sur salaire n\'a été trouvée pour les filtres sélectionnés.' }}</p>
+      <button type="button" class="btn btn-primary" onclick="openAdvanceModal()" style="margin-top:14px; font-weight:800; background:#059669; border-color:#059669; border-radius:9px; padding:8px 18px;">
+        + {{ 'تسجيل تسبيق جديد الآن' if lang=='ar' else 'Accorder une Avance Maintenant' }}
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- MODAL: ACCORDER UNE AVANCE EMPLOYÉ -->
+<div id="advanceModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:2000; align-items:center; justify-content:center; backdrop-filter:blur(3px);">
+  <div style="background:#fff; border-radius:16px; width:94%; max-width:540px; box-shadow:0 20px 40px rgba(0,0,0,0.25); overflow:hidden; border:1px solid #cbd5e1; animation:fadeInMenu 0.2s ease;">
+    
+    <!-- Modal Header -->
+    <div style="background:linear-gradient(135deg, #0B3D6E 0%, #1e40af 100%); color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:20px;">💸</span>
+        <h3 style="margin:0; font-size:16px; font-weight:800;">
+          {{ 'تسجيل تسبيق على الراتب (موظف / إدارة)' if lang=='ar' else 'Accorder une Avance au Personnel / Administration' }}
+        </h3>
+      </div>
+      <button type="button" onclick="closeAdvanceModal()" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer; font-weight:800; line-height:1;">&times;</button>
+    </div>
+
+    <!-- Modal Form -->
+    <form method="POST" action="{{ url_for('employee_advance_new') }}" style="padding:20px 22px;">
+      
+      <!-- Employee Selection -->
+      <div class="mb-3">
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:5px; text-transform:uppercase;">
+          👤 {{ 'اختيار المستفيد' if lang=='ar' else 'Bénéficiaire (Employé / Cadre)' }} <span style="color:#dc2626;">*</span>
+        </label>
+        <select name="employee_id" id="modalEmployeeSelect" required class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; width:100%; font-weight:700; color:#0B3D6E; box-sizing:border-box;">
+          <option value="">-- {{ 'اختر المستفيد...' if lang=='ar' else 'Sélectionnez un bénéficiaire...' }} --</option>
+          {% for e in all_employees %}
+          <option value="{{ e.id }}" {% if selected_employee_id == e.id %}selected{% endif %}>
+            {{ e.full_name }} — {{ e.job_title }} ({{ e.department }}) [{{ e.code }}]
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Amount & Imputation Month (2 columns) -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;" class="mb-3">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:5px; text-transform:uppercase;">
+            💰 {{ 'مبلغ التسبيق (درهم)' if lang=='ar' else 'Montant de l\'Avance (DH)' }} <span style="color:#dc2626;">*</span>
+          </label>
+          <input type="number" step="0.01" min="0.01" name="amount" id="modalAmount" required placeholder="Ex: 500" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; width:100%; font-weight:900; font-size:15px; color:#dc2626; box-sizing:border-box;">
+        </div>
+
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:5px; text-transform:uppercase;">
+            📅 {{ 'شهر الخصم من الراتب' if lang=='ar' else 'Mois d\'imputation' }} <span style="color:#dc2626;">*</span>
+          </label>
+          <input type="month" name="period_month" id="modalPeriodMonth" value="{{ req_month or '' }}" required class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; width:100%; font-weight:700; color:#0B3D6E; box-sizing:border-box;">
+        </div>
+      </div>
+
+      <!-- Transaction Date & Payment Method (2 columns) -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;" class="mb-3">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:5px; text-transform:uppercase;">
+            📆 {{ 'تاريخ الصرف الفعلي' if lang=='ar' else 'Date de Versement' }} <span style="color:#dc2626;">*</span>
+          </label>
+          <input type="date" name="date" id="modalDate" required class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; width:100%; font-weight:600; box-sizing:border-box;">
+        </div>
+
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:5px; text-transform:uppercase;">
+            💳 {{ 'طريقة الدفع' if lang=='ar' else 'Mode de Paiement' }}
+          </label>
+          <select name="payment_method" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; width:100%; font-weight:600; box-sizing:border-box;">
+            <option value="Espèces" selected>💵 Espèces (Cash)</option>
+            <option value="Virement">🏦 Virement bancaire</option>
+            <option value="Chèque">📑 Chèque</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Reference & Notes -->
+      <div class="mb-3">
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:5px; text-transform:uppercase;">
+          📝 {{ 'رقم الشيك أو المرجع' if lang=='ar' else 'Référence (N° Chèque / Virement)' }}
+        </label>
+        <input type="text" name="reference_no" placeholder="{{ 'اختياري: رقم التحويل أو الشيك...' if lang=='ar' else 'Ex: Chèque n° 458921 / Virement BMCE' }}" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; width:100%; font-size:12.5px; box-sizing:border-box;">
+      </div>
+
+      <div class="mb-3">
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:5px; text-transform:uppercase;">
+          💬 {{ 'ملاحظات / سبب التسبيق' if lang=='ar' else 'Motif / Remarques' }}
+        </label>
+        <textarea name="notes" rows="2" placeholder="{{ 'اختياري: دواعي التسبيق (مثال: تسبيق لشراء لوازم، مصاريف شخصية...)' if lang=='ar' else 'Ex: Avance exceptionnelle accordée, motif...' }}" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; width:100%; font-size:12.5px; box-sizing:border-box;"></textarea>
+      </div>
+
+      <!-- Checkboxes: Expense sync & Print immediately -->
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; margin-bottom:18px;">
+        <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:#1e293b; cursor:pointer; margin-bottom:6px;">
+          <input type="checkbox" name="sync_expense" value="1" checked style="width:16px; height:16px; accent-color:#059669;">
+          <span>💼 {{ 'تسجيل العملية تلقائياً كمصروف في الصندوق (Dépense Caisse)' if lang=='ar' else 'Synchroniser avec la caisse (Enregistrer comme dépense)' }}</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:#1e293b; cursor:pointer;">
+          <input type="checkbox" name="print_after" value="1" checked style="width:16px; height:16px; accent-color:#059669;">
+          <span>🖨️ {{ 'فتح وصل التسليم للطباعة مباشرة بعد الحفظ' if lang=='ar' else 'Ouvrir le reçu de versement immédiatement après validation' }}</span>
+        </label>
+      </div>
+
+      <!-- Modal Actions -->
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" onclick="closeAdvanceModal()" class="btn btn-light" style="font-weight:700; border-radius:9px; padding:8px 16px; border:1px solid #cbd5e1;">
+          {{ 'إلغاء' if lang=='ar' else 'Annuler' }}
+        </button>
+        <button type="submit" class="btn btn-primary" style="background:#059669; border-color:#059669; font-weight:800; border-radius:9px; padding:8px 20px; box-shadow:0 3px 8px rgba(5,150,105,0.3);">
+          ✓ {{ 'تأكيد وصرف التسبيق' if lang=='ar' else 'Valider le Versement' }}
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<script>
+  function openAdvanceModal(empId, periodMonth) {
+    var modal = document.getElementById('advanceModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    var dateInput = document.getElementById('modalDate');
+    if (dateInput && !dateInput.value) {
+      dateInput.value = new Date().toISOString().split('T')[0];
+    }
+    var monthInput = document.getElementById('modalPeriodMonth');
+    if (monthInput) {
+      if (periodMonth) {
+        monthInput.value = periodMonth;
+      } else if (!monthInput.value) {
+        var now = new Date();
+        var y = now.getFullYear();
+        var m = String(now.getMonth() + 1).padStart(2, '0');
+        monthInput.value = y + '-' + m;
+      }
+    }
+    if (empId) {
+      var select = document.getElementById('modalEmployeeSelect');
+      if (select) select.value = empId;
+    }
+  }
+
+  function closeAdvanceModal() {
+    var modal = document.getElementById('advanceModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  window.addEventListener('click', function(e) {
+    var modal = document.getElementById('advanceModal');
+    if (e.target === modal) {
+      closeAdvanceModal();
+    }
+  });
+</script>
+
+{% endblock %}

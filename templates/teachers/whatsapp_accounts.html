@@ -1,0 +1,1643 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- TEACHERS WHATSAPP ACCOUNTS & ANTI-BAN DISPATCHER -->
+<style>
+  .wa-hub-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  .wifi-card-banner {
+    background: linear-gradient(135deg, #0B3D6E 0%, #1e40af 50%, #065f46 100%);
+    border-radius: 16px;
+    color: #ffffff;
+    padding: 20px 24px;
+    box-shadow: 0 10px 25px -5px rgba(11, 61, 110, 0.25);
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .wifi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 14px;
+  }
+  .wifi-floor-box {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .wifi-notice-strip {
+    background: rgba(254, 240, 138, 0.2);
+    border: 1px solid rgba(253, 224, 71, 0.4);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-top: 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fef08a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* KPI Cards Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+  }
+  .kpi-blue::before { background: #2563eb; }
+  .kpi-green::before { background: #10b981; }
+  .kpi-amber::before { background: #f59e0b; }
+  .kpi-purple::before { background: #8b5cf6; }
+  .kpi-emerald::before { background: #059669; }
+
+  /* Toolbar & Filter Tabs */
+  .toolbar-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  }
+  .filter-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+  .ftab {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    transition: all 0.15s ease;
+  }
+  .ftab:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+  }
+  .ftab.active {
+    background: #0B3D6E;
+    color: #ffffff;
+    border-color: #0B3D6E;
+    box-shadow: 0 2px 8px rgba(11, 61, 110, 0.25);
+  }
+
+  /* Table styling */
+  .table-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+    overflow: hidden;
+  }
+  .wa-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .wa-table th {
+    background: #f8fafc;
+    padding: 12px 14px;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1.5px solid #e2e8f0;
+  }
+  .wa-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .wa-table tr:hover {
+    background: #f8fafc;
+  }
+
+  .pwd-input-wrap {
+    display: inline-flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 2px 6px;
+    gap: 4px;
+    width: 140px;
+    position: relative;
+  }
+  .pwd-input-wrap input {
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e293b;
+    width: 90px;
+    padding: 2px;
+    outline: none;
+  }
+  .pwd-input-wrap button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0;
+    color: #64748b;
+  }
+
+  /* Floating Batch Bar */
+  #waFloatingBar {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    background: #0B3D6E;
+    color: #ffffff;
+    padding: 10px 24px;
+    border-radius: 50px;
+    box-shadow: 0 15px 35px -5px rgba(11, 61, 110, 0.5);
+    align-items: center;
+    gap: 16px;
+    border: 2px solid #38bdf8;
+  }
+</style>
+
+<div class="wa-hub-container">
+  
+  <!-- Breadcrumb & Top bar -->
+  <div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+    <div>
+      <div class="muted" style="font-size:12px;">
+        <a href="{{ url_for('teachers') }}" style="color:#64748b; text-decoration:none; font-weight:700;">
+          ← {{ 'العودة لقائمة الأساتذة' if session.get('lang')=='ar' else 'Retour à la liste des enseignants' }}
+        </a>
+      </div>
+      <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800; display:flex; align-items:center; gap:10px;">
+        <span>📲</span>
+        <span>{{ 'إرسال الحسابات وكلمات سر Wi-Fi عبر WhatsApp (Anti-Ban)' if session.get('lang')=='ar' else 'Envoi des Comptes & Wi-Fi aux Enseignants (Anti-Ban)' }}</span>
+      </h2>
+      <p style="margin:4px 0 0; font-size:12.5px; color:#64748b;">
+        {{ 'نظام آلي وموجه لإرسال بيانات الدخول وكلمات سر Wi-Fi لكل أستاذ مع صيغ متغيرة لتفادي الحظر.' if session.get('lang')=='ar' else 'Diffusion des identifiants d\'accès et des codes Wi-Fi avec formulations Spintax anti-blocage.' }}
+      </p>
+    </div>
+
+    <!-- Quick action buttons -->
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <a href="{{ url_for('teachers_whatsapp_daily_timetable') }}" class="btn btn-sm" style="font-weight:800; background:#0284c7; border-color:#0284c7; color:#fff; box-shadow:0 3px 10px rgba(2,132,199,0.25); text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+        🗓️ {{ 'برنامج اليوم (WhatsApp)' if session.get('lang')=='ar' else 'Emploi du Jour WhatsApp' }}
+      </a>
+      <button type="button" onclick="openBulkPasswordModal()" class="btn btn-outline btn-sm" style="font-weight:700; border-color:#cbd5e1; background:#ffffff;">
+        🔑 {{ 'تعيين كلمة سر جماعية' if session.get('lang')=='ar' else 'Définir mot de passe groupé' }}
+      </button>
+      <button type="button" onclick="createAllMissingAccounts()" class="btn btn-outline btn-sm" style="font-weight:700; color:#0369a1; border-color:#bae6fd; background:#f0f9ff;">
+        ⚡ {{ 'إنشاء الحسابات المتبقية (1 نقرة)' if session.get('lang')=='ar' else 'Créer les comptes manquants' }}
+      </button>
+      <button type="button" onclick="openDispatchRunner('all')" class="btn btn-primary btn-sm" style="font-weight:800; background:#15803d; border-color:#15803d; box-shadow:0 3px 10px rgba(21,128,61,0.25);">
+        🚀 {{ 'بدء إرسال WhatsApp (Anti-Ban)' if session.get('lang')=='ar' else 'Lancer la diffusion WhatsApp' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 📶 WI-FI CREDENTIALS & ATTENDANCE NOTICE BANNER                -->
+  <!-- ============================================================== -->
+  <div class="wifi-card-banner">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+      <div>
+        <div style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:1px; opacity:0.9;">
+          📶 {{ 'شبكة Wi-Fi الرسمية للمعهد' if session.get('lang')=='ar' else 'RÉSEAU WI-FI DE L\'ÉTABLISSEMENT' }}
+        </div>
+        <h3 style="margin:4px 0 0; font-size:18px; font-weight:800;">
+          {{ 'معلومات الاتصال بشبكة Wi-Fi المشتركة مع الأساتذة' if session.get('lang')=='ar' else 'Accès Wi-Fi partagés avec l\'équipe pédagogique' }}
+        </h3>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button type="button" onclick="copyWifiInfo()" class="btn btn-xs" style="background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.3); color:#fff; font-weight:700; border-radius:8px; padding:6px 12px; cursor:pointer;">
+          📋 {{ 'نسخ بيانات Wi-Fi' if session.get('lang')=='ar' else 'Copier les accès Wi-Fi' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- 2 Floors Grid -->
+    <div class="wifi-grid">
+      <!-- 1st Floor -->
+      <div class="wifi-floor-box">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="font-size:24px;">📶</div>
+          <div>
+            <div style="font-size:11px; opacity:0.85; font-weight:700;">{{ 'الطابق الأول (1er étage)' if session.get('lang')=='ar' else '1er Étage (première étage)' }}</div>
+            <div style="font-size:15px; font-weight:800; letter-spacing:0.3px;">{{ wifi_info.wifi1_ssid }}</div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10.5px; opacity:0.85;">{{ 'كلمة السر' if session.get('lang')=='ar' else 'Mot de passe' }}</div>
+          <div style="font-family:monospace; font-size:16px; font-weight:900; background:rgba(0,0,0,0.2); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.25);">
+            {{ wifi_info.wifi1_pass }}
+          </div>
+        </div>
+      </div>
+
+      <!-- 2nd Floor -->
+      <div class="wifi-floor-box">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="font-size:24px;">📶</div>
+          <div>
+            <div style="font-size:11px; opacity:0.85; font-weight:700;">{{ 'الطابق الثاني (2ème étage)' if session.get('lang')=='ar' else '2ème Étage (deuxième étage)' }}</div>
+            <div style="font-size:15px; font-weight:800; letter-spacing:0.3px;">{{ wifi_info.wifi2_ssid }}</div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10.5px; opacity:0.85;">{{ 'كلمة السر' if session.get('lang')=='ar' else 'Mot de passe' }}</div>
+          <div style="font-family:monospace; font-size:16px; font-weight:900; background:rgba(0,0,0,0.2); padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.25);">
+            {{ wifi_info.wifi2_pass }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attendance Notice Notice Strip -->
+    <div class="wifi-notice-strip">
+      <span style="font-size:18px;">💡</span>
+      <div>
+        <strong>{{ 'تنبيه تربوي هام:' if session.get('lang')=='ar' else 'Note de la Direction :' }}</strong>
+        {{ 'تم تزويد وتفعيل Wi-Fi بالمعهد خصيصاً لكي يقوم جميع الأساتذة بتسجيل الحضور والغياب (Appel / Absence) لتلاميذهم في كل حصة دراسية عبر هواتفهم بكل يسر.' if session.get('lang')=='ar' else 'Ce réseau Wi-Fi a été installé afin que l\'ensemble des professeurs enregistrent le pointage et l\'absence de leurs élèves à chaque séance en temps réel.' }}
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI SUMMARY CARDS -->
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-blue">
+      <div style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">
+        {{ 'إجمالي الأساتذة' if session.get('lang')=='ar' else 'Total Enseignants' }}
+      </div>
+      <div style="font-size:24px; font-weight:900; color:#0B3D6E; margin:4px 0;">
+        {{ stats.total }}
+      </div>
+      <div style="font-size:11.5px; color:#2563eb; font-weight:700;">
+        {{ stats.with_phone }} {{ 'مع هاتف WhatsApp' if session.get('lang')=='ar' else 'avec contact WhatsApp' }}
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-green">
+      <div style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">
+        {{ 'حسابات مفعلة' if session.get('lang')=='ar' else 'Comptes Créés' }}
+      </div>
+      <div style="font-size:24px; font-weight:900; color:#059669; margin:4px 0;">
+        {{ stats.with_user }}
+      </div>
+      <div style="font-size:11.5px; color:#059669; font-weight:700;">
+        {{ (stats.with_user / stats.total * 100)|round|int if stats.total else 0 }}% {{ 'مجهزة للولوج' if session.get('lang')=='ar' else 'prêts à la connexion' }}
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-amber">
+      <div style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">
+        {{ 'حسابات غير منشأة بعد' if session.get('lang')=='ar' else 'Comptes à Créer' }}
+      </div>
+      <div style="font-size:24px; font-weight:900; color:#d97706; margin:4px 0;">
+        {{ stats.missing_user }}
+      </div>
+      <div style="font-size:11.5px; color:#b45309; font-weight:700;">
+        {{ 'يمكن إنشاؤها بنقرة واحدة' if session.get('lang')=='ar' else 'Génération auto disponible' }}
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-purple">
+      <div style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">
+        {{ 'أساتذة اللغات' if session.get('lang')=='ar' else 'Enseignants Langues' }}
+      </div>
+      <div style="font-size:24px; font-weight:900; color:#7c3aed; margin:4px 0;">
+        {{ stats.lang_teachers }}
+      </div>
+      <div style="font-size:11.5px; color:#6d28d9; font-weight:700;">
+        {{ 'لغة الرسالة وفق التخصص' if session.get('lang')=='ar' else 'Langue ciblée auto (FR/ES/DE)' }}
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-emerald">
+      <div style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">
+        {{ 'أساتذة الدعم المدرسي' if session.get('lang')=='ar' else 'Enseignants Soutien' }}
+      </div>
+      <div style="font-size:24px; font-weight:900; color:#047857; margin:4px 0;">
+        {{ stats.soutien_teachers }}
+      </div>
+      <div style="font-size:11.5px; color:#047857; font-weight:700;">
+        {{ 'اللغة الافتراضية: العربية' if session.get('lang')=='ar' else 'Langue par défaut : Arabe' }}
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOLBAR & FILTERS -->
+  <div class="toolbar-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      
+      <!-- Filter Tabs -->
+      <div class="filter-tabs">
+        <a href="{{ url_for('teachers_whatsapp_accounts', status='all', type=type_filter, q=q) }}" 
+           class="ftab {{ 'active' if status_filter == 'all' and type_filter == 'all' else '' }}">
+          {{ 'الكل' if session.get('lang')=='ar' else 'Tous' }} ({{ stats.total }})
+        </a>
+        <a href="{{ url_for('teachers_whatsapp_accounts', status='has_account', type=type_filter, q=q) }}" 
+           class="ftab {{ 'active' if status_filter == 'has_account' else '' }}">
+          ✅ {{ 'لديهم حساب' if session.get('lang')=='ar' else 'Avec compte' }} ({{ stats.with_user }})
+        </a>
+        <a href="{{ url_for('teachers_whatsapp_accounts', status='missing_account', type=type_filter, q=q) }}" 
+           class="ftab {{ 'active' if status_filter == 'missing_account' else '' }}">
+          ⚠️ {{ 'بدون حساب' if session.get('lang')=='ar' else 'Sans compte' }} ({{ stats.missing_user }})
+        </a>
+        <a href="{{ url_for('teachers_whatsapp_accounts', status=status_filter, type='lang', q=q) }}" 
+           class="ftab {{ 'active' if type_filter == 'lang' else '' }}">
+          🌐 {{ 'أساتذة اللغات' if session.get('lang')=='ar' else 'Langues' }} ({{ stats.lang_teachers }})
+        </a>
+        <a href="{{ url_for('teachers_whatsapp_accounts', status=status_filter, type='soutien', q=q) }}" 
+           class="ftab {{ 'active' if type_filter == 'soutien' else '' }}">
+          📐 {{ 'أساتذة الدعم' if session.get('lang')=='ar' else 'Soutien' }} ({{ stats.soutien_teachers }})
+        </a>
+      </div>
+
+      <!-- Search Input -->
+      <form method="get" action="{{ url_for('teachers_whatsapp_accounts') }}" style="display:flex; gap:6px; margin:0;">
+        <input type="hidden" name="status" value="{{ status_filter }}">
+        <input type="hidden" name="type" value="{{ type_filter }}">
+        <div style="position:relative;">
+          <input type="text" name="q" value="{{ q }}" placeholder="{{ 'بحث بالاسم أو الهاتف...' if session.get('lang')=='ar' else 'Rechercher enseignant, tél...' }}" 
+                 style="padding:6px 10px 6px 30px; border-radius:8px; border:1px solid #cbd5e1; font-size:12.5px; width:220px;">
+          <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:12px; color:#64748b;">🔍</span>
+        </div>
+        <button class="btn btn-sm btn-outline" type="submit" style="padding:6px 12px; font-weight:700;">{{ 'تصفية' if session.get('lang')=='ar' else 'Filtrer' }}</button>
+        {% if q or status_filter != 'all' or type_filter != 'all' %}
+        <a href="{{ url_for('teachers_whatsapp_accounts') }}" class="btn btn-sm btn-outline" style="padding:6px 10px;" title="Réinitialiser">✕</a>
+        {% endif %}
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- TEACHERS ACCOUNTS TABLE                                        -->
+  <!-- ============================================================== -->
+  <div class="table-card">
+    <div style="padding:14px 18px; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div style="font-weight:800; color:#0B3D6E; font-size:14px;">
+        👨‍🏫 {{ 'قائمة الأساتذة المستهدفين بالإرسال' if session.get('lang')=='ar' else 'Liste des Enseignants & Paramètres WhatsApp' }} ({{ teachers_data|length }})
+      </div>
+      <div style="font-size:12px; color:#64748b; font-weight:600;">
+        💡 {{ 'يمكنك تعديل كلمة المرور أو تغيير لغة الرسالة مباشرة في الجدول قبل الإرسال.' if session.get('lang')=='ar' else 'Vous pouvez modifier le mot de passe ou la langue du message directement dans le tableau.' }}
+      </div>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table class="wa-table">
+        <thead>
+          <tr>
+            <th style="width:36px; text-align:center;">
+              <input type="checkbox" id="masterCheckbox" onchange="toggleAllCheckboxes(this)" style="cursor:pointer; width:16px; height:16px;">
+            </th>
+            <th>{{ 'الأستاذ' if session.get('lang')=='ar' else 'Enseignant' }}</th>
+            <th>{{ 'المادة / التخصص' if session.get('lang')=='ar' else 'Matière / Discipline' }}</th>
+            <th>{{ 'هاتف WhatsApp' if session.get('lang')=='ar' else 'Tél WhatsApp' }}</th>
+            <th>{{ 'اسم المستخدم' if session.get('lang')=='ar' else 'Identifiant' }}</th>
+            <th>{{ 'كلمة المرور' if session.get('lang')=='ar' else 'Mot de passe' }}</th>
+            <th>{{ 'لغة الرسالة' if session.get('lang')=='ar' else 'Langue Message' }}</th>
+            <th style="text-align:right;">{{ 'إجراءات' if session.get('lang')=='ar' else 'Actions' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in teachers_data %}
+          {% set t = item.teacher %}
+          <tr id="row-teacher-{{ t.id }}" data-tid="{{ t.id }}">
+            
+            <!-- Checkbox -->
+            <td style="text-align:center;">
+              <input type="checkbox" class="teacher-checkbox" value="{{ t.id }}" onchange="onCheckboxChange()" style="cursor:pointer; width:16px; height:16px;">
+            </td>
+
+            <!-- Identity -->
+            <td>
+              <div style="display:flex; align-items:center; gap:10px;">
+                {% if t.photo %}
+                  <img src="{{ url_for('static', filename='uploads/'+t.photo) }}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; border:1px solid #cbd5e1;">
+                {% else %}
+                  <div style="width:34px; height:34px; border-radius:50%; background:#dbeafe; color:#1d4ed8; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:13px;">
+                    {{ t.first_name[0]|upper if t.first_name else 'P' }}
+                  </div>
+                {% endif %}
+                <div>
+                  <strong style="color:#0B3D6E; font-size:13.5px; display:block;">{{ t.full_name }}</strong>
+                  <div style="font-size:11px; color:#64748b;">
+                    {{ t.code or ('ID: ' ~ t.id) }} {% if t.cin %}· {{ t.cin }}{% endif %}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Specialty & Type -->
+            <td>
+              <div>
+                {% if item.is_lang_teacher %}
+                  <span class="chip" style="background:#ede9fe; color:#6d28d9; border:1px solid #ddd6fe; font-size:11px; font-weight:800;">
+                    🌐 {{ t.primary_matiere }}
+                  </span>
+                {% else %}
+                  <span class="chip" style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; font-size:11px; font-weight:800;">
+                    📐 {{ t.primary_matiere }}
+                  </span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- Phone -->
+            <td>
+              {% if item.has_phone %}
+                <a href="https://wa.me/{{ item.clean_phone }}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; font-weight:700; color:#15803d; text-decoration:none; background:#dcfce7; padding:2px 8px; border-radius:6px; font-size:11.5px; border:1px solid #bbf7d0;">
+                  <span>💬</span>
+                  <span>{{ item.raw_phone }}</span>
+                </a>
+              {% else %}
+                <span class="chip chip-red" style="font-size:10.5px;">⚠️ {{ 'بدون هاتف' if session.get('lang')=='ar' else 'Sans numéro' }}</span>
+              {% endif %}
+            </td>
+
+            <!-- Username -->
+            <td>
+              {% if item.has_account %}
+                <span class="chip chip-blue" style="font-weight:800; font-size:11px; font-family:monospace;">
+                  @{{ item.username }}
+                </span>
+              {% else %}
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span class="chip" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:10.5px; font-weight:700;">
+                    ⚠️ @{{ item.username }}
+                  </span>
+                  <button type="button" onclick="createSingleAccount({{ t.id }}, '{{ item.username }}')" class="btn btn-xs" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:10px; padding:1px 6px; border-radius:4px;" title="Créer maintenant">
+                    + Créer
+                  </button>
+                </div>
+              {% endif %}
+            </td>
+
+            <!-- Password Inline Edit -->
+            <td>
+              <div class="pwd-input-wrap" style="{% if not item.password and item.has_account %}border-color:#f59e0b; background:#fffbeb;{% endif %}">
+                <input type="password" id="pwd_input_{{ t.id }}" value="{{ item.password }}" placeholder="{{ 'Mot de passe...' }}" onchange="updatePasswordForTeacher({{ t.id }}, this.value)">
+                <button type="button" onclick="togglePwdVisibility('pwd_input_{{ t.id }}')" title="Afficher/Masquer">👁️</button>
+                <button type="button" onclick="savePwdForTeacher({{ t.id }})" title="Enregistrer dans la base de données" style="color:#059669;">💾</button>
+              </div>
+              {% if not item.password and item.has_account %}
+              <div style="font-size:10px; color:#b45309; margin-top:2px; font-weight:700;">
+                🔒 {{ 'معرف مسبقاً' if session.get('lang')=='ar' else 'Défini (chiffré)' }}
+              </div>
+              {% endif %}
+            </td>
+
+            <!-- Language Selector (Smart default) -->
+            <td>
+              <select id="lang_select_{{ t.id }}" onchange="onTeacherLangChange({{ t.id }})" style="padding:4px 8px; border-radius:7px; border:1.5px solid #cbd5e1; font-size:12px; font-weight:700; color:#0B3D6E; background:#fff; cursor:pointer;">
+                <option value="ar" {{ 'selected' if item.default_lang == 'ar' else '' }}>🇲🇦 العربية (ar)</option>
+                <option value="fr" {{ 'selected' if item.default_lang == 'fr' else '' }}>🇫🇷 Français (fr)</option>
+                <option value="es" {{ 'selected' if item.default_lang == 'es' else '' }}>🇪🇸 Español (es)</option>
+                <option value="de" {{ 'selected' if item.default_lang == 'de' else '' }}>🇩🇪 Deutsch (de)</option>
+                <option value="en" {{ 'selected' if item.default_lang == 'en' else '' }}>🇬🇧 English (en)</option>
+              </select>
+            </td>
+
+            <!-- Actions -->
+            <td style="text-align:right;">
+              <div style="display:inline-flex; align-items:center; gap:5px;">
+                <!-- Preview button -->
+                <button type="button" onclick="openPreviewModal({{ t.id }})" class="btn btn-xs btn-outline" style="padding:4px 8px; font-size:11px; font-weight:700;" title="Aperçu du message avant envoi">
+                  👁️ {{ 'معاينة' if session.get('lang')=='ar' else 'Aperçu' }}
+                </button>
+
+                <!-- 1-Click Send button -->
+                <button type="button" onclick="sendDirectSingle({{ t.id }})" class="btn btn-xs" style="background:#15803d; color:#fff; border:none; padding:4px 10px; font-size:11px; font-weight:800; border-radius:6px; cursor:pointer;" title="Envoyer directement via WhatsApp">
+                  📲 {{ 'إرسال' if session.get('lang')=='ar' else 'Envoyer' }}
+                </button>
+
+                <!-- Status indicator -->
+                <span id="badge_status_{{ t.id }}" class="chip chip-gray" style="font-size:10px;">
+                  ⏳ Prêt
+                </span>
+              </div>
+            </td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================================================== -->
+<!-- FLOATING BATCH BAR                                             -->
+<!-- ============================================================== -->
+<div id="waFloatingBar">
+  <div style="display:flex; align-items:center; gap:8px;">
+    <span style="font-size:18px;">🎯</span>
+    <span style="font-weight:800; font-size:13px;">
+      <span id="selectedCountBadge" style="background:#38bdf8; color:#0B3D6E; padding:2px 8px; border-radius:20px; font-weight:900;">0</span>
+      {{ 'أستاذ محدد' if session.get('lang')=='ar' else 'prof(s) sélectionné(s)' }}
+    </span>
+  </div>
+  
+  <button type="button" onclick="openDispatchRunner('selected')" class="btn btn-sm" style="background:#22c55e; border-color:#22c55e; color:#fff; font-weight:800; font-size:12.5px; padding:6px 16px; border-radius:30px; box-shadow:0 4px 12px rgba(34,197,94,0.35); cursor:pointer;">
+    🚀 {{ 'إرسال WhatsApp للمحددين (Anti-Ban)' if session.get('lang')=='ar' else 'Envoyer WhatsApp aux sélectionnés' }}
+  </button>
+
+  <button type="button" onclick="openBulkPasswordModal('selected')" class="btn btn-sm btn-outline" style="color:#fff; border-color:#fff; font-weight:700; font-size:12px; padding:5px 12px; border-radius:20px;">
+    🔑 {{ 'تعيين كلمة سر' if session.get('lang')=='ar' else 'Mot de passe' }}
+  </button>
+
+  <button type="button" onclick="uncheckAllRows()" style="background:transparent; border:none; color:#cbd5e1; font-size:12px; font-weight:700; cursor:pointer; text-decoration:underline;">
+    {{ 'إلغاء التحديد' if session.get('lang')=='ar' else 'Désélectionner' }}
+  </button>
+</div>
+
+<!-- ============================================================== -->
+<!-- MODAL 1: MESSAGE PREVIEW MODAL                                 -->
+<!-- ============================================================== -->
+<div id="previewMsgModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:10000; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#ffffff; width:100%; max-width:620px; border-radius:16px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #cbd5e1; overflow:hidden;">
+    <div style="background:#0B3D6E; color:#ffffff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="font-weight:800; font-size:15px; display:flex; align-items:center; gap:8px;">
+        <span>💬</span>
+        <span id="previewModalTitle">{{ 'معاينة الرسالة الموجهة للأستاذ' if session.get('lang')=='ar' else 'Aperçu du Message WhatsApp' }}</span>
+      </div>
+      <button type="button" onclick="closePreviewModal()" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer;">✕</button>
+    </div>
+    
+    <div style="padding:18px;">
+      <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:12px; font-weight:700; color:#64748b;" id="previewModalTeacherMeta">Enseignant · Tél</span>
+        <button type="button" onclick="regeneratePreviewSpintax()" class="btn btn-xs btn-outline" style="font-weight:700; font-size:11px;">
+          🔄 {{ 'توليد صيغة Spintax بديلة' if session.get('lang')=='ar' else 'Variation aléatoire' }}
+        </button>
+      </div>
+      <div id="previewModalMsgBody" style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:14px; font-size:13px; line-height:1.6; color:#14532d; white-space:pre-wrap; max-height:300px; overflow-y:auto; font-family:system-ui, sans-serif;">
+        <!-- Injected in JS -->
+      </div>
+      
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button type="button" onclick="copyPreviewMessage()" class="btn btn-outline btn-sm" style="font-weight:700;">
+          📋 {{ 'نسخ النص' if session.get('lang')=='ar' else 'Copier le texte' }}
+        </button>
+        <button type="button" id="btnPreviewModalSend" onclick="sendFromPreviewModal()" class="btn btn-primary btn-sm" style="background:#15803d; border-color:#15803d; font-weight:800;">
+          📲 {{ 'إرسال الآن عبر WhatsApp' if session.get('lang')=='ar' else 'Envoyer sur WhatsApp' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- MODAL 2: BULK PASSWORD MODAL                                   -->
+<!-- ============================================================== -->
+<div id="bulkPasswordModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:10000; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#ffffff; width:100%; max-width:480px; border-radius:16px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #cbd5e1; overflow:hidden;">
+    <div style="background:#0B3D6E; color:#ffffff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="font-weight:800; font-size:15px; display:flex; align-items:center; gap:8px;">
+        <span>🔑</span>
+        <span>{{ 'تعيين كلمة سر جماعية للأساتذة' if session.get('lang')=='ar' else 'Définir un Mot de Passe Groupé' }}</span>
+      </div>
+      <button type="button" onclick="closeBulkPasswordModal()" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer;">✕</button>
+    </div>
+    
+    <div style="padding:18px;">
+      <p style="font-size:13px; color:#475569; margin:0 0 14px 0; line-height:1.5;">
+        {{ 'سيتم حفظ وتحديث كلمة المرور هذه في قاعدة البيانات لجميع الأساتذة المحددين حتى يتمكنوا من تسجيل الدخول فور استلام الرسالة.' if session.get('lang')=='ar' else 'Ce mot de passe sera appliqué dans la base de données et dans les messages envoyés afin de garantir une connexion immédiate.' }}
+      </p>
+
+      <label style="font-size:12px; font-weight:800; color:#0B3D6E; display:block; margin-bottom:6px;">
+        {{ 'كلمة المرور الجديدة' if session.get('lang')=='ar' else 'Nouveau mot de passe :' }}
+      </label>
+      <div style="position:relative; margin-bottom:14px;">
+        <input type="text" id="bulkPasswordInput" value="" placeholder="{{ 'مثال: Prof@2026' if session.get('lang')=='ar' else 'Ex: Prof@2026' }}" style="width:100%; padding:9px 12px; border-radius:8px; border:1.5px solid #cbd5e1; font-size:14px; font-weight:800; color:#0B3D6E; box-sizing:border-box;">
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button type="button" onclick="closeBulkPasswordModal()" class="btn btn-outline btn-sm" style="font-weight:700;">
+          {{ 'إلغاء' if session.get('lang')=='ar' else 'Annuler' }}
+        </button>
+        <button type="button" onclick="applyBulkPassword()" class="btn btn-primary btn-sm" style="background:#0B3D6E; border-color:#0B3D6E; font-weight:800;">
+          💾 {{ 'تطبيق وحفظ' if session.get('lang')=='ar' else 'Appliquer et enregistrer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- MODAL 3: ANTI-BAN WHATSAPP DISPATCH RUNNER                     -->
+<!-- ============================================================== -->
+<div id="dispatchRunnerModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(4px); z-index:10000; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#ffffff; width:100%; max-width:820px; max-height:92vh; border-radius:18px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); border:1.5px solid #cbd5e1; display:flex; flex-direction:column; overflow:hidden;">
+    
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg, #0B3D6E 0%, #15803d 100%); color:#ffffff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:24px;">📲</span>
+        <div>
+          <h3 style="margin:0; font-size:16px; font-weight:800;">
+            {{ 'إرسال بيانات الحسابات و Wi-Fi للأساتذة (نظام مكافحة الحظر Anti-Ban)' if session.get('lang')=='ar' else 'Diffusion WhatsApp des Accès & Wi-Fi aux Enseignants (Système Anti-Ban)' }}
+          </h3>
+          <p style="margin:2px 0 0; font-size:11.5px; opacity:0.9;">
+            {{ 'صيغ Spintax متغيرة دورياً + كود مرجعي فريد لكل أستاذ #PROF-XXXX + وتيرة بشرية لتفادي الحظر' if session.get('lang')=='ar' else 'Formulations Spintax dynamiques + référence unique #PROF-XXXX + tempo humain anti-détection' }}
+          </p>
+        </div>
+      </div>
+      <button type="button" onclick="closeDispatchRunner()" style="background:rgba(255,255,255,0.2); border:none; width:32px; height:32px; border-radius:50%; color:#fff; font-size:16px; font-weight:bold; cursor:pointer;" title="Fermer">✕</button>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:20px; overflow-y:auto; flex:1;">
+      
+      <!-- STEP 1: CONFIGURATION -->
+      <div id="waStepConfig">
+        <!-- Anti-ban Shield Notification Strip -->
+        <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:12px;">
+          <span style="font-size:26px;">🛡️</span>
+          <div>
+            <strong style="color:#166534; font-size:13.5px; display:block;">
+              {{ 'استراتيجية مكافحة الحظر مفعلة (WhatsApp Anti-Ban Active)' if session.get('lang')=='ar' else 'Protection Anti-Ban Active pour le Numéro de l\'Établissement' }}
+            </strong>
+            <div style="color:#15803d; font-size:11.5px; margin-top:2px;">
+              {{ 'يتم توليد رسالة مختلفة لكل أستاذ مع رقم مرجعي فريد [Réf: #PROF-XXXX]، كما تُرسل الرسالة بلغة الأستاذ (الألمانية، الإسبانية، الفرنسية) ولأساتذة الدعم باللغة العربية.' if session.get('lang')=='ar' else 'Chaque message adopte une formulation différente aléatoire avec jeton unique #PROF-XXXX, et respecte la langue de la discipline (Arabe pour soutien, langue spécifique pour profs de langues).' }}
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <!-- Left: Scope -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px;">
+            <label style="font-size:12px; font-weight:800; color:#0B3D6E; display:block; margin-bottom:8px;">
+              👥 1. {{ 'نطاق الأساتذة المستهدفين' if session.get('lang')=='ar' else 'Enseignants à Notifier' }} :
+            </label>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; cursor:pointer;">
+                <input type="radio" name="dispatchScope" value="selected" id="radioScopeSelected" style="width:16px; height:16px;">
+                <span>🎯 {{ 'الأساتذة المحددين فقط' if session.get('lang')=='ar' else 'Enseignants sélectionnés uniquement' }} (<strong id="scopeSelectedCount">0</strong>)</span>
+              </label>
+
+              <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; cursor:pointer;">
+                <input type="radio" name="dispatchScope" value="all" id="radioScopeAll" checked style="width:16px; height:16px;">
+                <span>📋 {{ 'جميع الأساتذة المسجلين' if session.get('lang')=='ar' else 'Tous les enseignants' }} (<strong>{{ teachers_data|length }}</strong>)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Right: Mode & Channel -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px;">
+            <label style="font-size:12px; font-weight:800; color:#0B3D6E; display:block; margin-bottom:8px;">
+              ⏱️ 2. {{ 'طريقة الإرسال والفاصل الزمني' if session.get('lang')=='ar' else 'Mode & Cadence d\'Envoi' }} :
+            </label>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <label style="display:flex; align-items:flex-start; gap:8px; font-size:12px; font-weight:700; cursor:pointer;">
+                <input type="radio" name="dispatchCadence" value="guided" checked style="width:16px; height:16px; margin-top:2px;">
+                <div>
+                  <div style="color:#0f172a; font-weight:800;">⚡ {{ 'الوضع الموجه البشري (موصى به جداً)' if session.get('lang')=='ar' else 'Mode Guidé Assisté (Hautement Recommandé)' }}</div>
+                  <div style="font-size:11px; color:#64748b; font-weight:normal;">
+                    {{ 'الضغط على زر الإرسال أو زر المسافة (Espace) للانتقال للأستاذ الموالي.' if session.get('lang')=='ar' else 'Validez chaque envoi avec la touche Espace ou Entrée.' }}
+                  </div>
+                </div>
+              </label>
+
+              <label style="display:flex; align-items:flex-start; gap:8px; font-size:12px; font-weight:700; cursor:pointer;">
+                <input type="radio" name="dispatchCadence" value="auto" style="width:16px; height:16px; margin-top:2px;">
+                <div>
+                  <div style="color:#0f172a; font-weight:800;">⏳ {{ 'الوضع التتابعي الآلي بتأخير عشوائي' if session.get('lang')=='ar' else 'Mode Auto-Séquentiel avec Temporisation' }}</div>
+                  <div style="font-size:11px; color:#64748b; font-weight:normal;">
+                    {{ 'فاصل زمني بشري عشوائي بين 5 و 9 ثوان بين كل إرسال لتفادي الروبوتات.' if session.get('lang')=='ar' else 'Pause humaine aléatoire (5 à 9 secondes) entre chaque ouverture.' }}
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <div style="margin-top:12px; padding-top:8px; border-top:1px dashed #cbd5e1;">
+              <label style="font-size:11px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+                💻 {{ 'منصة الإرسال' if session.get('lang')=='ar' else 'Canal d\'envoi' }} :
+              </label>
+              <select id="dispatchChannelSelect" style="width:100%; padding:5px 8px; border-radius:7px; border:1px solid #cbd5e1; font-size:11.5px; font-weight:700;">
+                <option value="web">🌐 WhatsApp Web</option>
+                <option value="app">📱 Application Desktop (wa.me)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Launch Button -->
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" onclick="closeDispatchRunner()" class="btn btn-outline" style="font-weight:700; padding:10px 18px;">
+            {{ 'إلغاء' if session.get('lang')=='ar' else 'Annuler' }}
+          </button>
+          <button type="button" onclick="startDispatchQueue()" class="btn btn-primary" style="background:#15803d; border-color:#15803d; font-weight:800; font-size:14px; padding:10px 26px; box-shadow:0 4px 14px rgba(21,128,61,0.3); display:inline-flex; align-items:center; gap:8px;">
+            <span>🚀</span>
+            <span>{{ 'بدء إرسال رسائل الأساتذة' if session.get('lang')=='ar' else 'Lancer la File d\'Envoi Anti-Ban' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: RUNNER -->
+      <div id="waStepDispatch" style="display:none;">
+        
+        <!-- Progress Bar -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px 16px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div style="font-weight:800; font-size:13px; color:#0B3D6E;" id="runnerProgressTitle">
+              Progression : Enseignant 1 sur 28
+            </div>
+            <div style="font-weight:800; font-size:13px; color:#15803d;" id="runnerProgressPercent">
+              0%
+            </div>
+          </div>
+          <div style="width:100%; height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden;">
+            <div id="runnerProgressBarFill" style="width:0%; height:100%; background:linear-gradient(90deg, #10b981 0%, #059669 100%); transition:width 0.3s ease;"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; font-size:11.5px; color:#64748b;">
+            <span id="runnerProgressSentCount" style="font-weight:700; color:#15803d;">0 envoyé(s) ✅</span>
+            <span id="runnerProgressRemainingCount">28 restant(s)</span>
+          </div>
+        </div>
+
+        <!-- Active Teacher Card -->
+        <div id="runnerCurrentCard" style="background:#ffffff; border:2px solid #86efac; border-radius:14px; padding:18px 20px; margin-bottom:14px; box-shadow:0 4px 16px rgba(0,0,0,0.04);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div id="runnerCurrentAvatar" style="width:44px; height:44px; border-radius:12px; background:#0B3D6E; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800;">
+                P
+              </div>
+              <div>
+                <h3 id="runnerCurrentName" style="margin:0; font-size:16px; font-weight:800; color:#0f172a;">
+                  Nom Enseignant
+                </h3>
+                <div style="font-size:12px; color:#64748b; margin-top:2px;" id="runnerCurrentMeta">
+                  Matière · Tél WhatsApp
+                </div>
+              </div>
+            </div>
+            
+            <div id="runnerCurrentLangBadge">
+              <span class="chip chip-purple" style="font-size:11px; font-weight:800;">🌐 Français (fr)</span>
+            </div>
+          </div>
+
+          <!-- Credentials Preview Bar -->
+          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div>
+              <div style="font-size:11px; font-weight:800; color:#166534; text-transform:uppercase;">
+                {{ 'بيانات الحساب الموجهة إليه' if session.get('lang')=='ar' else 'ACCÈS DE L\'ENSEIGNANT' }} :
+              </div>
+              <div style="font-size:13.5px; font-weight:800; color:#0f172a; margin-top:2px;">
+                👤 <span id="runnerCurrentUname">@prof</span> &nbsp;|&nbsp; 🔑 <span id="runnerCurrentPwd">••••••••</span>
+              </div>
+            </div>
+            <div style="font-size:12px; font-weight:700; color:#15803d;">
+              📱 WhatsApp : <span id="runnerCurrentPhone">2126XXXXXXXX</span>
+            </div>
+          </div>
+
+          <!-- Live Message Text Box -->
+          <div style="margin-bottom:16px;">
+            <label style="font-size:11.5px; font-weight:800; color:#475569; display:block; margin-bottom:4px;">
+              {{ 'الرسالة الفريدة المولدة لهذا الأستاذ (Spintax Unique)' if session.get('lang')=='ar' else 'Message Unique Personnalisé pour cet Enseignant' }} :
+            </label>
+            <div id="runnerCurrentMessageText" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:12px 14px; font-size:12.5px; line-height:1.5; color:#1e293b; white-space:pre-wrap; max-height:140px; overflow-y:auto;">
+              Message...
+            </div>
+          </div>
+
+          <!-- Action buttons -->
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <button type="button" id="btnRunnerSendWhatsApp" onclick="triggerCurrentRunnerWhatsApp()" class="btn btn-primary" style="background:#15803d; border-color:#15803d; font-weight:800; font-size:14px; padding:10px 22px; flex:1; display:inline-flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 3px 10px rgba(21,128,61,0.25);">
+              <span style="font-size:18px;">📲</span>
+              <span>{{ 'إرسال (فتح واتساب)' if session.get('lang')=='ar' else 'Envoyer (Ouvrir WhatsApp)' }}</span>
+            </button>
+
+            <button type="button" onclick="advanceToNextTeacher()" class="btn btn-primary" id="btnRunnerNext" style="background:#1f6feb; border-color:#1f6feb; font-weight:800; font-size:13.5px; padding:10px 18px; display:inline-flex; align-items:center; gap:6px;">
+              <span>{{ 'الموالي' if session.get('lang')=='ar' else 'Suivant' }}</span>
+              <span>➡️</span>
+              <kbd style="background:rgba(255,255,255,0.25); font-size:10px; padding:2px 5px; border-radius:4px; margin-left:4px;">Espace</kbd>
+            </button>
+
+            <button type="button" onclick="skipCurrentTeacher()" class="btn btn-outline" style="font-weight:700; padding:10px 14px; color:#64748b;" title="Passer cet enseignant">
+              <span>{{ 'تخطي' if session.get('lang')=='ar' else 'Passer' }}</span> ⏭️
+            </button>
+
+            <button type="button" onclick="copyCurrentRunnerMessage()" class="btn btn-outline" style="padding:10px 12px;" title="Copier le message">
+              📋
+            </button>
+          </div>
+
+          <!-- Countdown -->
+          <div id="runnerCountdownContainer" style="display:none; margin-top:12px; padding:8px 12px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; align-items:center; justify-content:space-between;">
+            <div style="font-size:12px; font-weight:700; color:#b45309; display:flex; align-items:center; gap:6px;">
+              <span>⏱️</span>
+              <span>Envoi automatique dans <strong id="runnerCountdownVal">6</strong>s...</span>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button type="button" id="btnPauseRunnerAuto" onclick="pauseRunnerAuto()" class="btn btn-xs btn-outline" style="font-weight:700; background:#fff;">⏸️ Pause</button>
+              <button type="button" id="btnResumeRunnerAuto" onclick="resumeRunnerAuto()" class="btn btn-xs btn-outline" style="display:none; font-weight:700; background:#fff;">▶️ Reprendre</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Finish Card -->
+        <div id="runnerFinishCard" style="display:none; background:#f0fdf4; border:1.5px solid #86efac; border-radius:14px; padding:28px 20px; text-align:center; margin-bottom:14px;">
+          <div style="font-size:48px; margin-bottom:8px;">🎉</div>
+          <h3 style="margin:0; font-size:18px; font-weight:800; color:#166534;">
+            {{ 'تم الانتهاء من إرسال الحسابات للأساتذة بنجاح!' if session.get('lang')=='ar' else 'Envoi des accès enseignants terminé avec succès !' }}
+          </h3>
+          <p style="margin:6px 0 16px; font-size:13px; color:#15803d;" id="runnerFinishSummary">
+            Tous les enseignants traités.
+          </p>
+          <button type="button" onclick="closeDispatchRunner(true)" class="btn btn-primary" style="background:#15803d; border-color:#15803d; font-weight:800; padding:9px 24px;">
+            {{ 'إغلاق وتحديث الجدول' if session.get('lang')=='ar' else 'Fermer et actualiser' }}
+          </button>
+        </div>
+
+        <!-- Queue Summary Table -->
+        <div style="margin-top:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-size:12px; font-weight:800; color:#475569;">
+              📋 {{ 'قائمة الإرسال' if session.get('lang')=='ar' else 'File d\'attente des envois' }} (<span id="runnerQueueTableCount">0</span>)
+            </span>
+            <button type="button" onclick="backToRunnerConfig()" class="btn btn-xs btn-outline" style="font-weight:700;">
+              ⚙️ {{ 'تعديل الإعدادات' if session.get('lang')=='ar' else 'Paramètres' }}
+            </button>
+          </div>
+
+          <div style="max-height:160px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:10px;">
+            <table style="margin:0; font-size:12px; width:100%; border-collapse:collapse;">
+              <tbody id="runnerQueueTableBody">
+                <!-- Injected in JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- JAVASCRIPT: DATA & LOGIC                                       -->
+<!-- ============================================================== -->
+<script>
+var RAW_TEACHERS = [
+  {% for item in teachers_data %}
+  {
+    id: {{ item.teacher.id }},
+    name: {{ item.teacher.full_name|tojson }},
+    first_name: {{ (item.teacher.first_name or '')|tojson }},
+    matiere: {{ (item.teacher.primary_matiere or '')|tojson }},
+    phone: {{ (item.clean_phone or '')|tojson }},
+    raw_phone: {{ (item.raw_phone or '')|tojson }},
+    has_phone: {{ 'true' if item.has_phone else 'false' }},
+    username: {{ item.username|tojson }},
+    password: {{ item.password|tojson }},
+    has_account: {{ 'true' if item.has_account else 'false' }},
+    default_lang: {{ item.default_lang|tojson }},
+    is_lang_teacher: {{ 'true' if item.is_lang_teacher else 'false' }},
+    sample_msg: {{ item.sample_msg|tojson }}
+  }{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+var INST_NAME = {{ (inst_name or 'Institut ILAS')|tojson }};
+var INST_PHONE = {{ (inst_phone or '')|tojson }};
+var LOGIN_URL = {{ (login_url or 'https://app.institutilas.com/login')|tojson }};
+var WIFI_INFO = {{ wifi_info|tojson }};
+
+// Helper: Pick random item
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// Client-side Spintax builder for dynamic regenerations
+function buildClientSpintax(tObj, lang, seed) {
+  var s = seed || Math.floor(Math.random() * 8999 + 1000);
+  var fn = tObj.first_name || tObj.name || 'Professeur';
+  var un = tObj.username;
+  var pw = tObj.password || (tObj.has_account ? '••••••••' : '[Saisir mot de passe]');
+
+  if (lang === 'fr') {
+    var greetings = [
+      "Bonjour Cher(e) Professeur *" + fn + "* 🌸",
+      "Chers collègues, Bonjour Professeur *" + fn + "* 🌹",
+      "Bonjour *" + fn + "*, message officiel de l'administration " + INST_NAME + " 🏫",
+      "Très cher(e) enseignant(e) *" + fn + "*, nous espérons que vous allez bien 🌸"
+    ];
+    var intros = [
+      "La direction de *" + INST_NAME + "* a le plaisir de vous transmettre vos identifiants d'accès à l'espace enseignant :",
+      "Dans le cadre de l'optimisation du suivi pédagogique, voici vos accès à la plateforme *" + INST_NAME + "* :",
+      "Veuillez trouver ci-dessous vos paramètres de connexion à la plateforme pédagogique de *" + INST_NAME + "* :"
+    ];
+    var wifiNote = "📶 *Codes Wi-Fi de l'Établissement (Espace Professeurs) :*\n*Note importante :* Nous vous informons que le Wi-Fi a été spécialement installé et mis à votre disposition afin que l'ensemble des professeurs puissent effectuer l'appel et enregistrer l'absence/présence des élèves en direct à chaque séance :\n▫️ *1er étage :* `" + WIFI_INFO.wifi1_ssid + "` | Clé : `" + WIFI_INFO.wifi1_pass + "`\n▫️ *2ème étage :* `" + WIFI_INFO.wifi2_ssid + "` | Clé : `" + WIFI_INFO.wifi2_pass + "`";
+    var closings = [
+      "Nous vous remercions vivement pour votre collaboration et votre engagement constant auprès de nos élèves.",
+      "Merci pour votre rigueur et votre implication exemplaire dans le suivi en temps réel de nos apprenants.",
+      "Toute l'équipe administrative reste à votre écoute pour vous accompagner. Excellente journée à vous."
+    ];
+    return pickRandom(greetings) + "\n\n" + pickRandom(intros) + "\n\n🌐 *Lien de connexion :* " + LOGIN_URL + "\n👤 *Identifiant :* `" + un + "`\n🔑 *Mot de passe :* `" + pw + "`\n\n" + wifiNote + "\n\n" + pickRandom(closings) + "\n\n🏫 Direction *" + INST_NAME + "* | Tél : " + INST_PHONE + "\n[Réf: #PROF-" + s + "]";
+  } else if (lang === 'es') {
+    var greetings = [
+      "¡Hola, estimado/a profesor/a *" + fn + "*! 🌸",
+      "Saludos cordiales, estimado/a *" + fn + "* 🌹",
+      "Estimado/a profesor/a *" + fn + "*, le saludamos cordialmente desde " + INST_NAME + " 🏫"
+    ];
+    var intros = [
+      "La dirección de *" + INST_NAME + "* tiene el placer de facilitarle sus datos de acceso a la plataforma digital docente:",
+      "Para facilitar su labor pedagógica, aquí tiene sus credenciales de acceso al portal de *" + INST_NAME + "*:"
+    ];
+    var wifiNote = "📶 *Conexión Wi-Fi del Instituto (Exclusiva Profesores):*\n*Aviso importante:* Les informamos que se ha instalado la red Wi-Fi para que todos los profesores puedan registrar cómodamente la asistencia y las faltas de los alumnos en el sistema al inicio de cada clase:\n▫️ *1.ª planta (1er étage) :* `" + WIFI_INFO.wifi1_ssid + "` | Clave: `" + WIFI_INFO.wifi1_pass + "`\n▫️ *2.ª planta (2ème étage) :* `" + WIFI_INFO.wifi2_ssid + "` | Clave: `" + WIFI_INFO.wifi2_pass + "`";
+    var closings = [
+      "Le agradecemos profundamente su profesionalidad y constante dedicación hacia nuestros estudiantes.",
+      "Muchas gracias por su valiosa colaboración en el seguimiento pedagógico. ¡Mucho éxito en sus clases!"
+    ];
+    return pickRandom(greetings) + "\n\n" + pickRandom(intros) + "\n\n🌐 *Enlace de acceso :* " + LOGIN_URL + "\n👤 *Usuario :* `" + un + "`\n🔑 *Contraseña :* `" + pw + "`\n\n" + wifiNote + "\n\n" + pickRandom(closings) + "\n\n🏫 Dirección *" + INST_NAME + "* | Tel: " + INST_PHONE + "\n[Réf: #PROF-" + s + "]";
+  } else if (lang === 'de') {
+    var greetings = [
+      "Guten Tag, sehr geehrte/r Frau/Herr *" + fn + "* 🌸",
+      "Herzliche Grüße, liebe/r Kollege/in *" + fn + "* 🌹",
+      "Schönen Tag, Herr/Frau *" + fn + "*! Wir hoffen, es geht Ihnen hervorragend 🌸"
+    ];
+    var intros = [
+      "Die Schulleitung von *" + INST_NAME + "* übermittelt Ihnen hiermit gerne Ihre persönlichen Zugangsdaten zum Lehrerportal:",
+      "Im Rahmen der Optimierung unseres Schulsystems erhalten Sie hiermit Ihre Login-Daten für die Plattform von *" + INST_NAME + "*:"
+    ];
+    var wifiNote = "📶 *WLAN-Zugangsdaten des Instituts (Für Lehrkräfte):*\n*Wichtiger Hinweis:* Bitte beachten Sie, dass das WLAN eingerichtet wurde, damit alle Lehrkräfte die Anwesenheit und Fehlzeiten der Schüler zu Beginn jeder Unterrichtsstunde direkt im System erfassen können:\n▫️ *1. Etage (1er étage) :* `" + WIFI_INFO.wifi1_ssid + "` | Passwort: `" + WIFI_INFO.wifi1_pass + "`\n▫️ *2. Etage (2ème étage) :* `" + WIFI_INFO.wifi2_ssid + "` | Passwort: `" + WIFI_INFO.wifi2_pass + "`";
+    var closings = [
+      "Wir danken Ihnen herzlich für Ihre geschätzte Mitarbeit und Ihr Engagement für unsere Schüler.",
+      "Vielen Dank für Ihre zuverlässige Dokumentation und pädagogische Begleitung. Viel Erfolg bei Ihren Kursen!"
+    ];
+    return pickRandom(greetings) + "\n\n" + pickRandom(intros) + "\n\n🌐 *Login-Link :* " + LOGIN_URL + "\n👤 *Benutzername :* `" + un + "`\n🔑 *Passwort :* `" + pw + "`\n\n" + wifiNote + "\n\n" + pickRandom(closings) + "\n\n🏫 Schulleitung *" + INST_NAME + "* | Tel: " + INST_PHONE + "\n[Réf: #PROF-" + s + "]";
+  } else if (lang === 'en') {
+    var greetings = [
+      "Hello Dear Teacher *" + fn + "* 🌸",
+      "Warm greetings, dear *" + fn + "* 🌹",
+      "Greetings *" + fn + "*, we hope this message finds you well 🌸"
+    ];
+    var intros = [
+      "The administration of *" + INST_NAME + "* is pleased to share your login credentials for the school management platform:",
+      "To support your teaching and student management, here are your access details for *" + INST_NAME + "*:"
+    ];
+    var wifiNote = "📶 *Institute Wi-Fi Networks (For Teachers):*\n*Important Notice:* Please note that Wi-Fi has been installed so that all teachers can easily and promptly record student attendance and absences directly on the platform in each session:\n▫️ *1st Floor (1er étage) :* `" + WIFI_INFO.wifi1_ssid + "` | Password: `" + WIFI_INFO.wifi1_pass + "`\n▫️ *2nd Floor (2ème étage) :* `" + WIFI_INFO.wifi2_ssid + "` | Password: `" + WIFI_INFO.wifi2_pass + "`";
+    var closings = [
+      "Thank you very much for your continuous cooperation and dedication to our students.",
+      "The administration remains at your service for any assistance. Have a wonderful day!"
+    ];
+    return pickRandom(greetings) + "\n\n" + pickRandom(intros) + "\n\n🌐 *Platform Link :* " + LOGIN_URL + "\n👤 *Username :* `" + un + "`\n🔑 *Password :* `" + pw + "`\n\n" + wifiNote + "\n\n" + pickRandom(closings) + "\n\n🏫 Administration *" + INST_NAME + "* | Tel: " + INST_PHONE + "\n[Réf: #PROF-" + s + "]";
+  } else {
+    // Arabic
+    var greetings = [
+      "السلام عليكم ورحمة الله وبركاته، أستاذ(ة) *" + fn + "* المحترم(ة) 🌹",
+      "تحية طيبة أستاذ(ة) *" + fn + "*، نتمنى أن تكونوا في تمام الصحة والعافية 🌸",
+      "تحية تقدير واحترام للأستاذ(ة) الفاضل(ة) *" + fn + "*، نرجو أن يجدكم هذا الإشعار بأفضل حال 🌹"
+    ];
+    var intros = [
+      "يسر إدارة *" + INST_NAME + "* أن تضع رهن إشارتكم بيانات الولوج الخاصة بكم إلى المنظومة الرقمية للمعهد:",
+      "في إطار تنظيم وتطوير العمل الإداري والتربوي، إليكم بيانات حسابكم الشخصي على منصة *" + INST_NAME + "*:",
+      "نوافيكم ببيانات حسابكم المهني على الفضاء الرقمي لمؤسسة *" + INST_NAME + "* لتتبع الحصص والأنشطة:"
+    ];
+    var wifiNote = "📶 *شبكة Wi-Fi المعهد (خاصة بالأساتذة):*\n*إشعار هام:* نحيطكم علماً بأنه تم تزويد المعهد بشبكة Wi-Fi خاصة لتسهيل تسجيل غياب وحضور التلاميذ (Pointage d'absence) مباشرة وبانتظام في كل حصة دراسية عبر هواتفكم:\n▫️ *الطابق الأول (1er étage) :* `" + WIFI_INFO.wifi1_ssid + "` | الرمز: `" + WIFI_INFO.wifi1_pass + "`\n▫️ *الطابق الثاني (2ème étage) :* `" + WIFI_INFO.wifi2_ssid + "` | الرمز: `" + WIFI_INFO.wifi2_pass + "`";
+    var closings = [
+      "نشكركم جزيل الشكر على حسن تعاونكم الدائم وحرصكم التربوي المتميز.",
+      "شاكرين لكم مساهمتكم الفعالة في ضبط وتتبع مسار التلاميذ. دمتم في رعاية الله.",
+      "مع متمنياتنا لكم بكامل التوفيق والسداد في مهامكم النبيلة."
+    ];
+    return pickRandom(greetings) + "\n\n" + pickRandom(intros) + "\n\n🌐 *رابط المنصة :* " + LOGIN_URL + "\n👤 *اسم المستخدم (Username) :* `" + un + "`\n🔑 *كلمة المرور (Mot de passe) :* `" + pw + "`\n\n" + wifiNote + "\n\n" + pickRandom(closings) + "\n\n🏫 إدارة *" + INST_NAME + "* | هاتف: " + INST_PHONE + "\n[Réf: #PROF-" + s + "]";
+  }
+}
+
+// Copy WiFi Info
+function copyWifiInfo() {
+  var text = "📶 *Accès Wi-Fi Institut " + INST_NAME + "*\n\n" +
+             "▫️ 1er étage : " + WIFI_INFO.wifi1_ssid + " | Mot de passe : " + WIFI_INFO.wifi1_pass + "\n" +
+             "▫️ 2ème étage : " + WIFI_INFO.wifi2_ssid + " | Mot de passe : " + WIFI_INFO.wifi2_pass + "\n\n" +
+             "🎯 Remarque : Wi-Fi mis à disposition pour l'enregistrement de l'appel et des absences en classe.";
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      alert("✅ Accès Wi-Fi copiés dans le presse-papiers !");
+    });
+  } else {
+    alert("Accès Wi-Fi sélectionnés");
+  }
+}
+
+// Toggle password visibility
+function togglePwdVisibility(inputId) {
+  var inp = document.getElementById(inputId);
+  if (inp) {
+    inp.type = (inp.type === 'password') ? 'text' : 'password';
+  }
+}
+
+// Update password for teacher in local model
+function updatePasswordForTeacher(tid, val) {
+  var tObj = RAW_TEACHERS.find(function(x) { return x.id === tid; });
+  if (tObj) {
+    tObj.password = val;
+  }
+}
+
+// Save password in database
+function savePwdForTeacher(tid) {
+  var inp = document.getElementById('pwd_input_' + tid);
+  var pwd = inp ? inp.value.trim() : '';
+  if (!pwd) {
+    alert("⚠️ Veuillez saisir le mot de passe pour cet enseignant avant d'enregistrer.");
+    if (inp) inp.focus();
+    return;
+  }
+
+  fetch('/api/teachers/whatsapp-accounts/update-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ teacher_id: tid, password: pwd })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.success) {
+      updatePasswordForTeacher(tid, pwd);
+      alert("✅ Mot de passe enregistré avec succès pour @" + data.username + " !");
+    } else {
+      alert("Erreur : " + (data.message || 'Échec'));
+    }
+  })
+  .catch(function(err) { alert("Erreur réseau"); });
+}
+
+// Create single account
+function createSingleAccount(tid, uname) {
+  var pwdInp = document.getElementById('pwd_input_' + tid);
+  var pwd = pwdInp ? pwdInp.value.trim() : '';
+  if (!pwd) {
+    alert("⚠️ Veuillez d'abord saisir un mot de passe dans le champ mot de passe pour cet enseignant.");
+    if (pwdInp) pwdInp.focus();
+    return;
+  }
+
+  fetch('/api/teachers/whatsapp-accounts/create-account', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ teacher_id: tid, username: uname, password: pwd })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.success) {
+      alert("✅ Compte @" + data.username + " créé avec succès !");
+      window.location.reload();
+    } else {
+      alert("Erreur : " + (data.message || 'Échec lors de la création du compte.'));
+    }
+  })
+  .catch(function(err) { alert("Erreur réseau"); });
+}
+
+// Create all missing accounts
+function createAllMissingAccounts() {
+  var defaultPwd = prompt("Veuillez saisir le mot de passe initial à attribuer aux nouveaux comptes créés :", "");
+  if (!defaultPwd || !defaultPwd.trim()) {
+    alert("Opération annulée : mot de passe requis.");
+    return;
+  }
+  defaultPwd = defaultPwd.trim();
+
+  fetch('/api/teachers/whatsapp-accounts/create-all-missing', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: defaultPwd })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.success) {
+      alert("🎉 " + data.created_count + " compte(s) enseignant créé(s) avec succès !");
+      window.location.reload();
+    } else {
+      alert("Erreur : " + (data.message || 'Échec'));
+    }
+  })
+  .catch(function(err) { alert("Erreur réseau"); });
+}
+
+// Checkbox selection handling
+function onCheckboxChange() {
+  var checked = document.querySelectorAll('.teacher-checkbox:checked');
+  var count = checked.length;
+  var bar = document.getElementById('waFloatingBar');
+  var badge = document.getElementById('selectedCountBadge');
+  var scopeBadge = document.getElementById('scopeSelectedCount');
+  var radioSel = document.getElementById('radioScopeSelected');
+
+  if (badge) badge.innerText = count;
+  if (scopeBadge) scopeBadge.innerText = count;
+
+  if (count > 0) {
+    if (bar) bar.style.display = 'flex';
+    if (radioSel) { radioSel.disabled = false; radioSel.checked = true; }
+  } else {
+    if (bar) bar.style.display = 'none';
+    if (radioSel) { radioSel.disabled = true; document.getElementById('radioScopeAll').checked = true; }
+  }
+}
+
+function toggleAllCheckboxes(master) {
+  var boxes = document.querySelectorAll('.teacher-checkbox');
+  boxes.forEach(function(b) { b.checked = master.checked; });
+  onCheckboxChange();
+}
+
+function uncheckAllRows() {
+  var boxes = document.querySelectorAll('.teacher-checkbox');
+  boxes.forEach(function(b) { b.checked = false; });
+  var master = document.getElementById('masterCheckbox');
+  if (master) master.checked = false;
+  onCheckboxChange();
+}
+
+function getSelectedTeacherIds() {
+  var checked = document.querySelectorAll('.teacher-checkbox:checked');
+  var ids = [];
+  checked.forEach(function(b) { ids.push(parseInt(b.value)); });
+  return ids;
+}
+
+// Bulk password modal
+var currentBulkScope = 'all';
+function openBulkPasswordModal(scope) {
+  currentBulkScope = scope || 'all';
+  var modal = document.getElementById('bulkPasswordModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeBulkPasswordModal() {
+  var modal = document.getElementById('bulkPasswordModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function applyBulkPassword() {
+  var pwd = document.getElementById('bulkPasswordInput').value.trim();
+  if (!pwd) { alert("Veuillez saisir un mot de passe."); return; }
+
+  var tids = (currentBulkScope === 'selected') ? getSelectedTeacherIds() : [];
+
+  fetch('/api/teachers/whatsapp-accounts/bulk-set-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ teacher_ids: tids, password: pwd })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.success) {
+      alert("✅ Mot de passe mis à jour pour " + data.updated_count + " enseignant(s) !");
+      closeBulkPasswordModal();
+      window.location.reload();
+    } else {
+      alert("Erreur lors de la mise à jour");
+    }
+  })
+  .catch(function(err) { alert("Erreur réseau"); });
+}
+
+// Modal 1: Preview single message
+var previewCurrentTid = null;
+function openPreviewModal(tid) {
+  previewCurrentTid = tid;
+  var tObj = RAW_TEACHERS.find(function(x) { return x.id === tid; });
+  if (!tObj) return;
+
+  var langSel = document.getElementById('lang_select_' + tid);
+  var lang = langSel ? langSel.value : tObj.default_lang;
+  var pwdInp = document.getElementById('pwd_input_' + tid);
+  if (pwdInp) tObj.password = pwdInp.value.trim();
+
+  document.getElementById('previewModalTitle').innerText = "Aperçu Message · " + tObj.name;
+  document.getElementById('previewModalTeacherMeta').innerText = tObj.matiere + " · Tél: +" + (tObj.phone || 'Non renseigné');
+
+  var msg = buildClientSpintax(tObj, lang);
+  document.getElementById('previewModalMsgBody').textContent = msg;
+
+  var modal = document.getElementById('previewMsgModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closePreviewModal() {
+  var modal = document.getElementById('previewMsgModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function regeneratePreviewSpintax() {
+  if (!previewCurrentTid) return;
+  var tObj = RAW_TEACHERS.find(function(x) { return x.id === previewCurrentTid; });
+  if (!tObj) return;
+  var langSel = document.getElementById('lang_select_' + previewCurrentTid);
+  var lang = langSel ? langSel.value : tObj.default_lang;
+  var msg = buildClientSpintax(tObj, lang);
+  document.getElementById('previewModalMsgBody').textContent = msg;
+}
+
+function copyPreviewMessage() {
+  var msg = document.getElementById('previewModalMsgBody').textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(msg).then(function() {
+      alert("✅ Message copié dans le presse-papiers !");
+    });
+  } else {
+    alert("Message sélectionné");
+  }
+}
+
+function sendFromPreviewModal() {
+  if (!previewCurrentTid) return;
+  var tObj = RAW_TEACHERS.find(function(x) { return x.id === previewCurrentTid; });
+  if (!tObj) return;
+
+  if (!tObj.phone) {
+    alert("⚠️ Cet enseignant ne dispose pas d'un numéro de téléphone valide.");
+    return;
+  }
+
+  var msg = document.getElementById('previewModalMsgBody').textContent;
+  var url = "https://web.whatsapp.com/send?phone=" + encodeURIComponent(tObj.phone) + "&text=" + encodeURIComponent(msg);
+  window.open(url, '_blank');
+
+  var badge = document.getElementById('badge_status_' + tObj.id);
+  if (badge) {
+    badge.className = "chip chip-green";
+    badge.innerText = "✅ Envoyé";
+  }
+
+  closePreviewModal();
+}
+
+// 1-Click direct send from row
+function sendDirectSingle(tid) {
+  var tObj = RAW_TEACHERS.find(function(x) { return x.id === tid; });
+  if (!tObj) return;
+
+  if (!tObj.phone) {
+    alert("⚠️ Aucun numéro de téléphone WhatsApp valide pour cet enseignant.");
+    return;
+  }
+
+  var langSel = document.getElementById('lang_select_' + tid);
+  var lang = langSel ? langSel.value : tObj.default_lang;
+  var pwdInp = document.getElementById('pwd_input_' + tid);
+  if (pwdInp) tObj.password = pwdInp.value.trim();
+
+  // Save password in DB silently if changed
+  savePwdForTeacherSilently(tid, tObj.password);
+
+  var msg = buildClientSpintax(tObj, lang);
+  var url = "https://web.whatsapp.com/send?phone=" + encodeURIComponent(tObj.phone) + "&text=" + encodeURIComponent(msg);
+  window.open(url, '_blank');
+
+  var badge = document.getElementById('badge_status_' + tid);
+  if (badge) {
+    badge.className = "chip chip-green";
+    badge.innerText = "✅ Envoyé";
+  }
+}
+
+function savePwdForTeacherSilently(tid, pwd) {
+  fetch('/api/teachers/whatsapp-accounts/update-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ teacher_id: tid, password: pwd })
+  });
+}
+
+function onTeacherLangChange(tid) {
+  // Update sample on change
+}
+
+// ==============================================================
+// MODAL 3: ANTI-BAN DISPATCH RUNNER STATE & ENGINE
+// ==============================================================
+var runnerState = {
+  queue: [],
+  currentIndex: 0,
+  statuses: {}, // tid -> 'sent' | 'skipped' | 'pending'
+  autoIntervalTimer: null,
+  autoCountdownVal: 0,
+  isPaused: false
+};
+
+function openDispatchRunner(preselectScope) {
+  var modal = document.getElementById('dispatchRunnerModal');
+  if (!modal) return;
+
+  document.getElementById('waStepConfig').style.display = 'block';
+  document.getElementById('waStepDispatch').style.display = 'none';
+
+  onCheckboxChange();
+  if (preselectScope === 'selected' && getSelectedTeacherIds().length > 0) {
+    var radioSel = document.getElementById('radioScopeSelected');
+    if (radioSel) radioSel.checked = true;
+  }
+
+  modal.style.display = 'flex';
+}
+
+function closeDispatchRunner(shouldReload) {
+  var modal = document.getElementById('dispatchRunnerModal');
+  if (modal) modal.style.display = 'none';
+  clearInterval(runnerState.autoIntervalTimer);
+  runnerState.autoIntervalTimer = null;
+  if (shouldReload) window.location.reload();
+}
+
+function backToRunnerConfig() {
+  clearInterval(runnerState.autoIntervalTimer);
+  runnerState.autoIntervalTimer = null;
+  document.getElementById('waStepDispatch').style.display = 'none';
+  document.getElementById('waStepConfig').style.display = 'block';
+}
+
+function startDispatchQueue() {
+  var scopeRadio = document.querySelector('input[name="dispatchScope"]:checked');
+  var scopeVal = scopeRadio ? scopeRadio.value : 'all';
+  var selectedIds = getSelectedTeacherIds();
+
+  var queue = [];
+  if (scopeVal === 'selected' && selectedIds.length > 0) {
+    queue = RAW_TEACHERS.filter(function(t) { return selectedIds.indexOf(t.id) !== -1; });
+  } else {
+    queue = RAW_TEACHERS.slice();
+  }
+
+  // Filter only those with phone
+  queue = queue.filter(function(t) { return t.has_phone; });
+
+  if (queue.length === 0) {
+    alert("Aucun enseignant avec numéro WhatsApp dans la sélection.");
+    return;
+  }
+
+  runnerState.queue = queue;
+  runnerState.currentIndex = 0;
+  runnerState.statuses = {};
+  queue.forEach(function(t) { runnerState.statuses[t.id] = 'pending'; });
+
+  document.getElementById('waStepConfig').style.display = 'none';
+  document.getElementById('waStepDispatch').style.display = 'block';
+
+  renderRunnerQueueTable();
+  processRunnerQueueAt(0);
+
+  // Check cadence
+  var cadenceRadio = document.querySelector('input[name="dispatchCadence"]:checked');
+  if (cadenceRadio && cadenceRadio.value === 'auto') {
+    startRunnerAutoCountdown();
+  }
+}
+
+function processRunnerQueueAt(index) {
+  runnerState.currentIndex = index;
+  var total = runnerState.queue.length;
+
+  var currentCard = document.getElementById('runnerCurrentCard');
+  var finishCard = document.getElementById('runnerFinishCard');
+
+  var sentCount = Object.values(runnerState.statuses).filter(function(st) { return st === 'sent'; }).length;
+  var pct = Math.round((sentCount / total) * 100);
+
+  document.getElementById('runnerProgressTitle').innerText = 'Progression : Enseignant ' + Math.min(index + 1, total) + ' sur ' + total;
+  document.getElementById('runnerProgressPercent').innerText = pct + '%';
+  document.getElementById('runnerProgressBarFill').style.width = pct + '%';
+  document.getElementById('runnerProgressSentCount').innerText = sentCount + ' envoyé(s) ✅';
+  document.getElementById('runnerProgressRemainingCount').innerText = (total - sentCount) + ' restant(s)';
+
+  if (index >= total) {
+    if (currentCard) currentCard.style.display = 'none';
+    if (finishCard) finishCard.style.display = 'block';
+    clearInterval(runnerState.autoIntervalTimer);
+    document.getElementById('runnerFinishSummary').innerText = 'Félicitations ! ' + sentCount + ' message(s) envoyé(s) sur ' + total + ' enseignants traités.';
+    renderRunnerQueueTable();
+    return;
+  }
+
+  if (finishCard) finishCard.style.display = 'none';
+  if (currentCard) currentCard.style.display = 'block';
+
+  var item = runnerState.queue[index];
+  var langSel = document.getElementById('lang_select_' + item.id);
+  var lang = langSel ? langSel.value : item.default_lang;
+  var pwdInp = document.getElementById('pwd_input_' + item.id);
+  if (pwdInp) item.password = pwdInp.value.trim();
+
+  document.getElementById('runnerCurrentName').innerText = item.name;
+  document.getElementById('runnerCurrentAvatar').innerText = item.name ? item.name.charAt(0) : 'P';
+  document.getElementById('runnerCurrentMeta').innerText = item.matiere + ' · Tél: +' + item.phone;
+  document.getElementById('runnerCurrentUname').innerText = '@' + item.username;
+  document.getElementById('runnerCurrentPwd').innerText = item.password;
+  document.getElementById('runnerCurrentPhone').innerText = item.phone;
+
+  var langNames = { 'ar': '🇲🇦 العربية', 'fr': '🇫🇷 Français', 'es': '🇪🇸 Español', 'de': '🇩🇪 Deutsch', 'en': '🇬🇧 English' };
+  document.getElementById('runnerCurrentLangBadge').innerHTML = '<span class="chip chip-purple" style="font-size:11px; font-weight:800;">' + (langNames[lang] || lang) + '</span>';
+
+  var msg = buildClientSpintax(item, lang, item.id);
+  document.getElementById('runnerCurrentMessageText').textContent = msg;
+
+  var isLast = (index === total - 1);
+  document.getElementById('btnRunnerNext').innerHTML = isLast ? '<span>Terminer ✅</span>' : '<span>Suivant ➡️</span> <kbd style="background:rgba(255,255,255,0.25); font-size:10px; padding:2px 5px; border-radius:4px; margin-left:4px;">Espace</kbd>';
+
+  renderRunnerQueueTable();
+}
+
+function triggerCurrentRunnerWhatsApp() {
+  var item = runnerState.queue[runnerState.currentIndex];
+  if (!item) return;
+
+  var msg = document.getElementById('runnerCurrentMessageText').textContent;
+  var channel = document.getElementById('dispatchChannelSelect').value;
+
+  var url = (channel === 'web')
+    ? 'https://web.whatsapp.com/send?phone=' + encodeURIComponent(item.phone) + '&text=' + encodeURIComponent(msg)
+    : 'https://wa.me/' + encodeURIComponent(item.phone) + '?text=' + encodeURIComponent(msg);
+
+  window.open(url, '_blank');
+
+  savePwdForTeacherSilently(item.id, item.password);
+  runnerState.statuses[item.id] = 'sent';
+
+  var rowBadge = document.getElementById('badge_status_' + item.id);
+  if (rowBadge) { rowBadge.className = 'chip chip-green'; rowBadge.innerText = '✅ Envoyé'; }
+
+  renderRunnerQueueTable();
+}
+
+function advanceToNextTeacher() {
+  var curItem = runnerState.queue[runnerState.currentIndex];
+  if (curItem && runnerState.statuses[curItem.id] !== 'sent') {
+    savePwdForTeacherSilently(curItem.id, curItem.password);
+    runnerState.statuses[curItem.id] = 'sent';
+    var rowBadge = document.getElementById('badge_status_' + curItem.id);
+    if (rowBadge) { rowBadge.className = 'chip chip-green'; rowBadge.innerText = '✅ Envoyé'; }
+  }
+  processRunnerQueueAt(runnerState.currentIndex + 1);
+
+  var cadenceRadio = document.querySelector('input[name="dispatchCadence"]:checked');
+  if (cadenceRadio && cadenceRadio.value === 'auto' && runnerState.currentIndex < runnerState.queue.length) {
+    startRunnerAutoCountdown();
+  }
+}
+
+function skipCurrentTeacher() {
+  var curItem = runnerState.queue[runnerState.currentIndex];
+  if (curItem) {
+    runnerState.statuses[curItem.id] = 'skipped';
+  }
+  processRunnerQueueAt(runnerState.currentIndex + 1);
+
+  var cadenceRadio = document.querySelector('input[name="dispatchCadence"]:checked');
+  if (cadenceRadio && cadenceRadio.value === 'auto' && runnerState.currentIndex < runnerState.queue.length) {
+    startRunnerAutoCountdown();
+  }
+}
+
+function copyCurrentRunnerMessage() {
+  var msg = document.getElementById('runnerCurrentMessageText').textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(msg).then(function() {
+      alert("✅ Message copié dans le presse-papiers !");
+    });
+  } else {
+    alert("Message copié");
+  }
+}
+
+function renderRunnerQueueTable() {
+  var tbody = document.getElementById('runnerQueueTableBody');
+  var countLbl = document.getElementById('runnerQueueTableCount');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+  if (countLbl) countLbl.innerText = runnerState.queue.length;
+
+  runnerState.queue.forEach(function(item, idx) {
+    var tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid #f1f5f9';
+    if (idx === runnerState.currentIndex) {
+      tr.style.background = '#eff6ff';
+      tr.style.fontWeight = 'bold';
+    }
+
+    var st = runnerState.statuses[item.id] || 'pending';
+    var badgeHtml = (st === 'sent')
+      ? '<span class="chip chip-green" style="font-size:10px;">✅ Envoyé</span>'
+      : ((st === 'skipped')
+        ? '<span class="chip chip-gray" style="font-size:10px;">⏭️ Ignoré</span>'
+        : '<span class="chip chip-amber" style="font-size:10px;">⏳ En attente</span>');
+
+    tr.innerHTML = '<td style="padding:6px 10px;">' + (idx + 1) + '</td>' +
+                   '<td style="padding:6px 10px;"><strong>' + item.name + '</strong> <span style="color:#64748b; font-size:11px;">(' + item.matiere + ')</span></td>' +
+                   '<td style="padding:6px 10px;">+' + item.phone + '</td>' +
+                   '<td style="padding:6px 10px; font-family:monospace;">@' + item.username + '</td>' +
+                   '<td style="padding:6px 10px; text-align:right;">' + badgeHtml + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+// Auto sequence countdown
+function startRunnerAutoCountdown() {
+  clearInterval(runnerState.autoIntervalTimer);
+  var container = document.getElementById('runnerCountdownContainer');
+  if (container) container.style.display = 'flex';
+
+  // Random delay between 5 and 9 seconds
+  runnerState.autoCountdownVal = Math.floor(Math.random() * 5) + 5;
+  document.getElementById('runnerCountdownVal').innerText = runnerState.autoCountdownVal;
+  runnerState.isPaused = false;
+
+  runnerState.autoIntervalTimer = setInterval(function() {
+    if (runnerState.isPaused) return;
+    runnerState.autoCountdownVal--;
+    var el = document.getElementById('runnerCountdownVal');
+    if (el) el.innerText = runnerState.autoCountdownVal;
+
+    if (runnerState.autoCountdownVal <= 0) {
+      clearInterval(runnerState.autoIntervalTimer);
+      triggerCurrentRunnerWhatsApp();
+      setTimeout(function() {
+        advanceToNextTeacher();
+      }, 1200);
+    }
+  }, 1000);
+}
+
+function pauseRunnerAuto() {
+  runnerState.isPaused = true;
+  document.getElementById('btnPauseRunnerAuto').style.display = 'none';
+  document.getElementById('btnResumeRunnerAuto').style.display = 'inline-flex';
+}
+
+function resumeRunnerAuto() {
+  runnerState.isPaused = false;
+  document.getElementById('btnResumeRunnerAuto').style.display = 'none';
+  document.getElementById('btnPauseRunnerAuto').style.display = 'inline-flex';
+}
+
+// Keyboard shortcut: Spacebar to advance in guided mode
+document.addEventListener('keydown', function(e) {
+  var modal = document.getElementById('dispatchRunnerModal');
+  if (!modal || modal.style.display !== 'flex') return;
+  var stepDisp = document.getElementById('waStepDispatch');
+  if (!stepDisp || stepDisp.style.display !== 'block') return;
+
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
+    return;
+  }
+
+  if (e.code === 'Space') {
+    e.preventDefault();
+    triggerCurrentRunnerWhatsApp();
+    setTimeout(function() {
+      advanceToNextTeacher();
+    }, 600);
+  }
+});
+</script>
+
+{% endblock %}

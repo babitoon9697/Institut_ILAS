@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Connexion — {{ settings.inst_name }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=4">
+<!-- PWA & Mobile Meta Tags -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0B3D6E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Institut ILAS">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+<style>
+@media screen and (max-width: 640px) {
+  body {
+    padding: 16px 12px !important;
+    min-height: 100dvh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .card.login-card {
+    padding: 28px 18px !important;
+    border-radius: 18px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+  }
+}
+</style>
+</head>
+<body style="display:flex; align-items:center; justify-content:center; min-height:100vh; background:linear-gradient(135deg, #091322 0%, #0B3D6E 50%, #1f6feb 100%); padding:20px; box-sizing:border-box;">
+<div class="card login-card" style="width:100%; max-width:420px; padding:36px 30px; background:#ffffff; border-radius:22px; box-shadow:0 20px 50px rgba(0,0,0,0.3); border:none; box-sizing:border-box;">
+  <div style="text-align:center; margin-bottom:26px;">
+    <div style="width:58px; height:58px; border-radius:15px; background:linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%); color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:28px; margin-bottom:12px; box-shadow:0 8px 20px rgba(31,111,235,0.3);">🏛️</div>
+    <h1 style="font-size:22px; font-weight:800; color:#0f172a; margin:0 0 4px; letter-spacing:-0.4px;">{{ settings.inst_name }}</h1>
+    <div style="color:#64748b; font-size:13px; font-weight:500;">{{ settings.inst_tagline }}</div>
+  </div>
+
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in msgs %}<div class="alert alert-{{ cat }}">{{ msg }}</div>{% endfor %}
+  {% endwith %}
+
+  <form method="post">
+    <div class="field" style="margin-bottom:18px;">
+      <label>Nom d'utilisateur</label>
+      <div class="input-field has-ico">
+        <span class="f-ico">👤</span>
+        <input type="text" name="username" required autofocus placeholder="Nom d'utilisateur" autocapitalize="none" autocomplete="username" autocorrect="off" spellcheck="false">
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:18px;">
+      <label>Mot de passe</label>
+      <div class="input-field has-ico">
+        <span class="f-ico">🔑</span>
+        <input type="password" name="password" required placeholder="••••••••">
+      </div>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#475569; cursor:pointer; user-select:none;">
+        <input type="checkbox" name="remember_me" value="1" checked style="accent-color:#1f6feb; width:16px; height:16px; cursor:pointer;">
+        <span>Rester connecté <em style="font-size:11.5px; color:#64748b;">(Enseignants)</em></span>
+      </label>
+      <div style="font-size:11px; color:#64748b; margin-top:4px; line-height:1.4;">
+        🛡️ Les sessions <strong>Admin</strong> et <strong>Secrétaire</strong> ferment automatiquement à la fermeture du navigateur ou après inactivité pour protéger votre shift.
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%; justify-content:center; padding:13px; font-size:15px; font-weight:700; border-radius:12px;">🔑 Se connecter</button>
+  </form>
+
+  <!-- PWA Install prompt card for mobile teachers -->
+  <div id="pwaLoginInstallCard" style="margin-top:22px; padding:16px; background:linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 100%); border:1.5px solid #93c5fd; border-radius:16px; text-align:center; box-shadow:0 4px 15px rgba(31,111,235,0.08);">
+    <div style="font-size:13.5px; font-weight:800; color:#0B3D6E; margin-bottom:4px; display:flex; align-items:center; justify-content:center; gap:6px;">
+      <span>📲</span><span>Application Mobile Enseignants</span>
+    </div>
+    <div style="font-size:12px; color:#334155; margin-bottom:12px; line-height:1.4;">
+      Ne retapez plus l'adresse web ! Installez l'application directement sur votre écran d'accueil en 1 clic.
+    </div>
+    <button type="button" onclick="triggerPWAInstall()" class="btn btn-primary" style="width:100%; justify-content:center; font-size:13px; font-weight:800; border-radius:10px; padding:11px 14px; background:linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%); border:none; box-shadow:0 4px 12px rgba(31,111,235,0.3); cursor:pointer;">
+      📥 Installer sur mon téléphone
+    </button>
+  </div>
+
+  <div style="text-align:center; margin-top:20px; font-size:12px; color:#94a3b8;">Connexion sécurisée · {{ settings.school_year }}</div>
+</div>
+
+<script src="{{ url_for('static', filename='pwa.js') }}?v=1"></script>
+</body>
+</html>

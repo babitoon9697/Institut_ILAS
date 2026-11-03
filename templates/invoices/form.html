@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex between wrap mb-3">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('invoices') }}">← {{ t('invoices') }}</a></div>
+    <h2 class="mt-0 mb-0" style="font-size:22px">🧾 Nouvelle facture / devis</h2>
+  </div>
+</div>
+
+<form method="post" class="max-w">
+  <div class="form-section">
+    <div class="sec-head">
+      <span class="sec-ico">🧾</span>
+      <div><h3>Facture</h3><p>La TVA est calculée automatiquement</p></div>
+    </div>
+    <div class="sec-body">
+      <div class="field">
+        <label>Inscription <span class="req">*</span></label>
+        <select name="enrollment_id" required>
+          {% for e in enrolls %}
+          <option value="{{ e.id }}">{{ e.student.full_name }} — {{ e.course.display_name if e.course }} ({{ e.course.price if e.course }} {{ settings.currency }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Type de document</label>
+          <select name="type"><option value="facture">Facture</option><option value="devis">Devis</option></select>
+        </div>
+        <div class="field">
+          <label>Montant (laisser vide = prix du cours)</label>
+          <input type="number" step="0.01" name="amount" placeholder="Ex : 2400">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn btn-primary">💾 Créer le document</button>
+    <a class="btn btn-outline" href="{{ url_for('invoices') }}">{{ t('cancel') }}</a>
+  </div>
+</form>
+
+<style>.max-w { max-width: 760px; }</style>
+{% endblock %}

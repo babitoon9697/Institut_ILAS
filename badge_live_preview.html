@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><title>Badge ILAS — Design Final</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',-apple-system,sans-serif;background:#eef1f6;padding:30px;color:#1a2430}
+h1{font-size:24px;margin-bottom:4px}
+.sub{color:#5b6472;font-size:13px;margin-bottom:26px;max-width:760px;line-height:1.5}
+.card{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.badge{width:324px;height:204px;border-radius:11px;overflow:hidden;box-shadow:0 16px 34px rgba(5,12,28,.4);position:relative}
+
+/* textured layered background using all logo colors */
+.fr,.bk{color:#fff;position:relative;overflow:hidden;background:
+  radial-gradient(130% 130% at 100% 0%, rgba(240,150,30,.28) 0%, transparent 45%),
+  radial-gradient(120% 120% at 0% 100%, rgba(200,16,46,.30) 0%, transparent 45%),
+  radial-gradient(90% 90% at 70% 30%, rgba(26,109,200,.55), transparent 60%),
+  linear-gradient(140deg, #0a1628 0%, #0B3D6E 45%, #155DA8 75%, #123a63 100%),
+  repeating-linear-gradient(135deg, rgba(255,255,255,.03) 0 2px, transparent 2px 14px)}
+.fr::before,.bk::before{content:'';position:absolute;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,rgba(201,162,39,.30),transparent 70%);top:-40px;right:-30px}
+.fr::after,.bk::after{content:'';position:absolute;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,rgba(200,16,46,.35),transparent 70%);bottom:-40px;left:-30px}
+
+/* FRONT */
+.fr{display:flex;flex-direction:column}
+.ftop{display:flex;align-items:center;gap:10px;padding:9px 12px;position:relative;z-index:2}
+.ftop .logo{height:26px}
+.ftop .lab{font-size:8px;color:rgba(255,255,255,.7);letter-spacing:1px}
+.ftop .yr{margin-left:auto;font-size:8px;color:rgba(255,255,255,.55);letter-spacing:1.2px}
+.ribbon{height:12px;background:linear-gradient(90deg,#c8102e 0%,#e02038 60%,rgba(224,32,56,0) 100%);box-shadow:0 1px 3px rgba(0,0,0,.2);position:relative;z-index:2}
+.fbody{flex:1;display:flex;align-items:center;gap:14px;padding:9px 12px;position:relative;z-index:2;min-height:0}
+.finfo{flex:1;display:flex;flex-direction:column;min-width:0}
+.fname{font-size:22px;font-weight:700;letter-spacing:.3px;line-height:1.05}
+.fcode{font-size:10px;color:#f0a02e;font-weight:700;letter-spacing:2px;margin-top:2px}
+.fdiv{height:1px;margin:9px 0;background:linear-gradient(90deg,rgba(240,150,30,.85),rgba(240,150,30,.05))}
+.fpanels{display:flex;gap:8px}
+.fpanel{flex:1;background:rgba(255,255,255,.08);border:.5px solid rgba(255,255,255,.15);border-radius:6px;padding:4px 8px}
+.fpanel .lbl{font-size:7px;color:rgba(255,255,255,.6);letter-spacing:1px;text-transform:uppercase;font-weight:700}
+.fpanel .val{font-size:9px;color:#fff;font-weight:600;margin-top:2px}
+.chips{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
+.chip{font-size:7px;font-weight:600;color:#ffd47a;background:rgba(240,150,30,.18);border:.5px solid rgba(240,150,30,.5);border-radius:5px;padding:1px 4px;white-space:nowrap}
+.fphoto{width:52px;height:70px;border-radius:7px;flex-shrink:0;overflow:hidden;background:linear-gradient(150deg,#e7edf5,#c3d3e6);border:2px solid rgba(240,150,30,.85);box-shadow:0 3px 10px rgba(0,0,0,.35);display:flex;align-items:flex-start;justify-content:center;padding-top:8px;font-size:24px;color:#0B3D6E;font-weight:700}
+
+/* BACK */
+.bk{display:flex;flex-direction:column}
+.bktop{display:flex;align-items:center;gap:8px;padding:9px 12px;position:relative;z-index:2;border-bottom:1px solid rgba(255,255,255,.12)}
+.bktop .logo{height:22px;filter:brightness(0) invert(1)}
+.bktop span{font-size:8px;color:rgba(255,255,255,.75);letter-spacing:1px;font-weight:600;margin-left:auto}
+.bkmid{flex:1;display:flex;align-items:center;gap:14px;padding:9px 12px;position:relative;z-index:2}
+.bkqr{text-align:center;flex-shrink:0}
+.bkqr img{width:62px;height:62px;border-radius:5px;padding:2px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.bkqr .cap{font-size:7px;color:rgba(255,255,255,.6);margin-top:3px;letter-spacing:1px}
+.bkterms{flex:1;min-width:0}
+.bkterms .tl{font-size:8px;color:#f0a02e;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:3px}
+.bkterms p{font-size:10px;color:rgba(255,255,255,.88);line-height:1.5;text-align:justify}
+.bkfoot{border-top:1px solid rgba(255,255,255,.12);padding:7px 12px;position:relative;z-index:2;color:#fff}
+.bkfoot .c{font-size:9px}
+.bkfoot .lbl{color:rgba(255,255,255,.55)}
+</style></head><body>
+<h1>🪪 Badge ILAS — Design Final (texture + toutes les couleurs du logo)</h1>
+<div class="sub">Background image-like : dégradés layereux + texture géométrique + halos, avec toutes les couleurs du logo (navy, bleu royal, rouge, doré). Architecture équilibrée — pas de zones vides. Front + Back, 85.6×54mm.</div>
+<div class="card">
+
+  <div class="badge fr">
+    <div class="ftop"><img class="logo" src="badge_designs/../static/uploads/logo-ilas.png"><span class="lab">INSTITUT ILAS</span><span class="yr">2025/2026</span></div>
+    <div class="ribbon"></div>
+    <div class="fbody">
+      <div class="finfo">
+        <div class="fname">SARA ALAOUI</div>
+        <div class="fcode">ETU-0001</div>
+        <div class="fdiv"></div>
+        <div class="fpanels">
+          <div class="fpanel"><div class="lbl">Niveau</div><div class="val">2BAC PC</div></div>
+          <div class="fpanel">
+            <div class="lbl">Cours</div>
+            <div class="chips"><span class="chip">Anglais Gén.</span><span class="chip">Mathématiques</span><span class="chip">Français</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="fphoto">S</div>
+    </div>
+  </div>
+
+  <div class="badge bk">
+    <div class="bktop"><img class="logo" src="badge_designs/../static/uploads/logo-ilas.png"><span>RÈGLEMENT INTÉRIEUR</span></div>
+    <div class="bkmid">
+      <div class="bkqr"><img src="badge_designs/qr.png" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2760%27 height=%2760%27%3E%3Crect width=%2760%27 height=%2760%27 fill=%27%230B3D6E%27/%3E%3Ctext x=%276%27 y=%2736%27 fill=%27%23fff%27 font-size=%2710%27%3EQR%3C/text%3E%3C/svg%3E'"><div class="cap">SCAN</div></div>
+      <div class="bkterms">
+        <div class="tl">Conditions</div>
+        <p>Cette carte est la propriété de l'institut ILAS. Elle est strictement personnelle et non transférable. L'élève s'engage à respecter le règlement intérieur. En cas de perte, veuillez contacter l'administration.</p>
+      </div>
+    </div>
+    <div class="bkfoot">
+      <div class="c"><span class="lbl">Institut ILAS</span><br>12 Av. Mohammed V, Casablanca &nbsp;·&nbsp; 0522-00-00-00 · contact@institutilas.com</div>
+    </div>
+  </div>
+
+</div>
+</body></html>

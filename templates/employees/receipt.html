@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="{{ lang or 'fr' }}">
+<head>
+<meta charset="utf-8">
+<title>Bulletin de Paie & Reçu de Salaire — {{ payout.receipt_no }} — {{ employee.full_name }}</title>
+<style>
+  @page {
+    {% if fmt == 'a5' %}
+      size: A5 landscape;
+      margin: 8mm 10mm;
+    {% else %}
+      size: A4 portrait;
+      margin: 12mm 14mm;
+    {% endif %}
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: #0f172a;
+    background: #f8fafc;
+    margin: 0;
+    padding: 20px;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 12px;
+  }
+
+  /* Screen Control Bar */
+  .no-print-bar {
+    max-width: 800px;
+    margin: 0 auto 20px auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0B3D6E;
+    color: #ffffff;
+    padding: 10px 18px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(11,61,110,0.25);
+  }
+  .no-print-bar a, .no-print-bar button {
+    text-decoration: none;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .sheet-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 14px;
+    padding: 28px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+  }
+
+  @media print {
+    .no-print-bar { display: none !important; }
+    body { padding: 0 !important; background: #fff !important; }
+    .sheet-container {
+      border: none !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      max-width: 100% !important;
+    }
+  }
+
+  /* Header */
+  .header-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    border-bottom: 2.5px solid #0B3D6E;
+    padding-bottom: 10px;
+  }
+  .inst-title {
+    font-size: 16px;
+    font-weight: 900;
+    color: #0B3D6E;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .inst-sub {
+    font-size: 10.5px;
+    color: #475569;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  .doc-title-box {
+    text-align: right;
+  }
+  .doc-title {
+    font-size: 15px;
+    font-weight: 900;
+    color: #0B3D6E;
+    text-transform: uppercase;
+  }
+  .doc-receipt {
+    font-size: 13px;
+    font-weight: 800;
+    color: #0284c7;
+    font-family: monospace;
+    margin-top: 2px;
+  }
+
+  /* Info Boxes Grid */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .info-box {
+    background: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 12px 16px;
+  }
+  .info-box-title {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #0B3D6E;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+  }
+  .info-line {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 11.5px;
+  }
+  .info-label { color: #64748b; font-weight: 600; }
+  .info-value { color: #0f172a; font-weight: 700; text-align: right; }
+
+  /* Breakdown Table */
+  table.salary-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  table.salary-table th {
+    background: #0B3D6E;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    border: 1px solid #0B3D6E;
+    letter-spacing: 0.3px;
+  }
+  table.salary-table td {
+    padding: 9px 12px;
+    border: 1px solid #cbd5e1;
+    font-size: 12px;
+  }
+  table.salary-table tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+
+  .net-row td {
+    background: #ecfdf5 !important;
+    border-top: 2px solid #059669 !important;
+    border-bottom: 2px solid #059669 !important;
+    font-size: 14px !important;
+    font-weight: 900 !important;
+    color: #047857 !important;
+  }
+
+  /* Signatures */
+  .sign-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 24px;
+  }
+  .sign-box {
+    border: 1.5px dashed #94a3b8;
+    border-radius: 10px;
+    padding: 12px 16px;
+    min-height: 100px;
+    background: #fafafa;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .sign-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: #0B3D6E;
+    text-transform: uppercase;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 4px;
+  }
+  .sign-mention {
+    font-size: 9.5px;
+    color: #64748b;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<!-- SCREEN CONTROL BAR -->
+<div class="no-print-bar">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <a href="{{ url_for('employees_payroll', month=payout.period_month) }}" style="color:#ffffff; font-weight:700; font-size:12.5px; background:rgba(255,255,255,0.15); padding:6px 12px; border-radius:6px;">
+      ← {{ 'العودة لجدول الرواتب' if lang=='ar' else 'Retour à la paie' }}
+    </a>
+    <span style="font-weight:800; font-size:13.5px;">
+      📄 {{ 'سند أداء راتب رسمي' if lang=='ar' else 'Bulletin de Paie Officiel' }}
+    </span>
+  </div>
+
+  <div style="display:flex; align-items:center; gap:8px;">
+    <div style="display:flex; background:rgba(255,255,255,0.12); padding:2px; border-radius:6px;">
+      <a href="{{ url_for('employee_salary_receipt', pid=payout.id, format='a5') }}" style="padding:4px 8px; border-radius:5px; font-size:11px; font-weight:700; color:#fff; {{ 'background:#10b981;' if fmt=='a5' else '' }}">
+        A5 Paysage
+      </a>
+      <a href="{{ url_for('employee_salary_receipt', pid=payout.id, format='a4_portrait') }}" style="padding:4px 8px; border-radius:5px; font-size:11px; font-weight:700; color:#fff; {{ 'background:#10b981;' if fmt=='a4_portrait' else '' }}">
+        A4 Portrait
+      </a>
+    </div>
+
+    <button onclick="window.print()" style="background:#10b981; border:none; color:#ffffff; font-weight:800; padding:7px 16px; border-radius:8px; font-size:12.5px; display:inline-flex; align-items:center; gap:6px;">
+      <span>🖨️</span><span>{{ 'طباعة السند (Ctrl+P)' if lang=='ar' else 'Imprimer le Reçu' }}</span>
+    </button>
+  </div>
+</div>
+
+<div class="sheet-container">
+  
+  <!-- 1. OFFICIAL INSTITUTE HEADER -->
+  <table class="header-table">
+    <tr>
+      <td style="width:55%;">
+        <div class="inst-title">{{ settings.inst_name }} — CENTRE DEROUA</div>
+        <div class="inst-sub">INSTITUT DES LANGUES ET DES ARTS · {{ settings.inst_city }}</div>
+        <div class="inst-sub">Autorisation Ministérielle N° 22-200/2020 · Année Scolaire : <strong>{{ settings.school_year }}</strong></div>
+      </td>
+      <td class="doc-title-box" style="width:45%;">
+        <div class="doc-title">BULLETIN DE PAIE & REÇU DE SALAIRE</div>
+        <div class="doc-receipt">N° {{ payout.receipt_no }}</div>
+        <div style="font-size:10px; color:#64748b; margin-top:2px;">Mois : <strong>{{ month_name_fr }}</strong></div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- 2. INFORMATION BOXES -->
+  <div class="info-grid">
+    
+    <!-- Employee Box -->
+    <div class="info-box">
+      <div class="info-box-title">👤 INFORMATIONS DU SALARIÉ</div>
+      <div class="info-line">
+        <span class="info-label">Nom & Prénom :</span>
+        <span class="info-value"><strong>{{ employee.full_name }}</strong></span>
+      </div>
+      <div class="info-line">
+        <span class="info-label">Code Salarié :</span>
+        <span class="info-value" style="font-family:monospace;">{{ employee.code }}</span>
+      </div>
+      <div class="info-line">
+        <span class="info-label">Fonction / Poste :</span>
+        <span class="info-value">{{ employee.job_title }}</span>
+      </div>
+      <div class="info-line">
+        <span class="info-label">Département :</span>
+        <span class="info-value">{{ employee.department }}</span>
+      </div>
+      {% if employee.cin %}
+      <div class="info-line">
+        <span class="info-label">N° C.I.N :</span>
+        <span class="info-value">{{ employee.cin }}</span>
+      </div>
+      {% endif %}
+      {% if employee.phone %}
+      <div class="info-line">
+        <span class="info-label">Téléphone :</span>
+        <span class="info-value">{{ employee.phone }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Payout Details Box -->
+    <div class="info-box">
+      <div class="info-box-title">💳 DÉTAILS DU RÈGLEMENT</div>
+      <div class="info-line">
+        <span class="info-label">Période concernée :</span>
+        <span class="info-value"><strong>{{ month_name_fr }} ({{ payout.period_month }})</strong></span>
+      </div>
+      <div class="info-line">
+        <span class="info-label">Date de paiement :</span>
+        <span class="info-value">{{ payout.payment_date.strftime('%d/%m/%Y') }}</span>
+      </div>
+      <div class="info-line">
+        <span class="info-label">Mode de règlement :</span>
+        <span class="info-value"><strong>{{ payout.payment_method }}</strong></span>
+      </div>
+      {% if payout.reference_no %}
+      <div class="info-line">
+        <span class="info-label">N° Réf / Chèque :</span>
+        <span class="info-value">{{ payout.reference_no }}</span>
+      </div>
+      {% endif %}
+      <div class="info-line">
+        <span class="info-label">Statut :</span>
+        <span class="info-value" style="color:#059669; font-weight:800;">✓ RÉGLÉ & CLÔTURÉ</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 3. DETAILED SALARY BREAKDOWN -->
+  <table class="salary-table">
+    <thead>
+      <tr>
+        <th style="text-align:left;">Désignation / Rubrique</th>
+        <th style="width:130px; text-align:right;">Gains (+)</th>
+        <th style="width:130px; text-align:right;">Retenues (-)</th>
+        <th style="width:150px; text-align:right;">Montant Net</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Base Salary -->
+      <tr>
+        <td>
+          <strong>Salaire de Base Mensuel</strong>
+          <div style="font-size:10.5px; color:#64748b;">Rémunération convenue pour la fonction de {{ employee.job_title }}</div>
+        </td>
+        <td style="text-align:right; font-weight:700;">{{ "%.2f"|format(payout.base_salary) }} DH</td>
+        <td style="text-align:right; color:#94a3b8;">—</td>
+        <td style="text-align:right; font-weight:700;">{{ "%.2f"|format(payout.base_salary) }} DH</td>
+      </tr>
+
+      <!-- Bonus / Primes -->
+      {% if payout.bonus_amount and payout.bonus_amount > 0 %}
+      <tr>
+        <td>
+          <strong style="color:#047857;">Primes & Gratifications</strong>
+          <div style="font-size:10.5px; color:#64748b;">{{ payout.bonus_notes or 'Prime de rendement / heures supplémentaires' }}</div>
+        </td>
+        <td style="text-align:right; font-weight:700; color:#047857;">+{{ "%.2f"|format(payout.bonus_amount) }} DH</td>
+        <td style="text-align:right; color:#94a3b8;">—</td>
+        <td style="text-align:right; font-weight:700; color:#047857;">+{{ "%.2f"|format(payout.bonus_amount) }} DH</td>
+      </tr>
+      {% endif %}
+
+      <!-- Advances Deducted -->
+      {% if payout.advances_deducted and payout.advances_deducted > 0 %}
+      <tr>
+        <td>
+          <strong style="color:#dc2626;">Acomptes & Avances sur Salaire</strong>
+          <div style="font-size:10.5px; color:#64748b;">Remboursement des avances perçues au cours du mois</div>
+        </td>
+        <td style="text-align:right; color:#94a3b8;">—</td>
+        <td style="text-align:right; font-weight:700; color:#dc2626;">-{{ "%.2f"|format(payout.advances_deducted) }} DH</td>
+        <td style="text-align:right; font-weight:700; color:#dc2626;">-{{ "%.2f"|format(payout.advances_deducted) }} DH</td>
+      </tr>
+      {% endif %}
+
+      <!-- Deductions -->
+      {% if payout.deductions_amount and payout.deductions_amount > 0 %}
+      <tr>
+        <td>
+          <strong style="color:#dc2626;">Retenues & Déductions</strong>
+          <div style="font-size:10.5px; color:#64748b;">{{ payout.deductions_notes or 'Absences ou retenues diverses' }}</div>
+        </td>
+        <td style="text-align:right; color:#94a3b8;">—</td>
+        <td style="text-align:right; font-weight:700; color:#dc2626;">-{{ "%.2f"|format(payout.deductions_amount) }} DH</td>
+        <td style="text-align:right; font-weight:700; color:#dc2626;">-{{ "%.2f"|format(payout.deductions_amount) }} DH</td>
+      </tr>
+      {% endif %}
+
+      <!-- TOTAL NET -->
+      <tr class="net-row">
+        <td colspan="3" style="text-align:right; text-transform:uppercase;">
+          💰 NET À PAYER (SALAIRE NET VERSÉ) :
+        </td>
+        <td style="text-align:right;">
+          {{ "%.2f"|format(payout.net_amount) }} DH
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% if payout.notes %}
+  <div style="font-size:11px; color:#64748b; font-style:italic; margin-bottom:14px;">
+    <strong>Note :</strong> {{ payout.notes }}
+  </div>
+  {% endif %}
+
+  <!-- 4. OFFICIAL SIGNATURE BOXES -->
+  <div class="sign-grid">
+    <div class="sign-box">
+      <div class="sign-title">Émargement & Décharge de l'Employé(e)</div>
+      <div style="font-size:10.5px; color:#475569; margin:6px 0;">
+        Je soussigné(e), <strong>{{ employee.full_name }}</strong>, reconnais avoir reçu la somme nette de <strong>{{ "%.2f"|format(payout.net_amount) }} DH</strong> au titre de mon salaire pour la période de {{ month_name_fr }}.
+      </div>
+      <div class="sign-mention">Date et Signature : _______________________</div>
+    </div>
+
+    <div class="sign-box">
+      <div class="sign-title">Visa & Cachet de la Direction</div>
+      <div style="font-size:10.5px; color:#475569; margin:6px 0;">
+        Institut ILAS Deroua — Fait le {{ payout.payment_date.strftime('%d/%m/%Y') }}. Certifié sincère et conforme.
+      </div>
+      <div class="sign-mention">Cachet & Signature de l'Établissement :</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

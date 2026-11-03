@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex between wrap mb-3">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('enrollments') }}">← {{ t('enrollments') }}</a></div>
+    <h2 class="mt-0 mb-0" style="font-size:22px">➕ Nouvelle Inscription Multi-Cours (تسجيل متعدد)</h2>
+  </div>
+</div>
+
+<form method="post" class="max-w" id="enrollForm">
+  <!-- ===== Choix élève ===== -->
+  <div class="form-section">
+    <div class="sec-head">
+      <span class="sec-ico">👤</span>
+      <div><h3>1. Choix de l'élève & Date (التلميذ وتاريخ التسجيل)</h3><p>Sélectionner l'élève et la date d'entrée</p></div>
+    </div>
+    <div class="sec-body">
+      <div class="form-row">
+        <div class="field full">
+          <label>{{ t('students') }} <span class="req">*</span></label>
+          <select name="student_id" required id="studentSelect">
+            <option value="">-- Choisir un élève --</option>
+            {% for s in students %}<option value="{{ s.id }}">{{ s.full_name }} ({{ s.code }})</option>{% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>Date d'inscription <span class="req">*</span></label>
+          <input type="date" name="enroll_date" id="enrollDate" value="{{ today }}" required onchange="recalculateAll()">
+        </div>
+        <div class="field">
+          <label>Statut</label>
+          <select name="status"><option value="active">🟢 Actif</option><option value="completed">Terminé</option><option value="dropped">Abandonné</option></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Choix des cours ===== -->
+  <div class="form-section">
+    <div class="sec-head">
+      <span class="sec-ico">📚</span>
+      <div><h3>2. Sélection des cours & Frais d'inscription (المواد وواجبات التسجيل)</h3><p>Cocher les matières (Chaque langue a ses frais d'inscription)</p></div>
+    </div>
+    <div class="sec-body">
+      <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px;" id="coursesGrid">
+        {% for c in courses %}
+        <label class="course-card-option" style="border: 1px solid #dcdfe6; padding:12px; border-radius:10px; cursor:pointer; display:flex; gap:10px; align-items:flex-start; background:#fff; transition:all 0.2s;">
+          <input type="checkbox" name="course_ids" value="{{ c.id }}" data-price="{{ c.price }}" data-regfee="{{ c.registration_fee or (40 if c.category=='tutoring' else 200) }}" data-name="{{ c.display_name }}" onchange="toggleCourseRow(this)" style="margin-top:3px; transform:scale(1.2);">
+          <div>
+            <div style="font-weight:700; color:#0B3D6E;">{{ c.display_name }}</div>
+            <div style="font-size:12px; color:#606266; margin-top:2px;">
+              <span class="chip {% if c.category=='language' %}chip-blue{% else %}chip-green{% endif %}" style="font-size:10px; padding:2px 6px;">{{ 'Langue' if c.category=='language' else 'Soutien' }}</span>
+              <span>• {{ c.price }} {{ settings.currency }} + <strong style="color:#6d28d9;">{{ c.registration_fee or (40 if c.category=='tutoring' else 200) }} DH Frais</strong></span>
+            </div>
+          </div>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Tableau de répartition comptable ===== -->
+  <div class="form-section" id="prorateSection" style="display:none;">
+    <div class="sec-head">
+      <span class="sec-ico">🧮</span>
+      <div><h3>3. Répartition comptable & Frais d'inscription (التوزيع المالي وواجب التسجيل)</h3><p>تفصيل واجب الدراسة + واجبات التسجيل لكل مادة</p></div>
+    </div>
+    <div class="sec-body" style="padding:0; overflow-x:auto;">
+      <table class="table" style="width:100%; margin:0; border-collapse:collapse;" id="calcTable">
+        <thead>
+          <tr style="background:#f4f6f9; text-align:left; font-size:12px; color:#5b6472;">
+            <th style="padding:10px 12px;">Matière / Cours</th>
+            <th style="padding:10px; text-align:center;">Prix Cours (DH)</th>
+            <th style="padding:10px; text-align:center;">Frais D'inscription</th>
+            <th style="padding:10px; text-align:center;">Séances du mois</th>
+            <th style="padding:10px; text-align:center;">Séances ce mois</th>
+            <th style="padding:10px; text-align:center;">Pourcentage Prof (%)</th>
+            <th style="padding:10px; text-align:center;">Part ce mois (Mois)</th>
+            <th style="padding:10px; text-align:right;">Report mois prochain</th>
+          </tr>
+        </thead>
+        <tbody id="calcTbody">
+        </tbody>
+        <tfoot>
+          <tr style="background:#eef4fc; font-weight:700;">
+            <td style="padding:12px 12px; text-align:right; font-size:14px; color:#0B3D6E;">TOTAL FACTURÉ AU تلميذ :</td>
+            <td style="padding:12px 10px; text-align:center; font-size:15px; color:#C8102E;" id="grandTotalShow">0.00 {{ settings.currency }}</td>
+            <td colspan="4"></td>
+            <td style="padding:12px 10px; text-align:center; font-size:14px; color:#10b981;" id="earnedTotalShow">0.00 {{ settings.currency }}</td>
+            <td style="padding:12px 12px; text-align:right; font-size:14px; color:#f59e0b;" id="deferredTotalShow">0.00 {{ settings.currency }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== Paiement initial & Règlement ===== -->
+  <div class="form-section" id="paymentSection" style="display:none;">
+    <div class="sec-head">
+      <span class="sec-ico">💳</span>
+      <div><h3>4. Règlement & Paiement Initial (الأداء والوصل)</h3><p>Le تلميذ يدفع المبلغ الكامل شامل واجبات التسجيل أو تسقيعاً أولياً</p></div>
+    </div>
+    <div class="sec-body">
+      <div class="form-row">
+        <div class="field">
+          <label>Montant payé aujourd'hui ({{ settings.currency }})</label>
+          <input type="number" step="0.01" name="initial_payment" id="initialPayment" value="0" placeholder="0.00" oninput="updateBalance()">
+        </div>
+        <div class="field">
+          <label>Méthode de paiement</label>
+          <select name="payment_method">
+            <option value="cash">💵 Espèces</option>
+            <option value="transfer">🏦 Virement</option>
+            <option value="card">💳 Carte bancaire</option>
+            <option value="online">🌐 Paiement en ligne</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Reste à payer (Solde)</label>
+          <input type="text" id="balanceShow" readonly style="background:#f4f6f9; font-weight:700; color:#C8102E;" value="0.00 {{ settings.currency }}">
+        </div>
+        <div class="field full">
+          <label>Notes / Remarques</label>
+          <textarea name="notes" rows="2" placeholder="Informations complémentaires..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit" id="submitBtn">💾 Enregistrer l'inscription & Générer Facture</button>
+    <a class="btn btn-outline" href="{{ url_for('enrollments') }}">{{ t('cancel') }}</a>
+  </div>
+</form>
+
+<style>
+.max-w { max-width: 1040px; }
+.course-card-option:hover { border-color: #1f6feb !important; background: #f0f7ff !important; }
+</style>
+
+<script>
+  var grandTotal = 0;
+
+  function toggleCourseRow(cb) {
+    var cid = cb.value;
+    var tbody = document.getElementById('calcTbody');
+    var rowId = 'row_' + cid;
+
+    if (cb.checked) {
+      var row = document.createElement('tr');
+      row.id = rowId;
+      row.style.borderBottom = '1px solid #eef1f6';
+      row.innerHTML = `
+        <td style="padding:10px 12px; font-weight:600; color:#0B3D6E;">${cb.dataset.name}</td>
+        <td style="padding:8px; text-align:center;">
+          <input type="number" step="0.01" name="monthly_price_${cid}" id="mprice_${cid}" value="${cb.dataset.price}" oninput="recalcRow(${cid})" style="width:85px; text-align:center; font-weight:700; color:#0B3D6E; padding:4px; border:1px solid #1f6feb; border-radius:6px; background:#f0f7ff;">
+        </td>
+        <td style="padding:8px; text-align:center;">
+          <input type="number" step="0.01" name="registration_fee_${cid}" id="regfee_${cid}" value="${cb.dataset.regfee}" oninput="updateGrandTotal()" style="width:80px; text-align:center; font-weight:700; color:#6d28d9; padding:4px; border:1px solid #8b5cf6; border-radius:6px; background:#f5f3ff;">
+        </td>
+        <td style="padding:8px; text-align:center;">
+          <input type="number" name="total_sessions_${cid}" id="tsess_${cid}" value="10" oninput="recalcRow(${cid})" style="width:55px; text-align:center; padding:4px; border:1px solid #ccc; border-radius:6px;">
+        </td>
+        <td style="padding:8px; text-align:center;">
+          <input type="number" name="attended_sessions_${cid}" id="rsess_${cid}" value="10" oninput="recalcRow(${cid})" style="width:55px; text-align:center; padding:4px; border:1px solid #ccc; border-radius:6px;">
+        </td>
+        <td style="padding:8px; text-align:center;">
+          <input type="number" step="0.1" name="teacher_percentage_${cid}" id="tpct_${cid}" value="50" oninput="recalcRow(${cid})" style="width:55px; text-align:center; padding:4px; border:1px solid #8b5cf6; border-radius:6px; font-weight:700; color:#6d28d9;"> %
+        </td>
+        <td style="padding:8px; text-align:center;">
+          <input type="number" step="0.01" name="current_month_earned_${cid}" id="cearned_${cid}" value="${cb.dataset.price}" oninput="updateGrandTotal()" style="width:85px; text-align:center; padding:4px; border:1px solid #10b981; border-radius:6px; color:#047857; font-weight:600;">
+        </td>
+        <td style="padding:8px; text-align:right;">
+          <input type="number" step="0.01" name="deferred_amount_${cid}" id="damount_${cid}" value="0.00" oninput="updateGrandTotal()" style="width:85px; text-align:right; padding:4px; border:1px solid #f59e0b; border-radius:6px; color:#b45309; font-weight:600;">
+        </td>
+      `;
+      tbody.appendChild(row);
+      fetchProrated(cid);
+    } else {
+      var existing = document.getElementById(rowId);
+      if (existing) existing.remove();
+      updateGrandTotal();
+    }
+    checkVisibility();
+  }
+
+  function fetchProrated(cid) {
+    var dt = document.getElementById('enrollDate').value;
+    fetch(`/api/calculate_prorated?course_id=${cid}&enroll_date=${dt}`)
+      .then(res => res.json())
+      .then(data => {
+        if (document.getElementById('tsess_' + cid)) {
+          document.getElementById('tsess_' + cid).value = data.total_sessions;
+          document.getElementById('rsess_' + cid).value = data.remaining_sessions;
+          document.getElementById('mprice_' + cid).value = data.full_price;
+          document.getElementById('cearned_' + cid).value = data.current_month_earned;
+          document.getElementById('damount_' + cid).value = data.deferred_next_month;
+          if (data.teacher_percentage !== undefined) {
+            document.getElementById('tpct_' + cid).value = data.teacher_percentage;
+          }
+          if (data.registration_fee !== undefined) {
+            document.getElementById('regfee_' + cid).value = data.registration_fee;
+          }
+          updateGrandTotal();
+        }
+      }).catch(err => console.error(err));
+  }
+
+  function recalculateAll() {
+    var checkboxes = document.querySelectorAll('#coursesGrid input[type="checkbox"]:checked');
+    checkboxes.forEach(cb => fetchProrated(cb.value));
+  }
+
+  function recalcRow(cid) {
+    var cb = document.querySelector('#coursesGrid input[value="' + cid + '"]');
+    var cycleMonths = (cb && cb.dataset.cyclemonths) ? (parseInt(cb.dataset.cyclemonths) || 1) : 1;
+    var unitPrice = (cb && cb.dataset.unitprice) ? parseFloat(cb.dataset.unitprice) : ((parseFloat(document.getElementById('mprice_' + cid).value) || 0) / cycleMonths);
+    var m = parseFloat(document.getElementById('mprice_' + cid).value) || unitPrice;
+    
+    var t = parseInt(document.getElementById('tsess_' + cid).value) || 1;
+    var r = parseInt(document.getElementById('rsess_' + cid).value) || 0;
+    
+    var earned = (t > 0) ? (unitPrice / t) * r : unitPrice;
+    earned = Math.min(unitPrice, Math.max(0, earned));
+    var def = Math.max(0, m - earned);
+    
+    document.getElementById('cearned_' + cid).value = earned.toFixed(2);
+    document.getElementById('damount_' + cid).value = def.toFixed(2);
+    updateGrandTotal();
+  }
+
+  function updateGrandTotal() {
+    grandTotal = 0;
+    var earnedTotal = 0;
+    var deferredTotal = 0;
+
+    var mprices = document.querySelectorAll('#calcTbody input[id^="mprice_"]');
+    mprices.forEach(inp => {
+      var cid = inp.id.split('_')[1];
+      var coursePrice = parseFloat(inp.value) || 0;
+      var regFeeInp = document.getElementById('regfee_' + cid);
+      var regFee = regFeeInp ? (parseFloat(regFeeInp.value) || 0) : 0;
+      grandTotal += (coursePrice + regFee);
+    });
+
+    var cearnedInps = document.querySelectorAll('#calcTbody input[id^="cearned_"]');
+    cearnedInps.forEach(inp => {
+      earnedTotal += parseFloat(inp.value) || 0;
+    });
+
+    var damountInps = document.querySelectorAll('#calcTbody input[id^="damount_"]');
+    damountInps.forEach(inp => {
+      deferredTotal += parseFloat(inp.value) || 0;
+    });
+
+    document.getElementById('grandTotalShow').textContent = grandTotal.toFixed(2) + ' {{ settings.currency }}';
+    document.getElementById('earnedTotalShow').textContent = earnedTotal.toFixed(2) + ' {{ settings.currency }}';
+    document.getElementById('deferredTotalShow').textContent = deferredTotal.toFixed(2) + ' {{ settings.currency }}';
+
+    var initPayInp = document.getElementById('initialPayment');
+    if (!initPayInp.dataset.userEdited) {
+      initPayInp.value = grandTotal.toFixed(2);
+    }
+    updateBalance();
+  }
+
+  function updateBalance() {
+    var initPay = parseFloat(document.getElementById('initialPayment').value) || 0;
+    var bal = Math.max(0, grandTotal - initPay);
+    document.getElementById('balanceShow').value = bal.toFixed(2) + ' {{ settings.currency }}';
+  }
+
+  document.getElementById('initialPayment').addEventListener('input', function() {
+    this.dataset.userEdited = "true";
+  });
+
+  function checkVisibility() {
+    var checkedCount = document.querySelectorAll('#coursesGrid input[type="checkbox"]:checked').length;
+    document.getElementById('prorateSection').style.display = checkedCount > 0 ? 'block' : 'none';
+    document.getElementById('paymentSection').style.display = checkedCount > 0 ? 'block' : 'none';
+  }
+</script>
+{% endblock %}

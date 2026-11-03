@@ -1,0 +1,1425 @@
+{% extends 'base.html' %}
+{% set title = ('سجل غيابات قسمي' if cur_user and cur_user.role == 'teacher' else 'سجل الغيابات') if session.get('lang')=='ar' else ('Liste des Absences de mes classes' if cur_user and cur_user.role == 'teacher' else 'Suivi des Absences') %}
+{% block content %}
+
+<!-- TOP HEADER & ACTIONS -->
+<div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+  <div>
+    <div class="muted" style="font-size:12px">
+      {% if cur_user and cur_user.role == 'teacher' %}
+        <a href="{{ url_for('attendance') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ 'تسجيل الغياب' if session.get('lang')=='ar' else "Faire l'appel" }}</a>
+      {% else %}
+        <a href="{{ url_for('dashboard') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ t('dashboard') }}</a>
+      {% endif %}
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+      <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800;">
+        {% if cur_user and cur_user.role == 'teacher' %}
+          📑 {{ 'سجل وغيابات أقسامي' if session.get('lang')=='ar' else 'Liste des Absences de mes classes' }}
+        {% else %}
+          📲 {{ 'مركز متابعة الغياب وإشعارات أولياء الأمور (WhatsApp Anti-Ban)' if session.get('lang')=='ar' else 'Suivi des Absences & WhatsApp Anti-Ban Pro' }}
+        {% endif %}
+      </h2>
+      <span class="chip chip-blue" style="font-size:11px; font-weight:800;">
+        {{ absent_records|length }} {{ 'حالة مسجلة' if session.get('lang')=='ar' else 'cas répertorié(s)' }}
+      </span>
+    </div>
+    <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">
+      {% if cur_user and cur_user.role == 'teacher' %}
+        {{ 'سجل حضور وغياب تلاميذ أقسامك وتتبع حالات الغياب والتأخر' if session.get('lang')=='ar' else 'Consultez l\'historique des absences et retards des élèves de vos classes' }}
+      {% else %}
+        {{ 'سجل مركزي للغياب مع نظام إرسال واتساب محمي من الحظر (Spintax ديناميكي، تأخير بشري عشوائي وتتبع فوري)' if session.get('lang')=='ar' else 'Registre centralisé des absences avec diffusion WhatsApp sécurisée anti-ban (variations Spintax, temporisation aléatoire et traçabilité)' }}
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="flex wrap no-print" style="gap:8px; align-items:center;">
+    {% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+    <button type="button" onclick="openAbsenceWhatsAppModal()" class="btn btn-primary" style="background:#15803d; border-color:#15803d; font-weight:800; font-size:13px; padding:7px 16px; display:inline-flex; align-items:center; gap:8px; box-shadow:0 3px 10px rgba(21,128,61,0.25);">
+      <span style="font-size:16px;">📲</span>
+      <span>{{ 'إرسال WhatsApp لأولياء الأمور' if session.get('lang')=='ar' else 'Diffuser WhatsApp aux Parents' }}</span>
+      <span id="headerPendingBadge" class="chip chip-amber" style="font-size:10px; padding:1px 6px; background:#fef3c7; color:#b45309; border:none;">
+        {{ total_pending_count }} {{ 'في الانتظار' if session.get('lang')=='ar' else 'en attente' }}
+      </span>
+    </button>
+    {% endif %}
+    <button type="button" onclick="window.print()" class="btn btn-outline" style="background:#fff; font-weight:700; font-size:13px; padding:7px 14px; border-color:#cbd5e1; display:inline-flex; align-items:center; gap:6px;">
+      <span>🖨️</span>
+      <span>{{ 'طباعة' if session.get('lang')=='ar' else 'Imprimer' }}</span>
+    </button>
+    <a href="{{ url_for('attendance') }}" class="btn btn-outline" style="background:#fff; border-color:#1f6feb; color:#1f6feb; font-weight:800; font-size:13px; padding:7px 14px; display:inline-flex; align-items:center; gap:6px;">
+      <span>📋</span>
+      <span>{{ 'تسجيل الغياب' if session.get('lang')=='ar' else 'Faire l\'appel' }}</span>
+    </a>
+  </div>
+</div>
+
+<!-- AVIS OBLIGATOIRE ENSEIGNANT (5 LANGUES: FR, AR, EN, ES, DE) -->
+{% include 'teachers/_teacher_attendance_alert.html' %}
+
+<!-- KPIS SUMMARY STRIP -->
+<div class="grid grid-4 mb-3 no-print" style="gap:12px;">
+  <div class="card stat" style="border-left:4px solid #ef4444; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase;">
+      {{ 'إجمالي الغيابات' if session.get('lang')=='ar' else 'TOTAL ABSENCES' }}
+    </div>
+    <div class="value" style="font-size:22px; font-weight:900; color:#dc2626; margin:2px 0;">
+      {{ total_absent_count }} <span style="font-size:12px; font-weight:600; color:#64748b;">{{ 'تلميذ' if session.get('lang')=='ar' else 'élèves' }}</span>
+    </div>
+    <div class="sub" style="font-size:11px; color:#ef4444; font-weight:700;">
+      🔴 {{ 'حالات غياب مسجلة' if session.get('lang')=='ar' else 'Absences confirmées' }}
+    </div>
+  </div>
+
+  <div class="card stat" style="border-left:4px solid #f59e0b; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase;">
+      {{ 'إجمالي التأخيرات' if session.get('lang')=='ar' else 'TOTAL RETARDS' }}
+    </div>
+    <div class="value" style="font-size:22px; font-weight:900; color:#d97706; margin:2px 0;">
+      {{ total_late_count }} <span style="font-size:12px; font-weight:600; color:#64748b;">{{ 'تلميذ' if session.get('lang')=='ar' else 'élèves' }}</span>
+    </div>
+    <div class="sub" style="font-size:11px; color:#d97706; font-weight:700;">
+      ⚠️ {{ 'حالات تأخير مسجلة' if session.get('lang')=='ar' else 'Retards en séance' }}
+    </div>
+  </div>
+
+  <div class="card stat" style="border-left:4px solid #10b981; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase;">
+      {{ 'إشعارات الواتساب' if session.get('lang')=='ar' else 'NOTIFICATIONS ENVOYÉES' }}
+    </div>
+    <div class="value" style="font-size:22px; font-weight:900; color:#059669; margin:2px 0;">
+      {{ total_notified_count }} <span style="font-size:12px; font-weight:600; color:#64748b;">/ {{ absent_records|length }}</span>
+    </div>
+    <div class="sub" style="font-size:11px; color:#059669; font-weight:700;">
+      {% if total_pending_count > 0 %}
+        <span style="color:#d97706;">⏳ {{ total_pending_count }} {{ 'في انتظار الإرسال' if session.get('lang')=='ar' else 'en attente d\'envoi' }}</span>
+      {% else %}
+        <span>✅ {{ 'تم إشعار جميع الأولياء' if session.get('lang')=='ar' else 'Tous les parents notifiés' }}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card stat" style="border-left:4px solid #1f6feb; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase;">
+      {{ 'النطاق والتاريخ' if session.get('lang')=='ar' else 'PÉRIODE SÉLECTIONNÉE' }}
+    </div>
+    <div class="value" style="font-size:16px; font-weight:800; color:#0B3D6E; margin:4px 0;">
+      {% if period == 'today' %}
+        📅 {{ 'اليوم' if session.get('lang')=='ar' else 'Aujourd\'hui' }} ({{ d }})
+      {% elif period == 'yesterday' %}
+        ◀ {{ 'أمس' if session.get('lang')=='ar' else 'Hier' }}
+      {% elif period == 'this_week' %}
+        🗓️ {{ 'هذا الأسبوع' if session.get('lang')=='ar' else 'Cette semaine' }}
+      {% elif period == 'this_month' %}
+        📆 {{ 'هذا الشهر' if session.get('lang')=='ar' else 'Ce mois-ci' }}
+      {% elif period == 'all' %}
+        🌐 {{ 'جميع التواريخ' if session.get('lang')=='ar' else 'Toutes les dates' }}
+      {% elif att_date %}
+        📅 {{ att_date }}
+      {% else %}
+        📅 {{ d }}
+      {% endif %}
+    </div>
+    <div class="sub" style="font-size:11px; color:#1f6feb; font-weight:700;">
+      {{ 'تحديث فوري' if session.get('lang')=='ar' else 'Mise à jour en temps réel' }}
+    </div>
+  </div>
+</div>
+
+<!-- MODERN MULTI-CRITERIA FILTERS CARD -->
+<div class="card card-pad mb-3 no-print" style="border:1.5px solid #cbd5e1; border-radius:16px; background:#f8fafc; padding:16px 20px;">
+  
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="font-size:18px;">🔍</span>
+      <h3 style="margin:0; font-size:15px; font-weight:800; color:#0B3D6E;">
+        {{ 'تصفية وبحث متقدم في سجل الغيابات' if session.get('lang')=='ar' else 'Filtres Avancés des Absences' }}
+      </h3>
+    </div>
+
+    <!-- Quick Period Pills -->
+    <div style="display:inline-flex; background:#e2e8f0; padding:3px; border-radius:10px; gap:3px;">
+      <a href="{{ url_for('attendance_admin', period='today', teacher_id=teacher_id, course_id=course_id, level=level_filter, status=status_filter, notified=notified_filter, q=search_q) }}"
+         style="padding:4px 10px; border-radius:7px; font-size:11.5px; font-weight:800; text-decoration:none; transition:all 0.2s; background:{{ '#1f6feb; color:#fff;' if (period=='today' or (not period and not att_date)) else 'transparent; color:#475569;' }}">
+        {{ 'اليوم' if session.get('lang')=='ar' else 'Aujourd\'hui' }}
+      </a>
+      <a href="{{ url_for('attendance_admin', period='yesterday', teacher_id=teacher_id, course_id=course_id, level=level_filter, status=status_filter, notified=notified_filter, q=search_q) }}"
+         style="padding:4px 10px; border-radius:7px; font-size:11.5px; font-weight:800; text-decoration:none; transition:all 0.2s; background:{{ '#1f6feb; color:#fff;' if period=='yesterday' else 'transparent; color:#475569;' }}">
+        {{ 'أمس' if session.get('lang')=='ar' else 'Hier' }}
+      </a>
+      <a href="{{ url_for('attendance_admin', period='this_week', teacher_id=teacher_id, course_id=course_id, level=level_filter, status=status_filter, notified=notified_filter, q=search_q) }}"
+         style="padding:4px 10px; border-radius:7px; font-size:11.5px; font-weight:800; text-decoration:none; transition:all 0.2s; background:{{ '#1f6feb; color:#fff;' if period=='this_week' else 'transparent; color:#475569;' }}">
+        {{ 'هذا الأسبوع' if session.get('lang')=='ar' else 'Cette semaine' }}
+      </a>
+      <a href="{{ url_for('attendance_admin', period='this_month', teacher_id=teacher_id, course_id=course_id, level=level_filter, status=status_filter, notified=notified_filter, q=search_q) }}"
+         style="padding:4px 10px; border-radius:7px; font-size:11.5px; font-weight:800; text-decoration:none; transition:all 0.2s; background:{{ '#1f6feb; color:#fff;' if period=='this_month' else 'transparent; color:#475569;' }}">
+        {{ 'هذا الشهر' if session.get('lang')=='ar' else 'Ce mois' }}
+      </a>
+      <a href="{{ url_for('attendance_admin', period='all', teacher_id=teacher_id, course_id=course_id, level=level_filter, status=status_filter, notified=notified_filter, q=search_q) }}"
+         style="padding:4px 10px; border-radius:7px; font-size:11.5px; font-weight:800; text-decoration:none; transition:all 0.2s; background:{{ '#1f6feb; color:#fff;' if period=='all' else 'transparent; color:#475569;' }}">
+        {{ 'الكل' if session.get('lang')=='ar' else 'Toutes' }}
+      </a>
+    </div>
+  </div>
+
+  <form method="get" action="{{ url_for('attendance_admin') }}">
+    <input type="hidden" name="period" value="{{ period or '' }}">
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:10px; align-items:flex-end;">
+      
+      <!-- 1. FILTER BY TEACHER (PROF) -->
+      {% if not (cur_user and cur_user.role == 'teacher') %}
+      <div>
+        <label style="font-size:11px; font-weight:800; color:#475569; margin-bottom:3px; display:block;">
+          👨‍🏫 {{ 'الأستاذ' if session.get('lang')=='ar' else 'Professeur' }}
+        </label>
+        <div class="input-field has-ico" style="margin:0;">
+          <span class="f-ico">👨‍🏫</span>
+          <select name="teacher_id" onchange="this.form.submit()" style="font-size:12px; padding:6px 10px; font-weight:700;">
+            <option value="">-- {{ 'جميع الأساتذة' if session.get('lang')=='ar' else 'Tous les professeurs' }} --</option>
+            {% for t in all_teachers %}
+            <option value="{{ t.id }}" {{ 'selected' if teacher_id==t.id }}>{{ t.full_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- 2. FILTER BY CLASS (COURS) -->
+      <div>
+        <label style="font-size:11px; font-weight:800; color:#475569; margin-bottom:3px; display:block;">
+          📚 {{ 'الفوج / المادة' if session.get('lang')=='ar' else 'Classe / Cours' }}
+        </label>
+        <div class="input-field has-ico" style="margin:0;">
+          <span class="f-ico">📚</span>
+          <select name="course_id" onchange="this.form.submit()" style="font-size:12px; padding:6px 10px; font-weight:700;">
+            <option value="">-- {{ 'جميع الأفواج' if session.get('lang')=='ar' else 'Toutes les classes' }} --</option>
+            {% for c in courses %}
+            <option value="{{ c.id }}" {{ 'selected' if course_id==c.id }}>{{ c.display_name }} ({{ c.level }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- 3. FILTER BY LEVEL (NIVEAU) -->
+      <div>
+        <label style="font-size:11px; font-weight:800; color:#475569; margin-bottom:3px; display:block;">
+          🎓 {{ 'المستوى' if session.get('lang')=='ar' else 'Niveau Scolaire' }}
+        </label>
+        <div class="input-field has-ico" style="margin:0;">
+          <span class="f-ico">🎓</span>
+          <select name="level" onchange="this.form.submit()" style="font-size:12px; padding:6px 10px; font-weight:700;">
+            <option value="">-- {{ 'جميع المستويات' if session.get('lang')=='ar' else 'Tous les niveaux' }} --</option>
+            {% for lvl in all_levels %}
+            <option value="{{ lvl }}" {{ 'selected' if level_filter==lvl }}>{{ lvl }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- 4. FILTER BY STATUS -->
+      <div>
+        <label style="font-size:11px; font-weight:800; color:#475569; margin-bottom:3px; display:block;">
+          🏷️ {{ 'الحالة' if session.get('lang')=='ar' else 'Statut' }}
+        </label>
+        <div class="input-field has-ico" style="margin:0;">
+          <span class="f-ico">🏷️</span>
+          <select name="status" onchange="this.form.submit()" style="font-size:12px; padding:6px 10px; font-weight:700;">
+            <option value="" {{ 'selected' if not status_filter }}>🔴 ⚠️ {{ 'الغياب والتأخير' if session.get('lang')=='ar' else 'Absents & Retards' }}</option>
+            <option value="absent" {{ 'selected' if status_filter=='absent' }}>🔴 {{ 'الغياب فقط' if session.get('lang')=='ar' else 'Absents uniquement' }}</option>
+            <option value="late" {{ 'selected' if status_filter=='late' }}>⚠️ {{ 'التأخير فقط' if session.get('lang')=='ar' else 'Retards uniquement' }}</option>
+            <option value="all" {{ 'selected' if status_filter=='all' }}>📋 {{ 'الكل' if session.get('lang')=='ar' else 'Tous les pointages' }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 5. FILTER BY NOTIFICATION STATUS -->
+      <div>
+        <label style="font-size:11px; font-weight:800; color:#475569; margin-bottom:3px; display:block;">
+          📲 {{ 'إشعار واتساب' if session.get('lang')=='ar' else 'Alerte WhatsApp' }}
+        </label>
+        <div class="input-field has-ico" style="margin:0;">
+          <span class="f-ico">📲</span>
+          <select name="notified" onchange="this.form.submit()" style="font-size:12px; padding:6px 10px; font-weight:700;">
+            <option value="" {{ 'selected' if not notified_filter }}>{{ 'الكل' if session.get('lang')=='ar' else 'Tous' }}</option>
+            <option value="pending" {{ 'selected' if notified_filter=='pending' }}>⏳ {{ 'غير مرسل (في الانتظار)' if session.get('lang')=='ar' else 'En attente (Non notifiés)' }}</option>
+            <option value="notified" {{ 'selected' if notified_filter=='notified' }}>✅ {{ 'تم إرسالها مسبقاً' if session.get('lang')=='ar' else 'Déjà notifiés' }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 6. SEARCH STUDENT -->
+      <div style="flex:1.2;">
+        <label style="font-size:11px; font-weight:800; color:#475569; margin-bottom:3px; display:block;">
+          👤 {{ 'بحث عن تلميذ' if session.get('lang')=='ar' else 'Rechercher un élève' }}
+        </label>
+        <div class="input-field has-ico" style="margin:0;">
+          <span class="f-ico">🔍</span>
+          <input type="text" name="q" value="{{ search_q }}" placeholder="{{ 'الاسم أو الهاتف...' if session.get('lang')=='ar' else 'Nom, prénom, code...' }}" style="font-size:12px; padding:6px 10px;">
+        </div>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div style="display:flex; gap:6px;">
+        <button type="submit" class="btn btn-primary" style="padding:7px 16px; font-size:12px; font-weight:800; background:#1f6feb; border:none; border-radius:8px;">
+          {{ 'تصفية' if session.get('lang')=='ar' else 'Filtrer' }}
+        </button>
+        <a href="{{ url_for('attendance_admin') }}" class="btn btn-outline" style="padding:7px 12px; font-size:12px; font-weight:700; border-radius:8px; background:#fff; text-decoration:none; color:#64748b;" title="Réinitialiser les filtres">
+          🔄
+        </a>
+      </div>
+
+    </div>
+  </form>
+</div>
+
+<!-- BATCH ACTION BAR (WHEN ITEMS ARE CHECKED) -->
+<div id="batchActionBar" style="display:none; background:#ecfdf5; border:1.5px solid #86efac; border-radius:12px; padding:10px 16px; margin-bottom:12px; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(16,185,129,0.15);">
+  <div style="display:flex; align-items:center; gap:8px;">
+    <span style="font-size:18px;">🎯</span>
+    <span style="font-weight:800; color:#065f46; font-size:13px;">
+      <span id="selectedAbsCount">0</span> {{ 'تلميذ محدد للإرسال' if session.get('lang')=='ar' else 'élève(s) sélectionné(s)' }}
+    </span>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <button type="button" onclick="openAbsenceWhatsAppModal('selected')" class="btn btn-xs" style="background:#15803d; color:#fff; font-weight:800; padding:6px 14px; border-radius:7px; border:none; cursor:pointer;">
+      📲 {{ 'إرسال WhatsApp للمحددين (Anti-Ban)' if session.get('lang')=='ar' else 'Diffuser WhatsApp aux sélectionnés' }}
+    </button>
+    <button type="button" onclick="markSelectedAsNotified()" class="btn btn-xs btn-outline" style="background:#fff; font-weight:700; padding:6px 10px; border-radius:7px; cursor:pointer;">
+      ✓ {{ 'تحديد كمرسل' if session.get('lang')=='ar' else 'Marquer notifié' }}
+    </button>
+    <button type="button" onclick="clearAbsenceSelection()" class="btn btn-xs btn-outline" style="background:#fff; font-weight:700; padding:6px 10px; border-radius:7px; color:#ef4444; border-color:#fca5a5; cursor:pointer;">
+      ✕ {{ 'إلغاء التحديد' if session.get('lang')=='ar' else 'Désélectionner' }}
+    </button>
+  </div>
+</div>
+
+<!-- MAIN RECORDED ABSENCES DATA TABLE -->
+<div class="card" style="border-radius:16px; overflow:hidden; border:1px solid #e2e8f0; box-shadow:0 4px 16px rgba(0,0,0,0.03);">
+  
+  <div class="card-pad" style="background:#ffffff; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <div>
+      <h3 style="margin:0; font-size:16px; font-weight:800; color:#0B3D6E;">
+        📋 {{ 'قائمة الغيابات والتأخيرات المسجلة' if session.get('lang')=='ar' else 'Pointages d\'Absences Enregistrés' }}
+      </h3>
+      <div class="muted" style="font-size:12px; margin-top:2px;">
+        {{ absent_records|length }} {{ 'حالة مستوفية لشروط البحث' if session.get('lang')=='ar' else 'résultat(s) sur cette vue' }}
+      </div>
+    </div>
+    
+    <div style="display:flex; gap:8px;">
+      <button type="button" onclick="selectAllPendingOnly()" class="btn btn-xs btn-outline" style="font-weight:700; border-radius:7px; padding:5px 10px;" title="Cocher tous les élèves non encore notifiés">
+        ⏳ {{ 'تحديد غير المرسل فقط' if session.get('lang')=='ar' else 'Cocher non notifiés' }}
+      </button>
+    </div>
+  </div>
+
+  {% if absent_records %}
+  <div class="table-wrap">
+    <table style="margin:0;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0;">
+          <th style="width:36px; text-align:center;">
+            <input type="checkbox" id="selectAllAbsences" onchange="toggleSelectAllAbsences(this)" title="Tout cocher / décocher" style="cursor:pointer; transform:scale(1.15);">
+          </th>
+          <th style="width:30px; text-align:center;">#</th>
+          <th>{{ 'التلميذ' if session.get('lang')=='ar' else 'Élève' }}</th>
+          <th>{{ 'الفوج والمادة' if session.get('lang')=='ar' else 'Classe & Matière' }}</th>
+          <th>{{ 'الأستاذ' if session.get('lang')=='ar' else 'Professeur' }}</th>
+          <th>{{ 'تاريخ الحصة' if session.get('lang')=='ar' else 'Date & Séance' }}</th>
+          <th style="text-align:center;">{{ 'الحالة' if session.get('lang')=='ar' else 'Statut' }}</th>
+          <th style="text-align:center;">{{ 'إشعار الوالدين (WhatsApp Anti-Ban)' if session.get('lang')=='ar' else 'Alerte WhatsApp Anti-Ban' }}</th>
+          <th style="text-align:right;" class="no-print">{{ t('actions') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in absent_records %}
+        {% set a = item.attendance %}
+        {% set stu = item.student %}
+        {% set c = item.course %}
+        {% set t = item.teacher %}
+        <tr id="row-att-{{ item.attendance_id }}" style="transition:background 0.2s;">
+          
+          <!-- Checkbox -->
+          <td style="text-align:center;">
+            <input type="checkbox" class="abs-checkbox" value="{{ item.attendance_id }}" data-notified="{{ '1' if item.is_notified else '0' }}" onchange="updateSelectedCount()" style="cursor:pointer; transform:scale(1.15);">
+          </td>
+
+          <td style="text-align:center; font-weight:700; color:#94a3b8;">
+            {{ loop.index }}
+          </td>
+
+          <!-- 1. Student Info -->
+          <td>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div class="avatar avatar-sm" style="background:#0B3D6E; color:#fff; font-weight:800; width:34px; height:34px; border-radius:9px; font-size:13px;">
+                {{ stu.first_name[0]|upper if stu and stu.first_name else 'S' }}
+              </div>
+              <div>
+                <strong style="color:#0f172a; font-size:13.5px; display:block;">
+                  {{ stu.full_name if stu else '-' }}
+                </strong>
+                <div class="muted" style="font-size:11px; display:flex; gap:6px; align-items:center;">
+                  <span>{{ 'كود:' if session.get('lang')=='ar' else 'Code :' }} {{ stu.code or '-' }}</span>
+                  {% if stu and stu.school_level %}
+                  <span style="color:#cbd5e1;">•</span>
+                  <span style="color:#64748b;">{{ stu.school_level }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </td>
+
+          <!-- 2. Course & Level -->
+          <td>
+            {% if c %}
+            <div>
+              <strong style="color:#0B3D6E; font-size:12.5px; display:block;">
+                📚 {{ c.display_name }}
+              </strong>
+              {% if c.level %}
+              <span class="chip chip-blue" style="font-size:10px; padding:1px 5px; margin-top:2px;">
+                {{ c.level }}
+              </span>
+              {% endif %}
+            </div>
+            {% else %}
+            <span class="muted">—</span>
+            {% endif %}
+          </td>
+
+          <!-- 3. Teacher -->
+          <td>
+            {% if t %}
+            <div style="display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; color:#1e293b;">
+              <span>👨‍🏫</span>
+              <span>{{ t.full_name }}</span>
+            </div>
+            {% else %}
+            <span class="muted">—</span>
+            {% endif %}
+          </td>
+
+          <!-- 4. Date -->
+          <td>
+            <div style="font-size:12px; font-weight:700; color:#334155;">
+              📅 {{ a.date.strftime('%d/%m/%Y') if a.date else '-' }}
+            </div>
+          </td>
+
+          <!-- 5. Status Chip -->
+          <td style="text-align:center;">
+            {% if a.status == 'absent' %}
+            <span class="chip chip-red" style="font-size:11px; font-weight:800; padding:2px 8px;">
+              🔴 {{ 'غائب' if session.get('lang')=='ar' else 'Absent' }}
+            </span>
+            {% elif a.status == 'late' %}
+            <span class="chip chip-amber" style="font-size:11px; font-weight:800; padding:2px 8px;">
+              ⚠️ {{ 'متأخر' if session.get('lang')=='ar' else 'Retard' }}
+            </span>
+            {% else %}
+            <span class="chip chip-green" style="font-size:11px; font-weight:800; padding:2px 8px;">
+              🟢 {{ 'حاضر' if session.get('lang')=='ar' else 'Présent' }}
+            </span>
+            {% endif %}
+          </td>
+
+          <!-- 6. WhatsApp Parent Alert Button (With Spintax & Tracking) -->
+          <td style="text-align:center;">
+            <div>
+              <!-- Notification State Badge -->
+              <span id="notif-badge-{{ item.attendance_id }}" class="chip {{ 'chip-green' if item.is_notified else 'chip-gray' }}" style="font-size:10px; font-weight:800; padding:1px 6px; margin-bottom:4px; display:inline-block;">
+                {% if item.is_notified %}
+                  ✅ {{ 'تم الإرسال' if session.get('lang')=='ar' else 'Envoyé' }} ({{ item.notified_at_str }})
+                {% else %}
+                  ⏳ {{ 'غير مرسل' if session.get('lang')=='ar' else 'En attente' }}
+                {% endif %}
+              </span>
+
+              <div style="display:flex; justify-content:center; align-items:center; gap:4px;">
+                {% if item.clean_phone %}
+                <button type="button" onclick="openSingleAbsenceWhatsApp({{ item.attendance_id }})" class="btn btn-xs" 
+                        style="background:#15803d; color:#ffffff; font-weight:800; border-radius:7px; padding:4px 10px; display:inline-flex; align-items:center; gap:5px; border:none; cursor:pointer;"
+                        title="{{ 'إرسال إشعار فوري لولي الأمر بنظام الحماية Spintax' if session.get('lang')=='ar' else 'Envoyer alerte anti-ban personnalisée' }}">
+                  <span style="font-size:13px;">📲</span>
+                  <span>WhatsApp</span>
+                </button>
+                <button type="button" onclick="copyAbsenceMessage({{ item.attendance_id }})" class="btn btn-xs btn-outline" style="padding:3px 7px; border-radius:6px; background:#fff;" title="Copier le texte personnalisé">
+                  📋
+                </button>
+                {% else %}
+                <span class="chip chip-gray" style="font-size:9.5px;">
+                  {{ 'بدون هاتف' if session.get('lang')=='ar' else 'Sans tél' }}
+                </span>
+                {% endif %}
+              </div>
+
+              {% if item.phone %}
+              <div style="font-size:10px; color:#64748b; margin-top:2px;">
+                📱 {{ item.phone }} {% if item.raw_parent_phone %}<span style="color:#0B3D6E; font-weight:700;">(Parent)</span>{% endif %}
+              </div>
+              {% endif %}
+            </div>
+          </td>
+
+          <!-- 7. Actions -->
+          <td style="text-align:right;" class="no-print">
+            <div class="flex" style="justify-content:flex-end; gap:5px;">
+              {% if stu and not (cur_user and cur_user.role == 'teacher') %}
+              <a href="{{ url_for('student_view', sid=stu.id) }}" class="btn btn-xs btn-outline" style="font-weight:700; padding:3px 8px;" title="Voir le dossier de l'élève">
+                👁️ {{ 'ملف' if session.get('lang')=='ar' else 'Dossier' }}
+              </a>
+              {% endif %}
+              {% if c %}
+              <a href="{{ url_for('attendance', course_id=c.id, date=a.date) }}" class="btn btn-xs btn-outline" style="font-weight:700; padding:3px 8px; color:#1f6feb;" title="Modifier l'appel de cette séance">
+                ✏️ {{ 'تعديل' if session.get('lang')=='ar' else 'Pointage' }}
+              </a>
+              {% endif %}
+            </div>
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty" style="padding:60px 24px; text-align:center;">
+    <div style="font-size:52px; margin-bottom:12px;">🎉</div>
+    <h3 style="margin:0; color:#047857; font-size:18px;">
+      {{ 'لا توجد أي حالة غياب مسجلة مطابقة للبحث' if session.get('lang')=='ar' else 'Aucune absence enregistrée pour les filtres sélectionnés' }}
+    </h3>
+    <p style="color:#64748b; margin:6px 0 0; font-size:13px;">
+      {{ 'جميع التلاميذ حاضرون أو لم يتم تسجيل أي غياب بعد في هذه الفترة' if session.get('lang')=='ar' else 'Tous les élèves sont présents ou aucun pointage d\'absence n\'a été consigné sur cette sélection.' }}
+    </p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ============================================================== -->
+<!-- MODAL: WHATSAPP ABSENCE BROADCAST (ANTI-BAN STRATEGY ENGINE)    -->
+<!-- ============================================================== -->
+<div id="absenceWhatsAppModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); backdrop-filter:blur(5px); z-index:99999; justify-content:center; align-items:center; padding:15px; box-sizing:border-box;">
+  <div style="background:#ffffff; width:100%; max-width:840px; max-height:92vh; border-radius:18px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); border:1.5px solid #cbd5e1; display:flex; flex-direction:column; overflow:hidden;">
+    
+    <!-- Modal Header -->
+    <div style="background:linear-gradient(135deg, #0B3D6E 0%, #15803d 100%); color:#ffffff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:24px;">📲</span>
+        <div>
+          <h3 style="margin:0; font-size:16px; font-weight:800; letter-spacing:0.3px;">
+            {{ 'إرسال إشعارات الغياب عبر WhatsApp (نظام الحماية من الحظر)' if session.get('lang')=='ar' else 'Diffusion WhatsApp des Absences (Système Anti-Ban Pro)' }}
+          </h3>
+          <p style="margin:2px 0 0; font-size:11.5px; opacity:0.9;">
+            {{ 'توليد صيغ Spintax متغيرة تلقائياً + تأخير زمني بشري عشوائي + تتبع حي لحالة الاستلام' if session.get('lang')=='ar' else 'Génération Spintax dynamique aléatoire + temporisation humaine + suivi en temps réel' }}
+          </p>
+        </div>
+      </div>
+      <button type="button" onclick="closeAbsenceWhatsAppModal()" style="background:rgba(255,255,255,0.2); border:none; width:32px; height:32px; border-radius:50%; color:#fff; font-size:16px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Fermer">✕</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div style="padding:20px; overflow-y:auto; flex:1;">
+      
+      <!-- STEP 1: CONFIGURATION & ANTI-BAN PARAMETERS -->
+      <div id="waAbsStepConfig">
+        
+        <!-- Anti-ban Shield Notification Strip -->
+        <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:12px;">
+          <span style="font-size:26px;">🛡️</span>
+          <div>
+            <strong style="color:#166534; font-size:13.5px; display:block;">
+              {{ 'حماية قصوى لرقم المعهد ضد الحظر (Anti-Ban Pro Actif)' if session.get('lang')=='ar' else 'Protection Anti-Ban Active pour le Numéro de l\'Établissement' }}
+            </strong>
+            <div style="color:#15803d; font-size:11.5px; margin-top:2px;">
+              {{ 'يتم تغيير صيغة كل رسالة عشوائياً (التحية، النص، والخاتمة) مع إضافة كود مرجعي فريد لكل تلميذ لمنع اكتشاف رسائل متطابقة.' if session.get('lang')=='ar' else 'Chaque message envoyé adopte une formulation différente aléatoire (salutations, tournures et signatures) avec jeton de référence unique pour contourner les filtres antispam de WhatsApp.' }}
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+          
+          <!-- Column 1: Scope & Recipient Priority -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px;">
+            <label style="font-size:12px; font-weight:800; color:#0B3D6E; display:block; margin-bottom:8px;">
+              👥 1. {{ 'نطاق التلاميذ المستهدفين' if session.get('lang')=='ar' else 'Élèves à Notifier' }} :
+            </label>
+            
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; cursor:pointer;">
+                <input type="radio" name="waAbsScope" value="selected" id="radioScopeSelected" style="width:16px; height:16px;">
+                <span>🎯 {{ 'التلاميذ المحددين فقط' if session.get('lang')=='ar' else 'Élèves sélectionnés uniquement' }} (<strong id="scopeSelectedCount">0</strong>)</span>
+              </label>
+
+              <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; cursor:pointer;">
+                <input type="radio" name="waAbsScope" value="pending" checked style="width:16px; height:16px;">
+                <span>⏳ {{ 'جميع غير المرسل لهم في هذه الصفحة' if session.get('lang')=='ar' else 'Tous les absents en attente (Non notifiés)' }} (<strong>{{ total_pending_count }}</strong>)</span>
+              </label>
+
+              <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; cursor:pointer;">
+                <input type="radio" name="waAbsScope" value="all_view" style="width:16px; height:16px;">
+                <span>📋 {{ 'جميع الحالات في العرض الحالي' if session.get('lang')=='ar' else 'Tous les absents du tableau actuel' }} (<strong>{{ absent_records|length }}</strong>)</span>
+              </label>
+            </div>
+
+            <!-- Recipient Phone Preference -->
+            <div style="margin-top:14px; padding-top:10px; border-top:1px dashed #cbd5e1;">
+              <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:6px;">
+                📱 {{ 'رقم هاتف المستلم المستهدف' if session.get('lang')=='ar' else 'Priorité du Numéro Destinataire' }} :
+              </label>
+              <select id="waAbsRecipientTarget" style="width:100%; padding:6px 10px; border-radius:8px; border:1.5px solid #cbd5e1; font-size:12px; font-weight:700; color:#0B3D6E;">
+                <option value="parent_pref">👨‍👩‍👧 {{ 'هاتف ولي الأمر أولاً (ثم التلميذ)' if session.get('lang')=='ar' else 'Tél Parent en priorité (Fallback Élève)' }}</option>
+                <option value="parent_only">👨‍👩‍👧 {{ 'هاتف ولي الأمر فقط' if session.get('lang')=='ar' else 'Tél Parent uniquement' }}</option>
+                <option value="student_only">🎓 {{ 'هاتف التلميذ فقط' if session.get('lang')=='ar' else 'Tél Élève uniquement' }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Column 2: Anti-Ban Cadence & Language -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px;">
+            <label style="font-size:12px; font-weight:800; color:#0B3D6E; display:block; margin-bottom:8px;">
+              ⏱️ 2. {{ 'طريقة الإرسال والفاصل الزمني' if session.get('lang')=='ar' else 'Mode & Cadence d\'Envoi' }} :
+            </label>
+
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <label style="display:flex; align-items:flex-start; gap:8px; font-size:12px; font-weight:700; cursor:pointer;">
+                <input type="radio" name="waAbsCadence" value="guided" checked style="width:16px; height:16px; margin-top:2px;">
+                <div>
+                  <div style="color:#0f172a; font-weight:800;">⚡ {{ 'الوضع الموجه البشري (موصى به جداً)' if session.get('lang')=='ar' else 'Mode Guidé Assisté (Hautement Recommandé)' }}</div>
+                  <div style="font-size:11px; color:#64748b; font-weight:normal;">
+                    {{ 'الضغط على زر الإرسال أو زر المسافة (Espace) للانتقال للتلميذ الموالي.' if session.get('lang')=='ar' else 'Contrôle total : Validez chaque envoi avec la touche Espace ou Entrée.' }}
+                  </div>
+                </div>
+              </label>
+
+              <label style="display:flex; align-items:flex-start; gap:8px; font-size:12px; font-weight:700; cursor:pointer;">
+                <input type="radio" name="waAbsCadence" value="auto" style="width:16px; height:16px; margin-top:2px;">
+                <div>
+                  <div style="color:#0f172a; font-weight:800;">⏳ {{ 'الوضع التتابعي الآلي بتأخير عشوائي' if session.get('lang')=='ar' else 'Mode Auto-Séquentiel avec Temporisation' }}</div>
+                  <div style="font-size:11px; color:#64748b; font-weight:normal;">
+                    {{ 'فاصل زمني بشري عشوائي بين 5 و 9 ثوان بين كل إرسال لتفادي الروبوتات.' if session.get('lang')=='ar' else 'Pause humaine aléatoire (5 à 9 secondes) entre chaque ouverture.' }}
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <!-- Language and Platform switcher -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; padding-top:10px; border-top:1px dashed #cbd5e1;">
+              <div>
+                <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:3px;">
+                  🌐 {{ 'اللغة' if session.get('lang')=='ar' else 'Langue' }} :
+                </label>
+                <select id="waAbsLangSelect" onchange="refreshSpintaxPreview()" style="width:100%; padding:5px 8px; border-radius:7px; border:1px solid #cbd5e1; font-size:11.5px; font-weight:700;">
+                  <option value="ar">🇲🇦 العربية (Spintax)</option>
+                  <option value="fr">🇫🇷 Français (Spintax)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:3px;">
+                  💻 {{ 'منصة الإرسال' if session.get('lang')=='ar' else 'Canal' }} :
+                </label>
+                <select id="waAbsChannelSelect" style="width:100%; padding:5px 8px; border-radius:7px; border:1px solid #cbd5e1; font-size:11.5px; font-weight:700;">
+                  <option value="web">🌐 WhatsApp Web</option>
+                  <option value="app">📱 Application Desktop (wa.me)</option>
+                </select>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- LIVE SPINTAX PREVIEW BOX -->
+        <div style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:14px; padding:14px 18px; margin-bottom:18px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:12px; font-weight:800; color:#0B3D6E; display:flex; align-items:center; gap:6px;">
+              <span>💬</span>
+              <span>{{ 'معاينة حية لتغيّر نص الرسالة (Spintax Real-Time Preview)' if session.get('lang')=='ar' else 'Aperçu Dynamique des Variations Spintax' }}</span>
+            </div>
+            <button type="button" onclick="refreshSpintaxPreview()" class="btn btn-xs btn-outline" style="font-weight:700; font-size:11px; padding:3px 8px; border-radius:6px;">
+              🔄 {{ 'توليد صيغة عشوائية أخرى' if session.get('lang')=='ar' else 'Générer une autre variation' }}
+            </button>
+          </div>
+
+          <div id="waSpintaxPreviewBox" style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:12px 14px; font-size:12.5px; color:#14532d; line-height:1.6; white-space:pre-wrap; max-height:150px; overflow-y:auto; font-family:system-ui, -apple-system, sans-serif;">
+            <!-- Generated in JS -->
+          </div>
+          <div style="font-size:10.5px; color:#64748b; margin-top:4px;">
+            💡 {{ 'لاحظ كيف تتغير الكلمات والتحيات والكود المرجعي عند كل نقرة مع الحفاظ على البيانات الدقيقة.' if session.get('lang')=='ar' else 'Notez comment la salutation, les formulations et le jeton de référence changent à chaque génération.' }}
+          </div>
+        </div>
+
+        <!-- Launch Button -->
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" onclick="closeAbsenceWhatsAppModal()" class="btn btn-outline" style="font-weight:700; padding:10px 18px;">
+            {{ 'إلغاء' if session.get('lang')=='ar' else 'Annuler' }}
+          </button>
+          <button type="button" onclick="startAbsenceDispatchQueue()" class="btn btn-primary" style="background:#15803d; border-color:#15803d; font-weight:800; font-size:14px; padding:10px 26px; box-shadow:0 4px 14px rgba(21,128,61,0.3); display:inline-flex; align-items:center; gap:8px;">
+            <span>🚀</span>
+            <span id="btnLaunchQueueText">{{ 'بدء إرسال الإشعارات المحمية' if session.get('lang')=='ar' else 'Lancer la File d\'Envoi Anti-Ban' }}</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- STEP 2: INTERACTIVE LIVE DISPATCH RUNNER -->
+      <div id="waAbsStepDispatch" style="display:none;">
+        
+        <!-- Progress Bar & Counter -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px 16px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div style="font-weight:800; font-size:13px; color:#0B3D6E;" id="waAbsProgressTitle">
+              Progression : Élève 1 sur 5
+            </div>
+            <div style="font-weight:800; font-size:13px; color:#15803d;" id="waAbsProgressPercent">
+              0%
+            </div>
+          </div>
+          <div style="width:100%; height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden;">
+            <div id="waAbsProgressBarFill" style="width:0%; height:100%; background:linear-gradient(90deg, #10b981 0%, #059669 100%); transition:width 0.3s ease;"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; font-size:11.5px; color:#64748b;">
+            <span id="waAbsProgressSentCount" style="font-weight:700; color:#15803d;">0 envoyé(s) ✅</span>
+            <span id="waAbsProgressRemainingCount">5 restant(s)</span>
+          </div>
+        </div>
+
+        <!-- Active Student Card -->
+        <div id="waAbsCurrentCard" style="background:#ffffff; border:2px solid #86efac; border-radius:14px; padding:18px 20px; margin-bottom:14px; box-shadow:0 4px 16px rgba(0,0,0,0.04);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div id="waAbsCurrentAvatar" style="width:44px; height:44px; border-radius:12px; background:#0B3D6E; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800;">
+                S
+              </div>
+              <div>
+                <h3 id="waAbsCurrentStudentName" style="margin:0; font-size:16px; font-weight:800; color:#0f172a;">
+                  Nom Élève
+                </h3>
+                <div style="font-size:12px; color:#64748b; margin-top:2px;" id="waAbsCurrentMeta">
+                  Classe · Matière · Professeur
+                </div>
+              </div>
+            </div>
+            
+            <div id="waAbsCurrentStatusBadge">
+              <span class="chip chip-red" style="font-size:11px; font-weight:800;">🔴 Absent</span>
+            </div>
+          </div>
+
+          <!-- Recipient & Phone -->
+          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div>
+              <div style="font-size:11px; font-weight:800; color:#166534; text-transform:uppercase;">
+                {{ 'ولي الأمر المستهدف' if session.get('lang')=='ar' else 'DESTINATAIRE CIBLÉ' }} :
+              </div>
+              <div style="font-size:13.5px; font-weight:800; color:#0f172a; margin-top:2px;" id="waAbsCurrentRecipientDisplay">
+                Parent (06 XX XX XX XX)
+              </div>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button type="button" id="btnToggleAltPhone" onclick="toggleAlternativePhone()" class="btn btn-xs btn-outline" style="display:none; font-size:11px; padding:4px 8px; background:#fff;">
+                📱 Basculer sur tél élève
+              </button>
+            </div>
+          </div>
+
+          <!-- Live Personalized Message Preview for this student -->
+          <div style="margin-bottom:16px;">
+            <label style="font-size:11.5px; font-weight:800; color:#475569; display:block; margin-bottom:4px;">
+              {{ 'الرسالة الفريدة المولدة لهذا التلميذ (Spintax Unique)' if session.get('lang')=='ar' else 'Message Unique Personnalisé pour ce Parent' }} :
+            </label>
+            <div id="waAbsCurrentMessageText" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:12px 14px; font-size:12.5px; line-height:1.5; color:#1e293b; white-space:pre-wrap; max-height:120px; overflow-y:auto;">
+              Message...
+            </div>
+          </div>
+
+          <!-- Main Action Buttons Row -->
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <button type="button" id="btnAbsSendWhatsApp" onclick="triggerCurrentAbsenceWhatsApp()" class="btn btn-primary" style="background:#15803d; border-color:#15803d; font-weight:800; font-size:14px; padding:10px 22px; flex:1; display:inline-flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 3px 10px rgba(21,128,61,0.25);">
+              <span style="font-size:18px;">📲</span>
+              <span>{{ 'إرسال (فتح واتساب)' if session.get('lang')=='ar' else 'Envoyer (Ouvrir WhatsApp)' }}</span>
+            </button>
+
+            <button type="button" onclick="advanceToNextAbsence()" class="btn btn-primary" id="btnAbsNext" style="background:#1f6feb; border-color:#1f6feb; font-weight:800; font-size:13.5px; padding:10px 18px; display:inline-flex; align-items:center; gap:6px;">
+              <span>{{ 'الموالي' if session.get('lang')=='ar' else 'Suivant' }}</span>
+              <span>➡️</span>
+              <kbd style="background:rgba(255,255,255,0.25); font-size:10px; padding:2px 5px; border-radius:4px; margin-left:4px;">Espace</kbd>
+            </button>
+
+            <button type="button" onclick="skipCurrentAbsence()" class="btn btn-outline" style="font-weight:700; padding:10px 14px; color:#64748b;" title="Passer cet élève sans envoyer">
+              <span>{{ 'تخطي' if session.get('lang')=='ar' else 'Passer' }}</span> ⏭️
+            </button>
+
+            <button type="button" onclick="copyCurrentAbsenceMessage()" class="btn btn-outline" style="padding:10px 12px;" title="Copier le texte dans le presse-papiers">
+              📋
+            </button>
+          </div>
+
+          <!-- Auto-cadence Countdown Indicator -->
+          <div id="waAbsCountdownContainer" style="display:none; margin-top:12px; padding:8px 12px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; align-items:center; justify-content:space-between;">
+            <div style="font-size:12px; font-weight:700; color:#b45309; display:flex; align-items:center; gap:6px;">
+              <span>⏱️</span>
+              <span>Envoi automatique dans <strong id="waAbsCountdownVal">6</strong>s...</span>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button type="button" id="btnPauseAuto" onclick="pauseAutoSequence()" class="btn btn-xs btn-outline" style="font-weight:700; background:#fff;">⏸️ Pause</button>
+              <button type="button" id="btnResumeAuto" onclick="resumeAutoSequence()" class="btn btn-xs btn-outline" style="display:none; font-weight:700; background:#fff;">▶️ Reprendre</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Finished Screen (Displayed when queue reaches end) -->
+        <div id="waAbsFinishCard" style="display:none; background:#f0fdf4; border:1.5px solid #86efac; border-radius:14px; padding:28px 20px; text-align:center; margin-bottom:14px;">
+          <div style="font-size:48px; margin-bottom:8px;">🎉</div>
+          <h3 style="margin:0; font-size:18px; font-weight:800; color:#166534;">
+            {{ 'تم الانتهاء من إرسال الإشعارات بنجاح!' if session.get('lang')=='ar' else 'Envoi des notifications terminé avec succès !' }}
+          </h3>
+          <p style="margin:6px 0 16px; font-size:13px; color:#15803d;" id="waAbsFinishSummary">
+            Tous les élèves de la liste ont été traités.
+          </p>
+          <button type="button" onclick="closeAbsenceWhatsAppModal(true)" class="btn btn-primary" style="background:#15803d; border-color:#15803d; font-weight:800; padding:9px 24px;">
+            {{ 'إغلاق وتحديث الجدول' if session.get('lang')=='ar' else 'Fermer et actualiser' }}
+          </button>
+        </div>
+
+        <!-- Queue Summary Table -->
+        <div style="margin-top:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-size:12px; font-weight:800; color:#475569;">
+              📋 {{ 'قائمة الإرسال الحالية' if session.get('lang')=='ar' else 'Liste de la File d\'Envoi' }} (<span id="waAbsQueueTableCount">0</span>)
+            </span>
+            <button type="button" onclick="backToAbsConfig()" class="btn btn-xs btn-outline" style="font-weight:700;">
+              ⚙️ {{ 'تعديل الإعدادات' if session.get('lang')=='ar' else 'Paramètres' }}
+            </button>
+          </div>
+
+          <div style="max-height:180px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:10px;">
+            <table style="margin:0; font-size:12px;">
+              <tbody id="waAbsQueueTableBody">
+                <!-- Injected in JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- JAVASCRIPT: ANTI-BAN WHATSAPP ENGINE & LOGIC                    -->
+<!-- ============================================================== -->
+<script>
+// RAW DATA PASSED FROM SERVER
+var RAW_ABSENT_RECORDS = [
+  {% for r in absent_records %}
+  {
+    attendance_id: {{ r.attendance_id }},
+    student_id: {{ r.student_id or 0 }},
+    student_name: {{ r.student_name|tojson }},
+    student_code: {{ (r.student_code or '')|tojson }},
+    parent_name: {{ (r.parent_name or 'Parent')|tojson }},
+    course_name: {{ (r.course_name or '')|tojson }},
+    teacher_name: {{ (r.teacher_name or '')|tojson }},
+    date: {{ (r.date or '')|tojson }},
+    status: {{ (r.status or '')|tojson }},
+    status_lbl: {{ (r.status_lbl or '')|tojson }},
+    status_fr: {{ (r.status_fr or '')|tojson }},
+    raw_parent_phone: {{ (r.raw_parent_phone or '')|tojson }},
+    clean_parent_phone: {{ (r.clean_parent_phone or '')|tojson }},
+    raw_student_phone: {{ (r.raw_student_phone or '')|tojson }},
+    clean_student_phone: {{ (r.clean_student_phone or '')|tojson }},
+    clean_phone: {{ (r.clean_phone or '')|tojson }},
+    is_notified: {{ 'true' if r.is_notified else 'false' }},
+    notified_at_str: {{ (r.notified_at_str or '')|tojson }}
+  }{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+var INST_NAME = {{ (inst_name or 'Institut ILAS')|tojson }};
+var INST_PHONE = {{ (inst_phone or '')|tojson }};
+
+// ANTI-BAN SPINTAX DICTIONARY
+var SPINTAX_AR = {
+  greetings: [
+    "السلام عليكم ورحمة الله وبركاته، تحية طيبة من إدارة " + INST_NAME + " 🏫",
+    "تحية طيبة وبعد، تتشرف إدارة " + INST_NAME + " بالتواصل معكم 🏫",
+    "أهلاً وسهلاً بكم، إخبار رسمي من إدارة مؤسسة " + INST_NAME + " 🏫",
+    "السلام عليكم، إشعار تتبّع دراسي من إدارة " + INST_NAME + " 🏫"
+  ],
+  bodies: [
+    "نحيطكم علماً بأنه تم تسجيل حالة [{statut}] للتلميذ(ة) *{eleve}* في حصة مادة *{matiere}*{prof} بتاريخ {date}.",
+    "نود إبلاغكم بتسجيل [{statut}] بالنسبة للتلميذ(ة) *{eleve}* خلال حصة *{matiere}* المنعقدة بتاريخ {date}.",
+    "نلفت عنايتكم الكريمة إلى عدم حضور التلميذ(ة) *{eleve}* لحصة مادة *{matiere}* المبرمجة بتاريخ {date}.",
+    "تم رصد غياب التلميذ(ة) *{eleve}* عن حصة *{matiere}* المقررة بتاريخ {date}."
+  ],
+  closings: [
+    "نرجو منكم تأكيد سبب الغياب والتواصل معنا عند الحاجة عبر الرقم: " + INST_PHONE + ".",
+    "شاكرين لكم حسن تتبعكم وحرصكم الدائم على مسار التلميذ. رقم الإدارة: " + INST_PHONE + ".",
+    "لأي مبرر أو استفسار، المرجو الاتصال بإدارة المعهد على الرقم: " + INST_PHONE + ". دمتم بخير.",
+    "مع متمنياتنا للتلميذ(ة) بكامل التوفيق والنجاح. هاتف الإدارة: " + INST_PHONE + "."
+  ]
+};
+
+var SPINTAX_FR = {
+  greetings: [
+    "Bonjour, l'administration de " + INST_NAME + " vous contacte concernant votre enfant 🏫",
+    "Chers parents, message officiel de l'établissement " + INST_NAME + " 🏫",
+    "Bonjour, avis d'absence de la direction pédagogique " + INST_NAME + " 🏫",
+    "Chère famille, notification de suivi scolaire " + INST_NAME + " 🏫"
+  ],
+  bodies: [
+    "Nous vous informons que l'élève *{eleve}* a été marqué(e) [{statut}] pour le cours de *{matiere}*{prof} le {date}.",
+    "Une mention [{statut}] a été enregistrée pour *{eleve}* lors de la séance de *{matiere}* ce {date}.",
+    "Nous vous signalons l'absence constatée de l'élève *{eleve}* au cours de *{matiere}* du {date}.",
+    "Le pointage du cours de *{matiere}* ({date}) indique que *{eleve}* était [{statut}]."
+  ],
+  closings: [
+    "Merci de bien vouloir justifier cette absence en contactant l'administration au " + INST_PHONE + ".",
+    "Pour toute précision ou justificatif, notre secrétariat reste à votre écoute au " + INST_PHONE + ".",
+    "Nous vous remercions pour votre suivi attentif. Contact école : " + INST_PHONE + ".",
+    "Restant à votre entière disposition pour tout renseignement au " + INST_PHONE + "."
+  ]
+};
+
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function buildSpintaxMessage(item, lang, seed) {
+  var s = seed || item.attendance_id || Math.floor(Math.random() * 8999 + 1000);
+  if (lang === 'fr') {
+    var st = (item.status === 'absent') ? 'absent(e) 🔴' : ((item.status === 'late') ? 'en retard ⚠️' : 'présent(e) 🟢');
+    var profStr = item.teacher_name ? (' (Prof: ' + item.teacher_name + ')') : '';
+    var g = pickRandom(SPINTAX_FR.greetings);
+    var b = pickRandom(SPINTAX_FR.bodies)
+      .replace('{eleve}', item.student_name)
+      .replace('{matiere}', item.course_name)
+      .replace('{prof}', profStr)
+      .replace('{date}', item.date)
+      .replace('{statut}', st);
+    var c = pickRandom(SPINTAX_FR.closings);
+    return g + '\n\n' + b + '\n\n' + c + '\n[Réf: #AB-' + s + ']';
+  } else {
+    var st = (item.status === 'absent') ? 'غائب(ة) 🔴' : ((item.status === 'late') ? 'متأخر(ة) ⚠️' : 'حاضر(ة) 🟢');
+    var profStr = item.teacher_name ? (' (الأستاذ: ' + item.teacher_name + ')') : '';
+    var g = pickRandom(SPINTAX_AR.greetings);
+    var b = pickRandom(SPINTAX_AR.bodies)
+      .replace('{eleve}', item.student_name)
+      .replace('{matiere}', item.course_name)
+      .replace('{prof}', profStr)
+      .replace('{date}', item.date)
+      .replace('{statut}', st);
+    var c = pickRandom(SPINTAX_AR.closings);
+    return g + '\n\n' + b + '\n\n' + c + '\n[Réf: #AB-' + s + ']';
+  }
+}
+
+// LIVE STATE OBJECT
+var waAbsState = {
+  queue: [],
+  currentIndex: 0,
+  statuses: {}, // attendance_id -> 'sent' | 'skipped' | 'pending'
+  targetPhoneOverride: {}, // attendance_id -> specific phone
+  autoIntervalTimer: null,
+  autoCountdownVal: 0,
+  isPaused: false
+};
+
+// CHECKBOX SELECTION HELPERS
+function updateSelectedCount() {
+  var checked = document.querySelectorAll('.abs-checkbox:checked');
+  var count = checked.length;
+  var bar = document.getElementById('batchActionBar');
+  var lbl = document.getElementById('selectedAbsCount');
+  var scopeLbl = document.getElementById('scopeSelectedCount');
+  var radioSel = document.getElementById('radioScopeSelected');
+  
+  if (lbl) lbl.innerText = count;
+  if (scopeLbl) scopeLbl.innerText = count;
+
+  if (count > 0) {
+    if (bar) bar.style.display = 'flex';
+    if (radioSel) {
+      radioSel.disabled = false;
+      radioSel.checked = true;
+    }
+  } else {
+    if (bar) bar.style.display = 'none';
+    if (radioSel) {
+      radioSel.disabled = true;
+      var radPending = document.querySelector('input[name="waAbsScope"][value="pending"]');
+      if (radPending) radPending.checked = true;
+    }
+  }
+}
+
+function toggleSelectAllAbsences(master) {
+  var boxes = document.querySelectorAll('.abs-checkbox');
+  boxes.forEach(function(b) { b.checked = master.checked; });
+  updateSelectedCount();
+}
+
+function clearAbsenceSelection() {
+  var boxes = document.querySelectorAll('.abs-checkbox');
+  boxes.forEach(function(b) { b.checked = false; });
+  var master = document.getElementById('selectAllAbsences');
+  if (master) master.checked = false;
+  updateSelectedCount();
+}
+
+function selectAllPendingOnly() {
+  var boxes = document.querySelectorAll('.abs-checkbox');
+  boxes.forEach(function(b) {
+    b.checked = (b.getAttribute('data-notified') === '0');
+  });
+  updateSelectedCount();
+}
+
+function getSelectedAttendanceIds() {
+  var checked = document.querySelectorAll('.abs-checkbox:checked');
+  var ids = [];
+  checked.forEach(function(b) { ids.push(parseInt(b.value)); });
+  return ids;
+}
+
+// SPINTAX PREVIEW REFRESH
+function refreshSpintaxPreview() {
+  var lang = document.getElementById('waAbsLangSelect') ? document.getElementById('waAbsLangSelect').value : 'ar';
+  var sampleItem = RAW_ABSENT_RECORDS.length > 0 ? RAW_ABSENT_RECORDS[0] : {
+    student_name: 'ياسين بنسعيد',
+    course_name: 'رياضيات 2BAC',
+    teacher_name: 'أحمد العمراني',
+    date: '2026-09-22',
+    status: 'absent'
+  };
+  var text = buildSpintaxMessage(sampleItem, lang, Math.floor(Math.random() * 8999 + 1000));
+  var box = document.getElementById('waSpintaxPreviewBox');
+  if (box) box.textContent = text;
+}
+
+// MODAL CONTROLS
+function openAbsenceWhatsAppModal(preselectScope) {
+  var modal = document.getElementById('absenceWhatsAppModal');
+  if (!modal) return;
+
+  document.getElementById('waAbsStepConfig').style.display = 'block';
+  document.getElementById('waAbsStepDispatch').style.display = 'none';
+
+  updateSelectedCount();
+  if (preselectScope === 'selected' && getSelectedAttendanceIds().length > 0) {
+    var radioSel = document.getElementById('radioScopeSelected');
+    if (radioSel) radioSel.checked = true;
+  }
+
+  refreshSpintaxPreview();
+  modal.style.display = 'flex';
+}
+
+function closeAbsenceWhatsAppModal(shouldReload) {
+  var modal = document.getElementById('absenceWhatsAppModal');
+  if (modal) modal.style.display = 'none';
+  clearInterval(waAbsState.autoIntervalTimer);
+  waAbsState.autoIntervalTimer = null;
+  if (shouldReload) {
+    window.location.reload();
+  }
+}
+
+function backToAbsConfig() {
+  clearInterval(waAbsState.autoIntervalTimer);
+  waAbsState.autoIntervalTimer = null;
+  document.getElementById('waAbsStepDispatch').style.display = 'none';
+  document.getElementById('waAbsStepConfig').style.display = 'block';
+}
+
+// QUEUE DISPATCH RUNNER
+function startAbsenceDispatchQueue() {
+  var scopeRadio = document.querySelector('input[name="waAbsScope"]:checked');
+  var scopeVal = scopeRadio ? scopeRadio.value : 'pending';
+  var targetPref = document.getElementById('waAbsRecipientTarget').value;
+  var lang = document.getElementById('waAbsLangSelect').value;
+
+  var queue = [];
+  var selectedIds = getSelectedAttendanceIds();
+
+  if (scopeVal === 'selected' && selectedIds.length > 0) {
+    queue = RAW_ABSENT_RECORDS.filter(function(r) { return selectedIds.indexOf(r.attendance_id) !== -1; });
+  } else if (scopeVal === 'pending') {
+    queue = RAW_ABSENT_RECORDS.filter(function(r) { return !r.is_notified; });
+  } else {
+    queue = RAW_ABSENT_RECORDS.slice();
+  }
+
+  if (queue.length === 0) {
+    alert('Aucun élève correspondant au critère sélectionné dans la file d\'envoi.');
+    return;
+  }
+
+  waAbsState.queue = queue;
+  waAbsState.currentIndex = 0;
+  waAbsState.statuses = {};
+  waAbsState.targetPhoneOverride = {};
+  queue.forEach(function(r) { waAbsState.statuses[r.attendance_id] = 'pending'; });
+
+  document.getElementById('waAbsStepConfig').style.display = 'none';
+  document.getElementById('waAbsStepDispatch').style.display = 'block';
+
+  renderDispatchQueueTable();
+  processQueueAt(0);
+
+  // Check if auto sequence mode
+  var cadenceRadio = document.querySelector('input[name="waAbsCadence"]:checked');
+  if (cadenceRadio && cadenceRadio.value === 'auto') {
+    startAutoSequenceCountdown();
+  }
+}
+
+function getPhoneForStudent(item, targetPref) {
+  if (waAbsState.targetPhoneOverride[item.attendance_id]) {
+    return waAbsState.targetPhoneOverride[item.attendance_id];
+  }
+  if (targetPref === 'parent_only') {
+    return item.clean_parent_phone;
+  } else if (targetPref === 'student_only') {
+    return item.clean_student_phone;
+  } else {
+    return item.clean_parent_phone || item.clean_student_phone;
+  }
+}
+
+function processQueueAt(index) {
+  waAbsState.currentIndex = index;
+  var total = waAbsState.queue.length;
+
+  var currentCard = document.getElementById('waAbsCurrentCard');
+  var finishCard = document.getElementById('waAbsFinishCard');
+
+  // Check completion
+  var sentCount = Object.values(waAbsState.statuses).filter(function(st) { return st === 'sent'; }).length;
+  var pct = Math.round((sentCount / total) * 100);
+
+  document.getElementById('waAbsProgressTitle').innerText = 'Progression : Élève ' + Math.min(index + 1, total) + ' sur ' + total;
+  document.getElementById('waAbsProgressPercent').innerText = pct + '%';
+  document.getElementById('waAbsProgressBarFill').style.width = pct + '%';
+  document.getElementById('waAbsProgressSentCount').innerText = sentCount + ' envoyé(s) ✅';
+  document.getElementById('waAbsProgressRemainingCount').innerText = (total - sentCount) + ' restant(s)';
+
+  if (index >= total) {
+    if (currentCard) currentCard.style.display = 'none';
+    if (finishCard) finishCard.style.display = 'block';
+    clearInterval(waAbsState.autoIntervalTimer);
+    document.getElementById('waAbsFinishSummary').innerText = 'Félicitations ! ' + sentCount + ' notification(s) envoyée(s) sur ' + total + ' élèves traités.';
+    renderDispatchQueueTable();
+    return;
+  }
+
+  if (finishCard) finishCard.style.display = 'none';
+  if (currentCard) currentCard.style.display = 'block';
+
+  var item = waAbsState.queue[index];
+  var targetPref = document.getElementById('waAbsRecipientTarget').value;
+  var chosenPhone = getPhoneForStudent(item, targetPref);
+  var lang = document.getElementById('waAbsLangSelect').value;
+
+  // Set card info
+  document.getElementById('waAbsCurrentStudentName').innerText = item.student_name;
+  document.getElementById('waAbsCurrentAvatar').innerText = item.student_name ? item.student_name.charAt(0) : 'S';
+  document.getElementById('waAbsCurrentMeta').innerText = (item.course_name || 'Cours') + ' · ' + (item.teacher_name ? 'Prof: ' + item.teacher_name : '') + ' · ' + item.date;
+
+  // Status Badge
+  var statusBadgeEl = document.getElementById('waAbsCurrentStatusBadge');
+  if (item.status === 'absent') {
+    statusBadgeEl.innerHTML = '<span class="chip chip-red" style="font-size:11px; font-weight:800;">🔴 Absent</span>';
+  } else if (item.status === 'late') {
+    statusBadgeEl.innerHTML = '<span class="chip chip-amber" style="font-size:11px; font-weight:800;">⚠️ Retard</span>';
+  } else {
+    statusBadgeEl.innerHTML = '<span class="chip chip-green" style="font-size:11px; font-weight:800;">🟢 Présent</span>';
+  }
+
+  // Recipient Display
+  var recipDisplay = document.getElementById('waAbsCurrentRecipientDisplay');
+  var isTargetParent = (chosenPhone === item.clean_parent_phone);
+  if (chosenPhone) {
+    recipDisplay.innerHTML = (isTargetParent ? '👨‍👩‍👧 Parent (' + (item.parent_name || 'Tuteur') + ')' : '🎓 Élève') + ' : <strong>+' + chosenPhone + '</strong>';
+  } else {
+    recipDisplay.innerHTML = '<span style="color:#ef4444; font-weight:700;">⚠️ Aucun numéro de téléphone valide enregistré</span>';
+  }
+
+  // Secondary phone switcher button
+  var altBtn = document.getElementById('btnToggleAltPhone');
+  if (item.clean_parent_phone && item.clean_student_phone && item.clean_parent_phone !== item.clean_student_phone) {
+    altBtn.style.display = 'inline-flex';
+    altBtn.innerText = isTargetParent ? '📱 Basculer sur tél élève (' + item.clean_student_phone + ')' : '👨‍👩‍👧 Basculer sur tél parent (' + item.clean_parent_phone + ')';
+  } else {
+    altBtn.style.display = 'none';
+  }
+
+  // Message text
+  var msg = buildSpintaxMessage(item, lang, item.attendance_id);
+  document.getElementById('waAbsCurrentMessageText').textContent = msg;
+
+  var isLast = (index === total - 1);
+  document.getElementById('btnAbsNext').innerHTML = isLast ? '<span>Terminer ✅</span>' : '<span>Suivant ➡️</span> <kbd style="background:rgba(255,255,255,0.25); font-size:10px; padding:2px 5px; border-radius:4px; margin-left:4px;">Espace</kbd>';
+
+  renderDispatchQueueTable();
+}
+
+function toggleAlternativePhone() {
+  var item = waAbsState.queue[waAbsState.currentIndex];
+  if (!item) return;
+  var targetPref = document.getElementById('waAbsRecipientTarget').value;
+  var currentPhone = getPhoneForStudent(item, targetPref);
+  var altPhone = (currentPhone === item.clean_parent_phone) ? item.clean_student_phone : item.clean_parent_phone;
+  waAbsState.targetPhoneOverride[item.attendance_id] = altPhone;
+  processQueueAt(waAbsState.currentIndex);
+}
+
+function triggerCurrentAbsenceWhatsApp() {
+  var item = waAbsState.queue[waAbsState.currentIndex];
+  if (!item) return;
+
+  var targetPref = document.getElementById('waAbsRecipientTarget').value;
+  var phone = getPhoneForStudent(item, targetPref);
+
+  if (!phone) {
+    alert('Aucun numéro de téléphone disponible pour ' + item.student_name + '. Cliquez sur "Suivant ➡️" pour continuer.');
+    return;
+  }
+
+  var msg = document.getElementById('waAbsCurrentMessageText').textContent;
+  var channel = document.getElementById('waAbsChannelSelect').value;
+
+  var url = (channel === 'web') 
+    ? 'https://web.whatsapp.com/send?phone=' + encodeURIComponent(phone) + '&text=' + encodeURIComponent(msg)
+    : 'https://wa.me/' + encodeURIComponent(phone) + '?text=' + encodeURIComponent(msg);
+
+  window.open(url, '_blank');
+
+  // Mark as notified in database
+  markAttendanceNotifiedInDb(item.attendance_id, phone);
+  waAbsState.statuses[item.attendance_id] = 'sent';
+
+  renderDispatchQueueTable();
+}
+
+function advanceToNextAbsence() {
+  var curItem = waAbsState.queue[waAbsState.currentIndex];
+  if (curItem && waAbsState.statuses[curItem.attendance_id] !== 'sent') {
+    // If user clicked Next directly without sending, assume sent or mark sent
+    var targetPref = document.getElementById('waAbsRecipientTarget').value;
+    var phone = getPhoneForStudent(curItem, targetPref);
+    markAttendanceNotifiedInDb(curItem.attendance_id, phone);
+    waAbsState.statuses[curItem.attendance_id] = 'sent';
+  }
+  processQueueAt(waAbsState.currentIndex + 1);
+
+  var cadenceRadio = document.querySelector('input[name="waAbsCadence"]:checked');
+  if (cadenceRadio && cadenceRadio.value === 'auto' && waAbsState.currentIndex < waAbsState.queue.length) {
+    startAutoSequenceCountdown();
+  }
+}
+
+function skipCurrentAbsence() {
+  var curItem = waAbsState.queue[waAbsState.currentIndex];
+  if (curItem) {
+    waAbsState.statuses[curItem.attendance_id] = 'skipped';
+  }
+  processQueueAt(waAbsState.currentIndex + 1);
+
+  var cadenceRadio = document.querySelector('input[name="waAbsCadence"]:checked');
+  if (cadenceRadio && cadenceRadio.value === 'auto' && waAbsState.currentIndex < waAbsState.queue.length) {
+    startAutoSequenceCountdown();
+  }
+}
+
+function copyCurrentAbsenceMessage() {
+  var msg = document.getElementById('waAbsCurrentMessageText').textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(msg).then(function() {
+      alert('✅ Message copié dans le presse-papiers !');
+    });
+  } else {
+    alert('Message sélectionné');
+  }
+}
+
+// AUTO CADENCE COUNTDOWN (ANTI-BOT TEMPORISATION)
+function startAutoSequenceCountdown() {
+  clearInterval(waAbsState.autoIntervalTimer);
+  // Random delay between 5 and 9 seconds
+  var delaySeconds = Math.floor(Math.random() * 5) + 5;
+  waAbsState.autoCountdownVal = delaySeconds;
+
+  var bar = document.getElementById('waAbsCountdownContainer');
+  if (bar) bar.style.display = 'flex';
+  document.getElementById('waAbsCountdownVal').innerText = delaySeconds;
+
+  waAbsState.autoIntervalTimer = setInterval(function() {
+    if (waAbsState.isPaused) return;
+    waAbsState.autoCountdownVal -= 1;
+    document.getElementById('waAbsCountdownVal').innerText = waAbsState.autoCountdownVal;
+    if (waAbsState.autoCountdownVal <= 0) {
+      clearInterval(waAbsState.autoIntervalTimer);
+      triggerCurrentAbsenceWhatsApp();
+      setTimeout(function() {
+        advanceToNextAbsence();
+      }, 1500);
+    }
+  }, 1000);
+}
+
+function pauseAutoSequence() {
+  waAbsState.isPaused = true;
+  document.getElementById('btnPauseAuto').style.display = 'none';
+  document.getElementById('btnResumeAuto').style.display = 'inline-block';
+}
+
+function resumeAutoSequence() {
+  waAbsState.isPaused = false;
+  document.getElementById('btnResumeAuto').style.display = 'none';
+  document.getElementById('btnPauseAuto').style.display = 'inline-block';
+}
+
+// DISPATCH QUEUE TABLE RENDER
+function renderDispatchQueueTable() {
+  var tbody = document.getElementById('waAbsQueueTableBody');
+  if (!tbody) return;
+
+  document.getElementById('waAbsQueueTableCount').innerText = waAbsState.queue.length;
+  var html = '';
+  var targetPref = document.getElementById('waAbsRecipientTarget') ? document.getElementById('waAbsRecipientTarget').value : 'parent_pref';
+
+  waAbsState.queue.forEach(function(item, idx) {
+    var st = waAbsState.statuses[item.attendance_id] || 'pending';
+    var isCurrent = (idx === waAbsState.currentIndex);
+    var phone = getPhoneForStudent(item, targetPref);
+
+    var badge = '';
+    if (st === 'sent') badge = '<span class="chip chip-green" style="font-size:10px; font-weight:800;">✅ Envoyé</span>';
+    else if (st === 'skipped') badge = '<span class="chip chip-amber" style="font-size:10px; font-weight:800;">⏭️ Ignoré</span>';
+    else if (isCurrent) badge = '<span class="chip chip-blue" style="font-size:10px; font-weight:800;">💬 En cours</span>';
+    else badge = '<span class="chip chip-gray" style="font-size:10px; font-weight:700;">⏳ En attente</span>';
+
+    html += '<tr style="' + (isCurrent ? 'background:#f0fdf4; font-weight:700;' : '') + '">' +
+              '<td style="padding:6px 10px; width:25px; color:#94a3b8;">' + (idx + 1) + '</td>' +
+              '<td style="padding:6px 10px;"><strong>' + item.student_name + '</strong> <span style="font-size:10.5px; color:#64748b;">(' + item.course_name + ')</span></td>' +
+              '<td style="padding:6px 10px; font-size:11px; color:#475569;">📱 ' + (phone || 'Sans tél') + '</td>' +
+              '<td style="padding:6px 10px; text-align:right;">' + badge + '</td>' +
+            '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+// BACKEND API CALL: MARK NOTIFIED
+function markAttendanceNotifiedInDb(attId, phone) {
+  fetch('/attendance/mark_notified', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ attendance_id: attId, phone: phone || '' })
+  }).then(function(res) { return res.json(); }).then(function(data) {
+    if (data.success) {
+      // Update badge in main page table if present
+      var badge = document.getElementById('notif-badge-' + attId);
+      if (badge) {
+        badge.className = 'chip chip-green';
+        badge.innerText = '✅ Notifié (' + (data.notified_at.substring(11, 16)) + ')';
+      }
+    }
+  }).catch(function(err) {
+    console.error('Erreur mark notified:', err);
+  });
+}
+
+function markSelectedAsNotified() {
+  var ids = getSelectedAttendanceIds();
+  if (ids.length === 0) return;
+  if (!confirm('Marquer les ' + ids.length + ' absences sélectionnées comme déjà notifiées ?')) return;
+
+  fetch('/attendance/mark_notified', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ attendance_ids: ids })
+  }).then(function(res) { return res.json(); }).then(function(data) {
+    if (data.success) {
+      window.location.reload();
+    }
+  });
+}
+
+// SINGLE ROW INSTANT WHATSAPP WITH SPINTAX
+function openSingleAbsenceWhatsApp(attId) {
+  var item = RAW_ABSENT_RECORDS.find(function(r) { return r.attendance_id === attId; });
+  if (!item) return;
+
+  var phone = item.clean_phone;
+  if (!phone) {
+    alert('Aucun numéro de téléphone WhatsApp disponible pour ' + item.student_name);
+    return;
+  }
+
+  var msg = buildSpintaxMessage(item, 'ar', attId);
+  var url = 'https://wa.me/' + encodeURIComponent(phone) + '?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+
+  markAttendanceNotifiedInDb(attId, phone);
+}
+
+function copyAbsenceMessage(attId) {
+  var item = RAW_ABSENT_RECORDS.find(function(r) { return r.attendance_id === attId; });
+  if (!item) return;
+  var msg = buildSpintaxMessage(item, 'ar', attId);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(msg).then(function() {
+      alert('✅ Message copié dans le presse-papiers :\n\n' + msg);
+    });
+  } else {
+    prompt('Copiez ce message :', msg);
+  }
+}
+
+// KEYBOARD SHORTCUT: SPACEBAR ADVANCES IN MODAL
+document.addEventListener('keydown', function(e) {
+  var modal = document.getElementById('absenceWhatsAppModal');
+  if (!modal || modal.style.display !== 'flex') return;
+
+  var stepDispatch = document.getElementById('waAbsStepDispatch');
+  if (!stepDispatch || stepDispatch.style.display !== 'block') return;
+
+  // Spacebar (code 32)
+  if (e.code === 'Space' || e.keyCode === 32) {
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      advanceToNextAbsence();
+    }
+  }
+});
+
+// Auto-open modal if requested via URL param (e.g. after roll call)
+document.addEventListener('DOMContentLoaded', function() {
+  {% if open_wa %}
+  setTimeout(function() {
+    openAbsenceWhatsAppModal('pending');
+  }, 300);
+  {% endif %}
+});
+</script>
+
+<!-- PRINTABLE STYLES -->
+<style>
+@media print {
+  body { background: #ffffff !important; }
+  .no-print, aside.sidebar, .topbar, .btn, #absenceWhatsAppModal, #batchActionBar { display: none !important; }
+  .layout, .main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+  .card { box-shadow: none !important; border: 1px solid #000 !important; border-radius: 0 !important; }
+  table { width: 100% !important; border-collapse: collapse !important; }
+  th, td { border: 1px solid #cbd5e1 !important; padding: 8px !important; font-size: 11px !important; }
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>برنامج العمل اليومي - معهد إيلاس</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 8mm 9mm 8mm 9mm;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+            direction: rtl;
+            text-align: right;
+            color: #1e293b;
+            background: #ffffff;
+            margin: 0;
+            padding: 0;
+            font-size: 8.5pt;
+            line-height: 1.3;
+        }
+
+        /* En-tête */
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #1e3a8a;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+        }
+
+        .header h1 {
+            color: #1e3a8a;
+            font-size: 16pt;
+            font-weight: 800;
+            margin: 0 0 2px 0;
+            letter-spacing: 0.5px;
+        }
+
+        .header .subtitle {
+            font-size: 9.5pt;
+            color: #334155;
+            font-weight: 700;
+            margin: 0 0 3px 0;
+        }
+
+        .badge-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .badge {
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 7.5pt;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .badge.highlight {
+            background-color: #dbeafe;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+            font-weight: 700;
+        }
+
+        /* Titres de section */
+        .section-title {
+            background: #1e3a8a;
+            color: #ffffff;
+            font-size: 8.5pt;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 3px;
+            margin: 6px 0 4px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title.evening {
+            background: #0f766e;
+        }
+
+        .section-title span.hours {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 7.5pt;
+        }
+
+        /* Tableaux */
+        table.task-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 4px;
+        }
+
+        table.task-table th, table.task-table td {
+            border: 1px solid #cbd5e1;
+            padding: 3px 6px;
+            text-align: right;
+            vertical-align: top;
+        }
+
+        table.task-table th {
+            background-color: #f8fafc;
+            color: #1e293b;
+            font-size: 7.5pt;
+            font-weight: 700;
+        }
+
+        table.task-table td.time {
+            width: 16%;
+            font-weight: 700;
+            color: #1e3a8a;
+            font-size: 7.5pt;
+            white-space: nowrap;
+            direction: ltr;
+            text-align: center;
+        }
+
+        .evening table.task-table td.time {
+            color: #0f766e;
+        }
+
+        table.task-table td.domain {
+            width: 25%;
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 8pt;
+        }
+
+        table.task-table td.actions {
+            width: 59%;
+            font-size: 7.5pt;
+            color: #334155;
+        }
+
+        ul.task-list {
+            margin: 0;
+            padding-right: 14px;
+            padding-left: 0;
+        }
+
+        ul.task-list li {
+            margin-bottom: 1px;
+        }
+
+        .highlight-row {
+            background-color: #fefce8 !important;
+            border: 1.5px solid #eab308 !important;
+        }
+
+        .handover-box {
+            background-color: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-right: 4px solid #f59e0b;
+            padding: 4px 8px;
+            margin: 4px 0;
+            border-radius: 4px 0 0 4px;
+            font-size: 7.5pt;
+            color: #92400e;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        /* Grilles Fiche de Bord */
+        table.log-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 4px;
+        }
+
+        table.log-grid th, table.log-grid td {
+            border: 1px solid #cbd5e1;
+            padding: 3px 5px;
+            font-size: 7.5pt;
+            text-align: right;
+        }
+
+        table.log-grid th {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .log-box-area {
+            border: 1px solid #cbd5e1;
+            height: 38px;
+            padding: 4px;
+            background: #fafafa;
+            font-size: 7.5pt;
+            color: #64748b;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 7pt;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 2px;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== الصفحة 1 : البرنامج اليومي الشامل للفريقين ==================== -->
+    <div class="header">
+        <h1>معهد إيلاس — INSTITUT ILAS</h1>
+        <p class="subtitle">الدليل التشغيلي وبرنامج المهام اليومية لطاقم العمل</p>
+        <div class="badge-bar">
+            <span class="badge highlight">الفترة الصباحية: 07:50 – 15:00</span>
+            <span class="badge highlight">تسليم المهام: 14:50 – 15:00</span>
+            <span class="badge highlight">الفترة المسائية: 14:50 – 22:00</span>
+            <span class="badge">إغلاق المعهد: 22:00</span>
+        </div>
+    </div>
+
+    <!-- الفترة الصباحية -->
+    <div class="section-title">
+        <span>🌅 1. الفترة الصباحية: العمليات، المتابعة الإدارية والاستقبال التجاري</span>
+        <span class="hours">07:50 – 15:00</span>
+    </div>
+
+    <table class="task-table">
+        <thead>
+            <tr>
+                <th style="text-align:center;">التوقيت</th>
+                <th>المهمة الرئيسية</th>
+                <th>الإجراءات التفصيلية وتعليمات التنفيذ</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="time">07:50 – 08:05</td>
+                <td class="domain">فتح المعهد والتشغيل التقني</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>فتح الأبواب الرئيسية للمعهد وتعطيل جهاز الإنذار. تشغيل <strong>كاميرات المراقبة</strong>.</li>
+                        <li>تشغيل جميع <strong>الحواسيب</strong> (الاستقبال، الإدارة، القاعات) و<strong>آلات النسخ</strong> والطابعات.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">08:05 – 08:15</td>
+                <td class="domain">فحص دفتر الملاحظات والمستعجلات (الورقي)</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li><strong>الاطلاع الإلزامي على دفتر الملاحظات الورقي</strong> (المنفصل تماماً عن البرنامج/المنظومة): حصر الملاحظات والنقاط الهامة والطارئة المدونة من الإدارة أو طاقم المساء.</li>
+                        <li>البدء الفوري في معالجة المستعجلات، ونقل النقاط ذات الأولوية إلى جدول المتابعة اليومية لضمان المتابعة الدقيقة.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">08:15 – 08:25</td>
+                <td class="domain">طباعة ورقة المتابعة اليومية</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li><strong>طباعة استمارة المتابعة اليومية المتغيرة</strong> لتدوين المستجدات: غياب الأساتذة، الأعطال التقنية، الزوار والملاحظات الطارئة.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">08:25 – 08:45</td>
+                <td class="domain">تفقد الطوابق وترتيب المكاتب</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li><strong>مراقبة شاملة للطابقين الأول والثاني</strong>: نظافة القاعات، الإنارة، السبورة، أجهزة العرض (Datashow)، والمرافق الصحية.</li>
+                        <li>ترتيب وتنظيم مكاتب ومكتب الاستقبال وتجهيز استمارات التسجيل والأقلام.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">08:45 – 08:55</td>
+                <td class="domain">جدول التوقيت ومتابعة الجذاذات البيداغوجية (اللغات)</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>تأكيد حضور الأساتذة، ضبط وتوزيع القاعات، و<strong>تعليق جدول اليوم في الاستقبال</strong> للطلاب.</li>
+                        <li><strong>المتابعة والتحقق الصارم من استيفاء وملء الجذاذات البيداغوجية</strong> لأساتذة اللغات (المرسلة مساء كل سبت).</li>
+                        <li>تذكير ومتابعة الأساتذة الذين لم يستكملوا ملء الجذاذة لضمان حسن سير الدروس.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">08:55 – 09:35</td>
+                <td class="domain">مراقبة الغياب والتواصل مع الأولياء</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>جمع قوائم الحضور و<strong>حصر حالات التأخر والغياب الصباحي</strong>.</li>
+                        <li><strong>إرسال رسائل فورية (SMS / WhatsApp) إلى أولياء أمور</strong> الطلاب الغائبين.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">09:35 – 10:30</td>
+                <td class="domain">متابعة المسجلين وتسكين الأفواج</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>مراجعة الوضعية الإدارية لملفات الطلاب المسجلين. <strong>تسكين الطلاب في قوائم الانتظار</strong> في أفواجهم.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">10:30 – 11:45</td>
+                <td class="domain">المالية ومطالبات الدفع (WhatsApp)</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>مراقبة المدفوعات والاشتراكات وحصر الأقساط والمستحقات المتأخرة.</li>
+                        <li><strong>إرسال رسائل تذكير ومطالبة عبر واتساب</strong> للطلاب المعنيين بدفع المستحقات.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">11:45 – 12:45</td>
+                <td class="domain">إعداد بطاقات الطلاب</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>مراجعة الصور والبيانات، <strong>طباعة وتغليف بطاقات الطلاب</strong> وتوزيعها على أصحابها.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr class="highlight-row">
+                <td class="time">12:45 – 14:50</td>
+                <td class="domain">🎯 استقبال الزوار والإقناع بالتسجيل</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li><strong>استقبال حار واحترافي لكل زائر / ولي أمر</strong> والاستماع الدقيق لاحتياجاته.</li>
+                        <li>تقديم برامج المعهد ونقاط القوة بأسلوب إقناعي و<strong>إتمام إجراءات التسجيل فوراً</strong>.</li>
+                        <li>تسجيل بيانات الزوار الذين لم يسجلوا بعد في السجل لإعادة الاتصال بهم ومتابعتهم.</li>
+                    </ul>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- تسليم المهام -->
+    <div class="handover-box">
+        <span><strong>🔄 14:50 – 15:00 : جلسة تسليم المهام بين الفترتين (10 دقائق)</strong> — تسليم ورقة المتابعة اليومية: إحاطة فريق المساء بالمستجدات، والمسجلين الجدد، والمبالغ المستلمة، <strong>ومتابعة جذاذات أساتذة اللغات المستوفاة (والتأكيد على إرسالها مساء كل سبت)</strong>، والتعليمات العاجلة.</span>
+        <strong>فريق الصباح ➔ فريق المساء</strong>
+    </div>
+
+    <!-- الفترة المسائية -->
+    <div class="section-title evening">
+        <span>🌇 2. الفترة المسائية: البيداغوجيا، الإعلام الرقمي، استقطاب الشركات والتطوير</span>
+        <span class="hours">14:50 – 22:00</span>
+    </div>
+
+    <table class="task-table evening">
+        <thead>
+            <tr>
+                <th style="text-align:center;">التوقيت</th>
+                <th>المهمة الرئيسية</th>
+                <th>الإجراءات التفصيلية وتعليمات التنفيذ</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="time">14:50 – 15:00</td>
+                <td class="domain">استلام الوردية والتنسيق</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>حضور فريق المساء في تمام 14:50، مراجعة استمارة المتابعة واستلام تعليمات الصباح.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">15:00 – 16:15</td>
+                <td class="domain">الأفواج الجديدة والجولة البيداغوجية</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li><strong>إنشاء الأفواج الدراسية الجديدة</strong> وفقاً لتسجيلات اليوم والمستويات والأوقات.</li>
+                        <li><strong>جولة تفقدية في الأقسام رفقة المدير</strong>: متابعة جودة التدريس وسير الحصص والاستماع للأساتذة والطلاب.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">16:15 – 17:30</td>
+                <td class="domain">📸 الإعلام الرقمي، Canva ومنصات التواصل</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li><strong>تصميم عبر Canva وتصوير يومي</strong>: تصميم منشورات احترافية عبر <strong>Canva</strong>، والتقاط مقاطع وفيديوهات قصيرة وصور للأقسام.</li>
+                        <li><strong>نشر إلزامي (منشور واحد على الأقل يومياً)</strong> على منصات التواصل (فيسبوك، إنستغرام، تيك توك، ولينكد إن).</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">17:30 – 19:00</td>
+                <td class="domain">الموقع، التواصل مع الشركات وزوار المساء</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li><strong>تحديث الموقع الإلكتروني للمعهد</strong> ومعالجة طلبات التسجيل واستمارات الاتصال.</li>
+                        <li><strong>استقطاب الشركات (B2B)</strong>: إرسال عروض التكوين وعقد الشراكات مع المؤسسات والشركات.</li>
+                        <li><strong>استقبال وإقناع زوار المساء</strong> (الموظفين والطلاب الراغبين في التسجيل بعد دوامهم).</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">19:00 – 20:30</td>
+                <td class="domain">الفعاليات، الرحلات والشراكات الدولية</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li><strong>تنظيم الرحلات التعليمية</strong>: إعداد اللوجستيك والمخططات والموافقات اللازمة.</li>
+                        <li><strong>التحضير لفعاليات المعهد</strong>: حفلات التخرج، الأيام المفتوحة، والمناسبات الاحتفالية.</li>
+                        <li><strong>الشراكات الدولية</strong>: التواصل وتطوير اتفاقيات تعاون مع مراكز تكوين بالخارج.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">20:30 – 21:30</td>
+                <td class="domain">مداومة ومتابعة الدروس الليلية</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>استقبال ومتابعة حصص الدروس المسائية/الليلية (المهنيين والكبار).</li>
+                        <li>حصر حضور المساء وتوفير الدعم الإداري والتقني للأساتذة.</li>
+                        <li><strong>مساء كل سبت : الإرسال الإلزامي للجذاذة البيداغوجية عبر واتساب</strong> لجميع أساتذة اللغات لتعبئتها ومتابعة الأسبوع القادم.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">21:30 – 22:00</td>
+                <td class="domain">🔒 الإغلاق المحكم والتأمين الليلي</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>اعتماد وتوقيع ورقة المتابعة اليومية وحفظ السجلات، وتدوين الملاحظات والنقاط الهامة في <strong>دفتر الملاحظات الورقي</strong> (المنفصل عن البرنامج) لإحاطة فريق الصباح.</li>
+                        <li><strong>إطفاء عام</strong>: الحواسيب، آلات النسخ، أجهزة العرض، المكيفات، والإضاءة.</li>
+                        <li><strong>تأمين الطابقين 1 و 2</strong>: إغلاق النوافذ والأبواب، تشغيل جهاز الإنذار وإغلاق المعهد في تمام 22:00.</li>
+                    </ul>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer">
+        معهد إيلاس • وثيقة التنظيم الداخلي المعتمدة • الصفحة 1 من 2
+    </div>
+
+    <!-- ==================== الصفحة 2 : نموذج ورقة المتابعة اليومية ==================== -->
+    <div class="page-break"></div>
+
+    <div class="header">
+        <h1>معهد إيلاس — INSTITUT ILAS</h1>
+        <p class="subtitle">ورقة المتابعة اليومية (تُطبع يومياً وتُعلّق بمكتب الاستقبال)</p>
+        <div class="badge-bar">
+            <span class="badge">التاريخ: ..... / ..... / 202...</span>
+            <span class="badge">مسؤول الصباح (07:50 - 15:00): ...................................</span>
+            <span class="badge">مسؤول المساء (14:50 - 22:00): ...................................</span>
+        </div>
+    </div>
+
+    <div class="section-title">
+        <span>1. الفحص التقني والسلامة الصباحية (07:50)</span>
+    </div>
+    <table class="log-grid">
+        <tr>
+            <td style="width:17%;">[ ] فتح الأبواب والمداخل</td>
+            <td style="width:18%;">[ ] تشغيل الكاميرات والإنذار</td>
+            <td style="width:18%;">[ ] الحواسيب وآلات النسخ</td>
+            <td style="width:18%;">[ ] نظافة الطابق 1 و 2</td>
+            <td style="width:29%; font-weight:bold; color:#1e3a8a;">[ ] مراقبة دفتر الملاحظات والمستعجلات</td>
+        </tr>
+    </table>
+
+    <div class="section-title">
+        <span>2. جدول متابعة الأساتذة وسير الحصص</span>
+    </div>
+    <table class="log-grid">
+        <thead>
+            <tr>
+                <th style="width:22%;">الأستاذ / المكون</th>
+                <th style="width:18%;">المادة / الفوج</th>
+                <th style="width:9%; text-align:center;">القاعة</th>
+                <th style="width:15%; text-align:center;">الحالة (حاضر / تأخر)</th>
+                <th style="width:18%; text-align:center;">الجذاذة البيداغوجية (اللغات)</th>
+                <th style="width:18%;">ملاحظات / تعويض</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td style="text-align:center; font-size:7pt; color:#475569;">[ ] تم الاستيفاء والمتابعة</td><td></td></tr>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td style="text-align:center; font-size:7pt; color:#475569;">[ ] تم الاستيفاء والمتابعة</td><td></td></tr>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td style="text-align:center; font-size:7pt; color:#475569;">[ ] تم الاستيفاء والمتابعة</td><td></td></tr>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td style="text-align:center; font-size:7pt; color:#475569;">[ ] تم الاستيفاء والمتابعة</td><td></td></tr>
+        </tbody>
+    </table>
+
+    <div class="section-title">
+        <span>3. سجل الزوار والمترشحين للتسجيل (المتابعة والإقناع)</span>
+    </div>
+    <table class="log-grid">
+        <thead>
+            <tr>
+                <th style="width:22%;">اسم ولقب الزائر</th>
+                <th style="width:18%;">رقم الهاتف / الواتساب</th>
+                <th style="width:26%;">التكوين / التخصص المطلوب</th>
+                <th style="width:14%; text-align:center;">هل تم التسجيل؟</th>
+                <th style="width:20%;">تاريخ المتابعة القادمة</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+    </table>
+
+    <div class="section-title">
+        <span>4. متابعة الغيابات، الجذاذات البيداغوجية، المدفوعات والبطاقات</span>
+    </div>
+    <table class="log-grid">
+        <tr>
+            <td style="width:24%;"><strong>رسائل أولياء الأمور:</strong><br>[ ] تم الإرسال&nbsp;&nbsp;&nbsp;&nbsp;[ ] لم يُرسل<br>العدد: .......</td>
+            <td style="width:29%;"><strong>الجذاذة البيداغوجية (اللغات):</strong><br>[ ] أُرسلت بالواتساب (مساء كل سبت)<br>[ ] تم التحقق من الملء والمتابعة (..... / .....)</td>
+            <td style="width:24%;"><strong>مطالبات الواتساب للمستحقات:</strong><br>[ ] تم الإرسال&nbsp;&nbsp;&nbsp;&nbsp;[ ] لم يُرسل<br>العدد: .......</td>
+            <td style="width:23%;"><strong>بطاقات الطلاب المطبوعة:</strong><br>العدد المنجز: ....... بطاقة</td>
+        </tr>
+    </table>
+
+    <div class="section-title evening">
+        <span>5. متابعة المساء: الإعلام الرقمي، استقطاب الشركات والأنشطة</span>
+    </div>
+    <table class="log-grid">
+        <tr>
+            <td style="width:52%;">
+                <strong>المنشورات (منشور واحد يومياً كحد أدنى عبر Canva):</strong><br>
+                [ ] فيسبوك&nbsp;&nbsp;&nbsp;&nbsp;[ ] إنستغرام&nbsp;&nbsp;&nbsp;&nbsp;[ ] تيك توك&nbsp;&nbsp;&nbsp;&nbsp;[ ] لينكد إن<br>
+                [ ] منشور Canva مُنجز&nbsp;&nbsp;|&nbsp;&nbsp;الموضوع: ...........................................
+            </td>
+            <td style="width:48%;">
+                <strong>التواصل مع الشركات والمراكز الدولية:</strong><br>
+                الشركات التي تم التواصل معها: ...........................................<br>
+                المراكز الدولية التي تم مراسلتها: ..........................................
+            </td>
+        </tr>
+    </table>
+
+    <div class="section-title">
+        <span>6. الملاحظات اليومية، الأعطال والتعليمات العاجلة (بما فيها المنقولة من دفتر الملاحظات)</span>
+    </div>
+    <div class="log-box-area">
+        &nbsp;
+    </div>
+
+    <div class="section-title evening">
+        <span>7. التأمين النهائي والإغلاق الليلي (الساعة 22:00)</span>
+    </div>
+    <table class="log-grid">
+        <tr>
+            <td style="width:25%;">[ ] إطفاء الحواسيب والطابعات</td>
+            <td style="width:25%;">[ ] إطفاء المكيفات والإنارة</td>
+            <td style="width:25%;">[ ] إحكام غلق النوافذ والأبواب</td>
+            <td style="width:25%;">[ ] تفعيل الإنذار والإغلاق (22:00)</td>
+        </tr>
+        <tr>
+            <td colspan="2" style="height:25px; vertical-align:top;"><strong>تأشيرة مسؤول الصباح:</strong></td>
+            <td colspan="2" style="height:25px; vertical-align:top;"><strong>تأشيرة مسؤول المساء:</strong></td>
+        </tr>
+    </table>
+
+    <div class="footer">
+        معهد إيلاس • تُحفظ استمارة المتابعة اليومية في سجل الإدارة بشكل دوري • الصفحة 2 من 2
+    </div>
+
+</body>
+</html>

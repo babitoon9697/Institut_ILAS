@@ -1,0 +1,358 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex between wrap mb-3" style="align-items:center; gap:10px;">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('dashboard') }}">← {{ t('dashboard') }}</a></div>
+    <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E;">🔐 {{ t('users') }} (إدارة أدوار المستخدمين)</h2>
+  </div>
+  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <a href="{{ url_for('teachers_whatsapp_accounts') }}" class="btn btn-primary" style="font-weight:800; font-size:13px; background:#15803d; border-color:#15803d; box-shadow:0 4px 12px rgba(21,128,61,0.25);">
+      📲 {{ 'إرسال الحسابات و Wi-Fi عبر WhatsApp' if session.get('lang')=='ar' else 'Envoi Comptes & Wi-Fi Enseignants (WhatsApp)' }}
+    </a>
+    <a href="{{ url_for('user_activity') }}" class="btn btn-primary" style="font-weight:800; font-size:13px; background:#047857; border-color:#047857; box-shadow:0 4px 12px rgba(4,120,87,0.25);">
+      📊 Suivi Ventes & Opérations par Secrétaire
+    </a>
+  </div>
+</div>
+
+<div class="form-section mb-3" style="max-width:920px">
+  <div class="sec-head">
+    <div class="sec-ico">➕</div>
+    <div>
+      <h3>{{ 'إنشاء حساب جديد وتحديد الدور' if session.get('lang')=='ar' else 'Création d\'un Compte Utilisateur' }}</h3>
+      <p>{{ 'قم بإنشاء حساب للأستاذ أو السكرتارية وتحديد الصلاحيات المرتبطة به' if session.get('lang')=='ar' else 'Créer un accès pour l\'équipe avec attribution du profil enseignant' }}</p>
+    </div>
+  </div>
+  <div class="sec-body">
+    <form method="post" action="{{ url_for('user_new') }}">
+      <div class="form-row">
+        <div class="field">
+          <label>{{ 'اسم المستخدم (تسجيل الدخول)' if session.get('lang')=='ar' else 'Nom d\'utilisateur' }} <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">👤</span>
+            <input name="username" required placeholder="Ex : prof_alaoui">
+          </div>
+        </div>
+        <div class="field">
+          <label>{{ 'الاسم الكامل' if session.get('lang')=='ar' else 'Nom complet' }}</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📛</span>
+            <input name="full_name" placeholder="Ex : Prof. Reda Alaoui">
+          </div>
+        </div>
+        <div class="field">
+          <label>{{ 'كلمة السر' if session.get('lang')=='ar' else 'Mot de passe' }} <span class="req">*</span></label>
+          <div class="input-field has-ico" style="position:relative;">
+            <span class="f-ico">🔑</span>
+            <input type="password" name="password" id="userPasswordField" value="password" required placeholder="Mot de passe" style="padding-right:40px;">
+            <button type="button" onclick="togglePasswordVisibility()" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:15px; color:#64748b; padding:4px;" title="Afficher/Masquer">
+              👁️
+            </button>
+          </div>
+          <div id="pwdTeacherHint" style="display:none; font-size:11.5px; font-weight:700; color:#0369a1; margin-top:4px;"></div>
+        </div>
+        <div class="field">
+          <label>{{ 'الدور والصلاحية (Role)' if session.get('lang')=='ar' else 'Rôle & Type d\'accès' }} <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🛡️</span>
+            <select name="role" id="roleSelect" onchange="toggleRoleFields(this.value)">
+              <option value="admin">👑 Administrateur (مدير عام)</option>
+              <option value="secretary">📝 Secrétariat & Accueil (استقبال وتجسيل)</option>
+              <option value="teacher">👨‍🏫 Enseignant (أستاذ)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field full" id="secretaryBonusField" style="display:none; background:#ecfdf5; padding:16px; border-radius:14px; border:1.5px solid #a7f3d0;">
+          <label style="color:#065f46; font-weight:800;">
+            🎯 {{ 'نسبة مكافأة التسجيل للسكرتارية (%)' if session.get('lang')=='ar' else 'Pourcentage Bonus Inscription de la Secrétaire (%)' }}
+          </label>
+          <div style="font-size:12px; color:#047857; margin-bottom:8px;">
+            {{ 'تستفيد السكرتارية من هذه النسبة من صافي أرباح المدرسة على كل تسجيل (بعد خصم واجب التسجيل ونسبة الأستاذ)' if session.get('lang')=='ar' else 'La secrétaire perçoit ce pourcentage calculé sur la part nette de l\'école (après déduction des frais d\'inscription et de la rémunération enseignant).' }}
+          </div>
+          <div class="input-field has-ico" style="max-width:320px; position:relative;">
+            <span class="f-ico">💰</span>
+            <input type="number" step="0.01" min="0" max="100" name="commission_rate" id="commission_rate_input" value="0.0" step="0.01" placeholder="Ex : 10.0" style="padding-right:32px; font-weight:700;">
+            <span style="position:absolute; right:12px; top:50%; transform:translateY(-50%); font-weight:800; color:#065f46;">%</span>
+          </div>
+        </div>
+
+        <div class="field full" id="teacherSelectField" style="display:none; background:#f0f7ff; padding:16px; border-radius:14px; border:1.5px solid #bae6fd;">
+          <label style="color:#0369a1;">👨‍🏫 {{ 'ربط هذا الحساب بملف الأستاذ (لكي يرى حصصه ودروسه فقط)' if session.get('lang')=='ar' else 'Associer à l\'enseignant (pour filtrer ses cours uniquement)' }} <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🎓</span>
+            <select name="teacher_id" id="teacher_id_input" onchange="onTeacherSelected(this)">
+              <option value="">-- {{ 'اختر الأستاذ من القائمة...' if session.get('lang')=='ar' else 'Choisir un enseignant...' }} --</option>
+              {% for t in teachers %}
+                {% set existing_user = users|selectattr("teacher_id", "equalto", t.id)|first %}
+                {% if existing_user %}
+                  <option value="{{ t.id }}" disabled style="color:#94a3b8;">{{ t.full_name }} ({{ t.specialty or t.code }}) — ⚠️ {{ 'لديه حساب بالفعل' if session.get('lang')=='ar' else 'Déjà associé à @' ~ existing_user.username }}</option>
+                {% else %}
+                  <option value="{{ t.id }}" data-id="{{ t.id }}" data-fullname="{{ t.full_name }}" data-firstname="{{ t.first_name }}" data-lastname="{{ t.last_name }}">{{ t.full_name }} ({{ t.specialty or t.code }})</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:12px; padding:12px 28px; font-weight:800;">+ {{ 'حفظ وإنشاء الحساب' if session.get('lang')=='ar' else 'Créer le compte' }}</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-pad" style="padding-bottom:12px;"><h3 class="mt-0 mb-0" style="font-size:16px;">👥 {{ 'قائمة الحسابات والمستخدمين المسجلين' if session.get('lang')=='ar' else 'Comptes utilisateurs' }} ({{ users|length }})</h3></div>
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>{{ 'المستخدم' if session.get('lang')=='ar' else 'Utilisateur' }}</th>
+        <th>{{ 'الدور والصلاحية' if session.get('lang')=='ar' else 'Rôle' }}</th>
+        <th>{{ 'الأستاذ المرتبط / Bonus' if session.get('lang')=='ar' else 'Enseignant lié / Bonus' }}</th>
+        <th>{{ 'الحالة' if session.get('lang')=='ar' else 'Statut' }}</th>
+        <th style="text-align:right;">{{ t('actions') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>
+          <strong style="color:#0B3D6E; font-size:14.5px;">{{ u.full_name or u.username }}</strong>
+          <div class="muted" style="font-size:12px;">@{{ u.username }}</div>
+        </td>
+        <td>
+          {% if u.role == 'admin' %}
+            <span class="chip chip-blue">👑 Admin (مدير)</span>
+          {% elif u.role == 'secretary' %}
+            <span class="chip chip-green">📝 Secrétariat (استقبال)</span>
+            <div style="margin-top:4px;">
+              <span class="chip chip-blue" style="font-size:11px; font-weight:800; background:#ecfdf5; color:#047857; border:1px solid #a7f3d0;">
+                🎯 {{ '%.1f'|format(u.commission_rate or 0) }}% Bonus
+              </span>
+            </div>
+          {% else %}
+            <span class="chip chip-amber">👨‍🏫 Enseignant (أستاذ)</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if u.role == 'teacher' and u.teacher_id %}
+            {% set linked_t = teachers|selectattr("id", "equalto", u.teacher_id)|first %}
+            {% if linked_t %}
+              <strong style="color:#047857;">🎓 {{ linked_t.full_name }}</strong>
+            {% else %}
+              <span class="muted">—</span>
+            {% endif %}
+          {% elif u.role == 'secretary' %}
+            <span style="font-size:12px; font-weight:700; color:#047857;">
+              💰 {{ '%.1f'|format(u.commission_rate or 0) }}% par inscription
+            </span>
+          {% else %}
+            <span class="muted">—</span>
+          {% endif %}
+        </td>
+        <td><span class="chip {{ 'chip-green' if u.active else 'chip-red' }}">{{ '🟢 Actif' if u.active else '🔴 Inactif' }}</span></td>
+        <td style="text-align:right;">
+          <div class="flex" style="justify-content:flex-end; gap:6px; flex-wrap:wrap;">
+            {% if u.role in ('admin', 'secretary') %}
+            <a href="{{ url_for('user_activity', uid=u.id) }}" class="btn btn-xs btn-outline" style="color:#0284c7; border-color:#7dd3fc; background:#f0f9ff; font-weight:700;" title="Voir les ventes, primes et opérations">
+              📊 {{ 'Primes & Ventes' if u.role == 'secretary' else 'Activité & Ventes' }}
+            </a>
+            {% endif %}
+            <button type="button" 
+                    onclick="openEditUserModal({{ u.id }}, '{{ u.username|escape }}', '{{ (u.full_name or '')|escape }}', '{{ u.role }}', {{ u.commission_rate or 0 }}, {{ u.teacher_id or 'null' }})" 
+                    class="btn btn-xs btn-outline" 
+                    style="color:#0B3D6E; border-color:#93c5fd; background:#eff6ff; font-weight:700;" 
+                    title="Modifier ce compte (Rôle, Taux prime, Mot de passe...)">
+              ✏️ {{ 'تعديل' if session.get('lang')=='ar' else 'Modifier' }}
+            </button>
+            {% if u.role == 'secretary' %}
+            <button type="button" onclick="openCommissionModal({{ u.id }}, '{{ u.username }}', {{ u.commission_rate or 0 }})" class="btn btn-xs btn-outline" style="color:#047857; border-color:#a7f3d0; background:#f0fdf4; font-weight:700;" title="Modifier rapidement le pourcentage de commission">
+              🎯 Taux Prime
+            </button>
+            {% endif %}
+            <form method="post" action="{{ url_for('user_toggle', uid=u.id) }}">
+              <button class="btn btn-xs btn-outline">{{ 'Désactiver' if u.active else 'Activer' }}</button>
+            </form>
+            {% if u.id != cur_user.id %}
+            <form method="post" action="{{ url_for('user_delete', uid=u.id) }}" onsubmit="return confirm('Supprimer cet utilisateur ?');">
+              <button class="btn btn-xs btn-outline-danger" style="color:#ef4444;">{{ t('delete') }}</button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- Modal Edit Entire User (Role, Commission, Password, Teacher Link) -->
+<div id="editUserModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(3px);">
+  <div class="card" style="background:#fff; width:500px; max-width:94vw; border-radius:14px; padding:24px; box-shadow:0 20px 40px rgba(0,0,0,0.25); max-height:90vh; overflow-y:auto;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1.5px solid #e2e8f0; padding-bottom:10px;">
+      <h3 style="margin:0; color:#0B3D6E; font-size:18px; font-weight:800;">
+        ✏️ {{ 'تعديل حساب المستخدم' if session.get('lang')=='ar' else 'Modifier le Compte Utilisateur' }}
+      </h3>
+      <button type="button" onclick="closeEditUserModal()" style="background:none; border:none; font-size:22px; cursor:pointer; color:#94a3b8; font-weight:bold;">×</button>
+    </div>
+    
+    <p class="muted" style="font-size:13px; margin:0 0 16px 0;" id="modalEditUserSubtitle">
+      Utilisateur : @username
+    </p>
+
+    <form id="editUserForm" method="post" action="">
+      <div class="field mb-3">
+        <label style="font-weight:700; font-size:12.5px; color:#334155;">{{ 'الاسم الكامل' if session.get('lang')=='ar' else 'Nom complet' }}</label>
+        <div class="input-field has-ico">
+          <span class="f-ico">📛</span>
+          <input type="text" name="full_name" id="edit_full_name" placeholder="Ex: Maha Alaoui">
+        </div>
+      </div>
+
+      <div class="field mb-3">
+        <label style="font-weight:700; font-size:12.5px; color:#334155;">{{ 'الدور والصلاحية (Role)' if session.get('lang')=='ar' else 'Rôle & Type d\'accès' }} <span class="req">*</span></label>
+        <div class="input-field has-ico">
+          <span class="f-ico">🛡️</span>
+          <select name="role" id="edit_role_select" onchange="toggleEditRoleFields(this.value)">
+            <option value="admin">👑 Administrateur (مدير عام)</option>
+            <option value="secretary">📝 Secrétariat & Accueil (استقبال وتجسيل)</option>
+            <option value="teacher">👨‍🏫 Enseignant (أستاذ)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Commission Field for Secretary -->
+      <div class="field mb-3" id="editSecretaryBonusField" style="background:#ecfdf5; padding:14px; border-radius:10px; border:1.5px solid #a7f3d0;">
+        <label style="color:#065f46; font-weight:800; font-size:13px;">
+          🎯 {{ 'نسبة مكافأة التسجيل للسكرتارية (%)' if session.get('lang')=='ar' else 'Pourcentage Bonus Inscription (%)' }}
+        </label>
+        <div style="font-size:11.5px; color:#047857; margin-bottom:8px; line-height:1.4;">
+          {{ 'يُحسب هذا البونص على صافي ربح المدرسة بعد خصم مصاريف التسجيل وحصة الأستاذ، على المبالغ المحصلة فعلياً من التلاميذ الجدد.' if session.get('lang')=='ar' else 'Calculé sur la marge nette école encaissée (après déduction frais de dossier et prof) pour les nouveaux élèves.' }}
+        </div>
+        <div class="input-field has-ico" style="position:relative;">
+          <span class="f-ico">💰</span>
+          <input type="number" step="0.01" min="0" max="100" name="commission_rate" id="edit_commission_rate" style="padding-right:34px; font-weight:800; font-size:15px;">
+          <span style="position:absolute; right:12px; top:50%; transform:translateY(-50%); font-weight:800; color:#065f46;">%</span>
+        </div>
+      </div>
+
+      <!-- Teacher Association Field -->
+      <div class="field mb-3" id="editTeacherSelectField" style="background:#f0f7ff; padding:14px; border-radius:10px; border:1.5px solid #bae6fd; display:none;">
+        <label style="color:#0369a1; font-weight:700; font-size:13px;">
+          🎓 {{ 'ربط بملف الأستاذ' if session.get('lang')=='ar' else 'Associer à l\'enseignant' }}
+        </label>
+        <div class="input-field has-ico" style="margin-top:6px;">
+          <span class="f-ico">👨‍🏫</span>
+          <select name="teacher_id" id="edit_teacher_id">
+            <option value="">-- {{ 'اختر الأستاذ...' if session.get('lang')=='ar' else 'Choisir un enseignant...' }} --</option>
+            {% for t in teachers %}
+              <option value="{{ t.id }}">{{ t.full_name }} ({{ t.specialty or t.code }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Password Change -->
+      <div class="field mb-3">
+        <label style="font-weight:700; font-size:12.5px; color:#334155;">
+          🔑 {{ 'تغيير كلمة المرور (اتركه فارغاً للاحتفاظ بالقديمة)' if session.get('lang')=='ar' else 'Nouveau mot de passe (laisser vide pour conserver l\'actuel)' }}
+        </label>
+        <div class="input-field has-ico">
+          <span class="f-ico">🔒</span>
+          <input type="password" name="password" placeholder="Laisser vide pour ne pas changer">
+        </div>
+      </div>
+
+      <div class="flex" style="justify-content:flex-end; gap:8px; margin-top:20px; border-top:1px solid #f1f5f9; padding-top:14px;">
+        <button type="button" onclick="closeEditUserModal()" class="btn btn-outline">{{ 'إلغاء' if session.get('lang')=='ar' else 'Annuler' }}</button>
+        <button type="submit" class="btn btn-primary" style="background:#0B3D6E; border-color:#0B3D6E; font-weight:800; padding:9px 22px;">
+          💾 {{ 'حفظ التعديلات' if session.get('lang')=='ar' else 'Enregistrer les modifications' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Quick Edit Commission Only -->
+<div id="commissionModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(3px);">
+  <div class="card" style="background:#fff; width:440px; max-width:92vw; border-radius:14px; padding:24px; box-shadow:0 20px 40px rgba(0,0,0,0.2);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="margin:0; color:#0B3D6E; font-size:18px; font-weight:800;">🎯 {{ 'تعديل نسبة مكافأة السكرتارية' if session.get('lang')=='ar' else 'Modifier le Bonus Secrétaire' }}</h3>
+      <button type="button" onclick="closeCommissionModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#94a3b8;">×</button>
+    </div>
+    <p class="muted" style="font-size:12.5px; margin-top:0;" id="modalCommissionUserText">Secrétaire : @user</p>
+    
+    <form id="commissionForm" method="post" action="">
+      <div class="field mb-3">
+        <label style="font-weight:700; font-size:13px; color:#334155;">
+          {{ 'نسبة المكافأة الجديدة (%)' if session.get('lang')=='ar' else 'Nouveau Pourcentage de Commission (%)' }}
+        </label>
+        <div class="input-field has-ico" style="position:relative; margin-top:5px;">
+          <span class="f-ico">💰</span>
+          <input type="number" step="0.01" min="0" max="100" name="commission_rate" id="modal_commission_rate" required style="font-size:16px; font-weight:800; padding-right:34px;">
+          <span style="position:absolute; right:12px; top:50%; transform:translateY(-50%); font-weight:800; color:#64748b;">%</span>
+        </div>
+        <small class="muted" style="display:block; margin-top:6px; font-size:11.5px; line-height:1.4;">
+          ℹ️ {{ 'تُحسب هذه النسبة من صافي ربح المدرسة (بعد خصم مصاريف التسجيل وحصة الأستاذ).' if session.get('lang')=='ar' else 'Calculé sur la marge nette de l\'école par inscription (scolarité payée moins part enseignant).' }}
+        </small>
+      </div>
+      <div class="flex" style="justify-content:flex-end; gap:8px; margin-top:18px;">
+        <button type="button" onclick="closeCommissionModal()" class="btn btn-outline">{{ 'إلغاء' if session.get('lang')=='ar' else 'Annuler' }}</button>
+        <button type="submit" class="btn btn-primary" style="background:#047857; border-color:#047857; font-weight:800;">{{ 'حفظ التعديل' if session.get('lang')=='ar' else 'Enregistrer' }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function toggleRoleFields(val) {
+    var tf = document.getElementById('teacherSelectField');
+    var sf = document.getElementById('secretaryBonusField');
+    if (tf) tf.style.display = (val === 'teacher') ? 'block' : 'none';
+    if (sf) sf.style.display = (val === 'secretary') ? 'block' : 'none';
+  }
+
+  function openEditUserModal(uid, username, fullName, role, commissionRate, teacherId) {
+    var userSub = document.getElementById('modalEditUserSubtitle');
+    if (userSub) userSub.innerText = "Utilisateur : @" + username;
+    var nameInput = document.getElementById('edit_full_name');
+    if (nameInput) nameInput.value = fullName || '';
+    var roleSelect = document.getElementById('edit_role_select');
+    if (roleSelect) roleSelect.value = role || 'secretary';
+    var commInput = document.getElementById('edit_commission_rate');
+    if (commInput) commInput.value = commissionRate || 0;
+    var teacherSelect = document.getElementById('edit_teacher_id');
+    if (teacherSelect) teacherSelect.value = (teacherId && teacherId !== 'null') ? teacherId : '';
+    toggleEditRoleFields(role);
+    var form = document.getElementById('editUserForm');
+    if (form) form.action = "/users/" + uid + "/edit";
+    var modal = document.getElementById('editUserModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function closeEditUserModal() {
+    var modal = document.getElementById('editUserModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function toggleEditRoleFields(role) {
+    var sf = document.getElementById('editSecretaryBonusField');
+    var tf = document.getElementById('editTeacherSelectField');
+    if (sf) sf.style.display = (role === 'secretary') ? 'block' : 'none';
+    if (tf) tf.style.display = (role === 'teacher') ? 'block' : 'none';
+  }
+
+  function openCommissionModal(uid, username, rate) {
+    document.getElementById('modalCommissionUserText').innerText = "Secrétaire : @" + username;
+    document.getElementById('modal_commission_rate').value = rate || 0;
+    document.getElementById('commissionForm').action = "/users/" + uid + "/commission";
+    var modal = document.getElementById('commissionModal');
+    modal.style.display = 'flex';
+  }
+
+  function closeCommissionModal() {
+    document.getElementById('commissionModal').style.display = 'none';
+  }
+</script>
+{% endblock %}

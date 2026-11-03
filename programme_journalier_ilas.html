@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Programme Journalier - Institut ILAS</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 8mm 9mm 8mm 9mm;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #1e293b;
+            background: #ffffff;
+            margin: 0;
+            padding: 0;
+            font-size: 8.5pt;
+            line-height: 1.25;
+        }
+
+        /* En-tête */
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #1e3a8a;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+        }
+
+        .header h1 {
+            color: #1e3a8a;
+            font-size: 15pt;
+            font-weight: 800;
+            margin: 0 0 2px 0;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .header .subtitle {
+            font-size: 9pt;
+            color: #334155;
+            font-weight: 700;
+            margin: 0 0 3px 0;
+        }
+
+        .badge-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .badge {
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 7.5pt;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .badge.highlight {
+            background-color: #dbeafe;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+            font-weight: 700;
+        }
+
+        /* Titres de section */
+        .section-title {
+            background: #1e3a8a;
+            color: #ffffff;
+            font-size: 8.5pt;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 3px;
+            margin: 6px 0 4px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title.evening {
+            background: #0f766e;
+        }
+
+        .section-title span.hours {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 7.5pt;
+        }
+
+        /* Tableaux */
+        table.task-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 4px;
+        }
+
+        table.task-table th, table.task-table td {
+            border: 1px solid #cbd5e1;
+            padding: 3px 5px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        table.task-table th {
+            background-color: #f8fafc;
+            color: #1e293b;
+            font-size: 7.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        table.task-table td.time {
+            width: 16%;
+            font-weight: 700;
+            color: #1e3a8a;
+            font-size: 7.5pt;
+            white-space: nowrap;
+        }
+
+        .evening table.task-table td.time {
+            color: #0f766e;
+        }
+
+        table.task-table td.domain {
+            width: 27%;
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 8pt;
+        }
+
+        table.task-table td.actions {
+            width: 57%;
+            font-size: 7.5pt;
+            color: #334155;
+        }
+
+        ul.task-list {
+            margin: 0;
+            padding-left: 12px;
+        }
+
+        ul.task-list li {
+            margin-bottom: 1px;
+        }
+
+        .highlight-row {
+            background-color: #fefce8 !important;
+            border: 1.5px solid #eab308 !important;
+        }
+
+        .handover-box {
+            background-color: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-left: 4px solid #f59e0b;
+            padding: 4px 8px;
+            margin: 4px 0;
+            border-radius: 0 4px 4px 0;
+            font-size: 7.5pt;
+            color: #92400e;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        /* Grilles Fiche de Bord */
+        table.log-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 4px;
+        }
+
+        table.log-grid th, table.log-grid td {
+            border: 1px solid #cbd5e1;
+            padding: 3px 5px;
+            font-size: 7.5pt;
+        }
+
+        table.log-grid th {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .log-box-area {
+            border: 1px solid #cbd5e1;
+            height: 38px;
+            padding: 4px;
+            background: #fafafa;
+            font-size: 7.5pt;
+            color: #64748b;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 7pt;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 2px;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== PAGE 1 : PROGRAMME COMPLET DES 2 ÉQUIPES ==================== -->
+    <div class="header">
+        <h1>INSTITUT ILAS</h1>
+        <p class="subtitle">GUIDE OPÉRATIONNEL & CAHIER DES CHARGES JOURNALIER</p>
+        <div class="badge-bar">
+            <span class="badge highlight">Équipe Matin : 07h50 – 15h00</span>
+            <span class="badge highlight">Passation : 14h50 – 15h00</span>
+            <span class="badge highlight">Équipe Soir : 14h50 – 22h00</span>
+            <span class="badge">Fermeture Institut : 22h00</span>
+        </div>
+    </div>
+
+    <!-- MATINÉE -->
+    <div class="section-title">
+        <span>🌅 1. MATINÉE : OPÉRATIONS, SUIVI ADMINISTRATIF & ACCUEIL COMMERCIAL</span>
+        <span class="hours">07h50 – 15h00</span>
+    </div>
+
+    <table class="task-table">
+        <thead>
+            <tr>
+                <th>Horaires</th>
+                <th>Mission</th>
+                <th>Actions clés & Consignes de rigueur</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="time">07h50 – 08h05</td>
+                <td class="domain">Ouverture & Démarrage Technique</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>Déverrouillage des accès, désactivation alarme. Allumage des <strong>caméras de surveillance</strong>.</li>
+                        <li>Démarrage de tous les <strong>PC</strong> (accueil, direction, salles) et <strong>photocopieuses</strong>.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">08h05 – 08h15</td>
+                <td class="domain">Cahier des Remarques & Urgences (Hors Logiciel)</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li><strong>Contrôle obligatoire du cahier physique de liaison</strong> (séparé du logiciel de gestion) : prise de connaissance des consignes urgentes, incidents de la veille, remarques de la direction et points critiques.</li>
+                        <li>Traitement immédiat des urgences et report des priorités sur la fiche de suivi quotidienne.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">08h15 – 08h25</td>
+                <td class="domain">Fiche Quotidienne de Bord</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li><strong>Impression du programme quotidien variable (fiche de bord)</strong> pour noter au fur et à mesure : profs absents, incidents matériels, visites et remarques.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">08h25 – 08h45</td>
+                <td class="domain">Contrôle Étages & Bureaux</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li><strong>Inspection du 2ème et 1er étage</strong> : propreté, éclairage, tableaux, projecteurs, sanitaires.</li>
+                        <li>Rangement impeccable des comptoirs d'accueil, préparation des fiches d'inscription.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">08h45 – 08h55</td>
+                <td class="domain">Emploi du Temps &amp; Suivi Fiches Pédagogiques (Langues)</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>Validation des présences formateurs, affectation des salles et <strong>affichage à l'accueil</strong>.</li>
+                        <li><strong>Suivi &amp; vérification rigoureuse du remplissage</strong> des fiches pédagogiques (envoyées chaque samedi soir aux profs de langues).</li>
+                        <li>Relance WhatsApp immédiate des enseignants dont la fiche n'est pas encore complétée.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">08h55 – 09h35</td>
+                <td class="domain">Absences & Messages Parents</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>Relevé des listes d'émargement. <strong>Contrôle des retards / absences</strong>.</li>
+                        <li><strong>Envoi immédiat des messages (SMS / WhatsApp) aux parents</strong> des élèves concernés.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">09h35 – 10h30</td>
+                <td class="domain">Inscriptions & Affectations</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>Contrôle de conformité des dossiers élèves. Affectation des <strong>élèves en attente</strong>.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">10h30 – 11h45</td>
+                <td class="domain">Finances & Relances WhatsApp</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>Contrôle des règlements et pointage des mensualités en retard.</li>
+                        <li><strong>Envoi de messages WhatsApp de réclamation de paiement</strong> aux étudiants concernés.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">11h45 – 12h45</td>
+                <td class="domain">Cartes d'Étudiants</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>Impression, plastification, vérification des badges et remise aux étudiants.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr class="highlight-row">
+                <td class="time">12h45 – 14h50</td>
+                <td class="domain">🎯 Accueil Visiteurs & Conversion Inscription</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li><strong>Accueil personnalisé de chaque visiteur</strong>, écoute attentive des besoins.</li>
+                        <li>Présentation persuasive des filières & <strong>conclusion immédiate de l'inscription</strong>.</li>
+                        <li>Saisie des coordonnées des prospects non inscrits pour relance téléphonique.</li>
+                    </ul>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- PASSATION -->
+    <div class="handover-box">
+        <span><strong>🔄 14h50 – 15h00 : PASSATION D'ÉQUIPE (10 MIN)</strong> — Transmission de la fiche de bord : passage en revue des inscrits du matin, des paiements reçus, <strong>du suivi des fiches pédagogiques langues remplies (et envoi samedi soir)</strong>, des incidents et des urgences.</span>
+        <strong>Équipe Matin ➔ Équipe Soir</strong>
+    </div>
+
+    <!-- SOIRÉE -->
+    <div class="section-title evening">
+        <span>🌇 2. APRÈS-MIDI & SOIRÉE : PÉDAGOGIE, MARKETING DIGITAL, B2B & EXPANSION</span>
+        <span class="hours">14h50 – 22h00</span>
+    </div>
+
+    <table class="task-table evening">
+        <thead>
+            <tr>
+                <th>Horaires</th>
+                <th>Mission</th>
+                <th>Actions clés & Consignes de rigueur</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="time">14h50 – 15h00</td>
+                <td class="domain">Prise de Poste & Relève</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>Arrivée à 14h50, consultation de la fiche de bord et prise de consignes du matin.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">15h00 – 16h15</td>
+                <td class="domain">Nouveaux Groupes & Suivi Classe</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li><strong>Constitution des nouveaux groupes</strong> selon les profils et inscriptions récentes.</li>
+                        <li><strong>Visite des classes par la Direction</strong> : contrôle qualité, écoute profs/étudiants.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">16h15 – 17h30</td>
+                <td class="domain">📸 Médias, Canva &amp; Réseaux Sociaux</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li><strong>Création graphique via Canva &amp; captation</strong> : conception visuelle soignée sur <strong>Canva</strong>, courtes vidéos immersives et photos des cours / ateliers.</li>
+                        <li><strong>Publication obligatoire (au moins 1 post par jour)</strong> sur Facebook, Instagram, TikTok et LinkedIn.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">17h30 – 19h00</td>
+                <td class="domain">Site Web, B2B & Visiteurs du Soir</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li><strong>Mise à jour du site Web</strong> et traitement des formulaires d'entreprises.</li>
+                        <li><strong>Démarchage sociétés (B2B)</strong> : envoi de devis et conventions de formation.</li>
+                        <li><strong>Accueil & persuasion des visiteurs du soir</strong> (salariés et étudiants après 18h).</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">19h00 – 20h30</td>
+                <td class="domain">Événements & Partenariats Étranger</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li><strong>Sorties éducatives</strong> : logistique, planning et coordination des autorisations.</li>
+                        <li><strong>Célébrations de l'institut</strong> : organisation des remises de certificats, journées portes ouvertes.</li>
+                        <li><strong>Partenariats internationaux</strong> : conventions et échanges avec des centres à l'étranger.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">20h30 – 21h30</td>
+                <td class="domain">Permanence &amp; Cours du Soir</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>Accueil et encadrement des sessions de cours du soir (professionnels / adultes).</li>
+                        <li>Pointage des présences du soir et gestion des demandes administratives tardives.</li>
+                        <li><strong>Chaque Samedi Soir : Envoi WhatsApp des fiches pédagogiques à remplir</strong> à tous les professeurs de langues pour le suivi de la semaine suivante.</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td class="time">21h30 – 22h00</td>
+                <td class="domain">🔒 Clôture & Fermeture Sécurisée</td>
+                <td class="actions">
+                    <ul class="task-list">
+                        <li>Bilan et signature de la fiche de bord journalière, et <strong>consignation des remarques importantes et urgences sur le cahier physique</strong> (distinct du logiciel) pour l'équipe du matin.</li>
+                        <li><strong>Extinction générale</strong> : PC, photocopieuses, écrans, projecteurs et climatiseurs.</li>
+                        <li><strong>Sécurisation (1er et 2ème étage)</strong> : fermeture fenêtres/portes, alarme et verrouillage à 22h00.</li>
+                    </ul>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Institut ILAS • Document officiel d'organisation interne • Page 1 / 2
+    </div>
+
+    <!-- ==================== PAGE 2 : FICHE DE BORD QUOTIDIENNE TYPE ==================== -->
+    <div class="page-break"></div>
+
+    <div class="header">
+        <h1>INSTITUT ILAS</h1>
+        <p class="subtitle">FICHE DE BORD QUOTIDIENNE (À IMPRIMER ET REMPLIR CHAQUE JOUR)</p>
+        <div class="badge-bar">
+            <span class="badge">Date : ..... / ..... / 202...</span>
+            <span class="badge">Responsable Matin (07h50 - 15h00) : ...................................</span>
+            <span class="badge">Responsable Soir (14h50 - 22h00) : ...................................</span>
+        </div>
+    </div>
+
+    <div class="section-title">
+        <span>1. CONTRÔLE MATÉRIEL & SÉCURITÉ MATIN (07h50)</span>
+    </div>
+    <table class="log-grid">
+        <tr>
+            <td style="width:17%;">[ ] Accès & Portes déverrouillés</td>
+            <td style="width:18%;">[ ] Caméras & Alarmes actives</td>
+            <td style="width:18%;">[ ] PC & Copieurs fonctionnels</td>
+            <td style="width:18%;">[ ] Étages 1 & 2 propres</td>
+            <td style="width:29%; font-weight:bold; color:#1e3a8a;">[ ] Contrôle Cahier Remarques & Urgences</td>
+        </tr>
+    </table>
+
+    <div class="section-title">
+        <span>2. SUIVI DES FORMATEURS & EMPLOI DU TEMPS DU JOUR</span>
+    </div>
+    <table class="log-grid">
+        <thead>
+            <tr>
+                <th style="width:22%;">Formateur / Enseignant</th>
+                <th style="width:18%;">Matière / Groupe</th>
+                <th style="width:9%; text-align:center;">Salle</th>
+                <th style="width:15%; text-align:center;">Statut (Présent / Retard)</th>
+                <th style="width:18%; text-align:center;">Fiche Pédag. Langues</th>
+                <th style="width:18%;">Observations / Remplacement</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td style="text-align:center; font-size:7pt; color:#475569;">[ ] Remplie &amp; Suivie</td><td></td></tr>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td style="text-align:center; font-size:7pt; color:#475569;">[ ] Remplie &amp; Suivie</td><td></td></tr>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td style="text-align:center; font-size:7pt; color:#475569;">[ ] Remplie &amp; Suivie</td><td></td></tr>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td style="text-align:center; font-size:7pt; color:#475569;">[ ] Remplie &amp; Suivie</td><td></td></tr>
+        </tbody>
+    </table>
+
+    <div class="section-title">
+        <span>3. REGISTRE DES VISITEURS & PROSPECTS (CONVERSION EN INSCRITS)</span>
+    </div>
+    <table class="log-grid">
+        <thead>
+            <tr>
+                <th style="width:22%;">Nom & Prénom Visiteur</th>
+                <th style="width:18%;">Téléphone / WhatsApp</th>
+                <th style="width:26%;">Formation demandée</th>
+                <th style="width:14%;">Inscrit ? (Oui/Non)</th>
+                <th style="width:20%;">Suivi / Relance prévue</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td style="height:19px;"></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+    </table>
+
+    <div class="section-title">
+        <span>4. SUIVI ABSENCES, FICHES PÉDAGOGIQUES, PAIEMENTS & BADGES</span>
+    </div>
+    <table class="log-grid">
+        <tr>
+            <td style="width:24%;"><strong>Messages parents envoyés :</strong><br>[ ] Oui&nbsp;&nbsp;&nbsp;&nbsp;[ ] Non<br>Total absents : .......</td>
+            <td style="width:29%;"><strong>Fiches Pédagogiques (Langues) :</strong><br>[ ] Envoyées WhatsApp (Samedi Soir)<br>[ ] Remplies &amp; Suivies (..... / .....)</td>
+            <td style="width:24%;"><strong>Relances paiements :</strong><br>[ ] Oui&nbsp;&nbsp;&nbsp;&nbsp;[ ] Non<br>Total relancés : .......</td>
+            <td style="width:23%;"><strong>Cartes d'étudiants :</strong><br>Quantité : ....... badges</td>
+        </tr>
+    </table>
+
+    <div class="section-title evening">
+        <span>5. SUIVI APRÈS-MIDI & SOIR : MÉDIAS, PROSPECTION & PERMANENCE COURS</span>
+    </div>
+    <table class="log-grid">
+        <tr>
+            <td style="width:52%;">
+                <strong>Publications Réseaux Sociaux (Min. 1 post/jour via Canva) :</strong><br>
+                [ ] Facebook&nbsp;&nbsp;&nbsp;&nbsp;[ ] Instagram&nbsp;&nbsp;&nbsp;&nbsp;[ ] TikTok&nbsp;&nbsp;&nbsp;&nbsp;[ ] LinkedIn<br>
+                [ ] Post Canva publié&nbsp;&nbsp;|&nbsp;&nbsp;Thème : ....................................................
+            </td>
+            <td style="width:48%;">
+                <strong>Démarchage Entreprises & Partenariats Internationaux :</strong><br>
+                Entreprises contactées : ..............................................................<br>
+                Centres étrangers contactés : ........................................................
+            </td>
+        </tr>
+    </table>
+
+    <div class="section-title">
+        <span>6. OBSERVATIONS DU JOUR, INCIDENTS & CONSIGNES URGENTES (Y COMPRIS CAHIER DE LIAISON)</span>
+    </div>
+    <div class="log-box-area">
+        &nbsp;
+    </div>
+
+    <div class="section-title evening">
+        <span>7. CLÔTURE & CONTRÔLE DE SÉCURITÉ DU SOIR (FERMETURE 22h00)</span>
+    </div>
+    <table class="log-grid">
+        <tr>
+            <td style="width:25%;">[ ] PC & Imprimantes OFF</td>
+            <td style="width:25%;">[ ] Climatiseurs & Éclairages OFF</td>
+            <td style="width:25%;">[ ] Fenêtres & Portes fermées</td>
+            <td style="width:25%;">[ ] Alarme & Verrouillage OK (22h)</td>
+        </tr>
+        <tr>
+            <td colspan="2" style="height:25px; vertical-align:top;"><strong>Visa Responsable Matin :</strong></td>
+            <td colspan="2" style="height:25px; vertical-align:top;"><strong>Visa Responsable Soir :</strong></td>
+        </tr>
+    </table>
+
+    <div class="footer">
+        Institut ILAS • Fiche de bord journalière à archiver quotidiennement au classeur de direction • Page 2 / 2
+    </div>
+
+</body>
+</html>

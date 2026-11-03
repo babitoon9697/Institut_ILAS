@@ -1,0 +1,3551 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- BREADCRUMB & HEADER -->
+<div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('dashboard') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ t('dashboard') }}</a></div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+      <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800;">⚡ Inscription Express (التسجيل السريع)</h2>
+      <span class="chip chip-green" style="font-size:10.5px; font-weight:800; padding:2px 8px;">GUICHET UNIQUE 30s</span>
+    </div>
+    <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">Sélectionnez l'élève, cochez les cours et validez l'encaissement avec impression instantanée du ticket</p>
+  </div>
+  <div class="flex" style="gap:8px;">
+    <a class="btn btn-outline btn-sm" href="{{ url_for('enrollments') }}" style="font-weight:700; background:#fff;">📋 Liste des Inscriptions</a>
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="expressForm">
+  <input type="hidden" name="placement_test_id" value="{{ placement_test.id if placement_test else '' }}">
+  <input type="hidden" name="teacher_request_id" value="{{ teacher_request.id if teacher_request else '' }}">
+
+  {% if teacher_request %}
+  <div style="background: linear-gradient(135deg, {% if matched_student %}#eff6ff 0%, #dbeafe 100%{% else %}#f0fdf4 0%, #dcfce7 100%{% endif %}); border: 2px solid {% if matched_student %}#3b82f6{% else %}#22c55e{% endif %}; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow: 0 4px 14px rgba(0,0,0,0.06);">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <div style="width:44px; height:44px; border-radius:10px; background:{% if matched_student %}#2563eb{% else %}#16a34a{% endif %}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px;">
+        {% if matched_student %}🔗{% else %}👨‍🏫{% endif %}
+      </div>
+      <div>
+        <div style="font-size:15px; font-weight:800; color:{% if matched_student %}#1e40af{% else %}#14532d{% endif %};">
+          {% if matched_student %}
+            Demande enseignant liée à l'élève existant : <span style="color:#1d4ed8; text-decoration:underline;">{{ matched_student.full_name }} (#{{ matched_student.id }})</span>
+          {% else %}
+            Élève proposé par l'enseignant : <span style="color:#15803d;">{{ teacher_request.full_name }}</span> (Nouvelle inscription)
+          {% endif %}
+        </div>
+        <div style="font-size:12px; color:#374151; margin-top:3px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <span>Professeur : <strong style="color:#0f172a;">{{ teacher_request.teacher.full_name if teacher_request.teacher else 'N/A' }}</strong></span>
+          <span>•</span>
+          <span>Niveau proposé : <strong style="color:#16a34a;">{{ teacher_request.school_level or 'Non spécifié' }}</strong></span>
+          {% if teacher_request.course %}
+          <span>•</span>
+          <span style="background:{% if matched_student %}#2563eb{% else %}#16a34a{% endif %}; color:#fff; padding:2px 8px; border-radius:6px; font-weight:800; font-size:12px;">
+            Groupe : {{ teacher_request.course.display_name }}
+          </span>
+          {% endif %}
+          {% if teacher_request.phone %}
+          <span>•</span>
+          <span>Tél : <strong>{{ teacher_request.phone }}</strong></span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div>
+      <span style="background:#ffffff; color:{% if matched_student %}#1d4ed8; border:1px solid #93c5fd;{% else %}#15803d; border:1px solid #86efac;{% endif %} padding:6px 12px; border-radius:8px; font-size:11.5px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+        ⚡ {{ 'Élève Existant Sélectionné' if matched_student else 'Nouveau Candidat' }}
+      </span>
+    </div>
+  </div>
+  
+  {% endif %}
+  {% if placement_test %}
+  <div style="background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%); border: 2px solid #6366f1; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow: 0 4px 14px rgba(99,102,241,0.12);">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <div style="width:44px; height:44px; border-radius:10px; background:#4f46e5; color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px;">🎯</div>
+      <div>
+        <div style="font-size:15px; font-weight:800; color:#1e1b4b;">
+          Candidat orienté depuis le Test de Niveau : <span style="color:#4338ca;">{{ placement_test.full_name }}</span>
+        </div>
+        <div style="font-size:12px; color:#475569; margin-top:3px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <span>Langue : <strong style="color:#0f172a;">{{ placement_test.language }}</strong></span>
+          <span>•</span>
+          <span>Résultat : <strong style="color:#059669;">{{ placement_test.score|int }}/{{ placement_test.max_score|int }} ({{ placement_test.percentage }}%)</strong></span>
+          <span>•</span>
+          <span style="background:#4338ca; color:#fff; padding:2px 8px; border-radius:6px; font-weight:800; font-size:12px;">
+            Niveau Détecté : {{ placement_test.recommended_level }}
+          </span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <span style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; padding:6px 12px; border-radius:8px; font-size:11.5px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+        ✨ Auto-détection du niveau & Pré-remplissage activés
+      </span>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- LIVE ALERT CONTAINER (Feedback on auto-selection) -->
+  <div id="expressLiveAlert" style="display:none; margin-bottom:14px; padding:12px 18px; border-radius:10px; font-size:13.5px; font-weight:700; box-shadow:0 2px 8px rgba(0,0,0,0.06);"></div>
+
+  <!-- TWO-COLUMN WORKSPACE: LEFT = CONFIGURATION (62%), RIGHT = STICKY TICKET (38%) -->
+  <div style="display:grid; grid-template-columns: 1.6fr 1fr; gap:18px; align-items:start;" id="expressLayoutGrid">
+
+    <!-- ==================== LEFT COLUMN: SELECTION & SETTINGS ==================== -->
+    <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+
+      <!-- 1. IDENTIFICATION ÉLÈVE -->
+      <div class="card card-pad" style="padding:18px 20px; border-top:4px solid #1f6feb; position:relative; z-index:50;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="width:28px; height:28px; border-radius:6px; background:#dbeafe; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:14px; font-weight:800;">1</div>
+            <h3 style="margin:0; font-size:15.5px; color:#0B3D6E; font-weight:800;">Identification de l'Élève (بيانات التلميذ)</h3>
+          </div>
+
+          <!-- Mode Toggle Tabs -->
+          <div style="display:inline-flex; background:#f1f5f9; padding:3px; border-radius:8px;">
+            <button type="button" id="btnModeNew" onclick="setStudentMode('new')" style="padding:5px 12px; border-radius:6px; font-weight:800; font-size:12px; border:none; cursor:pointer; background:#1f6feb; color:#fff; transition:all 0.2s;">
+              ✨ Nouveau (جديد)
+            </button>
+            <button type="button" id="btnModeExist" onclick="setStudentMode('exist')" style="padding:5px 12px; border-radius:6px; font-weight:700; font-size:12px; border:none; cursor:pointer; background:transparent; color:#64748b; transition:all 0.2s;">
+              🔍 Déjà Inscrit (مسجل)
+            </button>
+          </div>
+          <input type="hidden" name="student_mode" id="studentMode" value="new">
+        </div>
+
+        <!-- NEW STUDENT FORM -->
+        <div id="boxNewStudent">
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            
+            <div class="field" style="grid-column: 1 / -1;">
+              <label style="font-size:12px; font-weight:700; color:#334155;">Nom & Prénom de l'Élève (الاسم الكامل) <span class="req">*</span></label>
+              <div class="input-field has-ico">
+                <span class="f-ico">👤</span>
+                <input type="text" name="full_name" id="inpFullName" value="{{ prefill_name if prefill_name else (placement_test.full_name if placement_test and not matched_student else '') }}" placeholder="Ex : Amine Nakkach" required style="font-weight:700; font-size:14px;">
+              </div>
+            </div>
+
+            <div class="field">
+              <label style="font-size:12px; font-weight:700; color:#334155;">Date de Naissance (تاريخ الازدياد)</label>
+              <div class="input-field has-ico">
+                <span class="f-ico">🎂</span>
+                <input type="date" name="birth_date" id="inpBirthDate" value="{{ placement_test.birth_date.strftime('%Y-%m-%d') if placement_test and placement_test.birth_date and not matched_student else '' }}" onchange="previewExpressAge(this.value)" style="font-size:13px; font-weight:600;">
+              </div>
+              <div id="expressAgeBadge" style="display:none; font-size:11px; font-weight:700; color:#1d4ed8; margin-top:2px;">
+                🎂 Âge : <span id="expressAgeVal"></span> ans
+              </div>
+            </div>
+
+            <div class="field">
+              <label style="font-size:12px; font-weight:700; color:#334155;">Niveau Scolaire (المستوى الدراسي)</label>
+              <div class="input-field has-ico">
+                <span class="f-ico">🎓</span>
+                {% set cur_target_level = prefill_level or (placement_test.school_level if placement_test else '') %}
+                <select name="school_level" id="inpSchoolLevel" style="font-size:13px; font-weight:600;">
+                  <option value="">-- Sélectionner le Niveau Scolaire --</option>
+                  
+                  <optgroup label="── Préscolaire / Maternelle (التعليم الأولي) ──">
+                    <option value="Maternelle" {{ 'selected' if cur_target_level and cur_target_level in ('Maternelle', 'Préscolaire') }}>Maternelle / Préscolaire (التعليم الأولي / الروض)</option>
+                  </optgroup>
+
+                  <optgroup label="── Enseignement Primaire (التعليم الابتدائي) ──">
+                    <option value="Primaire" {{ 'selected' if cur_target_level and cur_target_level == 'Primaire' }}>Primaire (Général) (الابتدائي)</option>
+                    <option value="1ère AEP" {{ 'selected' if cur_target_level and cur_target_level in ('1ère AEP', '1AEP') }}>1ère AEP (الأول ابتدائي)</option>
+                    <option value="2ème AEP" {{ 'selected' if cur_target_level and cur_target_level in ('2ème AEP', '2AEP') }}>2ème AEP (الثاني ابتدائي)</option>
+                    <option value="3ème AEP" {{ 'selected' if cur_target_level and cur_target_level in ('3ème AEP', '3AEP') }}>3ème AEP (الثالث ابتدائي)</option>
+                    <option value="4ème AEP" {{ 'selected' if cur_target_level and cur_target_level in ('4ème AEP', '4AEP') }}>4ème AEP (الرابع ابتدائي)</option>
+                    <option value="5ème AEP" {{ 'selected' if cur_target_level and cur_target_level in ('5ème AEP', '5AEP') }}>5ème AEP (الخامس ابتدائي)</option>
+                    <option value="6ème AEP" {{ 'selected' if cur_target_level and cur_target_level in ('6ème AEP', '6AEP') }}>6ème AEP (السادس ابتدائي - شهادة)</option>
+                  </optgroup>
+
+                  <optgroup label="── Enseignement Collégial (التعليم الإعدادي) ──">
+                    <option value="Collège" {{ 'selected' if cur_target_level and cur_target_level == 'Collège' }}>Collège (Général) (الإعدادي)</option>
+                    <option value="1AC" {{ 'selected' if cur_target_level and cur_target_level in ('1AC', '1ère Année Collège') }}>1AC (الأولى إعدادي)</option>
+                    <option value="2AC" {{ 'selected' if cur_target_level and cur_target_level in ('2AC', '2ème Année Collège') }}>2AC (الثانية إعدادي)</option>
+                    <option value="3AC" {{ 'selected' if cur_target_level and cur_target_level in ('3AC', '3ème Année Collège') }}>3AC (الثالثة إعدادي - شهادة)</option>
+                  </optgroup>
+
+                  <optgroup label="── Enseignement Qualifiant / Lycée (الثانوي التأهيلي) ──">
+                    <option value="Tronc Commun" {{ 'selected' if cur_target_level and cur_target_level in ('Tronc Commun', 'TC') }}>Tronc Commun (الجدع المشترك - TC)</option>
+                    <option value="1Bac" {{ 'selected' if cur_target_level and cur_target_level in ('1Bac', '1ère Année Bac', '1BAC') }}>1Bac (الأولى باكالوريا - جهوي)</option>
+                    <option value="2Bac" {{ 'selected' if cur_target_level and cur_target_level in ('2Bac', '2ème Année Bac', '2BAC') }}>2Bac (الثانية باكالوريا - وطني)</option>
+                  </optgroup>
+
+                  <optgroup label="── Enseignement Supérieur (التعليم العالي والمهني) ──">
+                    <option value="Supérieur" {{ 'selected' if cur_target_level and cur_target_level in ('Supérieur', 'Étudiant Supérieur') }}>Supérieur / Université (جامعي / كليات)</option>
+                    <option value="BTS / EST / CPGE" {{ 'selected' if cur_target_level and cur_target_level in ('BTS', 'EST', 'CPGE', 'BTS / EST / CPGE') }}>BTS / EST / CPGE (أقسام تحضيرية / تقني)</option>
+                    <option value="Formation Professionnelle" {{ 'selected' if cur_target_level and cur_target_level in ('Formation Professionnelle', 'OFPPT') }}>Formation Professionnelle (تكوين مهني / OFPPT)</option>
+                  </optgroup>
+
+                  <optgroup label="── Adultes & Formation Continue (كبار ولغات) ──">
+                    <option value="Adulte" {{ 'selected' if cur_target_level and cur_target_level in ('Adulte', 'Adultes', 'Adulte / Professionnel') }}>Adulte / Professionnel (كبار / لغات وتكوين مستمر)</option>
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label style="font-size:12px; font-weight:700; color:#334155;">Téléphone Tuteur / Parent (WhatsApp) <span class="req" style="color:#10b981;">*</span></label>
+              <div class="input-field has-ico">
+                <span class="f-ico">👨‍👩‍👧</span>
+                <input type="tel" name="parent_phone" id="inpParentPhone" oninput="onPhoneFieldInput()" value="{{ (teacher_request.phone if teacher_request and teacher_request.phone else '') or ((placement_test.whatsapp or placement_test.phone) if placement_test and not matched_student else '') }}" placeholder="Ex : 06 99 88 77 66" style="font-size:13.5px;">
+              </div>
+            </div>
+
+            <div class="field">
+              <label style="font-size:12px; font-weight:700; color:#334155;">Téléphone Élève (هاتف التلميذ)</label>
+              <div class="input-field has-ico">
+                <span class="f-ico">📞</span>
+                <input type="tel" name="phone" id="inpStudentPhone" oninput="onPhoneFieldInput()" value="{{ (teacher_request.phone if teacher_request and teacher_request.phone else '') or (placement_test.phone if placement_test and not matched_student else '') }}" placeholder="Ex : 06 12 34 56 78" style="font-size:13.5px;">
+              </div>
+            </div>
+
+            <!-- Live hint when phone matches existing student(s) -->
+            <div id="phoneDuplicateLiveHint" style="display:none; grid-column: 1 / -1; margin-top:-2px; margin-bottom:4px; padding:10px 14px; background:#fffbeb; border:1.5px solid #f59e0b; border-radius:8px; font-size:12px; color:#92400e; box-shadow:0 1px 4px rgba(245,158,11,0.08);">
+            </div>
+
+            <div class="field">
+              <label style="font-size:12px; font-weight:700; color:#334155;">N° CIN / Carte d'Identité (رقم البطاقة الوطنية)</label>
+              <div class="input-field has-ico">
+                <span class="f-ico">🪪</span>
+                <input type="text" name="cin" id="inpCin" placeholder="Ex : AB123456" style="font-size:13.5px; font-weight:700; text-transform:uppercase;">
+              </div>
+            </div>
+
+            <div class="field" style="display:flex; flex-direction:column; justify-content:flex-end;">
+              <input type="file" name="photo" id="studentPhotoInput" accept="image/*" onchange="previewStudentPhoto(this)" style="display:none;">
+              <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('studentPhotoInput').click()" style="padding:7px 12px; font-size:12px; font-weight:700; width:100%; justify-content:center; height:38px; border:1px dashed #cbd5e1; background:#f8fafc;">
+                📸 <span id="photoBtnTxt">Photo QR Badge</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- EXISTING STUDENT SEARCH -->
+        <div id="boxExistStudent" style="display:none; position:relative; z-index:100;">
+          <input type="hidden" name="student_id" id="selStudentId" value="">
+          <label style="font-size:12.5px; font-weight:700; color:#0B3D6E; margin-bottom:4px; display:block;">
+            Rechercher par Nom, Code (ILAS-...), ou N° Téléphone <span class="req">*</span>
+          </label>
+          <div class="input-field has-ico" style="position:relative;">
+            <span class="f-ico">🔍</span>
+            <input type="text" id="studentSearchInput" placeholder="Tapez au moins 2 lettres pour chercher..." autocomplete="off" oninput="filterStudentSearch()" onfocus="filterStudentSearch()" style="font-size:14px; font-weight:700; padding-right:32px;">
+            <button type="button" id="btnClearStudentSearch" onclick="clearStudentSelection()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; display:none; font-size:14px; color:#94a3b8;">❌</button>
+          </div>
+
+          <!-- Selected Student Confirmation Badge -->
+          <div id="selectedStudentBadge" style="display:none; margin-top:8px; padding:8px 12px; background:#ecfdf5; border:1.5px solid #10b981; border-radius:8px; align-items:center; justify-content:space-between;">
+            <div>
+              <span style="font-size:10px; font-weight:800; text-transform:uppercase; color:#047857;">✓ ÉLÈVE SÉLECTIONNÉ :</span>
+              <div id="selectedStudentInfo" style="font-size:13.5px; font-weight:800; color:#064e3b; margin-top:1px;"></div>
+            </div>
+            <button type="button" onclick="clearStudentSelection()" class="btn btn-xs btn-outline-danger" style="padding:2px 8px; font-size:11px;">Changer</button>
+          </div>
+
+          <!-- Student Credit Notice (Avoir disponible) -->
+          <div id="studentCreditNotice" style="display:none; margin-top:8px; padding:10px 14px; background:#f0fdf4; border:1.5px solid #22c55e; border-radius:8px; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:20px;">🪙</span>
+              <div>
+                <div style="font-size:12.5px; font-weight:800; color:#15803d;">
+                  Solde Avoir disponible : <strong id="creditBalanceVal">0.00</strong> {{ settings.currency }}
+                </div>
+                <div style="font-size:11px; color:#166534;">
+                  Ce solde d'avoir peut être déduit automatiquement de la facture.
+                </div>
+              </div>
+            </div>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:800; color:#15803d; cursor:pointer; background:#fff; padding:5px 10px; border-radius:6px; border:1.5px solid #86efac; margin:0;">
+              <input type="checkbox" name="use_credit" id="chkUseCredit" value="1" onchange="updateGrandTotal()" style="transform:scale(1.2); accent-color:#16a34a;">
+              <span>Déduire l'avoir (استعمال الرصيد)</span>
+            </label>
+          </div>
+
+          <!-- Dropdown Results -->
+          <div id="studentSearchResults" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:9999; background:#ffffff; border:2px solid #1f6feb; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.2); max-height:220px; overflow-y:auto; margin-top:4px;">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 2. CHOIX DES CLASSES & COURS OU MATIÈRES EN ATTENTE -->
+      <div class="card card-pad" style="padding:20px 22px; border-top:4px solid #7c3aed; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+        
+        <!-- HEADER ROW: Title + Enrollment Date -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; border-bottom:1px solid #f1f5f9; padding-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:32px; height:32px; border-radius:8px; background:#f3e8ff; display:flex; align-items:center; justify-content:center; color:#7c3aed; font-size:16px; font-weight:900;">2</div>
+            <div>
+              <h3 style="margin:0; font-size:16px; color:#0B3D6E; font-weight:800; line-height:1.2;">
+                Matières & Formules d'Inscription (الأفواج والمواد)
+              </h3>
+              <p style="margin:2px 0 0 0; font-size:11.5px; color:#64748b; font-weight:600;">
+                Choisissez la formule : classe régulière, en attente de groupe ou cours particulier VIP
+              </p>
+            </div>
+          </div>
+          
+          <div style="display:flex; align-items:center; gap:8px; background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:10px; padding:6px 12px; box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+            <label style="font-size:11.5px; font-weight:800; color:#0B3D6E; display:flex; align-items:center; gap:5px;">
+              <span>📅</span> <span>Date d'inscription (تاريخ التسجيل) :</span>
+            </label>
+            <input type="date" name="enroll_date" id="enrollDate" value="{{ start_date or today }}" required onchange="recalculateAll()" style="padding:4px 8px; font-size:12.5px; font-weight:800; border:1.5px solid #1f6feb; border-radius:6px; background:#fff; color:#0B3D6E; cursor:pointer;" title="Date administrative d'inscription de l'élève">
+          </div>
+        </div>
+
+        <!-- 3 EXECUTIVE MODE CARDS (SEGMENTED TABS) -->
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:16px;" id="courseModeTabsContainer">
+          
+          <button type="button" id="btnCourseModeSpecific" onclick="setCourseMode('specific')" 
+                  style="display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:12px; border:1.5px solid #6d28d9; background:linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color:#fff; cursor:pointer; text-align:left; transition:all 0.2s; box-shadow:0 3px 10px rgba(124,58,237,0.25);">
+            <div style="width:38px; height:38px; border-radius:9px; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">🏫</div>
+            <div style="min-width:0;">
+              <div style="font-weight:800; font-size:13.5px; line-height:1.2;">Classes & Groupes</div>
+              <div class="mode-sub" style="font-size:10.5px; opacity:0.9; margin-top:2px;">Planning & Groupe fixé</div>
+            </div>
+          </button>
+
+          <button type="button" id="btnCourseModePending" onclick="setCourseMode('pending')" 
+                  style="display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:12px; border:1.5px solid #cbd5e1; background:#f8fafc; color:#334155; cursor:pointer; text-align:left; transition:all 0.2s;">
+            <div style="width:38px; height:38px; border-radius:9px; background:#fef3c7; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">⏳</div>
+            <div style="min-width:0;">
+              <div style="font-weight:800; font-size:13.5px; line-height:1.2;">En Attente de Groupe</div>
+              <div class="mode-sub" style="font-size:10.5px; color:#64748b; margin-top:2px;">تحديد الفوج لاحقاً</div>
+            </div>
+          </button>
+
+          <button type="button" id="btnCourseModePrivate" onclick="setCourseMode('private')" 
+                  style="display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:12px; border:1.5px solid #cbd5e1; background:#f8fafc; color:#334155; cursor:pointer; text-align:left; transition:all 0.2s;">
+            <div style="width:38px; height:38px; border-radius:9px; background:#e0e7ff; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">⭐</div>
+            <div style="min-width:0;">
+              <div style="font-weight:800; font-size:13.5px; line-height:1.2;">Cours Particulier VIP</div>
+              <div class="mode-sub" style="font-size:10.5px; color:#64748b; margin-top:2px;">1 élève seul · sur mesure</div>
+            </div>
+          </button>
+
+        </div>
+        <input type="hidden" name="course_mode" id="courseMode" value="specific">
+
+        <!-- SEARCH & FILTER TOOLBAR (STRUCTURED 3-TIER PROFESSIONAL DECK) -->
+        <div id="courseFilterToolbar" style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:12px 14px; margin-bottom:14px; box-shadow:0 2px 6px rgba(0,0,0,0.02);">
+          
+          <!-- TIER 1: LIVE SEARCH INPUT -->
+          <div style="position:relative; margin-bottom:10px;">
+            <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:15px; color:#64748b; pointer-events:none;">🔍</span>
+            <input type="text" id="courseSearchInput" 
+                   placeholder="Recherche instantanée : nom de classe, matière, professeur, salle, horaire... (بحث فوري بالفوج أو الأستاذ)" 
+                   autocomplete="off"
+                   oninput="filterCourses()" 
+                   style="width:100%; padding:9px 34px 9px 36px; font-size:13px; font-weight:700; border:1.5px solid #cbd5e1; border-radius:8px; background:#fff; outline:none; transition:all 0.2s;"
+                   onfocus="this.style.borderColor='#7c3aed'; this.style.boxShadow='0 0 0 3px rgba(124,58,237,0.12)';"
+                   onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none';">
+            <button type="button" id="btnClearCourseSearch" onclick="clearCourseSearch()" 
+                    style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; display:none; font-size:13px; color:#94a3b8; padding:3px 6px;" title="Effacer">
+              ✕
+            </button>
+          </div>
+
+          <!-- TIER 2: 6 STRUCTURED DROPDOWNS -->
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:8px; align-items:center; margin-bottom:10px;">
+            
+            <!-- 1. Matière -->
+            <div id="subjectFilterBox">
+              <select id="subjectFilterSelect" onchange="filterCourses()" 
+                      style="width:100%; padding:7px 9px; font-size:12px; font-weight:700; border:1.5px solid #cbd5e1; border-radius:7px; background:#fff; color:#0B3D6E; cursor:pointer; outline:none;">
+                <option value="">📚 Matière / Langue</option>
+                {% if subjects %}
+                  {% for s in subjects %}
+                  <option value="{{ s }}">{{ s }}</option>
+                  {% endfor %}
+                {% endif %}
+              </select>
+            </div>
+
+            <!-- 2. Public Cible -->
+            <div id="audienceFilterBox">
+              <select id="audienceFilterSelect" onchange="filterCourses()" 
+                      style="width:100%; padding:7px 9px; font-size:12px; font-weight:700; border:1.5px solid #cbd5e1; border-radius:7px; background:#fff; color:#4338ca; cursor:pointer; outline:none;">
+                <option value="">👥 Public Cible</option>
+                <option value="kids">👶 Enfants (Kids / Primaire)</option>
+                <option value="teens">🎒 Ados (Collège / Lycée)</option>
+                <option value="adults">🎓 Adultes</option>
+              </select>
+            </div>
+
+            <!-- 3. Niveau -->
+            <div id="levelFilterBox">
+              <select id="levelFilterSelect" onchange="filterCourses()" 
+                      style="width:100%; padding:7px 9px; font-size:12px; font-weight:700; border:1.5px solid #cbd5e1; border-radius:7px; background:#fff; color:#1e40af; cursor:pointer; outline:none;">
+                <option value="">🎯 Tous Niveaux</option>
+                <optgroup label="── CECRL (Langues) ──">
+                  <option value="A1">A1 (Débutant)</option>
+                  <option value="A2">A2 (Élémentaire)</option>
+                  <option value="B1">B1 (Intermédiaire)</option>
+                  <option value="B2">B2 (Intermédiaire Supérieur)</option>
+                  <option value="C1">C1 (Avancé)</option>
+                  <option value="C2">C2 (Maîtrise)</option>
+                </optgroup>
+                <optgroup label="── Soutien Scolaire ──">
+                  <option value="Primaire">Primaire (الابتدائي)</option>
+                  <option value="Collège">Collège (الإعدادي)</option>
+                  <option value="Tronc Commun">Tronc Commun (الجدع المشترك)</option>
+                  <option value="1ère Année Bac">1ère Année Bac (الأولى باك)</option>
+                  <option value="2ème Année Bac">2ème Année Bac (الثانية باك)</option>
+                </optgroup>
+              </select>
+            </div>
+
+            <!-- 4. Créneau Horaire -->
+            <div id="slotFilterBox">
+              <select id="slotFilterSelect" onchange="filterCourses()" 
+                      style="width:100%; padding:7px 9px; font-size:12px; font-weight:700; border:1.5px solid #cbd5e1; border-radius:7px; background:#fff; color:#0f766e; cursor:pointer; outline:none;">
+                <option value="">⏰ Créneau Horaire</option>
+                <option value="day">☀️ Journée (avant 18h)</option>
+                <option value="evening">🌙 Soirée (dès 18h)</option>
+                <option value="weekend">📅 Week-end (Sam / Dim)</option>
+              </select>
+            </div>
+
+            <!-- 5. Professeur -->
+            <div id="teacherFilterBox">
+              <select id="teacherFilterSelect" onchange="filterCourses()" 
+                      style="width:100%; padding:7px 9px; font-size:12px; font-weight:700; border:1.5px solid #cbd5e1; border-radius:7px; background:#fff; color:#6b21a8; cursor:pointer; outline:none;">
+                <option value="">👨‍🏫 Tous Enseignants</option>
+                {% if teachers %}
+                  {% for t in teachers %}
+                  <option value="{{ t.id }}">{{ t.full_name }}</option>
+                  {% endfor %}
+                {% endif %}
+                <option value="none">⚠️ Sans formateur</option>
+              </select>
+            </div>
+
+            <!-- 6. Salle -->
+            <div id="roomFilterBox">
+              <select id="roomFilterSelect" onchange="filterCourses()" 
+                      style="width:100%; padding:7px 9px; font-size:12px; font-weight:700; border:1.5px solid #cbd5e1; border-radius:7px; background:#fff; color:#334155; cursor:pointer; outline:none;">
+                <option value="">📍 Toutes Salles</option>
+                {% if rooms %}
+                  {% for r in rooms %}
+                  <option value="{{ r.id }}">{{ r.name }}</option>
+                  {% endfor %}
+                {% endif %}
+              </select>
+            </div>
+
+          </div>
+
+          <!-- TIER 3: STRUCTURED SEGMENTED PILLS BAR -->
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-top:1px dashed #cbd5e1; padding-top:9px;">
+            
+            <!-- Segment 1: Disponibilité / Statut -->
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <span style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase;">⚡ Statut :</span>
+              <div style="display:inline-flex; background:#fff; border:1.5px solid #cbd5e1; border-radius:8px; padding:2px; gap:2px; box-shadow:0 1px 3px rgba(0,0,0,0.03);" id="statusSegmentGroup">
+                <button type="button" class="course-status-pill" id="pillStatusAll" onclick="setStatusFilter('all')"
+                        style="padding:4px 9px; border-radius:6px; font-size:11px; font-weight:800; border:none; background:#0B3D6E; color:#fff; cursor:pointer; transition:all 0.15s;">
+                  Toutes
+                </button>
+                <button type="button" class="course-status-pill" id="pillStatusAvailable" onclick="setStatusFilter('available')"
+                        style="padding:4px 9px; border-radius:6px; font-size:11px; font-weight:700; border:none; background:transparent; color:#047857; cursor:pointer; transition:all 0.15s;"
+                        title="Classes prêtes avec formateur assigné">
+                  🟢 Prêtes
+                </button>
+                <button type="button" class="course-status-pill" id="pillStatusUpcoming" onclick="setStatusFilter('upcoming')"
+                        style="padding:4px 9px; border-radius:6px; font-size:11px; font-weight:700; border:none; background:transparent; color:#b45309; cursor:pointer; transition:all 0.15s;"
+                        title="Classes sans formateur">
+                  ⏳ Sans Prof
+                </button>
+                <button type="button" class="course-status-pill" id="pillStatusPriority" onclick="setStatusFilter('priority')"
+                        style="padding:4px 9px; border-radius:6px; font-size:11px; font-weight:700; border:none; background:transparent; color:#ea580c; cursor:pointer; transition:all 0.15s;"
+                        title="Groupes en cours de constitution (1-3 inscrits)">
+                  🎯 Priorité (1-3)
+                </button>
+                <button type="button" class="course-status-pill" id="pillStatusUrgent" onclick="setStatusFilter('urgent')"
+                        style="padding:4px 9px; border-radius:6px; font-size:11px; font-weight:700; border:none; background:transparent; color:#dc2626; cursor:pointer; transition:all 0.15s;"
+                        title="Groupes complets >=4 nécessitant formateur">
+                  🚨 Prêt (≥4)
+                </button>
+              </div>
+            </div>
+
+            <!-- Segment 2: Matières / Catégorie -->
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <span style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase;">📚 Type :</span>
+              <div style="display:inline-flex; background:#fff; border:1.5px solid #cbd5e1; border-radius:8px; padding:2px; gap:2px; box-shadow:0 1px 3px rgba(0,0,0,0.03);" id="categoryFilterPills">
+                <button type="button" class="course-cat-pill" id="pillCatAll" onclick="setCategoryFilter('all')"
+                        style="padding:4px 9px; border-radius:6px; font-size:11px; font-weight:800; border:none; background:#7c3aed; color:#fff; cursor:pointer; transition:all 0.15s;">
+                  Tous
+                </button>
+                <button type="button" class="course-cat-pill" id="pillCatLang" onclick="setCategoryFilter('language')"
+                        style="padding:4px 9px; border-radius:6px; font-size:11px; font-weight:700; border:none; background:transparent; color:#1e40af; cursor:pointer; transition:all 0.15s;">
+                  📘 Langues
+                </button>
+                <button type="button" class="course-cat-pill" id="pillCatTut" onclick="setCategoryFilter('tutoring')"
+                        style="padding:4px 9px; border-radius:6px; font-size:11px; font-weight:700; border:none; background:transparent; color:#065f46; cursor:pointer; transition:all 0.15s;">
+                  📗 Soutien
+                </button>
+              </div>
+            </div>
+
+            <!-- Segment 3: Actions & Matches Counter -->
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button type="button" class="course-cat-pill" id="btnOnlySelected" onclick="toggleOnlySelectedFilter()"
+                      style="padding:4px 9px; border-radius:6px; font-size:11px; font-weight:800; border:1.5px solid #10b981; background:#fff; color:#047857; cursor:pointer; transition:all 0.15s; display:none;">
+                ✓ Sélectionnées (<span id="selectedCountBadge">0</span>)
+              </button>
+              <span id="courseMatchesCount" style="font-size:11.5px; font-weight:800; color:#0B3D6E; background:#e0f2fe; padding:4px 9px; border-radius:6px;">
+                {{ courses|length }} classes
+              </span>
+              <button type="button" id="btnResetFilters" onclick="resetAllCourseFilters()" 
+                      style="font-size:11px; font-weight:800; color:#dc2626; background:none; border:none; cursor:pointer; text-decoration:underline; display:none; padding:0;">
+                ↺ Réinitialiser tout
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- No Results Friendly Fallback -->
+        <div id="noCoursesFound" style="display:none; padding:24px 16px; text-align:center; background:#f8fafc; border:1.5px dashed #cbd5e1; border-radius:10px; margin-bottom:12px;">
+          <div style="font-size:26px; margin-bottom:6px;">🔍</div>
+          <div style="font-weight:800; color:#1e293b; font-size:13.5px;">Aucune classe ne correspond à vos critères de recherche</div>
+          <div style="font-size:12px; color:#64748b; margin-top:3px;" id="noCoursesFoundDetail">Essayez de modifier votre recherche ou les filtres sélectionnés.</div>
+          <button type="button" onclick="resetAllCourseFilters()" class="btn btn-xs btn-outline" style="margin-top:10px; font-weight:700;">
+            ↺ Réinitialiser tous les filtres
+          </button>
+        </div>
+
+        <!-- SCHEDULE CONFLICT ALERT BANNER -->
+        <div id="scheduleConflictBanner" style="display:none; margin-bottom:14px; padding:12px 16px; background:#fef2f2; border:2px solid #ef4444; border-radius:10px; color:#991b1b; box-shadow:0 3px 10px rgba(239,68,68,0.12);">
+          <div style="display:flex; align-items:flex-start; gap:10px;">
+            <span style="font-size:22px; line-height:1;">🚨</span>
+            <div style="flex:1;">
+              <div style="font-size:13.5px; font-weight:800; color:#991b1b; margin-bottom:4px;">
+                Attention : Conflit d'horaires détecté ! (تعارض في توقيت الحصص)
+              </div>
+              <div id="scheduleConflictDetails" style="font-size:12px; line-height:1.5; color:#7f1d1d;">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1. Specific Courses Grid -->
+        {% if courses %}
+        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:12px;" id="coursesGrid">
+          {% for c in courses %}
+          {% set is_tri = c.billing_cycle in ('3months', 'trimestriel', '3 mois') %}
+          {% set c_cycle_months = 3 if is_tri else 1 %}
+          {% set c_unit_price = c.unit_monthly_price or (c.price_per_month if (c.price_per_month and c.price_per_month > 0) else ((c.price / 3)|round(2) if is_tri else c.price)) %}
+          {% set teacher_name = c.teacher.full_name if c.teacher else '' %}
+          {% set teacher_id = c.teacher_id or 0 %}
+          {% set has_t = (c.teacher is not none) %}
+          {% set cnt = c.enrolled_count %}
+          {% set max_c = (c.max_students or 20) if has_t else 4 %}
+          {% set rem_seats = max_c - cnt if max_c > cnt else 0 %}
+          {% set fill_pct = [((cnt / max_c) * 100)|round, 100]|min %}
+          {% set is_priority = (not has_t and cnt >= 1 and cnt < 4) or (has_t and ((cnt >= 1 and cnt <= 3) or (rem_seats <= 2 and rem_seats > 0))) %}
+          {% set is_urgent = (not has_t and cnt >= 4) %}
+          {% set aud = c.target_audience %}
+          {% set tslot = c.timing_slot %}
+          {% set is_rec = false %}
+          {% if placement_test and c.category == 'language' and placement_test.recommended_level %}
+            {% set p_code = placement_test.recommended_level.split('(')[0].strip() %}
+            {% if p_code and p_code in (c.level or '') %}
+              {% set is_rec = true %}
+            {% endif %}
+          {% endif %}
+          <label class="course-card-option" 
+                 data-cid="{{ c.id }}"
+                 data-category="{{ c.category or '' }}"
+                 data-subject="{{ c.language or '' }}"
+                 data-audience="{{ aud }}"
+                 data-slot="{{ tslot }}"
+                 data-room-id="{{ c.room_id or '' }}"
+                 data-teacher-id="{{ teacher_id }}"
+                 data-has-teacher="{{ 'true' if has_t else 'false' }}"
+                 data-enrolled-count="{{ cnt }}"
+                 data-priority-fill="{{ 'true' if is_priority else 'false' }}"
+                 data-is-urgent="{{ 'true' if is_urgent else 'false' }}"
+                 data-teacher-name="{{ teacher_name }}"
+                 data-course-name="{{ c.name }}"
+                 data-level="{{ c.level or '' }}"
+                 data-is-recommended="{{ 'true' if is_rec else 'false' }}"
+                 data-search-text="{{ (c.name ~ ' ' ~ teacher_name ~ ' ' ~ (c.level or '') ~ ' ' ~ (c.language or '') ~ ' ' ~ ('langue' if c.category=='language' else 'soutien') ~ ' ' ~ (c.group_name or '') ~ ' ' ~ (c.room.name if c.room else '') ~ ' ' ~ (c.schedule_label or ''))|lower }}"
+                 style="border: 2px solid {% if is_rec %}#10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.25);{% elif is_urgent %}#ef4444; box-shadow: 0 2px 8px rgba(239,68,68,0.18);{% elif is_priority %}#f59e0b; box-shadow: 0 2px 8px rgba(245,158,11,0.15);{% elif not has_t %}#fde68a{% else %}#e2e8f0{% endif %}; padding:12px 14px; border-radius:12px; cursor:pointer; display:flex; gap:12px; align-items:flex-start; background:{% if is_rec %}#f0fdf4{% elif is_urgent %}#fef2f2{% elif not has_t %}#fffdf7{% else %}#fff{% endif %}; transition:all 0.15s; position:relative;">
+            
+            <input type="checkbox" name="course_ids" value="{{ c.id }}" data-price="{{ c.price }}" data-unitprice="{{ c_unit_price }}" data-cyclemonths="{{ c_cycle_months }}" data-regfee="{{ c.registration_fee or (40 if c.category=='tutoring' else 200) }}" data-name="{{ c.display_name }}" onchange="toggleCourseRow(this)" style="margin-top:3px; transform:scale(1.25); accent-color:#1f6feb; cursor:pointer;">
+            
+            <div style="flex:1; min-width:0;">
+              
+              <!-- 1. TOP BAR: Category & Audience Tags + Status Chip -->
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:5px;">
+                <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+                  <span class="chip {% if c.category=='language' %}chip-blue{% else %}chip-green{% endif %}" style="font-size:9.5px; padding:1px 6px; font-weight:800;">
+                    {{ '📘 ' ~ (c.language or 'Langue') if c.category=='language' else '📗 ' ~ (c.language or 'Soutien') }}
+                  </span>
+                  
+                  <!-- Audience Tag -->
+                  {% if aud == 'kids' %}
+                    <span class="chip" style="font-size:9px; padding:1px 5px; background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-weight:800;">👶 Kids</span>
+                  {% elif aud == 'teens' %}
+                    <span class="chip" style="font-size:9px; padding:1px 5px; background:#e0e7ff; color:#3730a3; border:1px solid #c7d2fe; font-weight:800;">🎒 Ados</span>
+                  {% else %}
+                    <span class="chip" style="font-size:9px; padding:1px 5px; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; font-weight:700;">🎓 Adultes</span>
+                  {% endif %}
+                </div>
+
+                <div style="display:flex; gap:4px; flex-shrink:0;">
+                  {% if is_rec %}
+                    <span class="chip" style="font-size:9.5px; padding:2px 6px; background:#dcfce7; color:#15803d; border:1px solid #86efac; font-weight:800; white-space:nowrap;">⭐ Recommandé</span>
+                  {% elif is_urgent %}
+                    <span class="chip" style="font-size:9.5px; padding:2px 6px; background:#dc2626; color:#fff; font-weight:900; white-space:nowrap;">🚨 4/4 Prêt</span>
+                  {% elif not has_t %}
+                    <span class="chip" style="font-size:9.5px; padding:2px 6px; background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-weight:800; white-space:nowrap;">⏳ Sans prof</span>
+                  {% elif rem_seats <= 2 and rem_seats > 0 %}
+                    <span class="chip" style="font-size:9.5px; padding:2px 6px; background:#ffedd5; color:#c2410c; border:1px solid #fed7aa; font-weight:800; white-space:nowrap;">🔥 Reste {{ rem_seats }} pl.</span>
+                  {% elif rem_seats <= 0 %}
+                    <span class="chip" style="font-size:9.5px; padding:2px 6px; background:#fee2e2; color:#b91c1c; border:1px solid #fecaca; font-weight:800; white-space:nowrap;">🔴 Complet</span>
+                  {% else %}
+                    <span class="chip" style="font-size:9.5px; padding:2px 6px; background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; font-weight:700; white-space:nowrap;">🟢 Prêt</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- 2. COURSE TITLE & LEVEL -->
+              <div style="font-weight:800; color:#0B3D6E; font-size:13.5px; line-height:1.3; word-break:break-word; margin-bottom:4px;">
+                {{ c.name }}
+              </div>
+
+              <!-- 3. LEVEL & ROOM BADGES -->
+              <div style="font-size:11px; color:#64748b; display:flex; align-items:center; gap:5px; flex-wrap:wrap; margin-bottom:5px;">
+                {% if c.level %}
+                  <span class="chip chip-gray" style="font-size:9.5px; padding:1px 6px; font-weight:700;">🎯 {{ c.level }}</span>
+                {% endif %}
+                {% if c.room %}
+                  <span style="font-size:10px; font-weight:700; color:#475569; background:#f8fafc; padding:1px 6px; border-radius:4px; border:1px solid #e2e8f0;">
+                    📍 {{ c.room.name }}
+                  </span>
+                {% endif %}
+              </div>
+
+              <!-- 4. PLANNING / SCHEDULE (HORAIRES & JOURS) -->
+              {% if c.schedule_label %}
+              <div style="font-size:11px; color:#1e293b; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:4px 8px; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                <div style="display:flex; align-items:center; gap:5px;">
+                  <span style="font-size:12px;">🗓️</span>
+                  <span style="font-weight:700; color:#0f172a;">{{ c.schedule_label }}</span>
+                </div>
+                {% if tslot == 'weekend' %}
+                  <span style="font-size:9.5px; font-weight:800; color:#0f766e; background:#ccfbf1; padding:1px 5px; border-radius:4px;">W-End</span>
+                {% elif tslot == 'evening' %}
+                  <span style="font-size:9.5px; font-weight:800; color:#4338ca; background:#e0e7ff; padding:1px 5px; border-radius:4px;">Soir</span>
+                {% endif %}
+              </div>
+              {% endif %}
+
+              <!-- 5. JAUGE DE REMPLISSAGE & EFFECTIF EXACT -->
+              <div style="margin-bottom:7px; padding:6px 8px; background:{% if is_urgent %}#fee2e2{% elif not has_t and cnt >= 1 %}#fffbeb{% elif is_priority %}#fff7ed{% else %}#f8fafc{% endif %}; border:1px solid {% if is_urgent %}#fca5a5{% elif not has_t and cnt >= 1 %}#fef3c7{% elif is_priority %}#ffedd5{% else %}#e2e8f0{% endif %}; border-radius:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px;">
+                  <span style="font-weight:800; color:{% if is_urgent %}#b91c1c{% elif not has_t and cnt >= 1 %}#b45309{% elif is_priority %}#c2410c{% elif rem_seats == 0 %}#dc2626{% else %}#047857{% endif %};">
+                    {% if not has_t %}
+                      {% if cnt == 0 %}
+                        ⏳ 0/4 inscrits · En attente
+                      {% elif cnt < 4 %}
+                        🎯 {{ cnt }}/4 inscrits · Reste {{ 4 - cnt }} pour démarrer !
+                      {% else %}
+                        🚨 4/4 inscrits · Prêt à démarrer (Prof requis)
+                      {% endif %}
+                    {% else %}
+                      {% if cnt == 0 %}
+                        ⚪ 0/{{ max_c }} inscrits · Nouveau groupe
+                      {% elif cnt <= 3 %}
+                        ⚡ {{ cnt }}/{{ max_c }} inscrits · Priorité remplissage
+                      {% elif rem_seats <= 2 and rem_seats > 0 %}
+                        🔥 {{ cnt }}/{{ max_c }} inscrits · Reste {{ rem_seats }} place(s) !
+                      {% elif rem_seats <= 0 %}
+                        🔴 {{ cnt }}/{{ max_c }} inscrits · Complet
+                      {% else %}
+                        🟢 {{ cnt }}/{{ max_c }} inscrits · {{ rem_seats }} places dispo
+                      {% endif %}
+                    {% endif %}
+                  </span>
+                  <span style="font-size:10px; font-weight:800; color:{% if is_urgent %}#b91c1c{% else %}#64748b{% endif %};">
+                    {{ fill_pct }}%
+                  </span>
+                </div>
+                
+                <!-- Mini Progress Bar -->
+                <div style="width:100%; height:5px; background:#e2e8f0; border-radius:3px; overflow:hidden; margin-top:4px;">
+                  <div style="width:{{ fill_pct }}%; height:100%; background:{% if is_urgent %}#dc2626{% elif not has_t and cnt >= 1 %}#f59e0b{% elif rem_seats <= 0 %}#dc2626{% elif rem_seats <= 2 and rem_seats > 0 %}#ea580c{% elif is_priority %}#f59e0b{% else %}#10b981{% endif %}; border-radius:3px; transition:width 0.3s;"></div>
+                </div>
+              </div>
+
+              <!-- 6. FOOTER: ENSEIGNANT + PRIX -->
+              <div style="font-size:11px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px; border-top:1px dashed #e2e8f0; padding-top:6px;">
+                <div>
+                  {% if has_t %}
+                    <span class="teacher-badge-btn" onclick="event.stopPropagation(); event.preventDefault(); quickFilterTeacher('{{ c.teacher_id }}')" title="Cliquer pour filtrer par {{ c.teacher.full_name }}" style="background:#f3e8ff; color:#6b21a8; padding:2px 7px; border-radius:5px; font-weight:700; cursor:pointer; font-size:10.5px; border:1px solid #e9d5ff; transition:all 0.15s; display:inline-flex; align-items:center; gap:4px;">
+                      👨‍🏫 {{ c.teacher.full_name }}
+                    </span>
+                  {% else %}
+                    <span style="color:#b45309; font-weight:800; background:#fef3c7; padding:2px 7px; border-radius:5px; border:1px solid #fde68a; font-size:10.5px;" title="Classe sans prof en attente de constitution de groupe">
+                      ⏳ Sans formateur
+                    </span>
+                  {% endif %}
+                </div>
+                <div style="text-align:right;">
+                  <strong style="color:#047857; font-size:13px;">{{ '%.0f'|format(c.price) }} DH</strong>
+                  <span style="font-size:10px; color:#64748b; font-weight:600;">{{ '/ trim.' if is_tri else '/ mois' }}</span>
+                  <div style="font-size:9.5px; color:#7c3aed; font-weight:700;">
+                    +{{ '%.0f'|format(c.registration_fee or (40 if c.category=='tutoring' else 200)) }} DH Frais
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty" id="coursesGridEmpty">Aucune classe créée. <a href="{{ url_for('course_form') }}">+ Créer une classe</a></div>
+        {% endif %}
+
+        <!-- 2. Pending Assignment Tariffs Grid -->
+        <div style="display:none; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:10px;" id="tariffsGrid">
+          {% if tariffs %}
+            {% for t in tariffs %}
+            {% set is_t_tri = (t.billing_cycle in ('3months', 'trimestriel', '3 mois', 'quarterly')) %}
+            {% set t_cycle_months = 3 if is_t_tri else 1 %}
+            {% set t_unit_price = (t.price / 3)|round(2) if is_t_tri else t.price %}
+            <label class="tariff-card-option" 
+                   data-tid="{{ t.id }}"
+                   data-category="{{ (t.category or '')|lower }}"
+                   data-search-text="{{ (t.name ~ ' ' ~ (t.language or '') ~ ' ' ~ (t.category or ''))|lower }}"
+                   style="border: 1.5px solid #f59e0b; padding:10px 12px; border-radius:10px; cursor:pointer; display:flex; gap:10px; align-items:flex-start; background:#fffbeb; transition:all 0.15s;">
+              <input type="checkbox" name="tariff_ids" value="{{ t.id }}" 
+                     data-price="{{ t.price }}" 
+                     data-unitprice="{{ t_unit_price }}" 
+                     data-cyclemonths="{{ t_cycle_months }}" 
+                     data-spw="{{ t.sessions_per_week or 3 }}"
+                     data-regfee="{{ t.registration_fee or (40 if t.category=='tutoring' else 200) }}" 
+                     data-name="{{ t.name }}" 
+                     onchange="toggleTariffRow(this)" 
+                     style="margin-top:2px; transform:scale(1.2); accent-color:#f59e0b;">
+              <div style="flex:1;">
+                <div style="font-weight:800; color:#b45309; font-size:13.5px; line-height:1.2;">
+                  {{ t.name }} <span class="chip chip-amber" style="font-size:9.5px; font-weight:800; padding:1px 5px;">⏳ En attente</span>
+                </div>
+                <div style="font-size:11.5px; color:#64748b; margin-top:3px; display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+                  <span class="chip chip-gray" style="font-size:9px; padding:1px 5px;">{{ t.language or t.category }}</span>
+                  <strong style="color:#b45309;">
+                    {% if is_t_tri %}
+                      {{ '%.0f'|format(t.price) }} DH / Trimestre ({{ '%.0f'|format(t_unit_price) }} DH/m)
+                    {% else %}
+                      {{ '%.0f'|format(t.price) }} DH / mois
+                    {% endif %}
+                  </strong>
+                </div>
+                <div style="font-size:10.5px; color:#78350f; margin-top:3px;">
+                  ⏳ Groupe & Prof à définir ultérieurement · <span style="color:#7c3aed; font-weight:700;">+{{ '%.0f'|format(t.registration_fee or (40 if t.category=='tutoring' else 200)) }} DH Frais</span>
+                </div>
+              </div>
+            </label>
+            {% endfor %}
+          {% else %}
+            <div class="empty" style="grid-column:1/-1;">Aucun tarif configuré. <a href="{{ url_for('tariffs') }}">+ Ajouter des tarifs</a></div>
+          {% endif %}
+        </div>
+
+        <!-- 3. Private / 1-to-1 Course Configuration Section -->
+        <div id="boxPrivateCourse" style="display:none; flex-direction:column; gap:14px; margin-top:8px;">
+          
+          <!-- Banner -->
+          <div style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border: 2px solid #8b5cf6; border-radius: 12px; padding: 12px 16px; display:flex; align-items:flex-start; gap:12px;">
+            <div style="width:38px; height:38px; border-radius:10px; background:#7c3aed; color:#fff; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">⭐</div>
+            <div style="flex:1;">
+              <div style="font-size:14px; font-weight:800; color:#4c1d95; display:flex; align-items:center; gap:8px;">
+                <span>Cours Particulier & Personnalisé (1 Personne / VIP)</span>
+                <span class="chip chip-purple" style="font-size:9.5px; padding:1px 6px; font-weight:800;">1 ÉLÈVE SEUL</span>
+              </div>
+              <div style="font-size:12px; color:#5b21b6; margin-top:3px; line-height:1.4;">
+                • Une classe dédiée sera créée automatiquement dans le système avec capacité maximale de 1 élève.<br>
+                • Choix du professeur, formule tarifaire (Packs de 15h, 30h, 60h ou au tarif horaire standard) avec <strong>prix modifiable manuellement</strong>, et affectation manuelle de l'emploi du temps.
+              </div>
+            </div>
+          </div>
+
+          <!-- Pédagogie: Matière, Niveau, Enseignant & Salle -->
+          <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px;">
+            <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#6d28d9; letter-spacing:0.5px; margin-bottom:10px;">
+              📚 1. Matière, Niveau & Enseignant Assigné
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+              
+              <div class="field">
+                <label style="font-size:12px; font-weight:700; color:#334155;">Catégorie</label>
+                <select name="private_category" id="privateCategory" onchange="onPrivateCategoryChange(this.value)" style="padding:7px; font-size:12.5px; font-weight:700; border:1px solid #cbd5e1; border-radius:6px;">
+                  <option value="language">🌍 Langue (اللغات)</option>
+                  <option value="tutoring">🎓 Soutien scolaire (الدعم المدرسي)</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label style="font-size:12px; font-weight:700; color:#334155;">Matière / Langue <span class="req">*</span></label>
+                <select name="private_subject" id="privateSubjectSelect" onchange="onPrivateSubjectSelect(this.value)" style="padding:7px; font-size:12.5px; font-weight:700; border:1.5px solid #8b5cf6; border-radius:6px; background:#faf5ff;">
+                  <optgroup label="── Langues Vivantes ──" id="optGrpLang">
+                    <option value="Français">Français</option>
+                    <option value="Anglais" selected>Anglais</option>
+                    <option value="Allemand">Allemand</option>
+                    <option value="Espagnol">Espagnol</option>
+                    <option value="Italien">Italien</option>
+                    <option value="Arabe">Arabe</option>
+                  </optgroup>
+                  <optgroup label="── Soutien Scolaire ──" id="optGrpTut">
+                    <option value="Mathématiques">Mathématiques</option>
+                    <option value="Physique-Chimie">Physique-Chimie</option>
+                    <option value="SVT">SVT</option>
+                    <option value="Français Régional">Français Régional</option>
+                    <option value="Philosophie">Philosophie</option>
+                    <option value="Comptabilité & Éco">Comptabilité & Éco</option>
+                    <option value="Informatique">Informatique</option>
+                  </optgroup>
+                  <option value="Autre">✏️ Autre (Saisie libre)...</option>
+                </select>
+                <input type="text" name="private_subject_custom" id="privateSubjectCustom" placeholder="Précisez la matière..." style="display:none; margin-top:6px; font-size:12px; padding:6px; border:1px solid #cbd5e1; border-radius:6px;">
+              </div>
+
+              <div class="field">
+                <label style="font-size:12px; font-weight:700; color:#334155;">Niveau Souhaité</label>
+                <select name="private_level" id="privateLevel" style="padding:7px; font-size:12.5px; font-weight:700; border:1px solid #cbd5e1; border-radius:6px;">
+                  <option value="A1 (Débutant)">A1 (Débutant)</option>
+                  <option value="A2 (Élémentaire)">A2 (Élémentaire)</option>
+                  <option value="B1 (Intermédiaire)">B1 (Intermédiaire)</option>
+                  <option value="B2 (Intermédiaire Supérieur)">B2 (Intermédiaire Supérieur)</option>
+                  <option value="C1 (Avancé)">C1 (Avancé)</option>
+                  <option value="Primaire (الابتدائي)">Primaire</option>
+                  <option value="Collège (الإعدادي)">Collège</option>
+                  <option value="Tronc Commun">Tronc Commun</option>
+                  <option value="1ère Année Bac">1ère Année Bac</option>
+                  <option value="2ème Année Bac">2ème Année Bac</option>
+                  <option value="Sur mesure (Programme Personnalisé)" selected>Sur mesure (Programme Personnalisé)</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label style="font-size:12px; font-weight:700; color:#334155;">👨‍🏫 Professeur Assigné <span class="req">*</span></label>
+                <select name="private_teacher_id" id="privateTeacherSelect" style="padding:7px; font-size:12.5px; font-weight:700; border:1.5px solid #8b5cf6; border-radius:6px; background:#faf5ff;">
+                  <option value="">-- Choisir le professeur * --</option>
+                  {% for t in teachers %}
+                  <option value="{{ t.id }}" data-comp-type="{{ t.salary_type or 'percentage' }}" data-comp-val="{{ '%.0f'|format(t.salary_amount) if t.salary_amount else 50 }}">{{ t.full_name }} {% if t.specialty %}({{ t.specialty }}){% endif %}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="field">
+                <label style="font-size:12px; font-weight:700; color:#334155;">🚪 Salle (Optionnel)</label>
+                <select name="private_room_id" id="privateRoomSelect" style="padding:7px; font-size:12.5px; font-weight:700; border:1px solid #cbd5e1; border-radius:6px;">
+                  <option value="">-- Non définie / Au choix --</option>
+                  {% for r in rooms %}
+                  <option value="{{ r.id }}">{{ r.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="field">
+                <label style="font-size:12px; font-weight:700; color:#334155;">💰 Rémunération Enseignant</label>
+                <div style="display:flex; gap:4px;">
+                  <select name="private_teacher_comp_type" id="privateTeacherCompType" onchange="calcPrivateTeacherComp()" style="padding:7px; font-size:11.5px; font-weight:700; border:1.5px solid #8b5cf6; border-radius:6px; width:105px; background:#fff;">
+                    <option value="percentage" selected>Pourcentage (%)</option>
+                    <option value="hourly">DH / heure</option>
+                  </select>
+                  <input type="number" step="1" name="private_teacher_comp_value" id="privateTeacherCompValue" value="50" placeholder="50" oninput="calcPrivateTeacherComp()" style="padding:7px; font-size:12.5px; font-weight:800; border:1.5px solid #8b5cf6; border-radius:6px; flex:1; text-align:center;">
+                </div>
+                <div id="privateTeacherCompNotice" style="font-size:10.5px; color:#6d28d9; font-weight:700; margin-top:3px;">
+                  💰 Prof : 50% par séance
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Tarification: Les 4 Packs + Calculatrice dynamique -->
+          <div style="background:#fff; border:1.5px solid #8b5cf6; border-radius:10px; padding:14px 16px; box-shadow: 0 4px 12px rgba(139,92,246,0.06);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+              <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#6d28d9; letter-spacing:0.5px;">
+                💎 2. Formule Tarifaire & Packs d'Heures
+              </div>
+              <span class="chip chip-purple" style="font-size:10px; font-weight:800; padding:2px 8px;">TARIFS DÉGRESSIFS</span>
+            </div>
+
+            <!-- Pack Cards Grid -->
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-bottom:14px;">
+              
+              <!-- Séance Unique (1h30) -->
+              <div class="private-pack-card" id="packCard_1_5" onclick="selectPrivatePack('1_5', 1.5, 100, 150)" style="border:2px solid #e2e8f0; border-radius:10px; padding:10px 8px; text-align:center; cursor:pointer; background:#f8fafc; transition:all 0.15s; position:relative;">
+                <div style="font-size:10px; font-weight:800; color:#0369a1;">SÉANCE UNIQUE</div>
+                <div style="font-size:17px; font-weight:800; color:#0284c7; margin:2px 0;">150 <span style="font-size:11px;">DH</span></div>
+                <div style="font-size:10px; color:#64748b; font-weight:600;">1 séance de 1h30</div>
+              </div>
+
+              <!-- Pack 10h -->
+              <div class="private-pack-card" id="packCard_10" onclick="selectPrivatePack('10', 10, 175, 1750)" style="border:2px solid #e2e8f0; border-radius:10px; padding:10px 8px; text-align:center; cursor:pointer; background:#f8fafc; transition:all 0.15s; position:relative;">
+                <div style="font-size:10px; font-weight:800; color:#475569;">PACK 10 HEURES</div>
+                <div style="font-size:17px; font-weight:800; color:#1e293b; margin:2px 0;">175 <span style="font-size:11px;">DH/h</span></div>
+                <div style="font-size:10.5px; font-weight:700; color:#475569;">Total: 1 750 DH</div>
+              </div>
+
+              <!-- Pack 20h -->
+              <div class="private-pack-card is-selected" id="packCard_20" onclick="selectPrivatePack('20', 20, 150, 3000)" style="border:2px solid #8b5cf6; border-radius:10px; padding:10px 8px; text-align:center; cursor:pointer; background:#f5f3ff; transition:all 0.15s; position:relative;">
+                <div style="position:absolute; top:-8px; right:6px; background:#7c3aed; color:#fff; font-size:8.5px; font-weight:800; padding:1px 5px; border-radius:8px;">POPULAIRE</div>
+                <div style="font-size:10px; font-weight:800; color:#6d28d9;">PACK 20 HEURES</div>
+                <div style="font-size:17px; font-weight:800; color:#5b21b6; margin:2px 0;">150 <span style="font-size:11px;">DH/h</span></div>
+                <div style="font-size:10.5px; font-weight:700; color:#7c3aed;">Total: 3 000 DH</div>
+              </div>
+
+              <!-- Pack 30h -->
+              <div class="private-pack-card" id="packCard_30" onclick="selectPrivatePack('30', 30, 140, 4200)" style="border:2px solid #e2e8f0; border-radius:10px; padding:10px 8px; text-align:center; cursor:pointer; background:#f8fafc; transition:all 0.15s;">
+                <div style="font-size:10px; font-weight:800; color:#0369a1;">PACK 30 HEURES</div>
+                <div style="font-size:17px; font-weight:800; color:#0284c7; margin:2px 0;">140 <span style="font-size:11px;">DH/h</span></div>
+                <div style="font-size:10.5px; font-weight:700; color:#0369a1;">Total: 4 200 DH</div>
+              </div>
+
+              <!-- Pack 60h -->
+              <div class="private-pack-card" id="packCard_60" onclick="selectPrivatePack('60', 60, 100, 6000)" style="border:2px solid #e2e8f0; border-radius:10px; padding:10px 8px; text-align:center; cursor:pointer; background:#f8fafc; transition:all 0.15s; position:relative;">
+                <div style="position:absolute; top:-8px; right:6px; background:#059669; color:#fff; font-size:8.5px; font-weight:800; padding:1px 5px; border-radius:8px;">MAX ÉCO</div>
+                <div style="font-size:10px; font-weight:800; color:#065f46;">PACK 60 HEURES</div>
+                <div style="font-size:17px; font-weight:800; color:#059669; margin:2px 0;">100 <span style="font-size:11px;">DH/h</span></div>
+                <div style="font-size:10.5px; font-weight:700; color:#065f46;">Total: 6 000 DH</div>
+              </div>
+
+            </div>
+
+            <!-- Detailed interactive inputs & manual price override -->
+            <div style="background:#faf5ff; border:1px solid #ddd6fe; border-radius:8px; padding:12px 14px;">
+              <div style="display:grid; grid-template-columns: 1fr 1fr 1.6fr 1fr; gap:12px; align-items:start;">
+                
+                <div>
+                  <label style="font-size:11.5px; font-weight:700; color:#4c1d95;">Nombre d'heures :</label>
+                  <input type="number" name="private_hours" id="privateHours" value="20" min="0.5" step="0.5" oninput="onPrivateHoursInput()" style="width:100%; text-align:center; font-weight:800; font-size:14px; padding:6px; border:1.5px solid #8b5cf6; border-radius:6px; background:#fff;">
+                </div>
+
+                <div>
+                  <label style="font-size:11.5px; font-weight:700; color:#4c1d95;">Tarif / heure :</label>
+                  <div style="display:flex; align-items:center;">
+                    <input type="number" name="private_hourly_rate" id="privateHourlyRate" value="150" min="0" step="0.01" oninput="onPrivateRateInput()" style="width:100%; text-align:center; font-weight:800; font-size:14px; padding:6px; border:1.5px solid #8b5cf6; border-radius:6px 0 0 6px; background:#fff;">
+                    <span style="background:#ede9fe; padding:6px 8px; border:1.5px solid #8b5cf6; border-left:none; border-radius:0 6px 6px 0; font-weight:700; font-size:11px; color:#5b21b6;">DH</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <label style="font-size:11.5px; font-weight:800; color:#15803d;">💰 PRIX TOTAL :</label>
+                    <span style="font-size:9.5px; font-weight:800; color:#166534; background:#dcfce7; padding:1px 5px; border-radius:4px;">✏️ Modifiable</span>
+                  </div>
+                  <div style="display:flex; align-items:center; margin-top:2px;">
+                    <input type="number" step="0.01" name="private_total_price" id="privateTotalPrice" value="3000" min="0" oninput="onPrivateTotalInput()" style="width:100%; text-align:center; font-weight:900; font-size:16px; color:#047857; padding:6px; border:2px solid #22c55e; border-radius:6px 0 0 6px; background:#fff;">
+                    <span style="background:#22c55e; color:#fff; padding:6px 10px; border:2px solid #22c55e; border-left:none; border-radius:0 6px 6px 0; font-weight:800; font-size:13px;">DH</span>
+                  </div>
+                  <div id="privateEffectiveRateNotice" style="font-size:10px; color:#475569; margin-top:3px;">
+                    20h × 150 DH = 3 000 DH
+                  </div>
+                </div>
+
+                <div>
+                  <label style="font-size:11.5px; font-weight:700; color:#4c1d95;">Frais d'inscription :</label>
+                  <div style="display:flex; align-items:center;">
+                    <input type="number" name="private_reg_fee" id="privateRegFee" value="0" min="0" step="0.01" oninput="updateGrandTotal()" style="width:100%; text-align:center; font-weight:700; font-size:13px; padding:6px; border:1.5px solid #cbd5e1; border-radius:6px 0 0 6px; background:#fff;">
+                    <span style="background:#f1f5f9; padding:6px 7px; border:1.5px solid #cbd5e1; border-left:none; border-radius:0 6px 6px 0; font-weight:700; font-size:11px; color:#64748b;">DH</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Emploi du Temps: Jours & Horaires manuels -->
+          <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
+              <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#0B3D6E; letter-spacing:0.5px;">
+                🗓️ 3. Affectation Emploi du Temps & Séances
+              </div>
+              <span id="privateScheduleSummary" style="font-size:11.5px; font-weight:700; color:#1d4ed8;">
+                2 séances / sem · 1h30
+              </span>
+            </div>
+
+            <!-- Option Horaires Flexibles -->
+            <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:8px; padding:10px 14px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+              <label style="display:flex; align-items:center; gap:9px; cursor:pointer; margin:0; user-select:none;">
+                <input type="checkbox" name="private_flexible_schedule" id="privateFlexibleSchedule" value="1" onchange="togglePrivateScheduleFlexibility(this)" style="width:18px; height:18px; accent-color:#16a34a; cursor:pointer;">
+                <div>
+                  <div style="font-weight:800; font-size:13px; color:#166534;">⚡ Horaires Flexibles / À la carte (Sans créneau fixe)</div>
+                  <div style="font-size:11px; color:#15803d; margin-top:1px;">Cochez cette option si les séances sont convenues au fur et à mesure sans jours fixes dans l'emploi du temps.</div>
+                </div>
+              </label>
+              <span id="badgeFlexStatus" class="chip" style="font-size:10.5px; font-weight:800; background:#dcfce7; color:#166534; border:1px solid #86efac; display:none;">✨ Planning flexible activé</span>
+            </div>
+
+            <div id="privateScheduleDetails">
+            <!-- Jours de la semaine checkboxes -->
+            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;" id="privateDaysContainer">
+              <label class="private-day-pill is-active" style="padding:6px 12px; border-radius:8px; border:1.5px solid #1f6feb; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:800; cursor:pointer; user-select:none;">
+                <input type="checkbox" name="private_days" value="0" checked onchange="onPrivateDaysChange(this)" style="display:none;">
+                Lundi
+              </label>
+              <label class="private-day-pill" style="padding:6px 12px; border-radius:8px; border:1.5px solid #cbd5e1; background:#fff; color:#475569; font-size:12px; font-weight:700; cursor:pointer; user-select:none;">
+                <input type="checkbox" name="private_days" value="1" onchange="onPrivateDaysChange(this)" style="display:none;">
+                Mardi
+              </label>
+              <label class="private-day-pill is-active" style="padding:6px 12px; border-radius:8px; border:1.5px solid #1f6feb; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:800; cursor:pointer; user-select:none;">
+                <input type="checkbox" name="private_days" value="2" checked onchange="onPrivateDaysChange(this)" style="display:none;">
+                Mercredi
+              </label>
+              <label class="private-day-pill" style="padding:6px 12px; border-radius:8px; border:1.5px solid #cbd5e1; background:#fff; color:#475569; font-size:12px; font-weight:700; cursor:pointer; user-select:none;">
+                <input type="checkbox" name="private_days" value="3" onchange="onPrivateDaysChange(this)" style="display:none;">
+                Jeudi
+              </label>
+              <label class="private-day-pill" style="padding:6px 12px; border-radius:8px; border:1.5px solid #cbd5e1; background:#fff; color:#475569; font-size:12px; font-weight:700; cursor:pointer; user-select:none;">
+                <input type="checkbox" name="private_days" value="4" onchange="onPrivateDaysChange(this)" style="display:none;">
+                Vendredi
+              </label>
+              <label class="private-day-pill" style="padding:6px 12px; border-radius:8px; border:1.5px solid #cbd5e1; background:#fff; color:#475569; font-size:12px; font-weight:700; cursor:pointer; user-select:none;">
+                <input type="checkbox" name="private_days" value="5" onchange="onPrivateDaysChange(this)" style="display:none;">
+                Samedi
+              </label>
+              <label class="private-day-pill" style="padding:6px 12px; border-radius:8px; border:1.5px solid #cbd5e1; background:#fff; color:#475569; font-size:12px; font-weight:700; cursor:pointer; user-select:none;">
+                <input type="checkbox" name="private_days" value="6" onchange="onPrivateDaysChange(this)" style="display:none;">
+                Dimanche
+              </label>
+            </div>
+
+            <!-- Horaires & Durée -->
+            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; background:#f8fafc; padding:10px 12px; border-radius:8px; border:1px solid #e2e8f0;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <label style="font-size:12px; font-weight:700; color:#334155;">Heure début :</label>
+                <input type="time" name="private_start_time" id="privateStartTime" value="18:00" onchange="calcPrivateDuration()" style="padding:4px 8px; font-size:12.5px; font-weight:700; border:1px solid #cbd5e1; border-radius:6px; background:#fff;">
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <label style="font-size:12px; font-weight:700; color:#334155;">Heure fin :</label>
+                <input type="time" name="private_end_time" id="privateEndTime" value="19:30" onchange="calcPrivateDuration()" style="padding:4px 8px; font-size:12.5px; font-weight:700; border:1px solid #cbd5e1; border-radius:6px; background:#fff;">
+              </div>
+
+              <!-- Quick duration shortcuts -->
+              <div style="display:flex; gap:4px; align-items:center;">
+                <span style="font-size:11px; color:#64748b; font-weight:600;">Durée :</span>
+                <button type="button" class="btn btn-xs btn-outline" id="btnDur60" onclick="setPrivateQuickDuration(60)" style="font-size:10.5px; padding:2px 7px;">1h00</button>
+                <button type="button" class="btn btn-xs btn-outline" id="btnDur90" onclick="setPrivateQuickDuration(90)" style="font-size:10.5px; padding:2px 7px; background:#eff6ff; border-color:#93c5fd; color:#1d4ed8; font-weight:800;">1h30</button>
+                <button type="button" class="btn btn-xs btn-outline" id="btnDur120" onclick="setPrivateQuickDuration(120)" style="font-size:10.5px; padding:2px 7px;">2h00</button>
+              </div>
+
+              <div id="privateSessionsTotalBadge" style="margin-left:auto; font-size:11.5px; font-weight:800; color:#047857; background:#dcfce7; padding:4px 8px; border-radius:6px;">
+                🎯 13 séances de 1h30 au total
+              </div>
+            </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 3. LIVRES & MANUELS SCOLAIRES (OPTIONNEL) -->
+      {% if books %}
+      <div class="card card-pad" style="padding:16px 20px; border-top:4px solid #f59e0b;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="width:28px; height:28px; border-radius:6px; background:#fef3c7; display:flex; align-items:center; justify-content:center; color:#b45309; font-size:14px; font-weight:800;">3</div>
+            <h3 style="margin:0; font-size:15px; color:#0B3D6E; font-weight:800;">Manuels Scolaires & Livres (اختياري: الكتب)</h3>
+          </div>
+          <span class="chip chip-gray" style="font-size:10px;">Optionnel</span>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:10px;" id="booksGrid">
+          {% for b in books %}
+          <label class="book-card-option" style="border:1.5px solid {% if b.stock_quantity > 0 %}#cbd5e1{% else %}#fca5a5{% endif %}; padding:8px 10px; border-radius:8px; cursor:{% if b.stock_quantity > 0 %}pointer{% else %}not-allowed{% endif %}; display:flex; gap:8px; align-items:flex-start; background:{% if b.stock_quantity > 0 %}#fff{% else %}#fef2f2{% endif %};">
+            <input type="checkbox" name="book_ids" value="{{ b.id }}" {{ 'disabled' if b.stock_quantity <= 0 }} data-price="{{ b.sale_price }}" data-name="{{ b.title }}" onchange="updateGrandTotal()" style="margin-top:2px; transform:scale(1.15); accent-color:#f59e0b;">
+            <div style="flex:1;">
+              <div style="font-weight:700; font-size:12.5px; color:#0B3D6E; line-height:1.2;">{{ b.title }}</div>
+              <div style="font-size:11px; color:#64748b; margin-top:2px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="color:#047857; font-weight:800;">{{ '%.0f'|format(b.sale_price) }} DH</span>
+                {% if b.stock_quantity > 0 %}
+                <div style="display:flex; align-items:center; gap:3px;" onclick="event.stopPropagation();">
+                  <span style="font-size:9.5px; font-weight:700;">Qté:</span>
+                  <input type="number" name="book_qty_{{ b.id }}" id="book_qty_{{ b.id }}" value="1" min="1" max="{{ b.stock_quantity }}" style="width:40px; text-align:center; padding:1px; font-weight:700; border:1px solid #cbd5e1; border-radius:4px; font-size:11px;" oninput="updateGrandTotal()">
+                </div>
+                {% else %}
+                <span style="color:#ef4444; font-size:9.5px; font-weight:700;">Rupture</span>
+                {% endif %}
+              </div>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- 4. ADVANCED REPARTITION ACCORDION (DRAWER) -->
+      <div class="card card-pad" id="prorateSection" style="display:none; padding:14px 18px; border-top:4px solid #10b981;">
+        <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleAdvancedDrawer()">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="width:28px; height:28px; border-radius:6px; background:#d1fae5; display:flex; align-items:center; justify-content:center; color:#047857; font-size:14px; font-weight:800;">4</div>
+            <h3 style="margin:0; font-size:14.5px; color:#0B3D6E; font-weight:800;">Détail & Répartition Comptable Avancée (التفاصيل المالية)</h3>
+          </div>
+          <span id="drawerToggleIcon" style="font-size:14px; font-weight:700; color:#1f6feb;">[Afficher/Masquer ▲]</span>
+        </div>
+
+        <div id="drawerContent" style="margin-top:12px; overflow-x:auto;">
+          <table class="table" style="width:100%; margin:0; border-collapse:collapse; font-size:12px;" id="calcTable">
+            <thead>
+              <tr style="background:#f8fafc; text-align:left; font-size:11px; color:#64748b; border-bottom:1.5px solid #e2e8f0;">
+                <th style="padding:6px 8px;">Matière (المادة)</th>
+                <th style="padding:6px; text-align:center; background:#ecfdf5; color:#065f46; font-weight:800;" title="Date de début effectif des cours pour ce groupe">📅 Date Début des cours (بداية الحصص)</th>
+                <th style="padding:6px; text-align:center;">Durée (المدة)</th>
+                <th style="padding:6px; text-align:center;">Prix Cours (الواجب)</th>
+                <th style="padding:6px; text-align:center;">Frais Insc. (التسجيل)</th>
+                <th style="padding:6px; text-align:center;">Séances Total</th>
+                <th style="padding:6px; text-align:center;">Séances Reste</th>
+                <th style="padding:6px; text-align:center; background:#e0f2fe; color:#0369a1;">Prix / Séance (الحصة)</th>
+                <th style="padding:6px; text-align:center; background:#ecfdf5; color:#047857;">Fin d'abonnement (النهاية)</th>
+                <th style="padding:6px; text-align:center;">Prof % (الأستاذ)</th>
+              </tr>
+            </thead>
+            <tbody id="calcTbody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ==================== RIGHT COLUMN: STICKY POS TERMINAL / RECEIPT ==================== -->
+    <div style="position:sticky; top:20px;">
+      <div class="card card-pad" style="padding:20px; border-top:4.5px solid #10b981; box-shadow:0 8px 30px rgba(0,0,0,0.06); background:#ffffff;">
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1.5px dashed #cbd5e1; padding-bottom:12px; margin-bottom:14px;">
+          <div>
+            <h3 style="margin:0; font-size:16px; color:#0B3D6E; font-weight:800;">🧾 Reçu & Facturation</h3>
+            <span class="muted" style="font-size:11px;">Calcul en temps réel</span>
+          </div>
+          <span class="chip chip-blue" style="font-size:11px; font-weight:800;">80mm Ticket</span>
+        </div>
+
+        <!-- Selected Items Dynamic Breakdown -->
+        <div id="receiptItemsSummary" style="min-height:70px; font-size:12.5px; border-bottom:1.5px solid #f1f5f9; padding-bottom:10px; margin-bottom:12px;">
+          <div class="muted" style="text-align:center; padding:18px 0; font-size:12px;">Cochez des matières pour calculer la facture...</div>
+        </div>
+
+        <!-- TOTAL DÛ HIGHLIGHT -->
+        <div style="background:#f0f9ff; border:1.5px solid #bae6fd; border-radius:10px; padding:12px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <span style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:#0369a1; letter-spacing:0.5px;">TOTAL GLOBAL DÛ :</span>
+            <div style="font-size:24px; font-weight:800; color:#0c4a6e; margin-top:1px;" id="grandTotalShow">0.00 {{ settings.currency }}</div>
+          </div>
+          <span style="font-size:24px;">💳</span>
+        </div>
+
+        <!-- Initial Payment Input -->
+        <div class="field mb-3">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="font-size:12px; font-weight:700; color:#334155; margin:0;">Montant payé maintenant ({{ settings.currency }}) <span class="req">*</span></label>
+            <span id="payModeBadge" class="chip chip-green" style="font-size:10px; font-weight:800;">100% Réglé</span>
+          </div>
+
+          <!-- Quick Fill Buttons for Payment -->
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:6px; margin-bottom:8px;">
+            <button type="button" id="btnPay100" class="btn btn-xs btn-primary" onclick="setQuickPayment('100')" style="font-weight:700; font-size:11px; padding:6px 4px; justify-content:center;">💵 100% Total</button>
+            <button type="button" id="btnPay50" class="btn btn-xs btn-outline" onclick="setQuickPayment('50')" style="font-weight:700; font-size:11px; padding:6px 4px; justify-content:center;">🪙 50% Acompte</button>
+            <button type="button" id="btnPay0" class="btn btn-xs btn-outline" onclick="setQuickPayment('0')" style="font-weight:700; font-size:11px; padding:6px 4px; justify-content:center; border-color:#dc2626; color:#dc2626;">⏳ 0 DH (Différé)</button>
+          </div>
+
+          <div class="input-field has-ico">
+            <span class="f-ico">💵</span>
+            <input type="number" step="0.01" min="0" name="initial_payment" id="initialPayment" value="0.00" required placeholder="0.00" oninput="onInitialPaymentInput()" style="font-size:16px; font-weight:800; color:#047857; text-align:center;">
+          </div>
+        </div>
+
+        <!-- Balance / Reste à Payer -->
+        <div class="field mb-3">
+          <label style="font-size:11.5px; font-weight:700; color:#64748b;">Reste à payer (Solde différé)</label>
+          <input type="text" id="balanceShow" readonly style="background:#fff1f2; font-weight:800; color:#e11d48; text-align:center; padding:6px; font-size:14px; border:1px solid #fecdd3; border-radius:6px;" value="0.00 {{ settings.currency }}">
+        </div>
+
+        <!-- Mode de paiement -->
+        <div class="field mb-3">
+          <label style="font-size:11.5px; font-weight:700; color:#334155;">Mode de règlement</label>
+          <select name="payment_method" style="padding:7px; font-size:13px; font-weight:700;">
+            <option value="cash">💵 Espèces (Cash / نقداً)</option>
+            <option value="transfer">🏦 Virement bancaire (تحويل بنكي)</option>
+            <option value="card">💳 Carte bancaire (بطاقة بنكية)</option>
+            <option value="cheque">📑 Chèque (شيك)</option>
+          </select>
+        </div>
+
+        <!-- Notes -->
+        <div class="field mb-3">
+          <input type="text" name="notes" placeholder="Remarques (Optionnel)..." style="font-size:12px; padding:6px 10px;">
+        </div>
+
+        <!-- Option: Auto-generate Placement Test if Language Course -->
+        <div id="expressAutoTestBox" style="margin-bottom:14px; background:#eff6ff; border:1.5px solid #93c5fd; border-radius:10px; padding:11px 13px; display:none;">
+          <label style="display:flex; align-items:flex-start; gap:8px; font-weight:800; color:#1e40af; cursor:pointer; margin:0; font-size:12px;">
+            <input type="checkbox" name="auto_create_placement_test" id="chkAutoPlacementTest" value="1" checked style="transform:scale(1.25); margin-top:2px; accent-color:#2563eb;">
+            <span>🎯 Programmer un Test de Niveau automatique (اختبار تحديد المستوى)</span>
+          </label>
+          <div style="font-size:11px; color:#2563eb; margin-top:4px; margin-left:24px;">
+            Crée un test en attente et déclenche une alerte si le résultat du test est différent de la classe choisie.
+          </div>
+        </div>
+
+        <!-- Big Submit Button -->
+        <button class="btn btn-primary" type="submit" id="submitBtn" style="width:100%; font-size:15px; font-weight:800; padding:12px; background:#10b981; border-color:#10b981; box-shadow:0 4px 14px rgba(16,185,129,0.35); justify-content:center;">
+          ⚡ Valider & Imprimer Reçu
+        </button>
+
+      </div>
+    </div>
+
+  </div>
+</form>
+
+<style>
+.course-card-option:hover { border-color: #7c3aed !important; background: #fdf4ff !important; box-shadow: 0 4px 14px rgba(124,58,237,0.12); }
+.book-card-option:hover { border-color: #f59e0b !important; background: #fffbeb !important; }
+.course-card-option.is-selected {
+  border-color: #7c3aed !important;
+  background: #f5f3ff !important;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25) !important;
+}
+.tariff-card-option.is-selected {
+  border-color: #d97706 !important;
+  background: #fef3c7 !important;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.25) !important;
+}
+.teacher-badge-btn:hover {
+  background: #e9d5ff !important;
+  border-color: #a855f7 !important;
+  color: #581c87 !important;
+}
+.course-cat-pill:hover {
+  filter: brightness(0.96);
+}
+.private-pack-card:hover { border-color: #8b5cf6 !important; background: #faf5ff !important; box-shadow: 0 4px 12px rgba(139,92,246,0.15); }
+.private-pack-card.is-selected {
+  border-color: #7c3aed !important;
+  background: #f5f3ff !important;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.3) !important;
+}
+.private-day-pill:hover { filter: brightness(0.97); }
+.private-day-pill.is-active {
+  border-color: #1f6feb !important;
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+}
+.course-card-option.has-schedule-clash {
+  border: 2.5px dashed #dc2626 !important;
+  background: #fef2f2 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.25) !important;
+  animation: clashPulse 2s infinite ease-in-out;
+}
+@keyframes clashPulse {
+  0% { box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25); }
+  50% { box-shadow: 0 0 0 5px rgba(220, 38, 38, 0.45); }
+  100% { box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25); }
+}
+@media (max-width: 900px) {
+  #expressLayoutGrid { grid-template-columns: 1fr !important; }
+}
+</style>
+
+<script>
+  var grandTotal = 0;
+  var currentCourseCatFilter = 'all';
+  var currentCourseStatusFilter = 'all';
+  var isOnlySelectedFilter = false;
+  var bypassPhoneCheck = false;
+  var COURSE_SLOTS = {{ course_slots_json|safe if course_slots_json is defined else '{}' }};
+  var currentSelectedStudent = null;
+  var detectedScheduleConflicts = [];
+
+  function setStudentMode(mode) {
+    document.getElementById('studentMode').value = mode;
+    var bNew = document.getElementById('btnModeNew');
+    var bExist = document.getElementById('btnModeExist');
+    var boxNew = document.getElementById('boxNewStudent');
+    var boxExist = document.getElementById('boxExistStudent');
+    var inpFull = document.getElementById('inpFullName');
+    var inpLevel = document.getElementById('inpSchoolLevel');
+    if (inpLevel) { inpLevel.required = false; }
+
+    if (mode === 'new') {
+      bNew.style.background = '#1f6feb';
+      bNew.style.color = '#fff';
+      bExist.style.background = 'transparent';
+      bExist.style.color = '#64748b';
+      boxNew.style.display = 'block';
+      boxExist.style.display = 'none';
+      inpFull.required = true;
+      bypassPhoneCheck = false;
+      currentSelectedStudent = null;
+      var crNotice = document.getElementById('studentCreditNotice');
+      var chkCredit = document.getElementById('chkUseCredit');
+      if (crNotice) crNotice.style.display = 'none';
+      if (chkCredit) chkCredit.checked = false;
+      if (typeof onPhoneFieldInput === 'function') {
+        onPhoneFieldInput();
+      }
+      updateGrandTotal();
+      if (typeof checkScheduleConflicts === 'function') checkScheduleConflicts();
+    } else {
+      bExist.style.background = '#1f6feb';
+      bExist.style.color = '#fff';
+      bNew.style.background = 'transparent';
+      bNew.style.color = '#64748b';
+      boxNew.style.display = 'none';
+      boxExist.style.display = 'block';
+      inpFull.required = false;
+      document.getElementById('studentSearchInput').focus();
+    }
+  }
+
+  function updateModeTabCards(activeMode) {
+    var tabs = [
+      { id: 'btnCourseModeSpecific', key: 'specific', bg: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)', border: '#6d28d9', shadow: '0 4px 12px rgba(124,58,237,0.3)', iconBg: 'rgba(255,255,255,0.2)' },
+      { id: 'btnCourseModePending', key: 'pending', bg: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', border: '#d97706', shadow: '0 4px 12px rgba(217,119,6,0.3)', iconBg: 'rgba(255,255,255,0.25)' },
+      { id: 'btnCourseModePrivate', key: 'private', bg: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', border: '#4f46e5', shadow: '0 4px 12px rgba(99,102,241,0.3)', iconBg: 'rgba(255,255,255,0.25)' }
+    ];
+
+    tabs.forEach(function(tab) {
+      var btn = document.getElementById(tab.id);
+      if (!btn) return;
+      var icon = btn.querySelector('div:first-child');
+      var sub = btn.querySelector('.mode-sub');
+
+      if (tab.key === activeMode) {
+        btn.style.background = tab.bg;
+        btn.style.borderColor = tab.border;
+        btn.style.color = '#fff';
+        btn.style.boxShadow = tab.shadow;
+        if (icon) icon.style.background = tab.iconBg;
+        if (sub) {
+          sub.style.color = 'rgba(255,255,255,0.9)';
+          sub.style.opacity = '1';
+        }
+      } else {
+        btn.style.background = '#f8fafc';
+        btn.style.borderColor = '#cbd5e1';
+        btn.style.color = '#334155';
+        btn.style.boxShadow = 'none';
+        if (icon) {
+          if (tab.key === 'specific') icon.style.background = '#ede9fe';
+          else if (tab.key === 'pending') icon.style.background = '#fef3c7';
+          else if (tab.key === 'private') icon.style.background = '#e0e7ff';
+        }
+        if (sub) {
+          sub.style.color = '#64748b';
+          sub.style.opacity = '1';
+        }
+      }
+    });
+  }
+
+  function setCourseMode(mode) {
+    if (document.getElementById('courseMode')) {
+      document.getElementById('courseMode').value = mode;
+    }
+    updateModeTabCards(mode);
+
+    var boxSpec = document.getElementById('coursesGrid') || document.getElementById('coursesGridEmpty');
+    var boxPend = document.getElementById('tariffsGrid');
+    var boxPrivate = document.getElementById('boxPrivateCourse');
+    var tBox = document.getElementById('teacherFilterBox');
+    var searchInp = document.getElementById('courseSearchInput');
+    var searchBar = document.getElementById('courseFilterToolbar');
+    var catPills = document.getElementById('categoryFilterPills');
+    var subBtn = document.getElementById('submitBtn');
+    var selTableCard = document.getElementById('selectedCoursesTableCard');
+    var prorateSec = document.getElementById('prorateSection');
+
+    // Deselect all checkboxes on mode change to avoid cross-mode mixing
+    document.querySelectorAll('#coursesGrid input[type="checkbox"]:checked, #tariffsGrid input[type="checkbox"]:checked').forEach(function(cb) {
+      cb.checked = false;
+      var card = cb.closest('.course-card-option') || cb.closest('.tariff-card-option');
+      if (card) card.classList.remove('is-selected');
+    });
+    var tbody = document.getElementById('calcTbody');
+    if (tbody) tbody.innerHTML = '';
+
+    if (mode === 'specific') {
+      if (boxSpec) boxSpec.style.display = 'grid';
+      if (boxPend) boxPend.style.display = 'none';
+      if (boxPrivate) boxPrivate.style.display = 'none';
+      if (searchBar) searchBar.style.display = 'block';
+      if (selTableCard) selTableCard.style.display = 'block';
+      if (tBox) tBox.style.display = 'block';
+      if (catPills) catPills.style.display = 'inline-flex';
+      if (searchInp) searchInp.placeholder = "Recherche instantanée : nom de classe, matière, professeur, salle, horaire... (بحث فوري بالفوج أو الأستاذ)";
+      if (subBtn) {
+        subBtn.textContent = "⚡ Valider & Imprimer Reçu";
+        subBtn.style.background = "#10b981";
+      }
+      setCategoryFilter('all');
+    } else if (mode === 'pending') {
+      if (boxSpec) boxSpec.style.display = 'none';
+      if (boxPend) boxPend.style.display = 'grid';
+      if (boxPrivate) boxPrivate.style.display = 'none';
+      if (searchBar) searchBar.style.display = 'block';
+      if (selTableCard) selTableCard.style.display = 'block';
+      if (tBox) tBox.style.display = 'none';
+      if (catPills) catPills.style.display = 'inline-flex';
+      if (searchInp) searchInp.placeholder = "Rechercher une matière en attente... (البحث في المواد المعلقة)";
+      if (subBtn) {
+        subBtn.textContent = "⚡ Valider & Imprimer Reçu";
+        subBtn.style.background = "#10b981";
+      }
+      setCategoryFilter('all');
+    } else if (mode === 'private') {
+      if (boxSpec) boxSpec.style.display = 'none';
+      if (boxPend) boxPend.style.display = 'none';
+      if (boxPrivate) boxPrivate.style.display = 'flex';
+      if (searchBar) searchBar.style.display = 'none';
+      if (selTableCard) selTableCard.style.display = 'none';
+      if (prorateSec) prorateSec.style.display = 'none';
+      if (tBox) tBox.style.display = 'none';
+      if (catPills) catPills.style.display = 'none';
+      if (subBtn) {
+        subBtn.textContent = "⚡ Valider & Créer Classe Particulière";
+        subBtn.style.background = "#7c3aed";
+      }
+      calcPrivateDuration();
+    }
+    if (mode !== 'private') {
+      filterCourses();
+    }
+    updateGrandTotal();
+  }
+
+  function onPrivateCategoryChange(cat) {
+    var subjSel = document.getElementById('privateSubjectSelect');
+    if (!subjSel) return;
+    if (cat === 'tutoring') {
+      subjSel.value = 'Mathématiques';
+    } else {
+      subjSel.value = 'Anglais';
+    }
+    onPrivateSubjectSelect(subjSel.value);
+  }
+
+  function onPrivateSubjectSelect(val) {
+    var custInp = document.getElementById('privateSubjectCustom');
+    if (custInp) {
+      custInp.style.display = (val === 'Autre') ? 'block' : 'none';
+      if (val === 'Autre') custInp.focus();
+    }
+    updateGrandTotal();
+  }
+
+  function togglePrivateScheduleFlexibility(cb) {
+    var schedSection = document.getElementById('privateScheduleDetails');
+    var badge = document.getElementById('badgeFlexStatus');
+    var summ = document.getElementById('privateScheduleSummary');
+    if (cb.checked) {
+      if (schedSection) {
+        schedSection.style.opacity = '0.4';
+        schedSection.style.pointerEvents = 'none';
+      }
+      if (badge) badge.style.display = 'inline-block';
+      if (summ) summ.textContent = '⚡ Horaires libres / À la carte';
+    } else {
+      if (schedSection) {
+        schedSection.style.opacity = '1';
+        schedSection.style.pointerEvents = 'auto';
+      }
+      if (badge) badge.style.display = 'none';
+      updatePrivateScheduleSummary();
+    }
+  }
+
+    document.addEventListener('DOMContentLoaded', function() {
+    var tSel = document.getElementById('privateTeacherSelect');
+    if (tSel) {
+      tSel.addEventListener('change', function() {
+        var opt = this.options[this.selectedIndex];
+        if (opt && opt.value) {
+          var cType = opt.getAttribute('data-comp-type') || 'percentage';
+          var cVal = opt.getAttribute('data-comp-val') || '50';
+          var typeSel = document.getElementById('privateTeacherCompType');
+          var valInp = document.getElementById('privateTeacherCompValue');
+          if (typeSel) typeSel.value = cType;
+          if (valInp) valInp.value = cVal;
+          calcPrivateTeacherComp();
+        }
+      });
+    }
+    calcPrivateTeacherComp();
+  });
+
+  function calcPrivateTeacherComp() {
+    var compType = document.getElementById('privateTeacherCompType') ? document.getElementById('privateTeacherCompType').value : 'percentage';
+    var compVal = parseFloat(document.getElementById('privateTeacherCompValue') ? document.getElementById('privateTeacherCompValue').value : 50) || 50;
+    var totPrice = parseFloat(document.getElementById('privateTotalPrice') ? document.getElementById('privateTotalPrice').value : 0) || 0;
+    var hours = parseFloat(document.getElementById('privateHours') ? document.getElementById('privateHours').value : 1.5) || 1.5;
+    var mins = getPrivateDurationMins();
+    var hPerSess = mins / 60.0;
+    var totalSessions = Math.max(1, Math.round(hours / hPerSess));
+    var pricePerSession = totalSessions > 0 ? (totPrice / totalSessions) : totPrice;
+
+    var notice = document.getElementById('privateTeacherCompNotice');
+    if (!notice) return;
+
+    if (compType === 'percentage') {
+      var profPerSession = (pricePerSession * (compVal / 100.0));
+      var totalProf = profPerSession * totalSessions;
+      notice.innerHTML = '💰 Prof : <strong style="color:#047857;">' + compVal + '%</strong> (' + profPerSession.toFixed(0) + ' DH / séance) · Total : ' + totalProf.toFixed(0) + ' DH';
+    } else {
+      var profPerSession = hPerSess * compVal;
+      var totalProf = profPerSession * totalSessions;
+      notice.innerHTML = '💰 Prof : <strong style="color:#047857;">' + compVal + ' DH/h</strong> (' + profPerSession.toFixed(0) + ' DH / séance) · Total : ' + totalProf.toFixed(0) + ' DH';
+    }
+  }
+
+  function selectPrivatePack(packKey, hours, rate, totalOverride) {
+    document.querySelectorAll('.private-pack-card').forEach(function(card) {
+      card.classList.remove('is-selected');
+      card.style.borderColor = '#e2e8f0';
+      card.style.background = '#f8fafc';
+    });
+    var selCard = document.getElementById('packCard_' + packKey);
+    if (selCard) {
+      selCard.classList.add('is-selected');
+      selCard.style.borderColor = '#8b5cf6';
+      selCard.style.background = '#f5f3ff';
+    }
+
+    var hInp = document.getElementById('privateHours');
+    var rInp = document.getElementById('privateHourlyRate');
+    var totInp = document.getElementById('privateTotalPrice');
+    var notice = document.getElementById('privateEffectiveRateNotice');
+
+    if (hInp) hInp.value = hours;
+    if (rInp) rInp.value = rate;
+    var tot = totalOverride !== undefined ? totalOverride : (hours * rate);
+    if (totInp) totInp.value = tot.toFixed(2);
+    if (notice) {
+      if (hours === 1.5) {
+        notice.textContent = 'Séance unique (1h30) = ' + tot.toFixed(2) + ' DH';
+      } else {
+        notice.textContent = hours + 'h × ' + rate + ' DH = ' + tot.toFixed(2) + ' DH';
+      }
+    }
+
+    calcPrivateDuration();
+    calcPrivateTeacherComp();
+    updateGrandTotal();
+  }
+
+  function onPrivateHoursInput() {
+    document.querySelectorAll('.private-pack-card').forEach(function(card) {
+      card.classList.remove('is-selected');
+      card.style.borderColor = '#e2e8f0';
+      card.style.background = '#f8fafc';
+    });
+    var h = parseFloat(document.getElementById('privateHours').value) || 0;
+    var r = parseFloat(document.getElementById('privateHourlyRate').value) || 0;
+    var tot = h * r;
+    var totInp = document.getElementById('privateTotalPrice');
+    if (totInp) totInp.value = tot.toFixed(2);
+    var notice = document.getElementById('privateEffectiveRateNotice');
+    if (notice) notice.textContent = h + 'h × ' + r + ' DH = ' + tot.toFixed(2) + ' DH';
+
+    calcPrivateDuration();
+    updateGrandTotal();
+  }
+
+  function onPrivateRateInput() {
+    document.querySelectorAll('.private-pack-card').forEach(function(card) {
+      card.classList.remove('is-selected');
+      card.style.borderColor = '#e2e8f0';
+      card.style.background = '#f8fafc';
+    });
+    var h = parseFloat(document.getElementById('privateHours').value) || 0;
+    var r = parseFloat(document.getElementById('privateHourlyRate').value) || 0;
+    var tot = h * r;
+    var totInp = document.getElementById('privateTotalPrice');
+    if (totInp) totInp.value = tot.toFixed(2);
+    var notice = document.getElementById('privateEffectiveRateNotice');
+    if (notice) notice.textContent = h + 'h × ' + r + ' DH = ' + tot.toFixed(2) + ' DH';
+
+    updateGrandTotal();
+  }
+
+  function onPrivateTotalInput() {
+    // User manually typed total price override
+    document.querySelectorAll('.private-pack-card').forEach(function(card) {
+      card.classList.remove('is-selected');
+      card.style.borderColor = '#e2e8f0';
+      card.style.background = '#f8fafc';
+    });
+    var totInp = document.getElementById('privateTotalPrice');
+    var tot = parseFloat(totInp ? totInp.value : 0) || 0;
+    var h = parseFloat(document.getElementById('privateHours').value) || 0;
+    var r = h > 0 ? (tot / h).toFixed(1) : 0;
+    var rInp = document.getElementById('privateHourlyRate');
+    if (rInp) rInp.value = r;
+
+    var notice = document.getElementById('privateEffectiveRateNotice');
+    if (notice) notice.textContent = '✏️ Prix personnalisé: ' + tot.toFixed(2) + ' DH (soit ' + r + ' DH/h)';
+
+    updateGrandTotal();
+  }
+
+  function onPrivateDaysChange(cb) {
+    var pill = cb.closest('.private-day-pill');
+    if (cb.checked) {
+      if (pill) {
+        pill.classList.add('is-active');
+        pill.style.borderColor = '#1f6feb';
+        pill.style.background = '#eff6ff';
+        pill.style.color = '#1d4ed8';
+        pill.style.fontWeight = '800';
+      }
+    } else {
+      if (pill) {
+        pill.classList.remove('is-active');
+        pill.style.borderColor = '#cbd5e1';
+        pill.style.background = '#fff';
+        pill.style.color = '#475569';
+        pill.style.fontWeight = '700';
+      }
+    }
+    updatePrivateScheduleSummary();
+  }
+
+  function updatePrivateScheduleSummary() {
+    var checkedDays = document.querySelectorAll('#privateDaysContainer input[type="checkbox"]:checked').length;
+    var durBadge = document.getElementById('privateScheduleSummary');
+    var durStr = getPrivateDurationStr();
+    if (durBadge) {
+      durBadge.textContent = checkedDays + ' séance' + (checkedDays > 1 ? 's' : '') + ' / sem · ' + durStr;
+    }
+    calcPrivateDuration();
+  }
+
+  function getPrivateDurationMins() {
+    var st = document.getElementById('privateStartTime') ? document.getElementById('privateStartTime').value : '18:00';
+    var et = document.getElementById('privateEndTime') ? document.getElementById('privateEndTime').value : '19:30';
+    if (!st || !et) return 90;
+    var sParts = st.split(':');
+    var eParts = et.split(':');
+    var diff = (parseInt(eParts[0])*60 + parseInt(eParts[1])) - (parseInt(sParts[0])*60 + parseInt(sParts[1]));
+    return diff > 0 ? diff : 90;
+  }
+
+  function getPrivateDurationStr() {
+    var mins = getPrivateDurationMins();
+    var h = Math.floor(mins / 60);
+    var m = mins % 60;
+    return h + 'h' + (m > 0 ? (m < 10 ? '0' + m : m) : '00');
+  }
+
+  function calcPrivateDuration() {
+    var mins = getPrivateDurationMins();
+    var hPerSess = mins / 60.0;
+    var totHours = parseFloat(document.getElementById('privateHours') ? document.getElementById('privateHours').value : 15) || 15;
+    var totalSessions = Math.max(1, Math.round(totHours / hPerSess));
+    var badge = document.getElementById('privateSessionsTotalBadge');
+    if (badge) {
+      badge.textContent = '🎯 ' + totalSessions + ' séance' + (totalSessions > 1 ? 's' : '') + ' de ' + getPrivateDurationStr() + ' au total';
+    }
+  }
+
+  function setPrivateQuickDuration(minutes) {
+    var st = document.getElementById('privateStartTime') ? document.getElementById('privateStartTime').value : '18:00';
+    if (!st) st = '18:00';
+    var sParts = st.split(':');
+    var startMins = parseInt(sParts[0])*60 + parseInt(sParts[1]);
+    var endMins = startMins + minutes;
+    var eh = Math.floor(endMins / 60) % 24;
+    var em = endMins % 60;
+    var etStr = (eh < 10 ? '0' + eh : eh) + ':' + (em < 10 ? '0' + em : em);
+
+    var etInp = document.getElementById('privateEndTime');
+    if (etInp) etInp.value = etStr;
+
+    ['btnDur60', 'btnDur90', 'btnDur120'].forEach(function(id) {
+      var btn = document.getElementById(id);
+      if (btn) {
+        btn.style.background = '';
+        btn.style.borderColor = '#cbd5e1';
+        btn.style.color = '';
+        btn.style.fontWeight = '700';
+      }
+    });
+    var activeBtn = document.getElementById('btnDur' + minutes);
+    if (activeBtn) {
+      activeBtn.style.background = '#eff6ff';
+      activeBtn.style.borderColor = '#93c5fd';
+      activeBtn.style.color = '#1d4ed8';
+      activeBtn.style.fontWeight = '800';
+    }
+
+    updatePrivateScheduleSummary();
+  }
+
+  function applySingleRegistrationFeeRule() {
+    var items = [];
+    var checkedCourses = document.querySelectorAll('#coursesGrid input[type="checkbox"]:checked');
+    checkedCourses.forEach(function(cb) {
+      var cid = cb.value;
+      var inp = document.getElementById('regfee_' + cid);
+      var defFee = parseFloat(cb.dataset.regfee) || 0;
+      items.push({ type: 'course', id: cid, input: inp, defaultFee: defFee });
+    });
+
+    var checkedTariffs = document.querySelectorAll('#tariffsGrid input[type="checkbox"]:checked');
+    checkedTariffs.forEach(function(cb) {
+      var tid = cb.value;
+      var inp = document.getElementById('tregfee_' + tid);
+      var defFee = parseFloat(cb.dataset.regfee) || 0;
+      items.push({ type: 'tariff', id: tid, input: inp, defaultFee: defFee });
+    });
+
+    if (items.length === 0) return;
+
+    if (items.length === 1) {
+      var singleItem = items[0];
+      if (singleItem.input && !singleItem.input.dataset.userEdited) {
+        singleItem.input.value = singleItem.defaultFee.toFixed(2);
+      }
+    } else {
+      // 2 or more classes/tariffs: keep only the single highest fee, set all others to 0.00
+      var maxFee = -1;
+      var maxIndex = -1;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].defaultFee > maxFee) {
+          maxFee = items[i].defaultFee;
+          maxIndex = i;
+        }
+      }
+
+      for (var j = 0; j < items.length; j++) {
+        var it = items[j];
+        if (it.input) {
+          if (j === maxIndex) {
+            if (!it.input.dataset.userEdited || parseFloat(it.input.value) === 0) {
+              it.input.value = maxFee.toFixed(2);
+            }
+          } else {
+            it.input.value = "0.00";
+          }
+        }
+      }
+    }
+  }
+
+  function onRegFeeInput(inp) {
+    inp.dataset.userEdited = 'true';
+    var val = parseFloat(inp.value) || 0;
+    var allRegInps = document.querySelectorAll('#calcTbody input[id^="regfee_"], #calcTbody input[id^="tregfee_"]');
+    if (allRegInps.length > 1 && val > 0) {
+      allRegInps.forEach(function(other) {
+        if (other !== inp) {
+          other.value = "0.00";
+        }
+      });
+    }
+    updateGrandTotal();
+  }
+
+  function formatTariffEndDate(startDateStr, months) {
+    if (!startDateStr) return '--';
+    var parts = startDateStr.split('-');
+    if (parts.length !== 3) return '--';
+    var y = parseInt(parts[0], 10);
+    var m = parseInt(parts[1], 10) - 1;
+    var d = parseInt(parts[2], 10);
+
+    var targetDate = new Date(y, m + months, d);
+    if (targetDate.getDate() !== d) {
+      targetDate.setDate(0);
+    }
+    var dd = String(targetDate.getDate()).padStart(2, '0');
+    var mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+    var yyyy = targetDate.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  }
+
+  function changeTariffMonthsCount(tid) {
+    var cb = document.querySelector('#tariffsGrid input[value="' + tid + '"]');
+    if (!cb) return;
+    var nmElem = document.getElementById('tnmonths_' + tid);
+    var nm = nmElem ? (parseInt(nmElem.value) || 1) : 1;
+    var basePrice = parseFloat(cb.dataset.price) || 0;
+    var cycleMonths = parseInt(cb.dataset.cyclemonths) || 1;
+    var unitPrice = parseFloat(cb.dataset.unitprice) || (cycleMonths > 0 ? (basePrice / cycleMonths) : basePrice);
+
+    var tmpriceInp = document.getElementById('tmprice_' + tid);
+    var isUserEdited = tmpriceInp && tmpriceInp.dataset.userEdited === 'true';
+
+    var totalPrice;
+    if (isUserEdited && cb.dataset.customUnit) {
+      var customUnit = parseFloat(cb.dataset.customUnit) || unitPrice;
+      totalPrice = Math.round(customUnit * nm * 100) / 100;
+    } else {
+      if (nm === cycleMonths) {
+        totalPrice = basePrice;
+      } else {
+        totalPrice = Math.round(unitPrice * nm * 100) / 100;
+      }
+    }
+
+    if (tmpriceInp) {
+      tmpriceInp.value = totalPrice.toFixed(2);
+    }
+
+    updateTariffRowCalculations(tid);
+    updateGrandTotal();
+  }
+
+  function recalcTariffRow(tid) {
+    var cb = document.querySelector('#tariffsGrid input[value="' + tid + '"]');
+    var nmElem = document.getElementById('tnmonths_' + tid);
+    var nm = nmElem ? (parseInt(nmElem.value) || 1) : 1;
+    var tmpriceInp = document.getElementById('tmprice_' + tid);
+    if (cb && tmpriceInp && nm > 0) {
+      var userTotal = parseFloat(tmpriceInp.value) || 0;
+      cb.dataset.customUnit = (userTotal / nm);
+      tmpriceInp.dataset.userEdited = 'true';
+    }
+    updateTariffRowCalculations(tid);
+    updateGrandTotal();
+  }
+
+  function updateTariffRowCalculations(tid) {
+    var cb = document.querySelector('#tariffsGrid input[value="' + tid + '"]');
+    if (!cb) return;
+    var nmElem = document.getElementById('tnmonths_' + tid);
+    var nm = nmElem ? (parseInt(nmElem.value) || 1) : 1;
+    var spw = parseInt(cb.dataset.spw) || 3;
+    var defaultTotalSessions = spw * 4 * nm;
+
+    var tsessInp = document.getElementById('ttsess_' + tid);
+    if (tsessInp && (!tsessInp.dataset.userEdited || tsessInp.dataset.lastMonths !== String(nm))) {
+      tsessInp.value = defaultTotalSessions;
+      tsessInp.dataset.lastMonths = String(nm);
+    }
+    var rsessInp = document.getElementById('trsess_' + tid);
+    if (rsessInp && (!rsessInp.dataset.userEdited || rsessInp.dataset.lastMonths !== String(nm))) {
+      rsessInp.value = tsessInp ? tsessInp.value : defaultTotalSessions;
+      rsessInp.dataset.lastMonths = String(nm);
+    }
+
+    var tmpriceInp = document.getElementById('tmprice_' + tid);
+    var currentPrice = tmpriceInp ? (parseFloat(tmpriceInp.value) || 0) : 0;
+    var tot = tsessInp ? (parseInt(tsessInp.value) || defaultTotalSessions) : defaultTotalSessions;
+    var pricePerSess = tot > 0 ? (currentPrice / tot) : 0;
+    var ppsInp = document.getElementById('tprice_per_session_' + tid);
+    if (ppsInp) {
+      ppsInp.value = pricePerSess.toFixed(2) + ' DH';
+    }
+
+    var tdateInp = document.getElementById('tdate_' + tid);
+    var dtStr = (tdateInp && tdateInp.value) ? tdateInp.value : document.getElementById('enrollDate').value;
+    var endDateInp = document.getElementById('tend_date_' + tid);
+    if (endDateInp && dtStr) {
+      endDateInp.value = formatTariffEndDate(dtStr, nm);
+    }
+  }
+
+  function toggleTariffRow(cb) {
+    var tid = cb.value;
+    var tbody = document.getElementById('calcTbody');
+    var rowId = 'row_tariff_' + tid;
+    var card = cb.closest('.tariff-card-option');
+
+    if (cb.checked) {
+      if (card) card.classList.add('is-selected');
+      var row = document.createElement('tr');
+      row.id = rowId;
+      row.style.borderBottom = '1px solid #fef3c7';
+      row.style.background = '#fffbeb';
+      var globalDt = document.getElementById('enrollDate').value;
+      var cycleMonths = parseInt(cb.dataset.cyclemonths) || 1;
+      var basePrice = parseFloat(cb.dataset.price) || 0;
+      var unitPrice = parseFloat(cb.dataset.unitprice) || (cycleMonths > 0 ? (basePrice / cycleMonths) : basePrice);
+      var spw = parseInt(cb.dataset.spw) || 3;
+      var defaultTotSess = spw * 4;
+      var defaultPricePerSess = defaultTotSess > 0 ? (unitPrice / defaultTotSess).toFixed(2) + ' DH' : '0.00 DH';
+      var defaultEndDate = formatTariffEndDate(globalDt, 1);
+
+      row.innerHTML = `
+        <td style="padding:6px 8px; font-weight:700; color:#b45309;">
+          ⏳ ${cb.dataset.name} <span class="chip chip-amber" style="font-size:9px;">En attente</span>
+        </td>
+        <td style="padding:6px; text-align:center;">
+          <input type="date" name="tariff_date_${tid}" id="tdate_${tid}" value="${globalDt}" onchange="this.dataset.userEdited='true'; updateTariffRowCalculations(${tid})" style="padding:3px; font-size:11px; font-weight:700; border:1px solid #cbd5e1; border-radius:4px; width:100px; text-align:center;">
+        </td>
+        <td style="padding:6px; text-align:center;">
+          <select name="tariff_months_paid_${tid}" id="tnmonths_${tid}" onchange="changeTariffMonthsCount(${tid})" style="padding:3px 5px; border:1px solid #f59e0b; border-radius:6px; font-weight:700; color:#b45309; font-size:11.5px; background:#fffbeb;">
+            <option value="1" selected>1 Mois</option>
+            <option value="2">2 Mois</option>
+            <option value="3">3 Mois (Trimestriel)</option>
+            <option value="6">6 Mois</option>
+            <option value="12">12 Mois</option>
+          </select>
+        </td>
+        <td style="padding:6px; text-align:center;">
+          <input type="number" step="0.01" name="tariff_monthly_price_${tid}" id="tmprice_${tid}" value="${unitPrice.toFixed(2)}" oninput="recalcTariffRow(${tid})" style="width:75px; text-align:center; font-weight:700; color:#b45309; padding:3px; border:1px solid #f59e0b; border-radius:4px; font-size:11.5px;">
+        </td>
+        <td style="padding:6px; text-align:center;">
+          <input type="number" step="0.01" name="tariff_registration_fee_${tid}" id="tregfee_${tid}" value="${cb.dataset.regfee}" oninput="onRegFeeInput(this)" style="width:65px; text-align:center; font-weight:700; color:#6d28d9; padding:3px; border:1px solid #8b5cf6; border-radius:4px; font-size:11.5px;">
+        </td>
+        <td style="padding:6px; text-align:center;">
+          <input type="number" name="tariff_total_sessions_${tid}" id="ttsess_${tid}" value="${defaultTotSess}" oninput="this.dataset.userEdited='true'; recalcTariffRow(${tid})" style="width:45px; text-align:center; padding:3px; border:1px solid #cbd5e1; border-radius:4px; font-size:11px;">
+        </td>
+        <td style="padding:6px; text-align:center;">
+          <input type="number" name="tariff_attended_sessions_${tid}" id="trsess_${tid}" value="${defaultTotSess}" oninput="this.dataset.userEdited='true'; recalcTariffRow(${tid})" style="width:45px; text-align:center; padding:3px; border:1px solid #cbd5e1; border-radius:4px; font-size:11px;">
+        </td>
+        <td style="padding:6px; text-align:center;">
+          <input type="text" id="tprice_per_session_${tid}" readonly style="width:70px; text-align:center; font-weight:800; color:#0369a1; background:#e0f2fe; padding:3px; border:1px solid #7dd3fc; border-radius:4px; font-size:11px;" value="${defaultPricePerSess}">
+        </td>
+        <td style="padding:6px; text-align:center;">
+          <input type="text" id="tend_date_${tid}" readonly style="width:85px; text-align:center; font-weight:800; color:#047857; background:#ecfdf5; padding:3px; border:1px solid #a7f3d0; border-radius:4px; font-size:11px;" value="${defaultEndDate}">
+        </td>
+        <td style="padding:6px; text-align:center; color:#94a3b8; font-size:11px; font-weight:700;" title="Groupe et prof à définir ultérieurement">
+          0% (0 DH)
+        </td>
+      `;
+      tbody.appendChild(row);
+      applySingleRegistrationFeeRule();
+      updateGrandTotal();
+    } else {
+      if (card) card.classList.remove('is-selected');
+      var existing = document.getElementById(rowId);
+      if (existing) existing.remove();
+      applySingleRegistrationFeeRule();
+      updateGrandTotal();
+    }
+    checkVisibility();
+    updateSelectedCountBadge();
+    if (isOnlySelectedFilter) filterCourses();
+  }
+
+  function toggleCourseRow(cb) {
+    var cid = cb.value;
+    var tbody = document.getElementById('calcTbody');
+    var rowId = 'row_' + cid;
+    var card = cb.closest('.course-card-option');
+
+    if (cb.checked) {
+      if (card) card.classList.add('is-selected');
+      var row = document.createElement('tr');
+      row.id = rowId;
+      row.style.borderBottom = '1px solid #f1f5f9';
+      var globalDt = document.getElementById('enrollDate').value;
+
+      row.innerHTML = `
+        <td style="padding:6px 8px; font-weight:700; color:#0B3D6E;">${cb.dataset.name}</td>
+        <td style="padding:6px; text-align:center;">
+          <input type="date" name="course_date_${cid}" id="cdate_${cid}" value="${globalDt}" onchange="this.dataset.userEdited='true'; fetchProrated(${cid})" style="padding:3px; font-size:11px; font-weight:700; border:1px solid #10b981; border-radius:4px; width:100px; text-align:center; background:#f0fdf4;" title="Date de début effectif des cours">
+        </td>
+        <td style="padding:6px; text-align:center;">
+          <select name="months_paid_${cid}" id="nmonths_${cid}" onchange="changeMonthsCount(${cid})" style="padding:3px 5px; border:1px solid #1f6feb; border-radius:6px; font-weight:700; color:#0B3D6E; font-size:11.5px; background:#f0f7ff;">
+            <option value="1" selected>1 Mois</option>
+            <option value="2">2 Mois</option>
+            <option value="3">3 Mois (Trimestriel)</option>
+            <option value="6">6 Mois</option>
+            <option value="12">12 Mois</option>
+          </select>
+        </td>
+        <td style="padding:6px; text-align:center;">
+          <input type="number" step="0.01" name="monthly_price_${cid}" id="mprice_${cid}" value="${cb.dataset.unitprice || cb.dataset.price}" oninput="recalcRow(${cid})" style="width:75px; text-align:center; font-weight:700; color:#0B3D6E; padding:3px; border:1px solid #1f6feb; border-radius:4px; font-size:11.5px;">
+        </td>
+        <td style="padding:6px; text-align:center;">
+          <input type="number" step="0.01" name="registration_fee_${cid}" id="regfee_${cid}" value="${cb.dataset.regfee}" oninput="onRegFeeInput(this)" style="width:65px; text-align:center; font-weight:700; color:#6d28d9; padding:3px; border:1px solid #8b5cf6; border-radius:4px; font-size:11.5px;">
+        </td>
+        <td style="padding:6px; text-align:center;">
+          <input type="number" name="total_sessions_${cid}" id="tsess_${cid}" value="10" oninput="recalcRow(${cid})" style="width:45px; text-align:center; padding:3px; border:1px solid #cbd5e1; border-radius:4px; font-size:11px;">
+        </td>
+        <td style="padding:6px; text-align:center;">
+          <input type="number" name="attended_sessions_${cid}" id="rsess_${cid}" value="10" oninput="recalcRow(${cid})" style="width:45px; text-align:center; padding:3px; border:1px solid #cbd5e1; border-radius:4px; font-size:11px;">
+        </td>
+        <td style="padding:6px; text-align:center;">
+          <input type="text" id="price_per_session_${cid}" readonly style="width:70px; text-align:center; font-weight:800; color:#0369a1; background:#e0f2fe; padding:3px; border:1px solid #7dd3fc; border-radius:4px; font-size:11px;" value="0.00 DH">
+        </td>
+        <td style="padding:6px; text-align:center;">
+          <input type="text" name="end_date_${cid}" id="end_date_${cid}" readonly style="width:85px; text-align:center; font-weight:800; color:#047857; background:#ecfdf5; padding:3px; border:1px solid #a7f3d0; border-radius:4px; font-size:11px;" value="--">
+        </td>
+        <td style="padding:6px; text-align:center;">
+          <input type="number" step="0.1" name="teacher_percentage_${cid}" id="tpct_${cid}" value="50" oninput="recalcRow(${cid})" style="width:45px; text-align:center; padding:3px; border:1px solid #8b5cf6; border-radius:4px; font-weight:700; color:#6d28d9; font-size:11px;">%
+          <input type="hidden" name="current_month_earned_${cid}" id="cearned_${cid}" value="${cb.dataset.unitprice || cb.dataset.price}">
+          <input type="hidden" name="deferred_amount_${cid}" id="damount_${cid}" value="0.00">
+        </td>
+      `;
+      tbody.appendChild(row);
+      applySingleRegistrationFeeRule();
+      fetchProrated(cid);
+    } else {
+      if (card) card.classList.remove('is-selected');
+      var existing = document.getElementById(rowId);
+      if (existing) existing.remove();
+      applySingleRegistrationFeeRule();
+      updateGrandTotal();
+    }
+    checkVisibility();
+    updateSelectedCountBadge();
+    if (isOnlySelectedFilter) filterCourses();
+    updateAutoPlacementTestVisibility();
+    if (typeof checkScheduleConflicts === 'function') checkScheduleConflicts();
+  }
+
+  function updateAutoPlacementTestVisibility() {
+    var checkedCourses = document.querySelectorAll('#coursesGrid input[name="course_ids"]:checked');
+    var hasLanguage = false;
+    checkedCourses.forEach(function(cb) {
+      var card = cb.closest('.course-card-option');
+      if (card) {
+        var cat = (card.dataset.category || '').toLowerCase();
+        var subj = (card.dataset.subject || '').toLowerCase();
+        if (cat === 'language' || ['anglais', 'français', 'francais', 'espagnol', 'allemand', 'arabe', 'turc', 'italien'].indexOf(subj) !== -1) {
+          hasLanguage = true;
+        }
+      }
+    });
+    var box = document.getElementById('expressAutoTestBox');
+    if (box) {
+      box.style.display = hasLanguage ? 'block' : 'none';
+    }
+  }
+
+  function fetchProrated(cid) {
+    var rowDateElem = document.getElementById('cdate_' + cid);
+    var dt = (rowDateElem && rowDateElem.value) ? rowDateElem.value : document.getElementById('enrollDate').value;
+    var nmElem = document.getElementById('nmonths_' + cid);
+    var nm = nmElem ? parseInt(nmElem.value) : '';
+    
+    var cb = document.querySelector('#coursesGrid input[value="' + cid + '"]');
+    var mpriceInp = document.getElementById('mprice_' + cid);
+    var isUserEdited = mpriceInp && mpriceInp.dataset.userEdited === 'true';
+
+    var url = `/api/calculate_prorated?course_id=${cid}&enroll_date=${dt}` + (nm ? `&months_count=${nm}` : '');
+    if (isUserEdited && cb && cb.dataset.unitprice) {
+        url += `&custom_unit_price=${cb.dataset.unitprice}`;
+    }
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (document.getElementById('tsess_' + cid)) {
+          var cb = document.querySelector('#coursesGrid input[value="' + cid + '"]');
+          var cycleMonths = data.months_count;
+          var unitMonthlyPrice = data.unit_monthly_price || (data.full_price / cycleMonths);
+          cb.dataset.unitprice = unitMonthlyPrice;
+          
+          document.getElementById('tsess_' + cid).value = data.total_sessions;
+          document.getElementById('rsess_' + cid).value = data.remaining_sessions;
+          if (data.end_date) {
+            document.getElementById('end_date_' + cid).value = data.end_date;
+          }
+
+          var calculatedCoursePrice = data.calculated_price || data.full_price;
+          document.getElementById('mprice_' + cid).value = calculatedCoursePrice.toFixed(2);
+          document.getElementById('cearned_' + cid).value = (data.current_month_earned || calculatedCoursePrice).toFixed(2);
+          document.getElementById('damount_' + cid).value = (data.deferred_amount || 0).toFixed(2);
+
+          updateSessionPrice(cid);
+          updateGrandTotal();
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        updateGrandTotal();
+      });
+  }
+
+  function updateSessionPrice(cid) {
+    var m = parseFloat(document.getElementById('mprice_' + cid).value) || 0;
+    var t = parseInt(document.getElementById('tsess_' + cid).value) || 1;
+    var pricePerSess = (t > 0) ? (m / t) : 0;
+    var pInput = document.getElementById('price_per_session_' + cid);
+    if (pInput) {
+      pInput.value = pricePerSess.toFixed(2) + ' DH';
+    }
+  }
+
+  function recalcRow(cid) {
+    var cb = document.querySelector('#coursesGrid input[value="' + cid + '"]');
+    var nmElem = document.getElementById('nmonths_' + cid);
+    var nm = nmElem ? parseInt(nmElem.value) : 1;
+    var mpriceInp = document.getElementById('mprice_' + cid);
+    if (cb && mpriceInp && nm > 0) {
+        cb.dataset.unitprice = (parseFloat(mpriceInp.value) || 0) / nm;
+        mpriceInp.dataset.userEdited = 'true';
+    }
+    updateSessionPrice(cid);
+    updateGrandTotal();
+  }
+
+  function changeMonthsCount(cid) {
+    fetchProrated(cid);
+  }
+
+  function recalculateAll() {
+    var checkedCourses = document.querySelectorAll('#coursesGrid input[type="checkbox"]:checked');
+    var globalDt = document.getElementById('enrollDate').value;
+    applySingleRegistrationFeeRule();
+    checkedCourses.forEach(cb => {
+      var cid = cb.value;
+      var rowDateElem = document.getElementById('cdate_' + cid);
+      if (rowDateElem && !rowDateElem.dataset.userEdited) {
+        rowDateElem.value = globalDt;
+      }
+      fetchProrated(cid);
+    });
+    var checkedTariffs = document.querySelectorAll('#tariffsGrid input[type="checkbox"]:checked');
+    checkedTariffs.forEach(cb => {
+      var tid = cb.value;
+      var rowDateElem = document.getElementById('tdate_' + tid);
+      if (rowDateElem && !rowDateElem.dataset.userEdited) {
+        rowDateElem.value = globalDt;
+      }
+      updateTariffRowCalculations(tid);
+    });
+  }
+
+  function updateGrandTotal() {
+    grandTotal = 0;
+    var itemsHtml = '';
+    var initPayInp = document.getElementById('initialPayment');
+    if (initPayInp) {
+      initPayInp.readOnly = false;
+    }
+
+    var courseMode = document.getElementById('courseMode') ? document.getElementById('courseMode').value : 'specific';
+    if (courseMode === 'private') {
+      var pHours = parseFloat(document.getElementById('privateHours') ? document.getElementById('privateHours').value : 0) || 0;
+      var pTotal = parseFloat(document.getElementById('privateTotalPrice') ? document.getElementById('privateTotalPrice').value : 0) || 0;
+      var pRegFee = parseFloat(document.getElementById('privateRegFee') ? document.getElementById('privateRegFee').value : 0) || 0;
+      var pSubjSel = document.getElementById('privateSubjectSelect');
+      var pSubj = pSubjSel ? pSubjSel.value : 'Cours Particulier';
+      if (pSubj === 'Autre') {
+        var custInp = document.getElementById('privateSubjectCustom');
+        if (custInp && custInp.value.trim()) pSubj = custInp.value.trim();
+      }
+      var pRate = pHours > 0 ? (pTotal / pHours).toFixed(0) : 0;
+      
+      grandTotal += (pTotal + pRegFee);
+      itemsHtml += `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <div><strong style="color:#7c3aed;">⭐ Cours Particulier (${pSubj})</strong> <span style="font-size:10px; color:#6d28d9; font-weight:700;">(${pHours}h @ ${pRate} DH/h)</span></div>
+          <div style="font-weight:700; color:#0B3D6E;">${pTotal.toFixed(2)} DH</div>
+        </div>
+      `;
+      if (pRegFee > 0) {
+        itemsHtml += `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; font-size:11.5px; color:#6d28d9;">
+            <div>Frais d'inscription</div>
+            <div style="font-weight:700;">${pRegFee.toFixed(2)} DH</div>
+          </div>
+        `;
+      }
+    }
+
+    // 1. Courses
+    var mprices = document.querySelectorAll('#calcTbody input[id^="mprice_"]');
+    mprices.forEach(inp => {
+      var cid = inp.id.split('_')[1];
+      var cb = document.querySelector('#coursesGrid input[value="' + cid + '"]');
+      var courseName = cb ? cb.dataset.name : ('Cours #' + cid);
+      var coursePrice = parseFloat(inp.value) || 0;
+      var regFeeInp = document.getElementById('regfee_' + cid);
+      var regFee = regFeeInp ? (parseFloat(regFeeInp.value) || 0) : 0;
+      var nmElem = document.getElementById('nmonths_' + cid);
+      var nm = nmElem ? (parseInt(nmElem.value) || 1) : 1;
+      
+      grandTotal += (coursePrice + regFee);
+
+      var durBadge = nm > 1 ? `<span style="font-size:10px; color:#1e40af; font-weight:700;">(${nm} mois)</span>` : '';
+      var feeLabel = regFee > 0 ? `<span style="font-size:10.5px; color:#6d28d9; font-weight:700;">(+${regFee.toFixed(2)} DH Frais)</span>` : '';
+      itemsHtml += `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <div><strong>${courseName}</strong> ${durBadge} ${feeLabel}</div>
+          <div style="font-weight:700; color:#0B3D6E;">${(coursePrice + regFee).toFixed(2)} DH</div>
+        </div>
+      `;
+    });
+
+    // 1.b Tariffs (En attente)
+    var tmprices = document.querySelectorAll('#calcTbody input[id^="tmprice_"]');
+    tmprices.forEach(inp => {
+      var tid = inp.id.split('_')[1];
+      var cb = document.querySelector('#tariffsGrid input[value="' + tid + '"]');
+      var tName = cb ? cb.dataset.name : ('Matière #' + tid);
+      var tPrice = parseFloat(inp.value) || 0;
+      var regFeeInp = document.getElementById('tregfee_' + tid);
+      var regFee = regFeeInp ? (parseFloat(regFeeInp.value) || 0) : 0;
+      var nmElem = document.getElementById('tnmonths_' + tid);
+      var nm = nmElem ? (parseInt(nmElem.value) || 1) : 1;
+      
+      grandTotal += (tPrice + regFee);
+
+      var durBadge = `<span style="font-size:10px; color:#b45309; font-weight:700;">(${nm} mois)</span>`;
+      var tFeeLabel = regFee > 0 ? `<span style="font-size:10.5px; color:#6d28d9; font-weight:700;">(+${regFee.toFixed(2)} DH Frais)</span>` : '';
+      itemsHtml += `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <div><strong style="color:#b45309;">⏳ ${tName}</strong> ${durBadge} ${tFeeLabel}</div>
+          <div style="font-weight:700; color:#b45309;">${(tPrice + regFee).toFixed(2)} DH</div>
+        </div>
+      `;
+    });
+
+    // 2. Books
+    var bookCheckboxes = document.querySelectorAll('#booksGrid input[type="checkbox"]:checked');
+    bookCheckboxes.forEach(function(bCb) {
+      var bid = bCb.value;
+      var bPrice = parseFloat(bCb.dataset.price) || 0;
+      var bName = bCb.dataset.name;
+      var qtyInp = document.getElementById('book_qty_' + bid);
+      var qty = qtyInp ? (parseInt(qtyInp.value) || 1) : 1;
+      var bTotal = bPrice * qty;
+      grandTotal += bTotal;
+
+      itemsHtml += `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; color:#b45309;">
+          <div>📖 ${bName} (x${qty})</div>
+          <div style="font-weight:700;">${bTotal.toFixed(2)} DH</div>
+        </div>
+      `;
+    });
+
+    // Handle Student Credit Balance deduction
+    var chkCredit = document.getElementById('chkUseCredit');
+    var creditDeducted = 0;
+    var currentStu = (typeof currentSelectedStudent !== 'undefined') ? currentSelectedStudent : null;
+    var stuMode = document.getElementById('studentMode') ? document.getElementById('studentMode').value : 'new';
+    if (stuMode === 'exist' && chkCredit && chkCredit.checked && currentStu && currentStu.credit_balance > 0) {
+      creditDeducted = Math.min(grandTotal, currentStu.credit_balance);
+      if (creditDeducted > 0) {
+        itemsHtml += `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; color:#15803d; font-weight:800; background:#f0fdf4; padding:3px 6px; border-radius:6px; border:1px solid #86efac;">
+            <div>🪙 Avoir déduit (Solde client)</div>
+            <div>-${creditDeducted.toFixed(2)} DH</div>
+          </div>
+        `;
+      }
+    }
+
+    var netTotal = Math.max(0, grandTotal - creditDeducted);
+
+    var summaryDiv = document.getElementById('receiptItemsSummary');
+    if (summaryDiv) {
+      summaryDiv.innerHTML = itemsHtml || '<div class="muted" style="text-align:center; padding:18px 0; font-size:12px;">Cochez des matières pour calculer la facture...</div>';
+    }
+
+    if (creditDeducted > 0) {
+      document.getElementById('grandTotalShow').innerHTML = netTotal.toFixed(2) + ' {{ settings.currency }} <div style="font-size:11.5px; font-weight:700; color:#15803d; margin-top:2px;">(Total brut : ' + grandTotal.toFixed(2) + ' DH · Avoir : -' + creditDeducted.toFixed(2) + ' DH)</div>';
+    } else {
+      document.getElementById('grandTotalShow').textContent = grandTotal.toFixed(2) + ' {{ settings.currency }}';
+    }
+
+    var initPayInp = document.getElementById('initialPayment');
+    if (initPayInp) {
+      if (currentPayMode === '0' || initPayInp.dataset.payMode === '0') {
+        initPayInp.value = '0.00';
+      } else if (currentPayMode === 'custom' || initPayInp.dataset.payMode === 'custom') {
+        // preserve user's customized acompte
+      } else if (currentPayMode === '50') {
+        initPayInp.value = (netTotal / 2).toFixed(2);
+      } else {
+        initPayInp.value = netTotal.toFixed(2);
+      }
+    }
+    updatePayButtonsUI();
+    updateBalance();
+  }
+
+  var currentPayMode = '100';
+
+  function setQuickPayment(type) {
+    currentPayMode = type;
+    var chkCredit = document.getElementById('chkUseCredit');
+    var creditDeducted = 0;
+    var currentStu = (typeof currentSelectedStudent !== 'undefined') ? currentSelectedStudent : null;
+    var stuMode = document.getElementById('studentMode') ? document.getElementById('studentMode').value : 'new';
+    if (stuMode === 'exist' && chkCredit && chkCredit.checked && currentStu && currentStu.credit_balance > 0) {
+      creditDeducted = Math.min(grandTotal, currentStu.credit_balance);
+    }
+    var netTotal = Math.max(0, grandTotal - creditDeducted);
+
+    var initPayInp = document.getElementById('initialPayment');
+    if (initPayInp) {
+      initPayInp.dataset.userEdited = "true";
+      initPayInp.dataset.payMode = type;
+      if (type === '100') {
+        initPayInp.value = netTotal.toFixed(2);
+      } else if (type === '50') {
+        initPayInp.value = (netTotal / 2).toFixed(2);
+      } else {
+        initPayInp.value = "0.00";
+      }
+    }
+    updatePayButtonsUI();
+    updateBalance();
+  }
+
+  function onInitialPaymentInput() {
+    var initPayInp = document.getElementById('initialPayment');
+    if (!initPayInp) return;
+    var val = parseFloat(initPayInp.value);
+    initPayInp.dataset.userEdited = "true";
+
+    var chkCredit = document.getElementById('chkUseCredit');
+    var creditDeducted = 0;
+    var currentStu = (typeof currentSelectedStudent !== 'undefined') ? currentSelectedStudent : null;
+    var stuMode = document.getElementById('studentMode') ? document.getElementById('studentMode').value : 'new';
+    if (stuMode === 'exist' && chkCredit && chkCredit.checked && currentStu && currentStu.credit_balance > 0) {
+      creditDeducted = Math.min(grandTotal, currentStu.credit_balance);
+    }
+    var netTotal = Math.max(0, grandTotal - creditDeducted);
+
+    if (isNaN(val) || val <= 0) {
+      currentPayMode = '0';
+      initPayInp.dataset.payMode = '0';
+    } else if (Math.abs(val - netTotal) < 0.01 && netTotal > 0) {
+      currentPayMode = '100';
+      initPayInp.dataset.payMode = '100';
+    } else {
+      currentPayMode = 'custom';
+      initPayInp.dataset.payMode = 'custom';
+    }
+    updatePayButtonsUI();
+    updateBalance();
+  }
+
+  function updatePayButtonsUI() {
+    var btn100 = document.getElementById('btnPay100');
+    var btn50 = document.getElementById('btnPay50');
+    var btn0 = document.getElementById('btnPay0');
+    var badge = document.getElementById('payModeBadge');
+    var subBtn = document.getElementById('submitBtn');
+    var initPayInp = document.getElementById('initialPayment');
+    var payVal = parseFloat(initPayInp ? initPayInp.value : 0) || 0;
+
+    [btn100, btn50, btn0].forEach(function(b) {
+      if (b) {
+        b.classList.remove('btn-primary', 'btn-danger');
+        b.classList.add('btn-outline');
+        if (b === btn0) {
+          b.style.borderColor = '#dc2626';
+          b.style.color = '#dc2626';
+          b.style.background = 'transparent';
+        }
+      }
+    });
+
+    if (currentPayMode === '0' || payVal === 0) {
+      if (btn0) {
+        btn0.classList.remove('btn-outline');
+        btn0.classList.add('btn-danger');
+        btn0.style.background = '#dc2626';
+        btn0.style.color = '#ffffff';
+      }
+      if (badge) { badge.className = 'chip chip-red'; badge.textContent = 'Différé (0 DH)'; }
+      if (subBtn) {
+        subBtn.innerHTML = '⚡ Valider & Imprimer Ticket (0 DH Différé)';
+        subBtn.style.background = '#dc2626';
+        subBtn.style.borderColor = '#dc2626';
+      }
+    } else if (currentPayMode === '50') {
+      if (btn50) { btn50.classList.remove('btn-outline'); btn50.classList.add('btn-primary'); }
+      if (badge) { badge.className = 'chip chip-blue'; badge.textContent = 'Acompte (50%)'; }
+      if (subBtn) {
+        subBtn.innerHTML = '⚡ Valider & Imprimer Reçu Acompte (' + payVal.toFixed(2) + ' {{ settings.currency }})';
+        subBtn.style.background = '#0284c7';
+        subBtn.style.borderColor = '#0284c7';
+      }
+    } else if (currentPayMode === '100') {
+      if (btn100) { btn100.classList.remove('btn-outline'); btn100.classList.add('btn-primary'); }
+      if (badge) { badge.className = 'chip chip-green'; badge.textContent = '100% Réglé'; }
+      if (subBtn) {
+        subBtn.innerHTML = '⚡ Valider & Imprimer Reçu (' + payVal.toFixed(2) + ' {{ settings.currency }})';
+        subBtn.style.background = '#10b981';
+        subBtn.style.borderColor = '#10b981';
+      }
+    } else {
+      if (badge) { badge.className = 'chip chip-yellow'; badge.textContent = 'Acompte Personnalisé'; }
+      if (subBtn) {
+        subBtn.innerHTML = '⚡ Valider & Imprimer Reçu (' + payVal.toFixed(2) + ' {{ settings.currency }})';
+        subBtn.style.background = '#0284c7';
+        subBtn.style.borderColor = '#0284c7';
+      }
+    }
+  }
+
+  function updateBalance() {
+    var initPay = parseFloat(document.getElementById('initialPayment').value) || 0;
+    var chkCredit = document.getElementById('chkUseCredit');
+    var creditDeducted = 0;
+    var currentStu = (typeof currentSelectedStudent !== 'undefined') ? currentSelectedStudent : null;
+    var stuMode = document.getElementById('studentMode') ? document.getElementById('studentMode').value : 'new';
+    if (stuMode === 'exist' && chkCredit && chkCredit.checked && currentStu && currentStu.credit_balance > 0) {
+      creditDeducted = Math.min(grandTotal, currentStu.credit_balance);
+    }
+    var netTotal = Math.max(0, grandTotal - creditDeducted);
+    var bal = Math.max(0, netTotal - initPay);
+    document.getElementById('balanceShow').value = bal.toFixed(2) + ' {{ settings.currency }}';
+  }
+
+  function checkVisibility() {
+    var checkedCourses = document.querySelectorAll('#coursesGrid input[type="checkbox"]:checked').length;
+    var checkedTariffs = document.querySelectorAll('#tariffsGrid input[type="checkbox"]:checked').length;
+    var totalChecked = checkedCourses + checkedTariffs;
+    var prorateSection = document.getElementById('prorateSection');
+    if (prorateSection) {
+      prorateSection.style.display = totalChecked > 0 ? 'block' : 'none';
+    }
+    var drawer = document.getElementById('drawerContent');
+    if (drawer && totalChecked > 0) {
+      drawer.style.display = 'block';
+      var icon = document.getElementById('drawerToggleIcon');
+      if (icon) icon.textContent = '[Afficher/Masquer ▲]';
+    }
+  }
+
+  function toggleAdvancedDrawer() {
+    var drawer = document.getElementById('drawerContent');
+    var icon = document.getElementById('drawerToggleIcon');
+    if (drawer.style.display === 'none') {
+      drawer.style.display = 'block';
+      icon.textContent = '[Afficher/Masquer ▲]';
+    } else {
+      drawer.style.display = 'none';
+      icon.textContent = '[Afficher/Masquer ▼]';
+    }
+  }
+
+  var ALL_STUDENTS = [
+    {% for s in students %}
+    {
+      id: {{ s.id }},
+      name: {{ s.full_name|tojson }},
+      code: {{ (s.code or '')|tojson }},
+      cin: {{ (s.cin or '')|tojson }},
+      phone: {{ (s.phone or '')|tojson }},
+      parent_phone: {{ (s.parent_phone or '')|tojson }},
+      whatsapp: {{ (s.whatsapp or '')|tojson }},
+      status: {{ (s.status or 'active')|tojson }},
+      level: {{ (s.school_level or '')|tojson }},
+      age: {{ (s.age if s.age is not none else '')|tojson }},
+      credit_balance: {{ (s._credit_balance_cache or s.dynamic_credit_balance or 0.0)|round(2) }},
+      active_courses: {{ (s._active_courses_info or [])|tojson }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  function previewExpressAge(val) {
+    var badge = document.getElementById('expressAgeBadge');
+    var valSpan = document.getElementById('expressAgeVal');
+    if (!val) {
+      if (badge) badge.style.display = 'none';
+      return;
+    }
+    var bDate = new Date(val);
+    var today = new Date();
+    var age = today.getFullYear() - bDate.getFullYear();
+    var m = today.getMonth() - bDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < bDate.getDate())) {
+      age--;
+    }
+    if (age >= 0 && !isNaN(age)) {
+      if (valSpan) valSpan.textContent = age;
+      if (badge) badge.style.display = 'block';
+    } else {
+      if (badge) badge.style.display = 'none';
+    }
+  }
+
+  function cleanSearchStr(str) {
+    if (!str) return '';
+    try {
+      return str.toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "") // Latin diacritics
+                .replace(/[\u064b-\u0652]/g, "") // Arabic tashkeel
+                .replace(/[أإآ]/g, "ا")
+                .replace(/ة/g, "ه")
+                .replace(/ى/g, "ي")
+                .replace(/ç/g, 'c');
+    } catch(e) {
+      return str.toLowerCase().replace(/ç/g, 'c').replace(/é|è|ê/g, 'e').replace(/à/g, 'a');
+    }
+  }
+
+  function normalizeSearchStr(str) {
+    return cleanSearchStr(str).replace(/[\s\-\+\(\)\._]/g, '');
+  }
+
+  function filterCourses() {
+    var rawQuery = (document.getElementById('courseSearchInput') ? document.getElementById('courseSearchInput').value : '').trim();
+    var normQuery = cleanSearchStr(rawQuery);
+    
+    var subjectSelect = document.getElementById('subjectFilterSelect');
+    var subjectVal = subjectSelect ? cleanSearchStr(subjectSelect.value) : '';
+
+    var audienceSelect = document.getElementById('audienceFilterSelect');
+    var audienceVal = audienceSelect ? audienceSelect.value : '';
+
+    var levelSelect = document.getElementById('levelFilterSelect');
+    var levelVal = levelSelect ? cleanSearchStr(levelSelect.value) : '';
+
+    var slotSelect = document.getElementById('slotFilterSelect');
+    var slotVal = slotSelect ? slotSelect.value : '';
+
+    var teacherSelect = document.getElementById('teacherFilterSelect');
+    var teacherId = teacherSelect ? teacherSelect.value : '';
+
+    var roomSelect = document.getElementById('roomFilterSelect');
+    var roomId = roomSelect ? roomSelect.value : '';
+
+    var btnClear = document.getElementById('btnClearCourseSearch');
+    var btnReset = document.getElementById('btnResetFilters');
+
+    if (btnClear) {
+      btnClear.style.display = rawQuery.length > 0 ? 'block' : 'none';
+    }
+
+    var isFilterActive = (rawQuery.length > 0) || (subjectVal !== '') || (audienceVal !== '') || (levelVal !== '') || (slotVal !== '') || (teacherId !== '') || (roomId !== '') || (currentCourseCatFilter !== 'all') || (currentCourseStatusFilter !== 'all') || isOnlySelectedFilter;
+    if (btnReset) {
+      btnReset.style.display = isFilterActive ? 'inline-block' : 'none';
+    }
+
+    var coursesGrid = document.getElementById('coursesGrid');
+    var isSpecific = coursesGrid && coursesGrid.style.display !== 'none';
+
+    if (isSpecific) {
+      var cards = document.querySelectorAll('#coursesGrid .course-card-option');
+      var visibleCount = 0;
+      var queryTerms = normQuery.split(/\s+/).filter(Boolean);
+
+      cards.forEach(function(card) {
+        var cardText = cleanSearchStr(card.dataset.searchText || '');
+        var cardCat = card.dataset.category || '';
+        var cardSubj = cleanSearchStr(card.dataset.subject || '');
+        var cardAud = card.dataset.audience || '';
+        var cardSlot = card.dataset.slot || '';
+        var cardTid = card.dataset.teacherId || '0';
+        var cardRid = card.dataset.roomId || '';
+        var cardLevel = cleanSearchStr(card.dataset.level || '');
+        var cardHasTeacher = card.dataset.hasTeacher === 'true' || (cardTid !== '0' && cardTid !== '');
+        var cardPriority = card.dataset.priorityFill === 'true';
+        var cardUrgent = card.dataset.isUrgent === 'true';
+        var cb = card.querySelector('input[type="checkbox"]');
+        var isChecked = cb && cb.checked;
+
+        // Query Search
+        var matchesQuery = true;
+        if (queryTerms.length > 0) {
+          matchesQuery = queryTerms.every(function(t) {
+            return cardText.includes(t);
+          });
+        }
+
+        // Subject Filter
+        var matchesSubject = true;
+        if (subjectVal) {
+          matchesSubject = cardSubj.includes(subjectVal) || cardText.includes(subjectVal);
+        }
+
+        // Audience Filter
+        var matchesAudience = true;
+        if (audienceVal) {
+          matchesAudience = (cardAud === audienceVal);
+        }
+
+        // Level Filter
+        var matchesLevel = true;
+        if (levelVal) {
+          matchesLevel = cardLevel.includes(levelVal);
+        }
+
+        // Slot Filter
+        var matchesSlot = true;
+        if (slotVal) {
+          matchesSlot = (cardSlot === slotVal);
+        }
+
+        // Teacher Filter
+        var matchesTeacher = true;
+        if (teacherId === 'none') {
+          matchesTeacher = (cardTid === '0' || cardTid === '');
+        } else if (teacherId) {
+          matchesTeacher = (cardTid === teacherId);
+        }
+
+        // Room Filter
+        var matchesRoom = true;
+        if (roomId) {
+          matchesRoom = (cardRid === roomId);
+        }
+
+        // Category Filter (Langues / Soutien)
+        var matchesCat = (currentCourseCatFilter === 'all') || (cardCat === currentCourseCatFilter);
+
+        // Status Filter
+        var matchesStatus = true;
+        if (currentCourseStatusFilter === 'available') {
+          matchesStatus = cardHasTeacher;
+        } else if (currentCourseStatusFilter === 'upcoming') {
+          matchesStatus = !cardHasTeacher;
+        } else if (currentCourseStatusFilter === 'priority') {
+          matchesStatus = cardPriority;
+        } else if (currentCourseStatusFilter === 'urgent') {
+          matchesStatus = cardUrgent;
+        }
+
+        // Selected Only Filter
+        var matchesSelected = !isOnlySelectedFilter || isChecked;
+
+        if (matchesQuery && matchesSubject && matchesAudience && matchesLevel && matchesSlot && matchesTeacher && matchesRoom && matchesCat && matchesStatus && matchesSelected) {
+          card.style.display = 'flex';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      var countBadge = document.getElementById('courseMatchesCount');
+      if (countBadge) {
+        countBadge.textContent = visibleCount + (visibleCount > 1 ? ' classes' : ' classe');
+      }
+
+      var noFound = document.getElementById('noCoursesFound');
+      if (noFound) {
+        noFound.style.display = (cards.length > 0 && visibleCount === 0) ? 'block' : 'none';
+        var detail = document.getElementById('noCoursesFoundDetail');
+        if (detail && rawQuery) {
+          detail.textContent = 'Aucune classe trouvée pour "' + rawQuery + '"';
+        } else if (detail) {
+          detail.textContent = 'Aucune classe ne correspond aux filtres sélectionnés.';
+        }
+      }
+    } else {
+      // Pending tariffs mode
+      var tariffCards = document.querySelectorAll('#tariffsGrid .tariff-card-option');
+      var visibleTariffsCount = 0;
+      var tQueryTerms = normQuery.split(/\s+/).filter(Boolean);
+
+      tariffCards.forEach(function(card) {
+        var cardText = cleanSearchStr(card.dataset.searchText || '');
+        var cardCat = card.dataset.category || '';
+        var cb = card.querySelector('input[type="checkbox"]');
+        var isChecked = cb && cb.checked;
+
+        var matchesQuery = true;
+        if (tQueryTerms.length > 0) {
+          matchesQuery = tQueryTerms.every(function(t) {
+            return cardText.includes(t);
+          });
+        }
+
+        var matchesCat = (currentCourseCatFilter === 'all') || (cardCat === currentCourseCatFilter);
+        var matchesSelected = !isOnlySelectedFilter || isChecked;
+
+        if (matchesQuery && matchesCat && matchesSelected) {
+          card.style.display = 'flex';
+          visibleTariffsCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      var countBadge = document.getElementById('courseMatchesCount');
+      if (countBadge) {
+        countBadge.textContent = visibleTariffsCount + (visibleTariffsCount > 1 ? ' tarifs' : ' tarif');
+      }
+
+      var noFound = document.getElementById('noCoursesFound');
+      if (noFound) {
+        noFound.style.display = (tariffCards.length > 0 && visibleTariffsCount === 0) ? 'block' : 'none';
+        var detail = document.getElementById('noCoursesFoundDetail');
+        if (detail && rawQuery) {
+          detail.textContent = 'Aucun tarif trouvé pour "' + rawQuery + '"';
+        }
+      }
+    }
+
+    updateSelectedCountBadge();
+  }
+
+  function clearCourseSearch() {
+    var inp = document.getElementById('courseSearchInput');
+    if (inp) {
+      inp.value = '';
+      inp.focus();
+    }
+    filterCourses();
+  }
+
+  function quickFilterTeacher(teacherId) {
+    var sel = document.getElementById('teacherFilterSelect');
+    if (sel) {
+      sel.value = teacherId;
+      filterCourses();
+    }
+  }
+
+  function setCategoryFilter(cat) {
+    currentCourseCatFilter = cat;
+    var pAll = document.getElementById('pillCatAll');
+    var pLang = document.getElementById('pillCatLang');
+    var pTut = document.getElementById('pillCatTut');
+
+    [pAll, pLang, pTut].forEach(function(p) {
+      if (!p) return;
+      p.style.background = 'transparent';
+      p.style.border = 'none';
+      p.style.boxShadow = 'none';
+      p.style.fontWeight = '700';
+    });
+    if (pAll) pAll.style.color = '#7c3aed';
+    if (pLang) pLang.style.color = '#1e40af';
+    if (pTut) pTut.style.color = '#065f46';
+
+    if (cat === 'all' && pAll) {
+      pAll.style.background = '#7c3aed';
+      pAll.style.color = '#fff';
+      pAll.style.boxShadow = '0 1px 4px rgba(124,58,237,0.3)';
+      pAll.style.fontWeight = '800';
+    } else if (cat === 'language' && pLang) {
+      pLang.style.background = '#1e40af';
+      pLang.style.color = '#fff';
+      pLang.style.boxShadow = '0 1px 4px rgba(30,64,175,0.3)';
+      pLang.style.fontWeight = '800';
+    } else if (cat === 'tutoring' && pTut) {
+      pTut.style.background = '#065f46';
+      pTut.style.color = '#fff';
+      pTut.style.boxShadow = '0 1px 4px rgba(6,95,70,0.3)';
+      pTut.style.fontWeight = '800';
+    }
+
+    filterCourses();
+  }
+
+  function setStatusFilter(status) {
+    currentCourseStatusFilter = status;
+    var pAll = document.getElementById('pillStatusAll');
+    var pAvail = document.getElementById('pillStatusAvailable');
+    var pUp = document.getElementById('pillStatusUpcoming');
+    var pPrio = document.getElementById('pillStatusPriority');
+    var pUrg = document.getElementById('pillStatusUrgent');
+
+    [pAll, pAvail, pUp, pPrio, pUrg].forEach(function(p) {
+      if (!p) return;
+      p.style.background = 'transparent';
+      p.style.border = 'none';
+      p.style.boxShadow = 'none';
+      p.style.fontWeight = '700';
+    });
+    if (pAll) pAll.style.color = '#0B3D6E';
+    if (pAvail) pAvail.style.color = '#047857';
+    if (pUp) pUp.style.color = '#b45309';
+    if (pPrio) pPrio.style.color = '#ea580c';
+    if (pUrg) pUrg.style.color = '#dc2626';
+
+    if (status === 'all' && pAll) {
+      pAll.style.background = '#0B3D6E';
+      pAll.style.color = '#fff';
+      pAll.style.boxShadow = '0 1px 4px rgba(11,61,110,0.3)';
+      pAll.style.fontWeight = '800';
+    } else if (status === 'available' && pAvail) {
+      pAvail.style.background = '#047857';
+      pAvail.style.color = '#fff';
+      pAvail.style.boxShadow = '0 1px 4px rgba(4,120,87,0.3)';
+      pAvail.style.fontWeight = '800';
+    } else if (status === 'upcoming' && pUp) {
+      pUp.style.background = '#b45309';
+      pUp.style.color = '#fff';
+      pUp.style.boxShadow = '0 1px 4px rgba(180,83,9,0.3)';
+      pUp.style.fontWeight = '800';
+    } else if (status === 'priority' && pPrio) {
+      pPrio.style.background = '#ea580c';
+      pPrio.style.color = '#fff';
+      pPrio.style.boxShadow = '0 1px 4px rgba(234,88,12,0.3)';
+      pPrio.style.fontWeight = '800';
+    } else if (status === 'urgent' && pUrg) {
+      pUrg.style.background = '#dc2626';
+      pUrg.style.color = '#fff';
+      pUrg.style.boxShadow = '0 1px 4px rgba(220,38,38,0.3)';
+      pUrg.style.fontWeight = '800';
+    }
+
+    filterCourses();
+  }
+
+  function toggleOnlySelectedFilter() {
+    isOnlySelectedFilter = !isOnlySelectedFilter;
+    var btn = document.getElementById('btnOnlySelected');
+    if (btn) {
+      if (isOnlySelectedFilter) {
+        btn.style.background = '#10b981';
+        btn.style.color = '#fff';
+        btn.style.borderColor = '#10b981';
+      } else {
+        btn.style.background = '#fff';
+        btn.style.color = '#047857';
+        btn.style.borderColor = '#10b981';
+      }
+    }
+    filterCourses();
+  }
+
+  function resetAllCourseFilters() {
+    var inp = document.getElementById('courseSearchInput');
+    if (inp) inp.value = '';
+    var subj = document.getElementById('subjectFilterSelect');
+    if (subj) subj.value = '';
+    var aud = document.getElementById('audienceFilterSelect');
+    if (aud) aud.value = '';
+    var lvl = document.getElementById('levelFilterSelect');
+    if (lvl) lvl.value = '';
+    var slot = document.getElementById('slotFilterSelect');
+    if (slot) slot.value = '';
+    var tchr = document.getElementById('teacherFilterSelect');
+    if (tchr) tchr.value = '';
+    var rm = document.getElementById('roomFilterSelect');
+    if (rm) rm.value = '';
+
+    isOnlySelectedFilter = false;
+    var btn = document.getElementById('btnOnlySelected');
+    if (btn) {
+      btn.style.background = '#fff';
+      btn.style.color = '#047857';
+      btn.style.borderColor = '#10b981';
+    }
+    setCategoryFilter('all');
+    setStatusFilter('all');
+  }
+
+  function updateSelectedCountBadge() {
+    var checkedCourses = document.querySelectorAll('#coursesGrid input[type="checkbox"]:checked').length;
+    var checkedTariffs = document.querySelectorAll('#tariffsGrid input[type="checkbox"]:checked').length;
+    var totalSelected = checkedCourses + checkedTariffs;
+    var badge = document.getElementById('selectedCountBadge');
+    var btn = document.getElementById('btnOnlySelected');
+    if (badge) badge.textContent = totalSelected;
+    if (btn) {
+      btn.style.display = totalSelected > 0 ? 'inline-block' : 'none';
+    }
+  }
+
+  // Prevent Enter key from submitting form in search boxes
+  ['courseSearchInput', 'studentSearchInput'].forEach(function(id) {
+    var elem = document.getElementById(id);
+    if (elem) {
+      elem.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+        }
+      });
+    }
+  });
+
+  function filterStudentSearch() {
+    var query = document.getElementById('studentSearchInput').value.trim();
+    var resultsDiv = document.getElementById('studentSearchResults');
+    var btnClear = document.getElementById('btnClearStudentSearch');
+
+    if (btnClear) btnClear.style.display = query.length > 0 ? 'block' : 'none';
+
+    if (!query) {
+      resultsDiv.style.display = 'none';
+      resultsDiv.innerHTML = '';
+      return;
+    }
+
+    var normQuery = normalizeSearchStr(query);
+    var tokens = cleanSearchStr(query).split(/\s+/).filter(Boolean);
+
+    var matches = ALL_STUDENTS.filter(function(s) {
+      var normName = normalizeSearchStr(s.name);
+      var cleanName = cleanSearchStr(s.name);
+      var normCode = normalizeSearchStr(s.code);
+      var normCin = s.cin ? normalizeSearchStr(s.cin) : '';
+      var normPhone = s.phone ? s.phone.replace(/[\s\-\+\(\)]/g, '') : '';
+      var normParentPhone = s.parent_phone ? s.parent_phone.replace(/[\s\-\+\(\)]/g, '') : '';
+      var normWhatsapp = s.whatsapp ? s.whatsapp.replace(/[\s\-\+\(\)]/g, '') : '';
+
+      var tokensMatch = tokens.length > 0 && tokens.every(function(t) {
+        return cleanName.includes(t) || (s.code && s.code.toLowerCase().includes(t)) || (s.cin && s.cin.toLowerCase().includes(t));
+      });
+
+      return normName.includes(normQuery) ||
+             tokensMatch ||
+             normCode.includes(normQuery) ||
+             normCin.includes(normQuery) ||
+             (normQuery.length >= 2 && (normPhone.includes(normQuery) || normParentPhone.includes(normQuery) || normWhatsapp.includes(normQuery)));
+    });
+
+    if (matches.length === 0) {
+      resultsDiv.innerHTML = '<div style="padding:10px; text-align:center; color:#64748b; font-size:12px;">Aucun élève trouvé avec "' + query + '"</div>';
+      resultsDiv.style.display = 'block';
+      return;
+    }
+
+    var html = '';
+    matches.forEach(function(s) {
+      var creditBadge = (s.credit_balance && s.credit_balance > 0) ? ' <span class="chip" style="font-size:10px; padding:1px 6px; background:#dcfce7; color:#15803d; border:1px solid #86efac; font-weight:800;">🪙 Avoir: ' + s.credit_balance.toFixed(0) + ' DH</span>' : '';
+      html += '<div onclick="selectStudentById(' + s.id + ')" style="padding:8px 12px; border-bottom:1px solid #f1f5f9; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background=\'#f0f7ff\'" onmouseout="this.style.background=\'#fff\'">';
+      html += '  <div style="font-weight:700; color:#0B3D6E; font-size:13.5px;">' + s.name + ' <span style="font-size:11px; font-weight:600; color:#64748b;">(' + (s.code || 'Code') + ')</span>' + (s.cin ? ' <span class="chip" style="font-size:10px; padding:1px 5px; background:#ede9fe; color:#6d28d9; border:1px solid #ddd6fe; font-weight:700;">🪪 ' + s.cin + '</span>' : '') + creditBadge + (s.status === 'inactive' ? ' <span class="chip" style="font-size:10px; padding:1px 5px; background:#fee2e2; color:#b91c1c; font-weight:700;">Inactif</span>' : '') + '</div>';
+      html += '  <div style="font-size:11px; color:#475569; margin-top:2px; display:flex; gap:10px; flex-wrap:wrap;">';
+      if (s.age) html += '    <span style="color:#0369a1; font-weight:700;">🎂 ' + s.age + ' ans</span>';
+      if (s.parent_phone) html += '    <span>👨‍👩‍👧 Parent: <strong>' + s.parent_phone + '</strong></span>';
+      if (s.level) html += '    <span>🎓 ' + s.level + '</span>';
+      html += '  </div>';
+      html += '</div>';
+    });
+
+    resultsDiv.innerHTML = html;
+    resultsDiv.style.display = 'block';
+  }
+
+  function selectStudentById(id) {
+    var s = ALL_STUDENTS.find(function(item) { return item.id === id; });
+    if (!s) return;
+
+    currentSelectedStudent = s;
+
+    document.getElementById('selStudentId').value = s.id;
+    document.getElementById('studentSearchInput').value = s.name + (s.code ? ' (' + s.code + ')' : '');
+    document.getElementById('studentSearchResults').style.display = 'none';
+
+    var badgeInfo = s.name + (s.code ? ' (' + s.code + ')' : '');
+    if (s.cin) badgeInfo += ' · 🪪 CIN: ' + s.cin;
+    if (s.age) badgeInfo += ' · 🎂 ' + s.age + ' ans';
+    if (s.parent_phone) badgeInfo += ' · Parent: ' + s.parent_phone;
+    if (s.level) badgeInfo += ' · 🎓 ' + s.level;
+
+    if (s.active_courses && s.active_courses.length > 0) {
+      badgeInfo += ' · 📚 Inscrit : ' + s.active_courses.map(function(c) { return c.name + (c.schedule ? ' [' + c.schedule + ']' : ''); }).join(', ');
+    }
+
+    document.getElementById('selectedStudentInfo').textContent = badgeInfo;
+    document.getElementById('selectedStudentBadge').style.display = 'flex';
+    if (document.getElementById('btnClearStudentSearch')) {
+      document.getElementById('btnClearStudentSearch').style.display = 'block';
+    }
+
+    var crNotice = document.getElementById('studentCreditNotice');
+    var crVal = document.getElementById('creditBalanceVal');
+    var chkCredit = document.getElementById('chkUseCredit');
+    if (s.credit_balance && s.credit_balance > 0) {
+      if (crVal) crVal.textContent = s.credit_balance.toFixed(2);
+      if (chkCredit) chkCredit.checked = true;
+      if (crNotice) crNotice.style.display = 'flex';
+    } else {
+      if (crNotice) crNotice.style.display = 'none';
+      if (chkCredit) chkCredit.checked = false;
+    }
+
+    updateGrandTotal();
+    if (typeof checkScheduleConflicts === 'function') checkScheduleConflicts();
+  }
+
+  function clearStudentSelection() {
+    currentSelectedStudent = null;
+    document.getElementById('selStudentId').value = '';
+    document.getElementById('studentSearchInput').value = '';
+    document.getElementById('studentSearchResults').style.display = 'none';
+    document.getElementById('selectedStudentBadge').style.display = 'none';
+
+    var crNotice = document.getElementById('studentCreditNotice');
+    var chkCredit = document.getElementById('chkUseCredit');
+    if (crNotice) crNotice.style.display = 'none';
+    if (chkCredit) chkCredit.checked = false;
+
+    document.getElementById('studentSearchInput').focus();
+    if (document.getElementById('btnClearStudentSearch')) {
+      document.getElementById('btnClearStudentSearch').style.display = 'none';
+    }
+    updateGrandTotal();
+    if (typeof checkScheduleConflicts === 'function') checkScheduleConflicts();
+  }
+
+  function previewStudentPhoto(input) {
+    if (input.files && input.files[0]) {
+      document.getElementById('photoBtnTxt').textContent = '✓ Photo: ' + input.files[0].name.substring(0, 12) + '...';
+    }
+  }
+
+  document.getElementById('expressForm').addEventListener('submit', function(e) {
+    var mode = document.getElementById('studentMode').value;
+    if (mode === 'exist') {
+      var sid = document.getElementById('selStudentId').value;
+      if (!sid) {
+        e.preventDefault();
+        alert('Veuillez sélectionner un élève existant dans la liste de recherche.');
+        document.getElementById('studentSearchInput').focus();
+        return false;
+      }
+    }
+    var courseMode = document.getElementById('courseMode') ? document.getElementById('courseMode').value : 'specific';
+    if (courseMode === 'private') {
+      var pSubj = document.getElementById('privateSubjectSelect') ? document.getElementById('privateSubjectSelect').value : '';
+      if (!pSubj) {
+        e.preventDefault();
+        alert('Veuillez sélectionner la matière ou la langue du cours particulier.');
+        document.getElementById('privateSubjectSelect').focus();
+        return false;
+      }
+      if (pSubj === 'Autre') {
+        var cust = document.getElementById('privateSubjectCustom') ? document.getElementById('privateSubjectCustom').value.trim() : '';
+        if (!cust) {
+          e.preventDefault();
+          alert('Veuillez préciser le nom de la matière du cours particulier.');
+          document.getElementById('privateSubjectCustom').focus();
+          return false;
+        }
+      }
+      var pTid = document.getElementById('privateTeacherSelect') ? document.getElementById('privateTeacherSelect').value : '';
+      if (!pTid) {
+        e.preventDefault();
+        alert('Veuillez sélectionner un professeur assigné pour ce cours particulier.');
+        document.getElementById('privateTeacherSelect').focus();
+        return false;
+      }
+      var pTotal = parseFloat(document.getElementById('privateTotalPrice') ? document.getElementById('privateTotalPrice').value : 0) || 0;
+      if (pTotal <= 0) {
+        e.preventDefault();
+        alert('Veuillez renseigner un montant total valide pour le cours particulier.');
+        document.getElementById('privateTotalPrice').focus();
+        return false;
+      }
+    } else {
+      var checkedCourses = document.querySelectorAll('#coursesGrid input[type="checkbox"]:checked');
+      var checkedTariffs = document.querySelectorAll('#tariffsGrid input[type="checkbox"]:checked');
+      if (checkedCourses.length === 0 && checkedTariffs.length === 0) {
+        e.preventDefault();
+        alert('Veuillez sélectionner au moins une classe ou une matière en attente pour valider l\'inscription.');
+        return false;
+      }
+    }
+
+    // CHECK FOR SCHEDULE CONFLICTS
+    if (typeof detectedScheduleConflicts !== 'undefined' && detectedScheduleConflicts.length > 0) {
+      var conflictMsg = "⚠️ ATTENTION : CONFLIT D'HORAIRES DÉTECTÉ !\n\n";
+      detectedScheduleConflicts.forEach(function(cfl, idx) {
+        conflictMsg += (idx + 1) + ". " + cfl.courseA_name + " et " + cfl.courseB_name + " ont lieu en même temps le " + cfl.dayName + " (" + cfl.timeA + " / " + cfl.timeB + ").\n";
+      });
+      conflictMsg += "\nVoulez-vous vraiment continuer et inscrire cet élève malgré ce chevauchement d'horaires ?";
+      if (!confirm(conflictMsg)) {
+        e.preventDefault();
+        return false;
+      }
+    }
+
+    // Ensure 0 DH payment mode accurately posts 0.00
+    var initPayInp = document.getElementById('initialPayment');
+    if (initPayInp) {
+      if (currentPayMode === '0' || initPayInp.dataset.payMode === '0' || parseFloat(initPayInp.value) === 0) {
+        initPayInp.value = '0.00';
+      }
+    }
+
+    // CHECK FOR PHONE DUPLICATES IN NEW STUDENT MODE
+    if (mode === 'new' && !bypassPhoneCheck) {
+      var duplicates = findPhoneDuplicates();
+      if (duplicates.length > 0) {
+        e.preventDefault();
+        showPhoneDuplicateModal(duplicates);
+        return false;
+      }
+    }
+  });
+
+  // -------------------------------------------------------------
+  // SCHEDULE CLASH DETECTION (INSCRIPTION EXPRESS)
+  // -------------------------------------------------------------
+  function parseTimeToMins(tStr) {
+    if (!tStr) return 0;
+    var parts = tStr.split(':');
+    return (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
+  }
+
+  function checkSlotsOverlap(s1, s2) {
+    if (parseInt(s1.day, 10) !== parseInt(s2.day, 10)) return false;
+    var start1 = parseTimeToMins(s1.start);
+    var end1 = parseTimeToMins(s1.end);
+    var start2 = parseTimeToMins(s2.start);
+    var end2 = parseTimeToMins(s2.end);
+    return (start1 < end2 && start2 < end1);
+  }
+
+  function checkScheduleConflicts() {
+    detectedScheduleConflicts = [];
+    var dayNames = {
+      0: 'Lundi (الإثنين)',
+      1: 'Mardi (الثلاثاء)',
+      2: 'Mercredi (الأربعاء)',
+      3: 'Jeudi (الخميس)',
+      4: 'Vendredi (الجمعة)',
+      5: 'Samedi (السبت)',
+      6: 'Dimanche (الأحد)'
+    };
+
+    // Reset previous clash styling on cards
+    document.querySelectorAll('.course-card-option').forEach(function(card) {
+      card.classList.remove('has-schedule-clash');
+      var clashBadge = card.querySelector('.schedule-clash-badge');
+      if (clashBadge) clashBadge.remove();
+    });
+
+    var checkedCids = [];
+    document.querySelectorAll('#coursesGrid input[name="course_ids"]:checked').forEach(function(cb) {
+      checkedCids.push(parseInt(cb.value, 10));
+    });
+
+    // 1. Check pairwise between checked courses
+    for (var i = 0; i < checkedCids.length; i++) {
+      var cidA = checkedCids[i];
+      var courseA = (typeof COURSE_SLOTS !== 'undefined' && COURSE_SLOTS[cidA]) ? COURSE_SLOTS[cidA] : null;
+      if (!courseA || !courseA.slots) continue;
+
+      for (var j = i + 1; j < checkedCids.length; j++) {
+        var cidB = checkedCids[j];
+        var courseB = (typeof COURSE_SLOTS !== 'undefined' && COURSE_SLOTS[cidB]) ? COURSE_SLOTS[cidB] : null;
+        if (!courseB || !courseB.slots) continue;
+
+        for (var a = 0; a < courseA.slots.length; a++) {
+          for (var b = 0; b < courseB.slots.length; b++) {
+            if (checkSlotsOverlap(courseA.slots[a], courseB.slots[b])) {
+              var slA = courseA.slots[a];
+              var slB = courseB.slots[b];
+              detectedScheduleConflicts.push({
+                type: 'checked_pair',
+                courseA_id: cidA,
+                courseA_name: courseA.name,
+                courseB_id: cidB,
+                courseB_name: courseB.name,
+                dayName: dayNames[slA.day] || ('Jour ' + slA.day),
+                timeA: slA.start + '-' + slA.end,
+                timeB: slB.start + '-' + slB.end
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Check between checked courses and existing student active courses
+    var stuMode = document.getElementById('studentMode') ? document.getElementById('studentMode').value : 'new';
+    var selSid = document.getElementById('selStudentId') ? parseInt(document.getElementById('selStudentId').value, 10) : 0;
+    if (stuMode === 'exist' && selSid && typeof ALL_STUDENTS !== 'undefined') {
+      var stuObj = ALL_STUDENTS.find(function(s) { return s.id === selSid; });
+      if (stuObj && stuObj.active_courses && stuObj.active_courses.length > 0) {
+        stuObj.active_courses.forEach(function(activeC) {
+          var existCid = activeC.id;
+          var existCourse = (typeof COURSE_SLOTS !== 'undefined' && COURSE_SLOTS[existCid]) ? COURSE_SLOTS[existCid] : null;
+          if (!existCourse || !existCourse.slots) return;
+
+          checkedCids.forEach(function(newCid) {
+            if (newCid === existCid) return; // same course handled by renewal
+            var newCourse = (typeof COURSE_SLOTS !== 'undefined' && COURSE_SLOTS[newCid]) ? COURSE_SLOTS[newCid] : null;
+            if (!newCourse || !newCourse.slots) return;
+
+            for (var na = 0; na < newCourse.slots.length; na++) {
+              for (var ea = 0; ea < existCourse.slots.length; ea++) {
+                if (checkSlotsOverlap(newCourse.slots[na], existCourse.slots[ea])) {
+                  var slNew = newCourse.slots[na];
+                  var slExist = existCourse.slots[ea];
+                  detectedScheduleConflicts.push({
+                    type: 'existing_clash',
+                    courseA_id: newCid,
+                    courseA_name: newCourse.name,
+                    courseB_id: existCid,
+                    courseB_name: activeC.name + ' (Déjà inscrit)',
+                    dayName: dayNames[slNew.day] || ('Jour ' + slNew.day),
+                    timeA: slNew.start + '-' + slNew.end,
+                    timeB: slExist.start + '-' + slExist.end
+                  });
+                }
+              }
+            }
+          });
+        });
+      }
+    }
+
+    // Render conflicts UI
+    var banner = document.getElementById('scheduleConflictBanner');
+    var details = document.getElementById('scheduleConflictDetails');
+    if (detectedScheduleConflicts.length > 0) {
+      var html = '<ul style="margin:4px 0 0 16px; padding:0;">';
+      detectedScheduleConflicts.forEach(function(cfl) {
+        html += '<li style="margin-bottom:3px;"><strong>' + escapeHtml(cfl.courseA_name) + '</strong> (' + cfl.timeA + ') et <strong>' + escapeHtml(cfl.courseB_name) + '</strong> (' + cfl.timeB + ') ont lieu en même temps le <strong>' + cfl.dayName + '</strong>.</li>';
+
+        // Highlight card A
+        var cardA = document.querySelector('.course-card-option[data-cid="' + cfl.courseA_id + '"]');
+        if (cardA) {
+          cardA.classList.add('has-schedule-clash');
+          if (!cardA.querySelector('.schedule-clash-badge')) {
+            var b = document.createElement('div');
+            b.className = 'schedule-clash-badge';
+            b.style.cssText = 'position:absolute; top:-8px; right:10px; background:#dc2626; color:#fff; font-size:10px; font-weight:800; padding:2px 8px; border-radius:10px; box-shadow:0 2px 6px rgba(220,38,38,0.4); z-index:10;';
+            b.textContent = '⚠️ Conflit Horaire (' + cfl.dayName + ')';
+            cardA.appendChild(b);
+          }
+        }
+        // Highlight card B if checked
+        var cardB = document.querySelector('.course-card-option[data-cid="' + cfl.courseB_id + '"]');
+        if (cardB) {
+          cardB.classList.add('has-schedule-clash');
+          if (!cardB.querySelector('.schedule-clash-badge')) {
+            var b2 = document.createElement('div');
+            b2.className = 'schedule-clash-badge';
+            b2.style.cssText = 'position:absolute; top:-8px; right:10px; background:#dc2626; color:#fff; font-size:10px; font-weight:800; padding:2px 8px; border-radius:10px; box-shadow:0 2px 6px rgba(220,38,38,0.4); z-index:10;';
+            b2.textContent = '⚠️ Conflit Horaire (' + cfl.dayName + ')';
+            cardB.appendChild(b2);
+          }
+        }
+      });
+      html += '</ul>';
+      if (details) details.innerHTML = html;
+      if (banner) banner.style.display = 'block';
+    } else {
+      if (banner) banner.style.display = 'none';
+    }
+  }
+
+  // -------------------------------------------------------------
+  // PHONE DUPLICATE CHECK & SELECTION HELPERS (INSCRIPTION EXPRESS)
+  // -------------------------------------------------------------
+  function getCleanPhoneDigits(val) {
+    if (!val) return '';
+    return val.toString().replace(/\D/g, '');
+  }
+
+  function checkPhoneMatch(phoneA, phoneB) {
+    var da = getCleanPhoneDigits(phoneA);
+    var db = getCleanPhoneDigits(phoneB);
+    if (!da || !db) return false;
+    if (da.length < 8 || db.length < 8) {
+      return (da.length >= 6 && da === db);
+    }
+    if (da === db) return true;
+    var last9a = da.slice(-9);
+    var last9b = db.slice(-9);
+    return (last9a.length === 9 && last9b.length === 9 && last9a === last9b);
+  }
+
+  function findPhoneDuplicates() {
+    var parentPhoneInp = document.getElementById('inpParentPhone');
+    var studentPhoneInp = document.getElementById('inpStudentPhone');
+    var parentPhone = parentPhoneInp ? parentPhoneInp.value.trim() : '';
+    var studentPhone = studentPhoneInp ? studentPhoneInp.value.trim() : '';
+
+    if (!parentPhone && !studentPhone) return [];
+
+    var matchesMap = new Map();
+
+    ALL_STUDENTS.forEach(function(s) {
+      var reasons = [];
+      var matchedPhones = [];
+
+      if (parentPhone) {
+        if (checkPhoneMatch(parentPhone, s.parent_phone)) {
+          reasons.push("Tél. Tuteur correspond au tél. parent (" + s.parent_phone + ")");
+          matchedPhones.push(s.parent_phone);
+        } else if (checkPhoneMatch(parentPhone, s.phone)) {
+          reasons.push("Tél. Tuteur correspond au tél. élève (" + s.phone + ")");
+          matchedPhones.push(s.phone);
+        } else if (s.whatsapp && checkPhoneMatch(parentPhone, s.whatsapp)) {
+          reasons.push("Tél. Tuteur correspond au WhatsApp (" + s.whatsapp + ")");
+          matchedPhones.push(s.whatsapp);
+        }
+      }
+
+      if (studentPhone) {
+        if (checkPhoneMatch(studentPhone, s.phone)) {
+          reasons.push("Tél. Élève correspond au tél. élève (" + s.phone + ")");
+          matchedPhones.push(s.phone);
+        } else if (checkPhoneMatch(studentPhone, s.parent_phone)) {
+          reasons.push("Tél. Élève correspond au tél. parent (" + s.parent_phone + ")");
+          matchedPhones.push(s.parent_phone);
+        } else if (s.whatsapp && checkPhoneMatch(studentPhone, s.whatsapp)) {
+          reasons.push("Tél. Élève correspond au WhatsApp (" + s.whatsapp + ")");
+          matchedPhones.push(s.whatsapp);
+        }
+      }
+
+      if (reasons.length > 0) {
+        matchesMap.set(s.id, {
+          student: s,
+          reasons: reasons,
+          matchedPhones: matchedPhones
+        });
+      }
+    });
+
+    return Array.from(matchesMap.values());
+  }
+
+  function onPhoneFieldInput() {
+    bypassPhoneCheck = false;
+    var hintBox = document.getElementById('phoneDuplicateLiveHint');
+    if (!hintBox) return;
+
+    var duplicates = findPhoneDuplicates();
+    if (duplicates.length === 0) {
+      hintBox.style.display = 'none';
+      hintBox.innerHTML = '';
+      return;
+    }
+
+    var d0 = duplicates[0];
+    var total = duplicates.length;
+    var html = '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">' +
+      '<div>' +
+      '  <span style="font-weight:800; color:#b45309;">⚠️ Attention :</span> ' +
+      '  <span>Ce numéro existe déjà pour <strong>' + escapeHtml(d0.student.name) + '</strong>' + (d0.student.code ? ' (' + escapeHtml(d0.student.code) + ')' : '') + (total > 1 ? ' et ' + (total - 1) + ' autre(s)' : '') + '.</span>' +
+      '  <div style="font-size:11px; color:#92400e; margin-top:2px;">Une alerte de confirmation s\'affichera lors de la validation pour choisir entre créer un nouvel élève (fratrie) ou sélectionner l\'élève existant.</div>' +
+      '</div>' +
+      '<div>' +
+      '  <button type="button" onclick="selectDuplicateAndClose(' + d0.student.id + ')" class="btn btn-xs btn-primary" style="padding:4px 9px; font-size:11px; font-weight:800; background:#1f6feb; border:none; cursor:pointer;">' +
+      '    🔍 Sélectionner ' + escapeHtml(d0.student.name.split(' ')[0]) +
+      '  </button>' +
+      '</div>' +
+      '</div>';
+    hintBox.innerHTML = html;
+    hintBox.style.display = 'block';
+  }
+
+  function showPhoneDuplicateModal(duplicates) {
+    var listContainer = document.getElementById('phoneDuplicateList');
+    if (!listContainer) return;
+
+    var html = '';
+    duplicates.forEach(function(item) {
+      var s = item.student;
+      html += '<div style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; gap:12px; box-shadow:0 2px 6px rgba(0,0,0,0.03); flex-wrap:wrap;">';
+      html += '  <div style="min-width:0; flex:1;">';
+      html += '    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">';
+      html += '      <span style="font-weight:800; color:#0B3D6E; font-size:14.5px;">' + escapeHtml(s.name) + '</span>';
+      if (s.code) html += '  <span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:5px; font-weight:800; font-size:11px;">' + escapeHtml(s.code) + '</span>';
+      if (s.cin) html += '   <span style="background:#ede9fe; color:#6d28d9; padding:2px 6px; border-radius:5px; font-weight:700; font-size:11px;">🪪 ' + escapeHtml(s.cin) + '</span>';
+      if (s.status === 'inactive') html += ' <span style="background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:5px; font-weight:700; font-size:10px;">Inactif</span>';
+      html += '    </div>';
+      html += '    <div style="font-size:11.5px; color:#64748b; margin-top:4px; display:flex; gap:10px; flex-wrap:wrap;">';
+      if (s.level) html += ' <span>🎓 ' + escapeHtml(s.level) + '</span>';
+      if (s.phone) html += ' <span>📞 Élève: <strong>' + escapeHtml(s.phone) + '</strong></span>';
+      if (s.parent_phone) html += ' <span>👨‍👩‍👧 Parent: <strong>' + escapeHtml(s.parent_phone) + '</strong></span>';
+      html += '    </div>';
+      html += '    <div style="font-size:11px; color:#d97706; font-weight:700; margin-top:5px; background:#fef3c7; padding:3px 8px; border-radius:5px; display:inline-block;">';
+      html += '      ⚠️ ' + escapeHtml(item.reasons.join(' · '));
+      html += '    </div>';
+      html += '  </div>';
+      html += '  <div style="display:flex; flex-direction:column; gap:6px; flex-shrink:0;">';
+      html += '    <button type="button" onclick="selectDuplicateAndClose(' + s.id + ')" class="btn btn-sm btn-primary" style="padding:7px 12px; font-size:12px; font-weight:800; background:#1f6feb; border-color:#1f6feb; white-space:nowrap; cursor:pointer;" title="Bascule le formulaire sur cet élève existant">';
+      html += '      🔄 Sélectionner cet élève';
+      html += '    </button>';
+      html += '    <button type="button" onclick="selectDuplicateAndValidate(' + s.id + ')" class="btn btn-sm btn-success" style="padding:6px 12px; font-size:11.5px; font-weight:800; background:#059669; border-color:#059669; white-space:nowrap; cursor:pointer;" title="Sélectionne et valide directement sans étape supplémentaire">';
+      html += '      ⚡ Sélectionner & Valider';
+      html += '    </button>';
+      html += '  </div>';
+      html += '</div>';
+    });
+
+    listContainer.innerHTML = html;
+    document.getElementById('phoneDuplicateModal').style.display = 'flex';
+  }
+
+  function selectDuplicateAndClose(studentId) {
+    closePhoneDuplicateModal(false);
+    setStudentMode('exist');
+    selectStudentById(studentId);
+    
+    var s = ALL_STUDENTS.find(function(item) { return item.id === studentId; });
+    var sName = s ? s.name : 'l\'élève';
+    var sCode = s && s.code ? ' (' + s.code + ')' : '';
+
+    var alertBox = document.getElementById('expressLiveAlert');
+    if (alertBox) {
+      alertBox.className = 'alert alert-success';
+      alertBox.style.display = 'block';
+      alertBox.style.background = '#ecfdf5';
+      alertBox.style.border = '1.5px solid #10b981';
+      alertBox.style.color = '#065f46';
+      alertBox.innerHTML = '✓ Élève existant <strong>' + escapeHtml(sName) + sCode + '</strong> sélectionné automatiquement. Vous pouvez maintenant valider son inscription ci-dessous.';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function selectDuplicateAndValidate(studentId) {
+    closePhoneDuplicateModal(false);
+    setStudentMode('exist');
+    selectStudentById(studentId);
+    bypassPhoneCheck = true;
+    var form = document.getElementById('expressForm');
+    if (form.requestSubmit) {
+      form.requestSubmit();
+    } else {
+      form.submit();
+    }
+  }
+
+  function confirmContinueAsNewStudent() {
+    bypassPhoneCheck = true;
+    closePhoneDuplicateModal(false);
+    var form = document.getElementById('expressForm');
+    if (form.requestSubmit) {
+      form.requestSubmit();
+    } else {
+      form.submit();
+    }
+  }
+
+  function closePhoneDuplicateModal(focusInput) {
+    var modal = document.getElementById('phoneDuplicateModal');
+    if (modal) modal.style.display = 'none';
+    if (focusInput) {
+      var pInp = document.getElementById('inpParentPhone');
+      if (pInp && pInp.value) {
+        pInp.focus();
+        pInp.select();
+      } else {
+        var sInp = document.getElementById('inpStudentPhone');
+        if (sInp) {
+          sInp.focus();
+          sInp.select();
+        }
+      }
+    }
+  }
+
+  function escapeHtml(text) {
+    if (!text) return '';
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      var modal = document.getElementById('phoneDuplicateModal');
+      if (modal && modal.style.display !== 'none') {
+        closePhoneDuplicateModal(true);
+      }
+    }
+  });
+
+  document.addEventListener('click', function(e) {
+    var box = document.getElementById('boxExistStudent');
+    var resultsDiv = document.getElementById('studentSearchResults');
+    if (box && resultsDiv && !box.contains(e.target)) {
+      resultsDiv.style.display = 'none';
+    }
+  });
+
+  // Auto-detection & Initialization for Placement Test and Pre-selected Courses
+  window.addEventListener('DOMContentLoaded', function() {
+    {% if matched_student %}
+      setStudentMode('exist');
+      selectStudentById({{ matched_student.id }});
+    {% endif %}
+
+    {% if placement_test %}
+      // Automatically switch to language category
+      setCategoryFilter('language');
+
+      // Auto-set level filter if detected
+      {% set rec_clean = placement_test.recommended_level.split('(')[0].strip() if placement_test.recommended_level else '' %}
+      {% if rec_clean %}
+        var lvlSel = document.getElementById('levelFilterSelect');
+        if (lvlSel) {
+          lvlSel.value = '{{ rec_clean }}';
+          filterCourses();
+        }
+      {% endif %}
+    {% endif %}
+
+    {% if preselected_course_id %}
+      var preCb = document.querySelector('input[name="course_ids"][value="{{ preselected_course_id }}"]');
+      if (preCb && !preCb.checked) {
+        preCb.checked = true;
+        toggleCourseRow(preCb);
+        setTimeout(function() {
+          var selTable = document.getElementById('selectedCoursesTableCard');
+          if (selTable) selTable.scrollIntoView({ behavior: 'smooth' });
+        }, 200);
+      }
+    {% endif %}
+    updatePayButtonsUI();
+    updateAutoPlacementTestVisibility();
+  });
+</script>
+
+<!-- MODAL DE DETECTION DE TELEPHONE EXISTANT (ALERTE GUICHET UNIQUE) -->
+<div id="phoneDuplicateModal" onclick="if(event.target===this) closePhoneDuplicateModal(true);" style="display:none; position:fixed; inset:0; z-index:999999; background:rgba(15, 23, 42, 0.72); backdrop-filter:blur(5px); align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#ffffff; border-radius:16px; max-width:620px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.35); overflow:hidden; border:1px solid #e2e8f0; max-height:90vh; display:flex; flex-direction:column;">
+    
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-bottom:1.5px solid #fde68a; padding:16px 20px; display:flex; align-items:center; gap:12px; flex-shrink:0;">
+      <div style="width:42px; height:42px; border-radius:12px; background:#fef08a; border:2px solid #f59e0b; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;">
+        ⚠️
+      </div>
+      <div style="flex:1;">
+        <h3 style="margin:0; font-size:16px; color:#92400e; font-weight:800; display:flex; align-items:center; gap:8px;">
+          <span>Numéro de Téléphone Déjà Existant !</span>
+        </h3>
+        <p style="margin:2px 0 0 0; font-size:12px; color:#b45309; font-weight:600;">
+          رقم الهاتف مسجل مسبقاً في النظام (نفس التلميذ أو نفس ولي الأمر)
+        </p>
+      </div>
+      <button type="button" onclick="closePhoneDuplicateModal(true)" style="background:transparent; border:none; font-size:22px; color:#94a3b8; cursor:pointer; padding:2px 8px; border-radius:6px; line-height:1;" title="Fermer">✕</button>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:18px 20px; overflow-y:auto; flex:1;">
+      <div style="font-size:13px; color:#334155; margin-bottom:12px; line-height:1.5;">
+        Le numéro de téléphone que vous avez saisi est déjà associé à l'élève (ou aux élèves) ci-dessous. <strong>Souhaitez-vous inscrire cet élève existant ou créer un nouvel élève (fratrie / même parent) ?</strong>
+      </div>
+
+      <!-- Matched Students List Container -->
+      <div id="phoneDuplicateList" style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;">
+        <!-- Dynamically filled by JS -->
+      </div>
+
+      <!-- Explanatory Info Card (Siblings / Fratrie) -->
+      <div style="background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:10px; padding:11px 14px; font-size:12px; color:#1e40af; line-height:1.45;">
+        <div style="font-weight:800; display:flex; align-items:center; gap:6px; margin-bottom:3px; color:#1d4ed8;">
+          <span>💡</span> <span>Fratrie / Même Parent (نفس ولي الأمر / إخوة) :</span>
+        </div>
+        <div>
+          S'il s'agit d'un <strong>frère</strong> ou d'une <strong>sœur</strong> avec le même numéro de tuteur, cliquez sur <strong>"Continuer comme Nouvel Élève"</strong> ci-dessous. Le système créera ce nouvel élève sans modifier l'ancien.
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <div style="background:#f8fafc; border-top:1px solid #e2e8f0; padding:14px 20px; display:flex; flex-direction:column; gap:8px; flex-shrink:0;">
+      <!-- Primary choice: Continue inserting as new student -->
+      <button type="button" onclick="confirmContinueAsNewStudent()" class="btn btn-primary" style="width:100%; justify-content:center; padding:11px 16px; font-size:13.5px; font-weight:800; background:#10b981; border-color:#10b981; box-shadow:0 4px 12px rgba(16,185,129,0.25); cursor:pointer;">
+        ➕ Continuer l'inscription (Nouvel Élève / Fratrie)
+      </button>
+
+      <div style="display:flex; gap:8px;">
+        <button type="button" onclick="closePhoneDuplicateModal(true)" class="btn btn-outline" style="flex:1; justify-content:center; padding:8px 14px; font-size:12.5px; font-weight:700; color:#475569; background:#fff; cursor:pointer;">
+          ↩️ Annuler & Modifier les numéros
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

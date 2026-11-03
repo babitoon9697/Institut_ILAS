@@ -1,0 +1,546 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="margin-bottom: 20px; border-radius:14px; border:1.5px solid #cbd5e1;">
+  <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding:16px 20px;">
+    <div>
+      <h2 style="margin:0; font-size:20px; color:#0B3D6E; font-weight:800; display:flex; align-items:center; gap:8px;">
+        📜 <span>{{ 'قوائم التلاميذ ومستحقات كل أستاذ وفوج' if lang=='ar' else 'Listes des Élèves et Paie par Enseignant' }}</span>
+      </h2>
+      <p style="margin:4px 0 0 0; font-size:12.5px; color:#64748b;">
+        {{ 'معاينة شاملة لأسماء البيانات والمبالغ ومستحقات الأجر بالضبط لكل أستاذ وفوج' if lang=='ar' else 'Consultez la liste des élèves avec le calcul exact des recettes et de la part de l\'enseignant.' }}
+      </p>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:8px;">
+      {% set t_ids_query = selected_teacher_ids|join(',') if selected_teacher_ids else '' %}
+      <a href="{{ url_for('teacher_class_lists', subject=selected_subject) }}" class="btn btn-sm btn-outline" style="background:#fff; color:#0B3D6E; font-weight:800; display:inline-flex; align-items:center; gap:6px; padding:8px 14px;">📋 <span>{{ 'لوائح الحضور (بدون أسعار)' if lang=='ar' else 'Listes d\'Appel (Sans Prix)' }}</span></a>
+      <a href="{{ url_for('teacher_student_lists_print', subject=selected_subject, teacher_ids=t_ids_query, month=req_month, q=search_q, format='a4_landscape') }}" target="_blank" class="btn btn-sm btn-primary" style="background:#10b981; border-color:#10b981; color:#fff; font-weight:800; display:inline-flex; align-items:center; gap:6px; box-shadow:0 3px 10px rgba(16,185,129,0.3); padding:8px 16px;">
+        🖨️ <span>{{ 'طباعة التقرير الرسمي (A4)' if lang=='ar' else 'Imprimer Document Officiel (A4)' }}</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- QUICK MATIÈRE FILTER BAR -->
+  {% if all_matieres %}
+  <div style="padding:10px 20px; background:#f1f5f9; border-top:1px solid #e2e8f0; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+    <span style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; display:flex; align-items:center; gap:4px;">
+      🎯 <span>{{ 'المادة :' if lang=='ar' else 'Matière :' }}</span>
+    </span>
+    <a href="{{ url_for('teacher_student_lists', month=req_month, q=search_q) }}" 
+       class="btn btn-xs" 
+       style="font-weight:800; padding:4px 10px; border-radius:20px; text-decoration:none; {{ 'background:#0B3D6E; color:#ffffff;' if not selected_subject else 'background:#ffffff; color:#334155; border:1px solid #cbd5e1;' }}">
+      {{ 'الكل' if lang=='ar' else 'Toutes les matières' }}
+    </a>
+    {% for m in all_matieres %}
+    <a href="{{ url_for('teacher_student_lists', subject=m.name, month=req_month, q=search_q) }}" 
+       class="btn btn-xs" 
+       style="font-weight:800; padding:4px 12px; border-radius:20px; text-decoration:none; display:inline-flex; align-items:center; gap:4px; {{ 'background:' ~ m.color ~ '; color:#ffffff; box-shadow:0 2px 6px rgba(0,0,0,0.15);' if selected_subject==m.name else 'background:' ~ m.bg ~ '; color:' ~ m.color ~ '; border:1.5px solid ' ~ m.border ~ ';' }}">
+      <span>{{ m.icon }}</span>
+      <span>{{ m.name_ar if lang=='ar' else m.name }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- COMPACT MODERN FILTER BAR -->
+  <div class="card-body" style="padding:14px 20px; background:#f8fafc; border-top:1px solid #e2e8f0;">
+    <form method="GET" action="{{ url_for('teacher_student_lists') }}" id="studentListFilterForm">
+      <input type="hidden" name="subject" value="{{ selected_subject or '' }}">
+      <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end;">
+        
+        <!-- Search Query -->
+        <div style="flex:1; min-width:200px;">
+          <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">{{ 'بحث تلميذ' if lang=='ar' else 'Recherche Élève' }}</label>
+          <input type="text" name="q" id="studentSearchInput" value="{{ search_q }}" autocomplete="off" placeholder="{{ 'اسم، كود أو هاتف...' if lang=='ar' else 'Nom, code ou téléphone...' }}" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:7px 12px; font-size:13px; height:38px; width:100%;">
+        </div>
+
+        <!-- Month Picker -->
+        <div style="min-width:150px;">
+          <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">{{ 'الشهر المستهدف' if lang=='ar' else 'Mois Cible' }}</label>
+          <input type="month" name="month" value="{{ req_month }}" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:7px 12px; font-size:13px; font-weight:700; color:#0B3D6E; height:38px; width:100%;">
+        </div>
+
+        <!-- Enterprise Searchable Multi-Teacher Dropdown -->
+        <div style="flex:1.5; min-width:280px; position:relative;" id="listTeacherDropdownContainer">
+          <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">
+            👨‍🏫 {{ 'اختيار الأساتذة' if lang=='ar' else 'Sélection des Enseignants' }}
+          </label>
+          
+          <!-- Trigger Button -->
+          <div id="listTeacherDropdownTrigger" onclick="toggleListTeacherDropdown()" style="display:flex; justify-content:space-between; align-items:center; background:#ffffff; border:1.5px solid #cbd5e1; border-radius:10px; padding:7px 12px; height:38px; cursor:pointer; user-select:none; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+            <div style="display:flex; align-items:center; gap:8px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">
+              <span style="font-size:15px;">👨‍🏫</span>
+              <span id="listTeacherTriggerLabel" style="font-weight:700; font-size:13px; color:#0B3D6E;">
+                {% if not selected_teacher_ids or selected_teacher_ids|length == all_teachers|length %}
+                  {{ 'جميع الأساتذة' if lang=='ar' else 'Tous les enseignants' }} ({{ all_teachers|length }})
+                {% elif selected_teacher_ids|length == 1 %}
+                  {% for t in all_teachers if t.id in selected_teacher_ids %}Prof. {{ t.full_name }}{% endfor %}
+                {% else %}
+                  {{ selected_teacher_ids|length }} {{ 'أساتذة محددون' if lang=='ar' else 'enseignants sélectionnés' }}
+                {% endif %}
+              </span>
+            </div>
+            <span style="font-size:11px; color:#64748b; font-weight:800;">▼</span>
+          </div>
+
+          <!-- Floating Popover Dropdown -->
+          <div id="listTeacherDropdownPopover" style="display:none; position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:1000; background:#ffffff; border:1.5px solid #cbd5e1; border-radius:12px; box-shadow:0 12px 28px rgba(0,0,0,0.15); min-width:320px; overflow:hidden;">
+            
+            <!-- Popover Header: Live Search & Action Buttons -->
+            <div style="padding:10px; background:#f8fafc; border-bottom:1px solid #e2e8f0;">
+              <input type="text" id="listTeacherSearchInput" onkeyup="filterListTeacherRows()" placeholder="{{ 'بحث سريع عن أستاذ أو مادة...' if lang=='ar' else 'Rechercher par nom ou matière...' }}" style="width:100%; border-radius:8px; border:1px solid #cbd5e1; padding:6px 10px; font-size:12px; margin-bottom:8px;">
+              
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:10.5px; font-weight:800; color:#64748b; text-transform:uppercase;">
+                  {{ all_teachers|length }} {{ 'أستاذ مسجل' if lang=='ar' else 'enseignants au total' }}
+                </span>
+                <div style="display:flex; gap:6px;">
+                  <button type="button" onclick="setAllListTeachersChecked(true)" style="background:#e0f2fe; color:#0369a1; border:none; border-radius:5px; padding:3px 8px; font-size:10.5px; font-weight:800; cursor:pointer;">
+                    ✓ {{ 'الكل' if lang=='ar' else 'Tout' }}
+                  </button>
+                  <button type="button" onclick="setAllListTeachersChecked(false)" style="background:#fee2e2; color:#991b1b; border:none; border-radius:5px; padding:3px 8px; font-size:10.5px; font-weight:800; cursor:pointer;">
+                    ✕ {{ 'إلغاء' if lang=='ar' else 'Aucun' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Popover Body: Scrollable List with Avatars -->
+            <div style="max-height:220px; overflow-y:auto; padding:4px;">
+              {% for t in all_teachers %}
+              {% set is_selected = (not selected_teacher_ids) or (t.id in selected_teacher_ids) %}
+              <label class="list-teacher-row" data-name="{{ t.full_name|lower }} {{ (t.specialty or '')|lower }} {{ (t.primary_matiere or '')|lower }}" style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; cursor:pointer; transition:background 0.15s; margin-bottom:2px;">
+                <input type="checkbox" name="teacher_ids" value="{{ t.id }}" class="list-teacher-checkbox" {% if is_selected %}checked{% endif %} onchange="updateListTeacherTriggerLabel()" style="width:16px; height:16px; cursor:pointer; accent-color:#0B3D6E;">
+                
+                <div style="background:#eff6ff; color:#1e40af; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0;">
+                  {{ t.full_name[:1]|upper }}
+                </div>
+
+                <div style="flex:1; min-width:0;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                    <div style="font-weight:700; font-size:12.5px; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Prof. {{ t.full_name }}</div>
+                    <span style="font-size:9.5px; font-weight:800; background:#f1f5f9; color:#475569; padding:1px 5px; border-radius:4px; border:1px solid #cbd5e1; flex-shrink:0;">{{ t.primary_matiere }}</span>
+                  </div>
+                  <div style="font-size:10.5px; color:#64748b;">{{ t.specialty or 'Général' }} · {{ t.salary_amount|int }}%</div>
+                </div>
+              </label>
+              {% endfor %}
+            </div>
+
+            <!-- Popover Footer -->
+            <div style="padding:8px 10px; background:#f1f5f9; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+              <span id="listSelectedCountFooter" style="font-size:11px; font-weight:700; color:#475569;">
+                {{ teacher_data|length }} / {{ all_teachers|length }} sélectionnés
+              </span>
+              <button type="submit" class="btn btn-sm btn-primary" style="font-weight:800; padding:4px 12px; font-size:11.5px; border-radius:6px;">
+                {{ 'تطبيق' if lang=='ar' else 'Appliquer' }}
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Filter Submit Button -->
+        <div style="display:flex; gap:8px;">
+          <button type="submit" class="btn btn-primary" style="font-weight:800; border-radius:10px; padding:8px 20px; font-size:13px; height:38px;">
+            🔍 <span>{{ 'تطبيق' if lang=='ar' else 'Filtrer' }}</span>
+          </button>
+          {% if search_q or selected_teacher_ids or req_month != current_month %}
+          <a href="{{ url_for('teacher_student_lists') }}" class="btn btn-light" style="font-weight:700; border-radius:10px; padding:8px 12px; height:38px; text-decoration:none;" title="{{ 'إعادة ضبط' if lang=='ar' else 'Réinitialiser' }}">
+            🔄
+          </a>
+          {% endif %}
+        </div>
+
+      </div>
+    </form>
+  </div>
+</div>
+
+{% for tdata in teacher_data %}
+{% set t = tdata.teacher %}
+<div class="card teacher-card" style="margin-bottom:24px; border:1.5px solid #cbd5e1; border-radius:14px; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,0.04);">
+  <!-- Teacher Header Banner -->
+  <div style="background:linear-gradient(135deg, #0B3D6E 0%, #1F6FEB 100%); padding:16px 20px; color:#ffffff;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="background:rgba(255,255,255,0.2); width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800;">
+          👨‍🏫
+        </div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 style="margin:0; font-size:18px; font-weight:800; color:#ffffff;">Prof. {{ t.full_name }}</h3>
+            <span style="background:rgba(255,255,255,0.22); color:#ffffff; border:1px solid rgba(255,255,255,0.4); font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px; text-transform:uppercase;">
+              {{ t.primary_matiere }}
+            </span>
+          </div>
+          <div style="font-size:12px; opacity:0.95; margin-top:2px;">
+            <span>{{ 'المادة / التخصص' if lang=='ar' else 'Matière / Spécialité' }}: <strong>{{ t.specialty or t.primary_matiere }}</strong></span> · 
+            <span>{{ 'نسبة الأجر' if lang=='ar' else 'Part' }}: <strong>{{ tdata.effective_rate if tdata.effective_rate else (t.salary_amount|int ~ '%') }}</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Metrics Badges & Individual Print -->
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <div style="background:rgba(255,255,255,0.15); padding:6px 14px; border-radius:10px; text-align:center;">
+          <div style="font-size:10px; text-transform:uppercase; opacity:0.85;">👥 {{ 'التلاميذ' if lang=='ar' else 'Élèves' }}</div>
+          <div style="font-size:15px; font-weight:800;">{{ tdata.total_students }}</div>
+        </div>
+
+        {% if cur_user and cur_user.role == 'admin' %}
+        <div style="background:rgba(255,255,255,0.15); padding:6px 14px; border-radius:10px; text-align:center;">
+          <div style="font-size:10px; text-transform:uppercase; opacity:0.85;">💵 {{ 'مداخيل الدروس' if lang=='ar' else 'Recette Cours' }}</div>
+          <div style="font-size:15px; font-weight:800;">{{ "%.2f"|format(tdata.total_tuition) }} DH</div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.15); padding:6px 14px; border-radius:10px; text-align:center;">
+          <div style="font-size:10px; text-transform:uppercase; opacity:0.85;">📊 {{ 'مستحق خام' if lang=='ar' else 'Brut Dû' }}</div>
+          <div style="font-size:15px; font-weight:800;">{{ "%.2f"|format(tdata.total_payout) }} DH</div>
+        </div>
+
+        {% if tdata.total_advances and tdata.total_advances > 0 %}
+        <div style="background:#dc2626; color:#ffffff; padding:6px 14px; border-radius:10px; text-align:center;" title="{{ 'تسبيق ممنوح خلال هذا الشهر' if lang=='ar' else 'Avances perçues ce mois' }}">
+          <div style="font-size:10px; text-transform:uppercase; font-weight:800;">💸 {{ 'تسبيق' if lang=='ar' else 'Avance' }}</div>
+          <div style="font-size:15px; font-weight:800;">-{{ "%.2f"|format(tdata.total_advances) }} DH</div>
+        </div>
+        {% endif %}
+
+        {% if tdata.total_expenses and tdata.total_expenses > 0 %}
+        <div style="background:#0284c7; color:#ffffff; padding:6px 14px; border-radius:10px; text-align:center;" title="{{ 'مصاريف ونسخ مسترجعة' if lang=='ar' else 'Frais & copies déduits' }}">
+          <div style="font-size:10px; text-transform:uppercase; font-weight:800;">🖨️ {{ 'نسخ ومصاريف' if lang=='ar' else 'Frais & Copies' }}</div>
+          <div style="font-size:15px; font-weight:800;">-{{ "%.2f"|format(tdata.total_expenses) }} DH</div>
+        </div>
+        {% endif %}
+
+        {% if tdata.prior_credit_deducted and tdata.prior_credit_deducted > 0 %}
+        <div style="background:#7c3aed; color:#ffffff; padding:6px 14px; border-radius:10px; text-align:center;" title="{{ tdata.prior_credit_reason }}">
+          <div style="font-size:10px; text-transform:uppercase; font-weight:800;">⏳ {{ 'اقتطاع مالي سابق' if lang=='ar' else 'Report Déduit' }}</div>
+          <div style="font-size:15px; font-weight:800;">-{{ "%.2f"|format(tdata.prior_credit_deducted) }} DH</div>
+        </div>
+        {% endif %}
+
+        {% if tdata.is_paid %}
+        <div style="background:#059669; color:#ffffff; padding:6px 16px; border-radius:10px; text-align:center; box-shadow:0 3px 10px rgba(5,150,105,0.35);">
+          <div style="font-size:10px; text-transform:uppercase; font-weight:800;">✅ {{ 'تم أداء الراتب' if lang=='ar' else 'Salaire Réglé' }}</div>
+          <div style="font-size:16px; font-weight:900;">{{ "%.2f"|format(tdata.salary_payout.net_amount) }} DH</div>
+          <div style="font-size:9.5px; opacity:0.9; font-weight:700;">{{ tdata.salary_payout.receipt_no }} ({{ tdata.salary_payout.payment_date.strftime('%d/%m') }})</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.2); color:#ffffff; padding:6px 12px; border-radius:10px; text-align:center;">
+          <div style="font-size:10px; text-transform:uppercase; opacity:0.85;">{{ 'المتبقي' if lang=='ar' else 'Reste à payer' }}</div>
+          <div style="font-size:14px; font-weight:800;">{{ "%.2f"|format(tdata.reste_a_payer) }} DH</div>
+        </div>
+        {% if tdata.salary_payout %}
+        <a href="{{ url_for('teacher_salary_receipt', pid=tdata.salary_payout.id) }}" target="_blank" class="btn btn-sm" style="background:#10b981; color:#fff; font-weight:800; border-radius:10px; padding:8px 12px; text-decoration:none;" title="{{ 'وصل أداء الراتب' if lang=='ar' else 'Reçu de paiement' }}">
+          🧾 {{ 'وصل' if lang=='ar' else 'Reçu' }}
+        </a>
+        {% endif %}
+        {% else %}
+        {% if tdata.credit_carryover and tdata.credit_carryover > 0 %}
+        <div style="background:#dc2626; color:#ffffff; padding:6px 16px; border-radius:10px; text-align:center; box-shadow:0 3px 10px rgba(220,38,38,0.35);">
+          <div style="font-size:10px; text-transform:uppercase; font-weight:800;">⚠️ {{ 'الصافي للأداء' if lang=='ar' else 'Net à Payer' }}</div>
+          <div style="font-size:16px; font-weight:900;">0.00 DH</div>
+        </div>
+        <div style="background:#ea580c; color:#ffffff; padding:6px 14px; border-radius:10px; text-align:center;" title="{{ 'رصيد زائد سيتم اقتطاعه من الشهر الموالي' if lang=='ar' else 'Crédit excédentaire reporté sur le mois prochain' }}">
+          <div style="font-size:10px; text-transform:uppercase; font-weight:800;">🔄 {{ 'رصيد دائن للأستاذ' if lang=='ar' else 'Crédit Prof' }}</div>
+          <div style="font-size:15px; font-weight:800;">-{{ "%.2f"|format(tdata.credit_carryover) }} DH</div>
+        </div>
+        {% else %}
+        <div style="background:#10b981; color:#ffffff; padding:6px 16px; border-radius:10px; text-align:center; box-shadow:0 3px 10px rgba(16,185,129,0.35);">
+          <div style="font-size:10px; text-transform:uppercase; font-weight:800;">💰 {{ 'الصافي للأداء' if lang=='ar' else 'Net à Payer' }}</div>
+          <div style="font-size:16px; font-weight:900;">{{ "%.2f"|format(tdata.net_payout) }} DH</div>
+        </div>
+        {% endif %}
+        {% endif %}
+        {% else %}
+        <!-- Non-admin view -->
+        <div style="background:#10b981; color:#ffffff; padding:6px 16px; border-radius:10px; text-align:center; box-shadow:0 3px 10px rgba(16,185,129,0.3);">
+          <div style="font-size:10px; text-transform:uppercase; font-weight:800;">💰 {{ 'مستحقات الأستاذ' if lang=='ar' else 'Salaire Prof Exact' }}</div>
+          <div style="font-size:16px; font-weight:800;">{{ "%.2f"|format(tdata.net_payout) }} DH</div>
+        </div>
+        {% endif %}
+
+        <a href="{{ url_for('teacher_student_lists_print', teacher_ids=t.id, month=req_month, format='a4_landscape') }}" target="_blank" class="btn btn-sm" style="background:rgba(255,255,255,0.25); color:#fff; font-weight:800; border-radius:10px; padding:8px 12px; text-decoration:none;">
+          🖨️ {{ 'طباعة' if lang=='ar' else 'Imprimer' }}
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-body" style="padding:16px;">
+    {% for cdata in tdata.courses %}
+    {% set c = cdata.course %}
+    <div class="course-block" style="margin-bottom:20px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden;">
+      <!-- Course Group Header -->
+      <div style="padding:10px 16px; background:#edf2f7; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div style="font-weight:800; font-size:14px; color:#1e293b; display:flex; align-items:center; gap:8px;">
+          <span>📚</span>
+          <span>{{ c.display_name }}</span>
+          <span style="font-size:11px; font-weight:800; background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; padding:1px 7px; border-radius:4px;">
+            {{ c.matiere }}
+          </span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="chip chip-blue" style="font-weight:800; font-size:11px;">
+            👥 {{ cdata.count }} {{ 'تلميذ' if lang=='ar' else 'Élève(s)' }}
+          </span>
+          {% if cur_user and cur_user.role == 'admin' %}
+          <span class="chip chip-gray" style="font-weight:800; font-size:11px;">
+            💵 {{ 'مداخيل الفوج' if lang=='ar' else 'Recette' }}: {{ "%.2f"|format(cdata.grp_tuition) }} DH
+          </span>
+          <span class="chip chip-green" style="font-weight:800; font-size:11px;">
+            💰 {% if cdata.comp_type == 'percentage' %}{{ 'مستحق الأستاذ' if lang=='ar' else 'Part Prof' }} ({{ cdata.comp_val|int }}%){% elif cdata.comp_type == 'per_student' %}{{ 'مستحق الأستاذ' if lang=='ar' else 'Part Prof' }} ({{ cdata.comp_val|int }} DH/él){% elif cdata.comp_type == 'fixed' %}{{ 'مستحق الأستاذ' if lang=='ar' else 'Part Prof' }} (Fixe {{ cdata.comp_val|int }} DH){% elif cdata.comp_type == 'hourly' %}{{ 'مستحق الأستاذ' if lang=='ar' else 'Part Prof' }} ({{ cdata.comp_val|int }} DH/h){% endif %}: {{ "%.2f"|format(cdata.grp_payout) }} DH
+          </span>
+          <a href="{{ url_for('teacher_class_lists_print', teacher_id=t.id, course_id=c.id, format='a4_landscape') }}" target="_blank" class="btn btn-xs" style="background:#10b981; color:#fff; font-weight:800; padding:3px 8px; border-radius:6px; text-decoration:none;" title="Imprimer la feuille d'appel sans prix pour ce cours">🖨️ {{ 'ورقة حضور (بدون أسعار)' if lang=='ar' else 'Appel (Sans prix)' }}</a>
+          </span>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if cdata.enrollments %}
+      <div style="overflow-x:auto;">
+        <table class="table" style="margin:0; font-size:12.5px; width:100%;">
+          <thead>
+            <tr style="background:#ffffff; text-align:center;">
+              <th style="width:50px;">#</th>
+              <th style="text-align:left;">{{ 'كود التلميذ' if lang=='ar' else 'Code Élève' }}</th>
+              <th style="text-align:left;">{{ 'اسم ونسب التلميذ' if lang=='ar' else 'Nom & Prénom' }}</th>
+              <th style="text-align:center;">{{ 'الهاتف' if lang=='ar' else 'Téléphone' }}</th>
+              <th style="text-align:center;">{{ 'تاريخ التسجيل' if lang=='ar' else 'Inscrit Le' }}</th>
+              <th style="text-align:center;">{{ 'الدورة الحالية' if lang=='ar' else 'Cycle' }}</th>
+              <th style="text-align:center;">{{ 'تاريخ الأداء القادم' if lang=='ar' else 'Prochain Paiement' }}</th>
+              <th style="text-align:center;">{{ 'واجب الفوج (DH)' if lang=='ar' else 'Tarif (DH)' }}</th>
+              <th style="text-align:center;">{{ 'مداخيل الشهر (DH)' if lang=='ar' else 'Recette Mois' }}</th>
+              {% if cur_user and cur_user.role == 'admin' %}
+              <th style="text-align:center; color:#15803d;">{{ 'مستحق الأستاذ' if lang=='ar' else 'Part Prof' }} ({{ cdata.comp_val|int }}%)</th>
+              <th style="text-align:center; color:#0369a1;">{{ 'حصة المعهد' if lang=='ar' else 'Part Institut' }}</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for en in cdata.enrollments %}
+            {% set st = en.student %}
+            <tr class="student-row" data-search="{{ (st.code or '')|lower }} {{ (st.full_name or '')|lower }} {{ (st.phone or '')|lower }} {{ (st.parent_phone or '')|lower }}" style="text-align:center;">
+              <td style="font-weight:700; color:#64748b;">{{ loop.index }}</td>
+              <td style="text-align:left; font-weight:800; color:#1f6feb;">
+                <a href="{{ url_for('student_view', sid=st.id) }}" style="text-decoration:none; color:#1f6feb;">{{ st.code }}</a>
+              </td>
+              <td style="text-align:left; font-weight:800; color:#0f172a;">
+                <a href="{{ url_for('student_view', sid=st.id) }}" style="text-decoration:none; color:#0f172a;">{{ st.full_name }}</a>
+                {% if en.is_cas_particulier or (en.unit_monthly_price is not none and en.unit_monthly_price <= 1.01) or (en.monthly_price is not none and en.monthly_price <= 1.01) or (en.calculated_price is not none and en.calculated_price <= 1.01) %}
+                  <span class="chip" style="background:#f3e8ff; color:#7e22ce; border:1px solid #d8b4fe; font-size:10px; font-weight:800; padding:1px 6px; margin-left:4px;" title="Cas particulier (Tarif spécial / Exonéré)">⭐ Cas Particulier</span>
+                {% endif %}
+                {% if en.status == 'transferred' %}
+                  <span class="chip" style="background:#e0f2fe; color:#0369a1; font-size:10px; font-weight:800; padding:1px 5px; margin-left:4px;" title="{{ en.notes }}">🔀 Transféré(e)</span>
+                {% elif en.notes and 'Transféré depuis' in en.notes %}
+                  <span class="chip" style="background:#f0fdf4; color:#166534; font-size:10px; font-weight:800; padding:1px 5px; margin-left:4px;" title="{{ en.notes }}">🔀 Arrivé(e)</span>
+                {% elif en.status == 'paused' or en.is_reported_absence %}
+                  <span class="chip" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:10px; font-weight:800; padding:1px 5px; margin-left:4px;" title="{{ en.notes }}">⏸️ En pause (Reporté)</span>
+                {% endif %}
+                {% if en.is_late_payment %}
+                  <span class="chip" style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-size:10px; font-weight:800; padding:1px 6px; margin-left:4px;" title="Paiement en retard / Rattrapage reliquat">⚠️ Paiement retard ({{ en.late_payment_detail }})</span>
+                {% endif %}
+              </td>
+              <td style="text-align:center; font-weight:700; color:#475569;">{{ st.phone or '—' }}</td>
+              <td style="text-align:center; color:#64748b;">{{ en.enroll_date.strftime('%d/%m/%Y') if en.enroll_date else '—' }}</td>
+              <td style="text-align:center;">
+                {% if en.id < 102 %}
+                  {% set mc = 3 if en.total_sessions_month == 12 else 1 %}
+                {% else %}
+                  {% set mc = en.duration_months or 1 %}
+                {% endif %}
+                <span class="chip {{ 'chip-green' if mc > 1 else 'chip-gray' }}" style="font-size:10.5px; font-weight:800;">
+                  {{ mc }} {{ 'أشهر' if mc > 2 else ('شهران' if mc == 2 else 'شهر') }}
+                </span>
+              </td>
+              <td style="text-align:center; font-weight:800; color:{{ '#10b981' if (en.days_remaining is not none and en.days_remaining > 5 and (en.total_paid or 0) > 0) else ('#6d28d9' if en.is_pack else '#ef4444') }};">
+                {% if en.is_pack %}
+                  <span class="chip" style="background:#ede9fe; color:#6d28d9; border:1px solid #ddd6fe; font-size:10.5px; font-weight:800; padding:2px 7px;">
+                    📦 {{ en.remaining_sessions }} {{ 'حصص باقية' if lang=='ar' else 'séance(s)' }}
+                  </span>
+                {% elif (en.total_paid or 0) <= 0 and (en.balance or 0) > 0 %}
+                  <span class="chip" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; font-size:10.5px; font-weight:800; padding:2px 7px;">
+                    🔴 {{ 'غير مؤدى' if lang=='ar' else 'Non payé' }}
+                  </span>
+                  <div style="font-size:10px; color:#ef4444; font-weight:700; margin-top:2px;">
+                    {{ en.enroll_date.strftime('%d/%m/%Y') if en.enroll_date else '—' }}
+                  </div>
+                {% else %}
+                  📅 {{ en.end_date.strftime('%d/%m/%Y') if en.end_date else '—' }}
+                {% endif %}
+              </td>
+              <td style="text-align:center; font-weight:700; color:#475569;">
+                {% if en.is_cas_particulier or (en.unit_monthly_price is not none and en.unit_monthly_price <= 1.01) or (en.monthly_price is not none and en.monthly_price <= 1.01) %}
+                  <span style="color:#7e22ce; font-weight:800;">0 DH</span>
+                {% else %}
+                  {{ "%.0f"|format(en.unit_monthly_price or en.monthly_price or c.unit_monthly_price or c.price_per_month or 300.0) }} DH
+                {% endif %}
+              </td>
+              <td style="text-align:center; font-weight:800; color:#0f172a;">
+                {{ "%.2f"|format(en.month_rev or 0) }} DH
+              </td>
+              {% if cur_user and cur_user.role == 'admin' %}
+              <td style="text-align:center; font-weight:900; color:{{ '#b45309' if (en.status == 'paused' or en.is_reported_absence) else '#15803d' }}; background:{{ '#fffbeb' if (en.status == 'paused' or en.is_reported_absence) else 'rgba(34,197,94,0.04)' }};">
+                {{ "%.2f"|format(en.part_prof or 0) }} DH
+                {% if en.status == 'paused' or en.is_reported_absence %}
+                  <div style="font-size:9px; color:#b45309; font-weight:800; margin-top:1px;">Absent tout le mois (reporté)</div>
+                {% endif %}
+              </td>
+              <td style="text-align:center; font-weight:900; color:#0369a1; background:rgba(2,132,199,0.04);">
+                {{ "%.2f"|format(en.part_inst or 0) }} DH
+                {% if en.status == 'paused' or en.is_reported_absence %}
+                  <div style="font-size:9px; color:#0369a1; font-weight:800; margin-top:1px;">Solde Avoir Élève</div>
+                {% endif %}
+              </td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+          {% if cur_user and cur_user.role == 'admin' %}
+          <tfoot>
+            <tr style="background:#f1f5f9; font-weight:900; font-size:12.5px; border-top:2px solid #cbd5e1;">
+              <td colspan="8" style="text-align:right; padding:10px 14px; color:#0B3D6E;">
+                {{ 'مجموع الفوج :' if lang=='ar' else 'TOTAL DU GROUPE :' }}
+              </td>
+              <td style="text-align:center; padding:10px 8px; color:#0f172a; font-size:13px;">
+                {{ "%.2f"|format(cdata.grp_tuition) }} DH
+              </td>
+              <td style="text-align:center; padding:10px 8px; color:#15803d; font-size:13px; background:rgba(34,197,94,0.08);">
+                {{ "%.2f"|format(cdata.grp_payout) }} DH
+              </td>
+              <td style="text-align:center; padding:10px 8px; color:#0369a1; font-size:13px; background:rgba(2,132,199,0.08);">
+                {{ "%.2f"|format(cdata.grp_net) }} DH
+              </td>
+            </tr>
+          </tfoot>
+          {% endif %}
+        </table>
+      </div>
+      {% else %}
+      <div style="padding:16px; text-align:center; color:#94a3b8; font-size:12.5px;">
+        {{ 'لا يوجد تلاميذ مسجلون في هذا الفوج حالياً' if lang=='ar' else 'Aucun élève inscrit dans ce groupe pour le moment.' }}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="card" style="padding:32px; text-align:center; color:#64748b; border-radius:14px;">
+  <div style="font-size:36px; margin-bottom:8px;">🔍</div>
+  <div style="font-weight:800; font-size:15px; color:#1e293b;">{{ 'لم يتم العثور على أي قوائم مطابقة للبحث' if lang=='ar' else 'Aucune liste d\'élèves trouvée pour votre recherche.' }}</div>
+</div>
+{% endfor %}
+
+<style>
+.list-teacher-row:hover {
+  background: #f1f5f9;
+}
+</style>
+
+<script>
+function toggleListTeacherDropdown() {
+  const popover = document.getElementById('listTeacherDropdownPopover');
+  if (popover.style.display === 'none' || !popover.style.display) {
+    popover.style.display = 'block';
+    document.getElementById('listTeacherSearchInput').focus();
+  } else {
+    popover.style.display = 'none';
+  }
+}
+
+function filterListTeacherRows() {
+  const q = document.getElementById('listTeacherSearchInput').value.toLowerCase().trim();
+  const rows = document.querySelectorAll('.list-teacher-row');
+  rows.forEach(r => {
+    const text = r.getAttribute('data-name') || '';
+    r.style.display = text.includes(q) ? 'flex' : 'none';
+  });
+}
+
+function setAllListTeachersChecked(checked) {
+  const checkboxes = document.querySelectorAll('.list-teacher-checkbox');
+  checkboxes.forEach(cb => cb.checked = checked);
+  updateListTeacherTriggerLabel();
+}
+
+function updateListTeacherTriggerLabel() {
+  const checkboxes = document.querySelectorAll('.list-teacher-checkbox');
+  const total = checkboxes.length;
+  const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
+  const label = document.getElementById('listTeacherTriggerLabel');
+  const footer = document.getElementById('listSelectedCountFooter');
+  
+  if (footer) {
+    footer.innerText = `${checked} / ${total} sélectionnés`;
+  }
+
+  if (checked === total || checked === 0) {
+    label.innerText = `Tous les enseignants (${total})`;
+  } else if (checked === 1) {
+    const singleChecked = Array.from(checkboxes).find(cb => cb.checked);
+    const parentRow = singleChecked.closest('.list-teacher-row');
+    const name = parentRow ? parentRow.querySelector('div').innerText : '1 enseignant';
+    label.innerText = name;
+  } else {
+    label.innerText = `${checked} enseignants sélectionnés`;
+  }
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', function(e) {
+  const container = document.getElementById('listTeacherDropdownContainer');
+  const popover = document.getElementById('listTeacherDropdownPopover');
+  if (container && popover && !container.contains(e.target)) {
+    popover.style.display = 'none';
+  }
+});
+
+// Instant client-side live search (Zero latency filter while typing)
+const studentSearchInput = document.getElementById('studentSearchInput');
+if (studentSearchInput) {
+  let searchDebounceTimer = null;
+  studentSearchInput.addEventListener('input', function() {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      const q = (studentSearchInput.value || '').toLowerCase().trim();
+      const tokens = q ? q.split(/\s+/).filter(Boolean) : [];
+      const teacherCards = document.querySelectorAll('.teacher-card');
+
+      teacherCards.forEach(card => {
+        let cardHasMatch = false;
+        const courseBlocks = card.querySelectorAll('.course-block');
+        
+        courseBlocks.forEach(cBlock => {
+          let courseHasMatch = false;
+          const rows = cBlock.querySelectorAll('.student-row');
+          
+          rows.forEach(row => {
+            if (!tokens.length) {
+              row.style.display = '';
+              courseHasMatch = true;
+              return;
+            }
+            const hay = (row.getAttribute('data-search') || '');
+            const match = tokens.every(tok => hay.includes(tok));
+            if (match) {
+              row.style.display = '';
+              courseHasMatch = true;
+            } else {
+              row.style.display = 'none';
+            }
+          });
+
+          cBlock.style.display = courseHasMatch ? '' : 'none';
+          if (courseHasMatch) cardHasMatch = true;
+        });
+
+        card.style.display = cardHasMatch ? '' : 'none';
+      });
+    }, 100);
+  });
+}
+</script>
+
+{% endblock %}

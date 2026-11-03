@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- BREADCRUMB & HEADER -->
+<div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('books') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ t('books') }}</a></div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+      <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800;">
+        🛒 Vente Directe de Manuels (بيع المقررات والكتب)
+      </h2>
+      <span class="chip chip-green" style="font-size:11px; font-weight:800;">COMPTOIR POS</span>
+    </div>
+    <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">Vente immédiate de manuels scolaires avec décrémentation automatique du stock et impression du reçu de caisse</p>
+  </div>
+  <a class="btn btn-outline" href="{{ url_for('book_sales') }}">📋 Journal des Ventes</a>
+</div>
+
+<form method="post" id="saleBookForm">
+  <div style="display:grid; grid-template-columns: 1.4fr 1fr; gap:18px; align-items:start;">
+    
+    <!-- LEFT CONFIGURATION COLUMN -->
+    <div>
+      <!-- 1. Manuel & Stock -->
+      <div class="card card-pad mb-3" style="padding:18px 20px; border-top:4px solid #1f6feb;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+          <div style="width:26px; height:26px; border-radius:6px; background:#dbeafe; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:13px; font-weight:800;">1</div>
+          <h3 style="margin:0; font-size:15px; color:#0B3D6E; font-weight:800;">Sélection du Manuel & Quantité</h3>
+        </div>
+
+        <div class="field mb-3">
+          <label style="font-size:12px; font-weight:700;">Manuel scolaire à vendre <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📖</span>
+            <select name="book_id" id="selBook" required onchange="updateSaleBookDetails()" style="font-size:13.5px; font-weight:700; color:#0B3D6E;">
+              <option value="">-- Sélectionner un manuel dans le stock --</option>
+              {% for b in books %}
+              <option value="{{ b.id }}" data-title="{{ b.title }}" data-price="{{ b.sale_price }}" data-stock="{{ b.stock_quantity }}" {{ 'disabled' if b.stock_quantity <= 0 }} {{ 'selected' if pre_book_id == b.id else '' }}>
+                {{ b.title }} ({{ b.publisher or 'Éditeur' }}) — {{ '%.0f'|format(b.sale_price) }} {{ settings.currency }} [Stock : {{ b.stock_quantity }}]
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="field">
+            <label style="font-size:12px; font-weight:700;">Quantité (Exemplaires) <span class="req">*</span></label>
+            <div class="input-field has-ico">
+              <span class="f-ico">🔢</span>
+              <input type="number" name="quantity" id="inpQty" value="1" min="1" required style="font-size:16px; font-weight:800; text-align:center;" oninput="calcTotal()">
+            </div>
+            <div id="stockNotice" style="font-size:11px; color:#64748b; margin-top:3px;"></div>
+          </div>
+
+          <div class="field">
+            <label style="font-size:12px; font-weight:700;">Prix Unitaire ({{ settings.currency }}) <span class="req">*</span></label>
+            <div class="input-field has-ico">
+              <span class="f-ico">🏷️</span>
+              <input type="number" step="0.01" name="unit_price" id="inpUnitPrice" value="0.00" required style="font-size:15px; font-weight:700; text-align:center; color:#047857;" oninput="calcTotal()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Élève & Modalités -->
+      <div class="card card-pad mb-3" style="padding:18px 20px; border-top:4px solid #8b5cf6;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+          <div style="width:26px; height:26px; border-radius:6px; background:#f3e8ff; display:flex; align-items:center; justify-content:center; color:#7c3aed; font-size:13px; font-weight:800;">2</div>
+          <h3 style="margin:0; font-size:15px; color:#0B3D6E; font-weight:800;">Bénéficiaire & Encaissement</h3>
+        </div>
+
+        <div class="field mb-3">
+          <label style="font-size:12px; font-weight:700;">Élève bénéficiaire (Facultatif ou sélectionner dans la liste)</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">👤</span>
+            <select name="student_id" id="selStudent" onchange="updateReceiptStudent()">
+              <option value="" data-name="Comptoir Libre">-- Vente comptoir libre (Sans fiche élève) --</option>
+              {% for s in students %}
+              <option value="{{ s.id }}" data-name="{{ s.full_name }}" {{ 'selected' if pre_student_id == s.id else '' }}>
+                {{ s.full_name }} ({{ s.code or 'Code' }}) — {{ s.school_level or '' }} ({{ s.phone or '' }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="field">
+            <label style="font-size:12px; font-weight:700;">Mode de règlement</label>
+            <div class="input-field has-ico">
+              <span class="f-ico">💳</span>
+              <select name="payment_method">
+                <option value="cash">💵 Espèces (Cash)</option>
+                <option value="transfer">🏦 Virement bancaire</option>
+                <option value="card">💳 Carte bancaire</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label style="font-size:12px; font-weight:700;">Date de la vente</label>
+            <div class="input-field has-ico">
+              <span class="f-ico">📅</span>
+              <input type="date" name="sale_date" value="{{ today }}" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="field mt-2">
+          <label style="font-size:12px; font-weight:700;">Remarques / Observation</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📝</span>
+            <input type="text" name="notes" placeholder="Remarque éventuelle...">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT STICKY TICKET COLUMN -->
+    <div style="position:sticky; top:18px;">
+      <div class="card card-pad" style="padding:22px; border-top:5px solid #10b981; background:#ffffff; box-shadow:0 8px 24px rgba(0,0,0,0.06);">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1.5px dashed #e2e8f0; padding-bottom:12px; margin-bottom:14px;">
+          <div>
+            <div style="font-weight:800; font-size:15px; color:#0B3D6E;">🧾 REÇU DE CAISSE</div>
+            <div style="font-size:11px; color:#64748b;">Institut ILAS · Manuels</div>
+          </div>
+          <span class="chip chip-green" style="font-size:10.5px; font-weight:800;">ENCAISSEMENT DIRECT</span>
+        </div>
+
+        <div style="font-size:12.5px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span style="color:#64748b;">Client / Élève :</span>
+            <strong id="receiptStudentName" style="color:#1e293b;">Comptoir Libre</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span style="color:#64748b;">Article :</span>
+            <strong id="receiptBookTitle" style="color:#0B3D6E; max-width:180px; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">—</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span style="color:#64748b;">Quantité :</span>
+            <strong id="receiptQty" style="color:#1e293b;">x1</strong>
+          </div>
+        </div>
+
+        <div style="background:#f8fafc; border-radius:10px; padding:14px; margin-bottom:16px; border:1px solid #e2e8f0; text-align:center;">
+          <div style="font-size:11px; font-weight:800; text-transform:uppercase; color:#64748b; letter-spacing:0.5px;">MONTANT TOTAL À PAYER :</div>
+          <div id="totalAmountShow" style="font-size:26px; font-weight:800; color:#047857; margin-top:2px;">
+            0.00 {{ settings.currency }}
+          </div>
+          <div style="font-size:11px; color:#059669; font-weight:700; margin-top:2px;">
+            ✓ Décrémentation automatique du stock
+          </div>
+        </div>
+
+        <button class="btn btn-primary" type="submit" style="width:100%; font-size:15px; font-weight:800; padding:12px; background:#10b981; border-color:#10b981; box-shadow:0 4px 14px rgba(16,185,129,0.35);">
+          🛒 Valider & Imprimer Reçu
+        </button>
+        <a class="btn btn-outline" href="{{ url_for('books') }}" style="width:100%; text-align:center; margin-top:8px; padding:8px; font-weight:700; font-size:12.5px;">
+          Annuler
+        </a>
+      </div>
+    </div>
+
+  </div>
+</form>
+
+<script>
+  function updateSaleBookDetails() {
+    var sel = document.getElementById('selBook');
+    var opt = sel.options[sel.selectedIndex];
+    if (opt && opt.value) {
+      var price = parseFloat(opt.dataset.price) || 0;
+      var stock = parseInt(opt.dataset.stock) || 0;
+      var title = opt.dataset.title || opt.innerText;
+      document.getElementById('inpUnitPrice').value = price.toFixed(2);
+      document.getElementById('inpQty').max = stock;
+      document.getElementById('stockNotice').innerHTML = "Disponibilité : <strong style='color:#047857;'>" + stock + " exemplaires</strong> en stock";
+      document.getElementById('receiptBookTitle').innerText = title;
+    } else {
+      document.getElementById('inpUnitPrice').value = "0.00";
+      document.getElementById('stockNotice').innerHTML = "";
+      document.getElementById('receiptBookTitle').innerText = "—";
+    }
+    calcTotal();
+  }
+
+  function updateReceiptStudent() {
+    var sel = document.getElementById('selStudent');
+    var opt = sel.options[sel.selectedIndex];
+    document.getElementById('receiptStudentName').innerText = opt ? (opt.dataset.name || 'Comptoir Libre') : 'Comptoir Libre';
+  }
+
+  function calcTotal() {
+    var qty = parseInt(document.getElementById('inpQty').value) || 1;
+    var unitPrice = parseFloat(document.getElementById('inpUnitPrice').value) || 0;
+    var total = qty * unitPrice;
+    document.getElementById('totalAmountShow').textContent = total.toFixed(2) + " {{ settings.currency }}";
+    document.getElementById('receiptQty').textContent = "x" + qty;
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    updateSaleBookDetails();
+    updateReceiptStudent();
+  });
+</script>
+
+{% endblock %}

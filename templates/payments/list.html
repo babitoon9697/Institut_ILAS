@@ -1,0 +1,1564 @@
+{% extends 'base.html' %}
+{% set title = settings.inst_name ~ ' — ' ~ ('سجل المقبوضات والوصولات' if lang=='ar' else 'Journal des Paiements & Reçus') %}
+{% block content %}
+
+<!-- PAYMENTS LEDGER CUSTOM MODERN STYLES -->
+<style>
+  .payments-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  /* -------------------------------------------------------------
+     TOP HEADER BANNER
+     ------------------------------------------------------------- */
+  .payments-header {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 18px 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .header-breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  .breadcrumb-link {
+    color: #1f6feb;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.15s;
+  }
+  .breadcrumb-link:hover {
+    color: #0B3D6E;
+  }
+  .breadcrumb-separator {
+    color: #94a3b8;
+    font-size: 11px;
+  }
+  .breadcrumb-current {
+    color: #64748b;
+    font-weight: 600;
+  }
+  .header-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .header-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 900;
+    color: #0B3D6E;
+    letter-spacing: -0.3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .header-count-badge {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    font-size: 11.5px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .header-subtitle {
+    margin: 4px 0 0 0;
+    font-size: 12.5px;
+    color: #64748b;
+    line-height: 1.4;
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .btn-header-primary {
+    background: #059669;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 10px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: none;
+    box-shadow: 0 3px 10px rgba(5, 150, 105, 0.25);
+    transition: all 0.2s ease;
+  }
+  .btn-header-primary:hover {
+    background: #047857;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+    transform: translateY(-1px);
+  }
+  .btn-header-secondary {
+    background: #ffffff;
+    color: #334155;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 15px;
+    border-radius: 10px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1.5px solid #cbd5e1;
+    transition: all 0.2s ease;
+  }
+  .btn-header-secondary:hover {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #94a3b8;
+  }
+
+  /* -------------------------------------------------------------
+     KPI FINANCIAL CARDS GRID
+     ------------------------------------------------------------- */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+  }
+  body.rtl .kpi-card::before {
+    left: auto;
+    right: 0;
+  }
+  .kpi-emerald::before { background: #059669; }
+  .kpi-blue::before { background: #2563eb; }
+  .kpi-amber::before { background: #d97706; }
+  .kpi-purple::before { background: #7c3aed; }
+
+  .kpi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .kpi-icon {
+    font-size: 18px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-emerald { background: #ecfdf5; color: #059669; }
+  .icon-blue { background: #eff6ff; color: #2563eb; }
+  .icon-amber { background: #fffbeb; color: #d97706; }
+  .icon-purple { background: #f5f3ff; color: #7c3aed; }
+
+  .kpi-value {
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 6px;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+  .text-emerald { color: #047857; }
+  .text-blue { color: #1d4ed8; }
+  .text-amber { color: #b45309; }
+  .text-purple { color: #6d28d9; }
+
+  .kpi-currency {
+    font-size: 13px;
+    font-weight: 700;
+    opacity: 0.85;
+  }
+  .kpi-sub {
+    font-size: 11.5px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* -------------------------------------------------------------
+     FILTERS TOOLBAR & MULTI-CONTROL PANEL
+     ------------------------------------------------------------- */
+  .filter-panel {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+  }
+
+  .status-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 13px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    color: #475569;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    transition: all 0.2s ease;
+  }
+  .status-pill:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #cbd5e1;
+  }
+  .status-pill.active {
+    background: #0B3D6E;
+    color: #ffffff;
+    border-color: #0B3D6E;
+    box-shadow: 0 3px 10px rgba(11, 61, 110, 0.25);
+  }
+
+  .filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+  .filter-input-wrap {
+    min-width: 170px;
+  }
+  .filter-input-wrap select,
+  .filter-input-wrap input {
+    width: 100%;
+    height: 38px;
+    border-radius: 10px;
+    border: 1.5px solid #cbd5e1;
+    padding: 7px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #0B3D6E;
+    background: #f8fafc;
+    box-sizing: border-box;
+    transition: all 0.2s;
+  }
+  .filter-input-wrap select:focus,
+  .filter-input-wrap input:focus {
+    background: #ffffff;
+    border-color: #0B3D6E;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(11, 61, 110, 0.12);
+  }
+
+  .search-box {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border-radius: 10px;
+    border: 1.5px solid #cbd5e1;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #f8fafc;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    height: 38px;
+  }
+  .search-box input:focus {
+    background: #ffffff;
+    border-color: #0B3D6E;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(11, 61, 110, 0.12);
+  }
+  .search-box .icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #94a3b8;
+    pointer-events: none;
+  }
+  body.rtl .search-box input {
+    padding: 8px 36px 8px 12px;
+  }
+  body.rtl .search-box .icon {
+    left: auto;
+    right: 11px;
+  }
+
+  .btn-filter-submit {
+    background: #0B3D6E;
+    color: #ffffff;
+    border: none;
+    font-weight: 800;
+    border-radius: 10px;
+    padding: 8px 18px;
+    font-size: 13px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(11, 61, 110, 0.2);
+    transition: all 0.15s;
+  }
+  .btn-filter-submit:hover {
+    background: #082d52;
+    transform: translateY(-1px);
+  }
+  .btn-filter-reset {
+    background: #f8fafc;
+    color: #475569;
+    border: 1.5px solid #cbd5e1;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 8px 12px;
+    height: 38px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .btn-filter-reset:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+  }
+
+  /* Active Filters Strip */
+  .active-filters-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    margin-top: 12px;
+    border-top: 1px dashed #e2e8f0;
+  }
+  .active-filters-label {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .active-filter-badge {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .clear-filters-link {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #dc2626;
+    text-decoration: none;
+    margin-left: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  body.rtl .clear-filters-link {
+    margin-left: 0;
+    margin-right: 4px;
+  }
+  .clear-filters-link:hover {
+    text-decoration: underline;
+  }
+
+  /* -------------------------------------------------------------
+     TABLE CARD & MODERN LEDGER
+     ------------------------------------------------------------- */
+  .table-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+    overflow: visible;
+  }
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 16px;
+  }
+  .modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+  }
+  body.rtl .modern-table {
+    text-align: right;
+  }
+  .modern-table th {
+    background: #f8fafc;
+    padding: 13px 14px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1.5px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  .modern-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    transition: background-color 0.15s ease;
+  }
+  .modern-table tr:hover td {
+    background-color: #f8fbff;
+  }
+  .modern-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Student Cell */
+  .student-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .student-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    color: #1d4ed8;
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #bfdbfe;
+  }
+  .wa-pill {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    transition: background 0.15s;
+  }
+  .wa-pill:hover {
+    background: #bbf7d0;
+  }
+
+  /* Course Badges Cluster (Smart Shortened) */
+  .course-badges-cluster {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+    max-width: 290px;
+  }
+  .course-pill-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #1e293b;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    white-space: nowrap;
+    line-height: 1.3;
+    transition: all 0.15s ease;
+  }
+  .course-pill-badge:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+  }
+  .course-pill-badge.pill-registration {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+  }
+  .cell-note-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+    margin-top: 4px;
+    background: #f8fafc;
+    padding: 2px 7px;
+    border-radius: 5px;
+    border: 1px dashed #e2e8f0;
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Actions Cluster & Modern Fixed Dropdown */
+  .actions-cell {
+    position: relative;
+    white-space: nowrap;
+    text-align: right;
+    width: 195px;
+    min-width: 195px;
+  }
+  body.rtl .actions-cell {
+    text-align: left;
+  }
+  .action-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    position: relative;
+  }
+  .btn-primary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 96px;
+    min-width: 96px;
+    max-width: 96px;
+    height: 33px;
+    padding: 0 8px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 800;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-sizing: border-box;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .btn-act-emerald {
+    background: #059669;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+  }
+  .btn-act-emerald:hover {
+    background: #047857;
+    color: #ffffff;
+    box-shadow: 0 3px 8px rgba(5, 150, 105, 0.35);
+  }
+  .btn-icon-action {
+    width: 33px;
+    min-width: 33px;
+    max-width: 33px;
+    height: 33px;
+    padding: 0;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+    flex-shrink: 0;
+  }
+  .btn-act-wa {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+  }
+  .btn-act-wa:hover {
+    background: #d1fae5;
+    border-color: #6ee7b7;
+  }
+  .btn-act-menu {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    font-size: 15px;
+  }
+  .btn-act-menu:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    border-color: #94a3b8;
+  }
+
+  /* Floating Dropdown */
+  .dropdown-menu-float {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 1050;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 10px 28px -4px rgba(15, 23, 42, 0.18), 0 4px 10px -2px rgba(15, 23, 42, 0.08);
+    min-width: 220px;
+    padding: 6px;
+    display: none;
+    text-align: left;
+  }
+  body.rtl .dropdown-menu-float {
+    right: auto;
+    left: 0;
+    text-align: right;
+  }
+  .dropdown-menu-float.show {
+    display: block;
+    animation: fadeInMenu 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes fadeInMenu {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .dropdown-item-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #334155;
+    text-decoration: none;
+    transition: background 0.15s;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    box-sizing: border-box;
+    text-align: inherit;
+  }
+  .dropdown-item-link:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+  .dropdown-item-link.text-danger {
+    color: #dc2626;
+  }
+  .dropdown-item-link.text-danger:hover {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+  .dropdown-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 4px 0;
+  }
+
+  /* -------------------------------------------------------------
+     MOBILE SAAS CARDS (PORTRAIT <= 768px)
+     ------------------------------------------------------------- */
+  .mobile-card-label {
+    display: none;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+
+  @media screen and (max-width: 768px) {
+    .payments-container {
+      padding: 0 4px;
+    }
+    .payments-header {
+      padding: 14px 16px;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .header-actions {
+      width: 100%;
+    }
+    .btn-header-primary, .btn-header-secondary {
+      flex: 1;
+      justify-content: center;
+    }
+    .kpi-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 10px !important;
+    }
+    .modern-table thead {
+      display: none !important;
+    }
+    .modern-table, .modern-table tbody {
+      display: block !important;
+      width: 100% !important;
+    }
+    .modern-table tr {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 10px !important;
+      background: #ffffff !important;
+      border: 1.5px solid #cbd5e1 !important;
+      border-radius: 18px !important;
+      padding: 15px !important;
+      margin-bottom: 14px !important;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05) !important;
+      position: relative !important;
+      box-sizing: border-box !important;
+    }
+    .modern-table td {
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      padding: 0 !important;
+      border: none !important;
+      background: transparent !important;
+      min-width: 0 !important;
+    }
+
+    /* 1. Header: Receipt & Date & Method */
+    .modern-table td.cell-receipt {
+      grid-column: 1 / -1 !important;
+      padding-bottom: 10px !important;
+      padding-right: 95px !important;
+      border-bottom: 1px solid #f1f5f9 !important;
+    }
+    body.rtl .modern-table td.cell-receipt {
+      padding-right: 0 !important;
+      padding-left: 95px !important;
+    }
+
+    /* 2. Top-Right Pinned Amount */
+    .modern-table td.cell-amount {
+      position: absolute !important;
+      top: 15px !important;
+      right: 15px !important;
+      text-align: right !important;
+      align-items: flex-end !important;
+      background: #ecfdf5 !important;
+      border: 1.5px solid #a7f3d0 !important;
+      border-radius: 12px !important;
+      padding: 6px 12px !important;
+      z-index: 2 !important;
+    }
+    body.rtl .modern-table td.cell-amount {
+      right: auto !important;
+      left: 15px !important;
+      text-align: left !important;
+      align-items: flex-start !important;
+    }
+
+    /* 3. Middle Boxes */
+    .modern-table td.cell-student,
+    .modern-table td.cell-desc {
+      background: #f8fafc !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 12px !important;
+      padding: 9px 11px !important;
+    }
+
+    /* 4. Agent / Registered by strip */
+    .modern-table td.cell-creator {
+      grid-column: 1 / -1 !important;
+      background: #f1f5f9 !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 10px !important;
+      padding: 6px 10px !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+    }
+
+    /* 5. Footer Actions */
+    .modern-table td.cell-actions {
+      grid-column: 1 / -1 !important;
+      border-top: 1.5px solid #f1f5f9 !important;
+      padding-top: 10px !important;
+      margin-top: 2px !important;
+      width: 100% !important;
+    }
+    .modern-table td.cell-actions .action-group {
+      width: 100% !important;
+      display: flex !important;
+      gap: 8px !important;
+      align-items: center !important;
+      position: relative !important;
+    }
+    .modern-table td.cell-actions .btn-primary-action {
+      flex: 1 1 auto !important;
+      width: auto !important;
+      height: 40px !important;
+      font-size: 13.5px !important;
+      font-weight: 800 !important;
+      justify-content: center !important;
+      border-radius: 10px !important;
+    }
+    .modern-table td.cell-actions .btn-icon-action {
+      width: 40px !important;
+      min-width: 40px !important;
+      max-width: 40px !important;
+      height: 40px !important;
+      border-radius: 10px !important;
+      font-size: 18px !important;
+      flex-shrink: 0 !important;
+    }
+
+    .mobile-card-label {
+      display: block !important;
+    }
+  }
+
+  @media screen and (max-width: 440px) {
+    .kpi-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .modern-table tr {
+      grid-template-columns: 1fr !important;
+    }
+    .modern-table td.cell-student,
+    .modern-table td.cell-desc {
+      grid-column: 1 / -1 !important;
+    }
+  }
+</style>
+
+<div class="payments-container">
+
+  <!-- TOP HEADER & ACTIONS BANNER -->
+  <div class="payments-header">
+    <div>
+      <div class="header-breadcrumbs">
+        <a href="{{ url_for('dashboard') }}" class="breadcrumb-link">
+          <span>←</span> <span>{{ t('dashboard') }}</span>
+        </a>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">{{ 'سجل المقبوضات' if lang=='ar' else 'Journal des Paiements' }}</span>
+      </div>
+      <div class="header-title-row">
+        <h1 class="header-title">
+          <span>💳</span>
+          <span>{{ 'سجل المقبوضات والوصولات' if lang=='ar' else 'Journal des Paiements & Reçus' }}</span>
+        </h1>
+        <span class="header-count-badge">
+          {{ payments|length }} {{ 'عملية' if lang=='ar' else 'règlement(s)' }}
+        </span>
+      </div>
+      <p class="header-subtitle">
+        {{ 'سجل المقبوضات اليومية، طباعة الوصولات الحرارية 80mm وإدارة النسخ المكررة والمراسلات' if lang=='ar' else 'Historique chronologique des encaissements, réimpression des tickets thermiques 80mm et gestion des duplicatas.' }}
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <a class="btn-header-primary" href="{{ url_for('payment_new') }}">
+        <span>💵</span> <span>{{ '+ تسجيل استخلاص' if lang=='ar' else '+ Encaisser un Paiement' }}</span>
+      </a>
+      <a class="btn-header-secondary" href="{{ url_for('express_enrollment') }}">
+        <span>⚡</span> <span>{{ 'تسجيل سريع' if lang=='ar' else 'Inscription Express' }}</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- FINANCIAL KPIS (4 Modern SaaS Cards) -->
+  <div class="kpi-grid">
+    <!-- 1. Total Encaissé -->
+    <div class="kpi-card kpi-emerald">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'مجموع المقبوضات' if lang=='ar' else 'Total Encaissé' }}</span>
+        <div class="kpi-icon icon-emerald">💰</div>
+      </div>
+      <div class="kpi-value text-emerald">
+        {{ '%.2f'|format(total_collected_sum) }} <span class="kpi-currency">{{ settings.currency }}</span>
+      </div>
+      <div class="kpi-sub text-emerald">
+        <span>✓</span> <span>{{ payments|length }} {{ 'وصل مسلم' if lang=='ar' else 'reçus sur la période' }}</span>
+      </div>
+    </div>
+
+    <!-- 2. Recettes du Jour -->
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'مداخيل اليوم' if lang=='ar' else 'Recettes du Jour' }}</span>
+        <div class="kpi-icon icon-blue">📆</div>
+      </div>
+      <div class="kpi-value text-blue">
+        {{ '%.2f'|format(today_collected_sum) }} <span class="kpi-currency">{{ settings.currency }}</span>
+      </div>
+      <div class="kpi-sub text-blue">
+        <span>⚡</span> <span>{{ 'Encaissés aujourd\'hui' if lang=='fr' else 'المداخيل المحصلة اليوم' }}</span>
+      </div>
+    </div>
+
+    <!-- 3. Espèces (Cash en Caisse) -->
+    <div class="kpi-card kpi-amber">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'نقداً في الصندوق' if lang=='ar' else 'Espèces (Cash)' }}</span>
+        <div class="kpi-icon icon-amber">💵</div>
+      </div>
+      <div class="kpi-value text-amber">
+        {{ '%.2f'|format(cash_collected_sum) }} <span class="kpi-currency">{{ settings.currency }}</span>
+      </div>
+      <div class="kpi-sub text-amber">
+        <span>✓</span> <span>{{ 'Règlements liquides' if lang=='fr' else 'سيولة نقدية مباشرة' }}</span>
+      </div>
+    </div>
+
+    <!-- 4. Virements & Cartes -->
+    <div class="kpi-card kpi-purple">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'تحويلات وبطاقات' if lang=='ar' else 'Virements & Cartes' }}</span>
+        <div class="kpi-icon icon-purple">🏦</div>
+      </div>
+      <div class="kpi-value text-purple">
+        {{ '%.2f'|format(transfer_card_sum) }} <span class="kpi-currency">{{ settings.currency }}</span>
+      </div>
+      <div class="kpi-sub text-purple">
+        <span>💳</span> <span>{{ 'Banque & électronique' if lang=='fr' else 'معاملات بنكية وإلكترونية' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEARCH & MULTI-FILTER BAR -->
+  <div class="filter-panel">
+    <form method="GET" action="{{ url_for('payments') }}">
+      
+      <!-- Payment Method Filter Tabs -->
+      <div class="status-pills">
+        <a href="{{ url_for('payments', method='', month=req_month, user_id=req_user_id, q=q) }}" class="status-pill {% if not req_method %}active{% endif %}">
+          <span>📋</span> <span>{{ 'جميع الطرق' if lang=='ar' else 'Tous les modes' }}</span>
+        </a>
+        <a href="{{ url_for('payments', method='cash', month=req_month, user_id=req_user_id, q=q) }}" class="status-pill {% if req_method=='cash' %}active{% endif %}">
+          <span>💵</span> <span>{{ 'نقداً (Espèces)' if lang=='ar' else 'Espèces (Cash)' }}</span>
+        </a>
+        <a href="{{ url_for('payments', method='transfer', month=req_month, user_id=req_user_id, q=q) }}" class="status-pill {% if req_method=='transfer' %}active{% endif %}">
+          <span>🏦</span> <span>{{ 'تحويل بنكي' if lang=='ar' else 'Virement bancaire' }}</span>
+        </a>
+        <a href="{{ url_for('payments', method='card', month=req_month, user_id=req_user_id, q=q) }}" class="status-pill {% if req_method=='card' %}active{% endif %}">
+          <span>💳</span> <span>{{ 'بطاقة بنكية' if lang=='ar' else 'Carte bancaire' }}</span>
+        </a>
+      </div>
+
+      <!-- Filters & Search Controls Row -->
+      <div class="filter-controls">
+        
+        {% if cur_user and cur_user.role == 'admin' %}
+        <!-- Agent / User Filter -->
+        <div class="filter-input-wrap">
+          <select name="user_id" onchange="this.form.submit()" title="{{ 'تصفية حسب الوكيل' if lang=='ar' else 'Filtrer par agent' }}">
+            <option value="">👤 {{ 'جميع الوكلاء' if lang=='ar' else 'Tous les agents' }}</option>
+            {% for u in staff_users %}
+              <option value="{{ u.id }}" {% if req_user_id == u.id %}selected{% endif %}>
+                {{ u.full_name or u.username }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        <!-- Target Month Filter -->
+        <div class="filter-input-wrap" style="min-width:150px; max-width:180px;">
+          <input type="month" name="month" value="{{ req_month }}" onchange="this.form.submit()" title="{{ 'تصفية حسب الشهر' if lang=='ar' else 'Filtrer par mois' }}">
+        </div>
+
+        <!-- Text Search Box -->
+        <div class="search-box">
+          <span class="icon">🔍</span>
+          <input type="text" name="q" value="{{ q }}" placeholder="{{ 'رقم الوصل، اسم التلميذ، الكود، الدورة...' if lang=='ar' else 'N° reçu, élève, code, cours...' }}">
+        </div>
+
+        {% if req_method %}
+        <input type="hidden" name="method" value="{{ req_method }}">
+        {% endif %}
+
+        <!-- Submit & Reset Buttons -->
+        <div style="display:flex; gap:8px;">
+          <button type="submit" class="btn-filter-submit">
+            <span>🔍</span> <span>{{ 'تصفية' if lang=='ar' else 'Filtrer' }}</span>
+          </button>
+          {% if q or req_month or req_method or req_user_id %}
+          <a href="{{ url_for('payments') }}" class="btn-filter-reset" title="{{ 'إعادة ضبط عوامل التصفية' if lang=='ar' else 'Réinitialiser les filtres' }}">
+            🔄
+          </a>
+          {% endif %}
+        </div>
+
+      </div>
+
+      <!-- Active Filters Pill Strip -->
+      {% if q or req_month or req_method or req_user_id %}
+      <div class="active-filters-strip">
+        <span class="active-filters-label">{{ 'تصفية نشطة :' if lang=='ar' else 'Filtres actifs :' }}</span>
+        {% if q %}
+          <span class="active-filter-badge">
+            <span>🔍</span> <span>« {{ q }} »</span>
+          </span>
+        {% endif %}
+        {% if req_month %}
+          <span class="active-filter-badge">
+            <span>📆</span> <span>{{ req_month }}</span>
+          </span>
+        {% endif %}
+        {% if req_method %}
+          <span class="active-filter-badge">
+            <span>💳</span> <span>{{ 'نقداً' if req_method=='cash' else ('تحويل' if req_method=='transfer' else 'بطاقة') }}</span>
+          </span>
+        {% endif %}
+        {% if req_user_id %}
+          {% for u in staff_users %}
+            {% if u.id == req_user_id %}
+              <span class="active-filter-badge">
+                <span>👤</span> <span>{{ u.full_name or u.username }}</span>
+              </span>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        <a href="{{ url_for('payments') }}" class="clear-filters-link" title="{{ 'إلغاء جميع عوامل التصفية' if lang=='ar' else 'Réinitialiser tous les filtres' }}">
+          ✕ {{ 'مسح الكل' if lang=='ar' else 'Effacer' }}
+        </a>
+      </div>
+      {% endif %}
+
+    </form>
+  </div>
+
+  <!-- PAYMENTS LEDGER TABLE (LAPTOP OPTIMIZED, ZERO UNWANTED OVERFLOW) -->
+  <div class="table-card">
+    {% if payments %}
+    <div class="table-responsive">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th style="padding-left:20px;">{{ 'رقم الوصل & التاريخ' if lang=='ar' else 'Reçu & Date' }}</th>
+            <th>{{ 'التلميذ & الكود' if lang=='ar' else 'Élève & Contact' }}</th>
+            <th>{{ 'المادة / البيان' if lang=='ar' else 'Objet / Prestation' }}</th>
+            <th style="text-align:center;">{{ 'المبلغ المؤدى' if lang=='ar' else 'Montant Encaissé' }}</th>
+            <th style="text-align:center;">{{ 'الوكيل / المستلم' if lang=='ar' else 'Enregistré par' }}</th>
+            <th class="actions-cell" style="padding-right:20px;">{{ 'إجراءات' if lang=='ar' else 'Actions' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in payments %}
+          <tr>
+            
+            <!-- 1. Receipt No & Date & Method -->
+            <td class="cell-receipt" style="padding-left:20px;">
+              <span class="mobile-card-label">{{ 'وصل الأداء' if lang=='ar' else 'Reçu de paiement' }}</span>
+              <a href="{{ url_for('payment_receipt', pid=p.id) }}" target="_blank" style="font-weight:900; color:#0B3D6E; text-decoration:none; font-family:monospace; font-size:13px; display:inline-flex; align-items:center; gap:6px;" title="{{ 'طباعة الوصل الحراري 80mm' if lang=='ar' else 'Imprimer le ticket thermique' }}">
+                <span>📄</span>
+                <span>{{ p.receipt or ('REC-' ~ p.id) }}</span>
+              </a>
+              <div style="font-size:11.5px; color:#64748b; margin-top:3px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <span>📆 {{ p.date.strftime('%d/%m/%Y') if p.date else '—' }}</span>
+                <span>•</span>
+                {% if p.method == 'cash' %}
+                  <span class="chip" style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;">💵 Espèces</span>
+                {% elif p.method == 'transfer' %}
+                  <span class="chip" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;">🏦 Virement</span>
+                {% elif p.method == 'card' %}
+                  <span class="chip" style="background:#fffbeb; color:#b45309; border:1px solid #fde68a; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;">💳 Carte</span>
+                {% else %}
+                  <span class="chip" style="background:#f8fafc; color:#64748b; border:1px solid #e2e8f0; font-size:10px; font-weight:700; padding:1px 6px; border-radius:4px;">🌐 En ligne</span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- 2. Student & Code & WhatsApp -->
+            <td class="cell-student">
+              <span class="mobile-card-label">{{ 'التلميذ / المستفيد' if lang=='ar' else 'Élève / Client' }}</span>
+              {% if p.student %}
+              <div class="student-cell">
+                <div class="student-avatar">
+                  {{ p.student.first_name[0]|upper }}
+                </div>
+                <div style="min-width:0;">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <a href="{{ url_for('student_view', sid=p.student.id) }}" style="font-weight:800; color:#0B3D6E; text-decoration:none; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                      {{ p.student.full_name }}
+                    </a>
+                    <span class="chip" style="background:#f1f5f9; color:#475569; font-size:10px; font-weight:800; border:1px solid #e2e8f0; padding:1px 5px; border-radius:4px;">
+                      #{{ p.student.code }}
+                    </span>
+                  </div>
+                  <div style="font-size:11px; color:#64748b; margin-top:2px; display:flex; align-items:center; gap:6px;">
+                    {% if p.student.phone %}
+                    <a href="https://wa.me/{{ p.student.phone|replace(' ', '')|replace('-', '') }}" target="_blank" class="wa-pill" title="WhatsApp élève/parent">
+                      <span>💬</span> {{ p.student.phone }}
+                    </a>
+                    {% else %}
+                    <span>{{ p.student.city or 'Élève inscrit' }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              {% else %}
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:16px;">🏷️</span>
+                <div>
+                  <span class="chip" style="background:#f1f5f9; color:#475569; font-size:11px; font-weight:700; border:1px solid #e2e8f0;">
+                    {{ 'استخلاص شباك' if lang=='ar' else 'Vente comptoir' }}
+                  </span>
+                </div>
+              </div>
+              {% endif %}
+            </td>
+
+            <!-- 3. Course / Description (Smart Shortened Badges) -->
+            <td class="cell-desc">
+              <span class="mobile-card-label">{{ 'البيان / الدورة' if lang=='ar' else 'Objet / Prestation' }}</span>
+              <div class="course-badges-cluster">
+                {% if p.courses_list %}
+                  {% for cname in p.courses_list %}
+                    <span class="course-pill-badge {% if 'Inscription' in cname %}pill-registration{% endif %}" title="{{ p.courses_description_full or cname }}">
+                      {{ cname }}
+                    </span>
+                  {% endfor %}
+                {% else %}
+                  <span class="course-pill-badge" title="{{ p.courses_description_full }}">
+                    {{ p.courses_description or p.note or 'Paiement de scolarité' }}
+                  </span>
+                {% endif %}
+              </div>
+              {% if p.clean_note %}
+              <div class="cell-note-pill" title="{{ p.note }}">
+                <span>💬</span> <span>{{ p.clean_note }}</span>
+              </div>
+              {% endif %}
+            </td>
+
+            <!-- 4. Amount -->
+            <td class="cell-amount" style="text-align:center; background:#f0fdf4;">
+              <div style="font-weight:900; color:#047857; font-size:15px;">
+                {{ '%.2f'|format(p.amount) }} <small style="font-size:11px;">{{ settings.currency }}</small>
+              </div>
+              <div style="font-size:10px; color:#166534; font-weight:800; text-transform:uppercase; margin-top:1px;">
+                {{ '✓ مؤدى' if lang=='ar' else '✓ Encaissé' }}
+              </div>
+            </td>
+
+            <!-- 5. Creator / Agent -->
+            <td class="cell-creator" style="text-align:center;">
+              <span class="mobile-card-label" style="margin-bottom:0;">{{ 'المستلم' if lang=='ar' else 'Agent' }}</span>
+              <span class="chip" style="background:#f8fafc; color:#334155; border:1px solid #cbd5e1; font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">
+                <span>👤</span>
+                <span>{{ p.creator.full_name or p.creator.username if p.creator else 'Admin' }}</span>
+              </span>
+            </td>
+
+            <!-- 6. Actions (Reçu 80mm + Quick WhatsApp + ⋮ Dropdown) -->
+            <td class="actions-cell cell-actions" style="padding-right:20px;">
+              <div class="action-group">
+                <!-- Primary Action: Reçu Ticket 80mm -->
+                <a href="{{ url_for('payment_receipt', pid=p.id) }}" target="_blank" class="btn-primary-action btn-act-emerald" title="{{ 'طباعة الوصل الحراري 80mm' if lang=='ar' else 'Imprimer Ticket Thermique 80mm' }}">
+                  <span>🖨️</span> <span>{{ 'reçu' if lang=='fr' else 'وصل 80mm' }}</span>
+                </a>
+
+                <!-- Quick WhatsApp Receipt Trigger: 33px -->
+                <button type="button" class="btn-icon-action btn-act-wa" onclick="openWhatsAppReceiptModalFromList({{ p.id }})" title="{{ 'إرسال الوصل بالواتساب (Anti-Ban)' if lang=='ar' else 'Envoyer Reçu WhatsApp (Anti-Ban)' }}">
+                  💬
+                </button>
+
+                <!-- Menu Trigger: 33px -->
+                <button type="button" class="btn-icon-action btn-act-menu" onclick="toggleActionMenu(event, 'menu-pay-{{ p.id }}')" title="{{ 'خيارات إضافية' if lang=='ar' else 'Options' }}">
+                  ⋮
+                </button>
+
+                <!-- Floating Dropdown Menu -->
+                <div id="menu-pay-{{ p.id }}" class="dropdown-menu-float">
+                  <a href="javascript:void(0)" onclick="openWhatsAppReceiptModalFromList({{ p.id }})" class="dropdown-item-link" style="color:#059669; font-weight:700;">
+                    <span>💬</span>
+                    <span>{{ 'إرسال الوصل عبر واتساب (Anti-Ban)' if lang=='ar' else 'Envoyer Reçu WhatsApp (Anti-Ban)' }}</span>
+                  </a>
+                  <a href="{{ url_for('payment_receipt', pid=p.id) }}" target="_blank" class="dropdown-item-link">
+                    <span>🖨️</span>
+                    <span>{{ 'طباعة الوصل الحراري (80mm)' if lang=='ar' else 'Imprimer Reçu (Ticket 80mm)' }}</span>
+                  </a>
+                  <a href="{{ url_for('payment_receipt', pid=p.id) }}?duplicata=1" target="_blank" class="dropdown-item-link">
+                    <span>📄</span>
+                    <span>{{ 'طباعة نسخة ثانية (Duplicata)' if lang=='ar' else 'Imprimer Duplicata Reçu' }}</span>
+                  </a>
+                  
+                  {% if p.student %}
+                  <div class="dropdown-divider"></div>
+                  <a href="{{ url_for('student_view', sid=p.student.id) }}" class="dropdown-item-link">
+                    <span>👤</span>
+                    <span>{{ 'ملف التلميذ' if lang=='ar' else 'Dossier de l\'élève' }}</span>
+                  </a>
+                  {% if p.student.phone %}
+                  <a href="https://wa.me/{{ p.student.phone|replace(' ', '')|replace('-', '') }}" target="_blank" class="dropdown-item-link">
+                    <span>💬</span>
+                    <span>{{ 'مراسلة عبر واتساب' if lang=='ar' else 'WhatsApp élève/parent' }}</span>
+                  </a>
+                  {% endif %}
+                  {% endif %}
+
+                  {% if p.invoice_id %}
+                  <div class="dropdown-divider"></div>
+                  <a href="{{ url_for('invoice_view', iid=p.invoice_id) }}" class="dropdown-item-link">
+                    <span>🧾</span>
+                    <span>{{ 'عرض الفاتورة المرتبطة' if lang=='ar' else 'Facture associée' }}</span>
+                  </a>
+                  {% endif %}
+
+                  {% if cur_user and cur_user.role == 'admin' %}
+                  <div class="dropdown-divider"></div>
+                  <form method="POST" action="{{ url_for('payment_delete', pid=p.id) }}" onsubmit="return confirm('{{ 'هل أنت متأكد من حذف هذا الأداء؟ سيتم تصحيح رصيد التلميذ تلقائياً.' if lang=='ar' else 'Êtes-vous sûr de vouloir supprimer ce paiement ? Le solde de l\'élève sera automatiquement réajusté.' }}');" style="margin:0;">
+                    <button type="submit" class="dropdown-item-link text-danger">
+                      <span>🗑️</span>
+                      <span>{{ 'حذف هذا الأداء' if lang=='ar' else 'Supprimer ce paiement' }}</span>
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+
+        <!-- Table Footers -->
+        <tfoot>
+          <tr style="background:#f8fafc; font-weight:800; border-top:1.5px solid #cbd5e1;">
+            <td colspan="3" style="padding:12px 20px; text-align:right; color:#0B3D6E; font-size:13px;">
+              {{ 'مجموع المقبوضات على هذه الصفحة' if lang=='ar' else 'TOTAL DES ENCAISSEMENTS' }} :
+            </td>
+            <td style="padding:12px 10px; text-align:center; color:#047857; font-size:16px; background:#dcfce7;">
+              {{ '%.2f'|format(total_collected_sum) }} {{ settings.currency }}
+            </td>
+            <td colspan="2" style="padding:12px 20px; text-align:right; color:#64748b; font-size:12px;">
+              {{ payments|length }} {{ 'عملية مقبوضة مسجلة' if lang=='ar' else 'reçus enregistrés' }}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty p-5" style="text-align:center; padding:50px 20px; color:#64748b;">
+      <div style="font-size:36px; margin-bottom:10px;">💳</div>
+      <h3 style="margin:0 0 6px 0; color:#0B3D6E;">{{ 'لا توجد مقبوضات مسجلة' if lang=='ar' else 'Aucun paiement enregistré' }}</h3>
+      <p style="margin:0; font-size:13px;">{{ 'لم يتم تسجيل أي عملية دفع تطابق معايير البحث المحددة.' if lang=='ar' else 'Aucun règlement trouvé pour les filtres ou la période sélectionnés.' }}</p>
+      <a class="btn btn-primary" href="{{ url_for('payment_new') }}" style="margin-top:14px; font-weight:800; background:#059669; border-color:#059669; border-radius:9px; padding:8px 18px; display:inline-flex; align-items:center; gap:6px;">
+        <span>💵</span> <span>{{ 'تسجيل استخلاص جديد الآن' if lang=='ar' else '+ Encaisser un Paiement' }}</span>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- SCRIPTS: ACTION MENU DROPDOWNS -->
+<script>
+  // Smart Action Menu Toggle with Dynamic Repositioning
+  function toggleActionMenu(event, menuId) {
+    event.stopPropagation();
+    if (window.openFloatingDropdown) {
+      window.openFloatingDropdown(event.currentTarget, document.getElementById(menuId));
+    }
+  }
+</script>
+
+<!-- Modal Reçu WhatsApp Anti-Ban (Liste des Paiements) -->
+<div id="waListReceiptModal" class="no-print" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.75); backdrop-filter:blur(6px); z-index:99999; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#ffffff; border-radius:20px; max-width:580px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); overflow:hidden; border:1px solid #cbd5e1; max-height:92vh; display:flex; flex-direction:column;">
+
+    <!-- Modal Header -->
+    <div style="background:linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%); padding:18px 24px; color:#ffffff; display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:24px;">💬</span>
+        <div>
+          <div style="font-size:17px; font-weight:800;" id="listModalTitle">Envoi du Reçu par WhatsApp</div>
+          <div style="font-size:12px; color:#bfdbfe; font-weight:600;">Solution Anti-Ban Spintax &bullet; إيصال أداء رسمي</div>
+        </div>
+      </div>
+      <button type="button" onclick="closeListWhatsAppModal()" style="background:rgba(255,255,255,0.15); border:none; color:#ffffff; width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:700;">✕</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div style="padding:22px 24px; overflow-y:auto; flex:1;">
+
+      <!-- Anti-Ban Alert Badge -->
+      <div style="background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:12px; padding:12px 14px; margin-bottom:18px; display:flex; align-items:flex-start; gap:10px;">
+        <span style="font-size:20px; line-height:1;">🛡️</span>
+        <div style="font-size:12px; color:#1e40af; line-height:1.45;">
+          <strong>Protection Anti-Ban Active :</strong> Chaque message est dynamiquement généré avec des formulations variées (Spintax) et une clé de sécurité unique afin d'éliminer tout risque de blocage par WhatsApp.
+        </div>
+      </div>
+
+      <!-- Recipient Selector: Parent vs Élève -->
+      <div style="margin-bottom:16px;">
+        <label style="font-size:12px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">
+          Destinataire / المتلقي :
+        </label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <label id="lblListParent" onclick="setListRecipient('parent')" style="display:flex; align-items:center; gap:8px; border:2px solid #10b981; background:#ecfdf5; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:700; font-size:13.5px; transition:all 0.15s;">
+            <input type="radio" name="modalListRecip" value="parent" checked style="accent-color:#10b981;">
+            <span>👨‍👩‍👧 Parent (ولي الأمر)</span>
+          </label>
+          <label id="lblListStudent" onclick="setListRecipient('student')" style="display:flex; align-items:center; gap:8px; border:2px solid #cbd5e1; background:#f8fafc; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:700; font-size:13.5px; transition:all 0.15s;">
+            <input type="radio" name="modalListRecip" value="student" style="accent-color:#10b981;">
+            <span>👤 Élève (التلميذ)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Language Selector -->
+      <div style="margin-bottom:16px;">
+        <label style="font-size:12px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">
+          Langue du Message / لغة الرسالة :
+        </label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <label id="lblListLangAr" onclick="setListLanguage('ar')" style="display:flex; align-items:center; gap:8px; border:2px solid #10b981; background:#ecfdf5; border-radius:12px; padding:8px 14px; cursor:pointer; font-weight:700; font-size:13px;">
+            <input type="radio" name="modalListLang" value="ar" checked style="accent-color:#10b981;">
+            <span>🇲🇦 العربية (المفضلة)</span>
+          </label>
+          <label id="lblListLangFr" onclick="setListLanguage('fr')" style="display:flex; align-items:center; gap:8px; border:2px solid #cbd5e1; background:#f8fafc; border-radius:12px; padding:8px 14px; cursor:pointer; font-weight:700; font-size:13px;">
+            <input type="radio" name="modalListLang" value="fr" style="accent-color:#10b981;">
+            <span>🇫🇷 Français (Officiel)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Phone Number Input with Auto-formatting -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label style="font-size:12px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px;">
+            Numéro WhatsApp / رقم الواتساب :
+          </label>
+          <span id="phoneListLabelType" style="font-size:11.5px; font-weight:700; color:#1e40af;">Téléphone du Parent</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="targetListPhoneInput" style="flex:1; height:44px; border:1.5px solid #cbd5e1; border-radius:10px; padding:0 14px; font-size:15px; font-weight:700; color:#0f172a; outline:none;" placeholder="Ex: 0612345678 ou 212612345678">
+        </div>
+        <div id="phoneListMissingAlert" style="display:none; color:#dc2626; font-size:12px; font-weight:700; margin-top:4px;">
+          ⚠️ Aucun numéro enregistré pour ce destinataire. Veuillez saisir le numéro ci-dessus.
+        </div>
+      </div>
+
+      <!-- Live Message Preview Box -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label style="font-size:12px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px;">
+            Aperçu du Message / معاينة نص الوصل :
+          </label>
+          <div style="display:flex; gap:6px;">
+            <button type="button" onclick="regenerateListVariation()" class="btn btn-xs btn-outline" style="font-size:11px; padding:3px 8px; border-radius:6px;" title="Générer une nouvelle variante Anti-Ban">
+              🔄 Varier (Spintax)
+            </button>
+            <button type="button" onclick="copyListReceiptText()" id="btnCopyListWa" class="btn btn-xs btn-outline" style="font-size:11px; padding:3px 8px; border-radius:6px;" title="Copier dans le presse-papiers">
+              📋 Copier
+            </button>
+          </div>
+        </div>
+        <textarea id="waListPreviewArea" rows="9" style="width:100%; border:1.5px solid #cbd5e1; border-radius:12px; padding:12px; font-size:12.5px; font-family:monospace; line-height:1.45; color:#0f172a; background:#f8fafc; resize:vertical; outline:none; box-sizing:border-box;"></textarea>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display:flex; justify-content:flex-end; gap:10px; align-items:center;">
+        <button type="button" onclick="closeListWhatsAppModal()" class="btn btn-outline btn-sm">Fermer</button>
+        <button type="button" onclick="openWhatsAppChatFromList()" class="btn btn-sm btn-success" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; color:#fff; font-weight:800; padding:10px 22px; border-radius:10px; font-size:14px; box-shadow:0 4px 12px rgba(16,185,129,0.35); display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+          <span>🚀</span>
+          <span>Envoyer sur WhatsApp</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentListWaData = null;
+  let currentListRecipient = 'parent';
+  let currentListLanguage = 'ar';
+
+  async function openWhatsAppReceiptModalFromList(paymentId) {
+    try {
+      const resp = await fetch(`/api/payments/${paymentId}/whatsapp_receipt_data?t=${Date.now()}`);
+      const data = await resp.json();
+      if (!data.success) {
+        alert("Erreur lors de la récupération des données du reçu.");
+        return;
+      }
+      currentListWaData = data;
+      currentListRecipient = data.default_recipient || 'parent';
+      document.getElementById('listModalTitle').textContent = `Reçu ${data.receipt_no} — ${data.student_name}`;
+      document.getElementById('waListReceiptModal').style.display = 'flex';
+      setListRecipient(currentListRecipient);
+    } catch (e) {
+      console.error(e);
+      alert("Erreur réseau.");
+    }
+  }
+
+  function closeListWhatsAppModal() {
+    document.getElementById('waListReceiptModal').style.display = 'none';
+  }
+
+  function setListRecipient(type) {
+    currentListRecipient = type;
+    const rInput = document.querySelector(`input[name="modalListRecip"][value="${type}"]`);
+    if (rInput) rInput.checked = true;
+
+    const lblP = document.getElementById('lblListParent');
+    const lblS = document.getElementById('lblListStudent');
+    if (type === 'parent') {
+      lblP.style.borderColor = '#10b981';
+      lblP.style.background = '#ecfdf5';
+      lblS.style.borderColor = '#cbd5e1';
+      lblS.style.background = '#f8fafc';
+      document.getElementById('phoneListLabelType').textContent = "Téléphone du Parent (Tuteur)";
+      const raw = currentListWaData ? currentListWaData.raw_parent_phone : '';
+      document.getElementById('targetListPhoneInput').value = raw;
+      document.getElementById('phoneListMissingAlert').style.display = raw ? 'none' : 'block';
+    } else {
+      lblS.style.borderColor = '#10b981';
+      lblS.style.background = '#ecfdf5';
+      lblP.style.borderColor = '#cbd5e1';
+      lblP.style.background = '#f8fafc';
+      document.getElementById('phoneListLabelType').textContent = "Téléphone de l'Élève (Apprenant)";
+      const raw = currentListWaData ? currentListWaData.raw_student_phone : '';
+      document.getElementById('targetListPhoneInput').value = raw;
+      document.getElementById('phoneListMissingAlert').style.display = raw ? 'none' : 'block';
+    }
+
+    refreshListPreview();
+  }
+
+  function setListLanguage(lang) {
+    currentListLanguage = lang;
+    const lInput = document.querySelector(`input[name="modalListLang"][value="${lang}"]`);
+    if (lInput) lInput.checked = true;
+
+    const lblAr = document.getElementById('lblListLangAr');
+    const lblFr = document.getElementById('lblListLangFr');
+    if (lang === 'ar') {
+      lblAr.style.borderColor = '#10b981';
+      lblAr.style.background = '#ecfdf5';
+      lblFr.style.borderColor = '#cbd5e1';
+      lblFr.style.background = '#f8fafc';
+    } else {
+      lblFr.style.borderColor = '#10b981';
+      lblFr.style.background = '#ecfdf5';
+      lblAr.style.borderColor = '#cbd5e1';
+      lblAr.style.background = '#f8fafc';
+    }
+
+    refreshListPreview();
+  }
+
+  function refreshListPreview() {
+    if (!currentListWaData) return;
+    const key = `${currentListLanguage}_${currentListRecipient}`;
+    const txt = (currentListWaData.messages && currentListWaData.messages[key]) || '';
+    document.getElementById('waListPreviewArea').value = txt;
+  }
+
+  async function regenerateListVariation() {
+    if (!currentListWaData) return;
+    try {
+      const resp = await fetch(`/api/payments/${currentListWaData.payment_id}/whatsapp_receipt_data?t=${Date.now()}`);
+      const data = await resp.json();
+      if (data.success && data.messages) {
+        currentListWaData.messages = data.messages;
+        refreshListPreview();
+      }
+    } catch (e) {
+      console.warn("Could not regenerate variation", e);
+    }
+  }
+
+  function copyListReceiptText() {
+    const ta = document.getElementById('waListPreviewArea');
+    navigator.clipboard.writeText(ta.value).then(() => {
+      const btn = document.getElementById('btnCopyListWa');
+      btn.textContent = '✅ Copié !';
+      setTimeout(() => { btn.textContent = '📋 Copier'; }, 2000);
+    });
+  }
+
+  function cleanPhoneList(raw) {
+    if (!raw) return '';
+    let p = String(raw).replace(/[^0-9]/g, '');
+    if (p.startsWith('00')) p = p.substring(2);
+    else if (p.startsWith('0')) p = '212' + p.substring(1);
+    else if (p.length === 9 && (p.startsWith('6') || p.startsWith('7'))) p = '212' + p;
+    return p;
+  }
+
+  function openWhatsAppChatFromList() {
+    const phoneInput = document.getElementById('targetListPhoneInput').value.trim();
+    const cleaned = cleanPhoneList(phoneInput);
+    if (!cleaned) {
+      alert("Veuillez saisir un numéro de téléphone valide avant d'envoyer.");
+      document.getElementById('targetListPhoneInput').focus();
+      return;
+    }
+    const message = document.getElementById('waListPreviewArea').value;
+    const url = `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  }
+</script>
+
+{% endblock %}

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="{{ lang or 'fr' }}" dir="{{ 'rtl' if lang=='ar' else 'ltr' }}">
+<head>
+<meta charset="utf-8">
+<title>Échéances du {{ target_date.strftime('%d/%m/%Y') }} — {{ settings.inst_name }}</title>
+<style>
+  @page {
+    size: A4 landscape;
+    margin: 8mm 10mm;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: #0f172a;
+    background: #ffffff;
+    margin: 0;
+    padding: 16px;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 11.5px;
+  }
+
+  .no-print-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0B3D6E;
+    color: #ffffff;
+    padding: 10px 18px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(11,61,110,0.2);
+  }
+  .no-print-bar a, .no-print-bar button {
+    font-family: inherit;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .doc-container {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 16px 20px;
+  }
+
+  /* Header */
+  .inst-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #0B3D6E;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+  }
+  .inst-brand h1 {
+    margin: 0;
+    font-size: 20px;
+    color: #0B3D6E;
+    font-weight: 800;
+  }
+  .inst-brand p {
+    margin: 2px 0 0 0;
+    font-size: 11px;
+    color: #475569;
+  }
+  .inst-meta {
+    text-align: right;
+    font-size: 11px;
+    color: #475569;
+  }
+
+  /* Title Box */
+  .title-box {
+    text-align: center;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 14px;
+  }
+  .title-box h2 {
+    margin: 0;
+    font-size: 15px;
+    color: #0B3D6E;
+    font-weight: 800;
+  }
+  .title-box .sub {
+    margin-top: 3px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #047857;
+  }
+
+  /* KPI Mini Badges */
+  .kpi-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .kpi-box {
+    flex: 1;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 6px 10px;
+    background: #f8fafc;
+    text-align: center;
+  }
+  .kpi-box .num {
+    font-size: 16px;
+    font-weight: 800;
+    color: #0B3D6E;
+  }
+  .kpi-box .lbl {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+  }
+
+  /* Table */
+  table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  table.data-table th {
+    background: #0B3D6E;
+    color: #ffffff;
+    font-weight: 700;
+    padding: 6px 8px;
+    border: 1px solid #0B3D6E;
+    text-align: left;
+    font-size: 10.5px;
+  }
+  table.data-table td {
+    padding: 6px 8px;
+    border: 1px solid #cbd5e1;
+    vertical-align: middle;
+  }
+  table.data-table tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  .signature-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 24px;
+    padding-top: 12px;
+    border-top: 1px dashed #cbd5e1;
+    font-size: 11px;
+  }
+
+  @media print {
+    .no-print-bar {
+      display: none !important;
+    }
+    body {
+      padding: 0 !important;
+    }
+    .doc-container {
+      border: none !important;
+      padding: 0 !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Screen Controls Bar -->
+<div class="no-print-bar">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <button onclick="window.history.back()" style="background:#ffffff; color:#0B3D6E; border:none; border-radius:6px; padding:6px 12px; font-weight:700; font-size:12px;">
+      ← Retour
+    </button>
+    <span style="font-weight:700; font-size:13px;">
+      🖨️ Fiche des Échéances du {{ target_date.strftime('%d/%m/%Y') }} ({{ total_count }} dossiers)
+    </span>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <button onclick="window.print()" style="background:#10b981; color:#ffffff; border:none; border-radius:6px; padding:6px 16px; font-weight:800; font-size:13px; box-shadow:0 2px 6px rgba(16,185,129,0.4);">
+      🖨️ Imprimer cette feuille (A4 Paysage)
+    </button>
+  </div>
+</div>
+
+<div class="doc-container">
+  <!-- Institute Header -->
+  <div class="inst-header">
+    <div class="inst-brand">
+      <h1>{{ settings.inst_name }}</h1>
+      <p>{{ settings.inst_tagline or 'Institut de Formation & Cours de Soutien' }}</p>
+      <p style="font-size:10px; color:#64748b; margin-top:2px;">
+        📍 {{ settings.inst_city or 'Deroua' }} · 📞 {{ settings.inst_phone or '05 22 00 00 00' }} · Année : {{ settings.school_year }}
+      </p>
+    </div>
+    <div class="inst-meta">
+      <div style="font-weight:800; color:#0B3D6E; font-size:13px;">
+        SUIVI QUOTIDIEN DES RELANCES
+      </div>
+      <div>Date d'impression : <strong>{{ today_dt.strftime('%d/%m/%Y') }}</strong></div>
+      {% if current_teacher %}
+      <div>Professeur : <strong>{{ current_teacher.full_name }}</strong></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Title Banner -->
+  <div class="title-box">
+    <h2>LISTE DES ÉLÈVES ARRIVANT À ÉCHÉANCE (DATE FIN D'ABONNEMENT)</h2>
+    <div class="sub">
+      📅 {{ target_date_fr }} &nbsp;|&nbsp; {{ target_date_ar }}
+      {% if filter_mode != 'exact' %}
+        <span style="font-size:11px; color:#b45309;">(Mode : {{ filter_mode }})</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- KPI Badges -->
+  <div class="kpi-row">
+    <div class="kpi-box">
+      <div class="num">{{ unique_students }}</div>
+      <div class="lbl">Élèves concernés</div>
+    </div>
+    <div class="kpi-box">
+      <div class="num">{{ unique_courses }}</div>
+      <div class="lbl">Groupes / Classes</div>
+    </div>
+    <div class="kpi-box">
+      <div class="num">{{ with_phone_count }}</div>
+      <div class="lbl">Avec Téléphone</div>
+    </div>
+    <div class="kpi-box">
+      <div class="num" style="color:{% if sum_balance > 0 %}#b91c1c{% else %}#047857{% endif %};">
+        {{ '%.0f'|format(sum_balance) }} {{ settings.currency }}
+      </div>
+      <div class="lbl">Soldes Impayés</div>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:30px; text-align:center;">N°</th>
+        <th style="width:70px;">Code</th>
+        <th>Nom Complet de l'Élève</th>
+        <th>Groupe & Cours (بالفوج)</th>
+        <th style="width:110px;">Tél. Élève</th>
+        <th style="width:110px;">Tél. Parent</th>
+        <th style="width:80px; text-align:center;">Date Fin</th>
+        <th style="width:75px; text-align:right;">Reste Dû</th>
+        <th style="width:140px; text-align:center;">Pointage / Appel</th>
+        <th>Observations & Décision</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in enrollments %}
+      {% set s = e.student %}
+      {% set c = e.course %}
+      <tr>
+        <td style="text-align:center; font-weight:700;">{{ loop.index }}</td>
+        <td style="font-weight:700; color:#0B3D6E;">{{ s.code if s else '-' }}</td>
+        <td style="font-weight:800; color:#0f172a;">
+          {{ s.full_name if s else 'Inconnu' }}
+          {% if s and s.school_level %}
+            <span style="font-size:9.5px; color:#64748b; font-weight:normal;">({{ s.school_level }})</span>
+          {% endif %}
+        </td>
+        <td>
+          <strong>{{ c.name if c else '-' }}</strong>
+          {% if c and c.group_name %}
+            <span style="color:#6d28d9; font-weight:700;">[{{ c.group_name }}]</span>
+          {% endif %}
+          {% if c and c.teacher %}
+            <span style="color:#475569; font-size:10px;">— Prof: {{ c.teacher.full_name }}</span>
+          {% endif %}
+        </td>
+        <td>
+          <strong>{{ s.phone if (s and s.phone) else '—' }}</strong>
+        </td>
+        <td>
+          <strong>{{ s.parent_phone if (s and s.parent_phone) else '—' }}</strong>
+        </td>
+        <td style="text-align:center; font-weight:800; color:#0B3D6E;">
+          {{ e.end_date.strftime('%d/%m/%Y') if e.end_date else '—' }}
+        </td>
+        <td style="text-align:right; font-weight:800; color:{% if e.balance > 0 %}#b91c1c{% else %}#047857{% endif %};">
+          {{ '%.0f'|format(e.balance) }} DH
+        </td>
+        <td style="text-align:center; font-size:10px; color:#475569;">
+          [ &nbsp; ] Appelé &nbsp;&nbsp; [ &nbsp; ] Renouvelé
+        </td>
+        <td style="color:#64748b; font-size:10px;">
+          {{ e.notes or '' }}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="10" style="text-align:center; padding:20px; color:#64748b;">
+          Aucun élève trouvé à échéance pour ce jour.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Footer with Signatures -->
+  <div class="signature-row">
+    <div>
+      <div>Secrétariat & Accueil :</div>
+      <div style="margin-top:30px; font-weight:700;">Nom & Signature : ___________________</div>
+    </div>
+    <div style="text-align:center;">
+      <div>Contrôle & Recouvrement :</div>
+      <div style="margin-top:30px; font-weight:700;">Cachet ILAS : ___________________</div>
+    </div>
+    <div style="text-align:right;">
+      <div>Direction Pédagogique :</div>
+      <div style="margin-top:30px; font-weight:700;">Visa : ___________________</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1410 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- Custom Scoped Styling for Modern Pedagogical & Operations Dashboard (No Financial Data) -->
+<style>
+  :root {
+    --dash-primary: #0B3D6E;
+    --dash-primary-light: #1e40af;
+    --dash-accent: #1f6feb;
+    --dash-success: #10b981;
+    --dash-warning: #f59e0b;
+    --dash-danger: #ef4444;
+    --dash-purple: #8b5cf6;
+    --dash-bg-card: #ffffff;
+    --dash-border: #e2e8f0;
+    --dash-text-main: #0f172a;
+    --dash-text-muted: #64748b;
+  }
+
+  .dash-hero-banner {
+    background: linear-gradient(135deg, #0B3D6E 0%, #1e3a8a 60%, #1f6feb 100%);
+    border-radius: 18px;
+    padding: 24px 28px;
+    color: #ffffff;
+    box-shadow: 0 10px 30px rgba(11, 61, 110, 0.15);
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .dash-hero-banner::after {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .dash-hero-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .dash-hero-title {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .dash-hero-meta {
+    font-size: 13px;
+    color: #cbd5e1;
+    margin-top: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+  }
+  .dash-dock-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 9px;
+  }
+  .dash-dock-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 15px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    border: none;
+    cursor: pointer;
+  }
+  .dash-dock-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  }
+  .dash-dock-primary {
+    background: #10b981;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  }
+  .dash-dock-glass {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+  }
+  .dash-dock-glass:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+  }
+  .dash-dock-white {
+    background: #ffffff;
+    color: #0B3D6E;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  /* KPI Grid */
+  .dash-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .dash-kpi-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 18px 20px;
+    border: 1px solid var(--dash-border);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+    position: relative;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .dash-kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    border-color: #cbd5e1;
+  }
+  .dash-kpi-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .dash-kpi-label {
+    font-size: 11.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--dash-text-muted);
+  }
+  .dash-kpi-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+  }
+  .dash-kpi-val {
+    font-size: 27px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--dash-primary);
+    line-height: 1.15;
+    margin-bottom: 6px;
+  }
+  .dash-kpi-val small {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--dash-text-muted);
+  }
+  .dash-kpi-sub {
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--dash-text-muted);
+    border-top: 1px solid #f1f5f9;
+    padding-top: 8px;
+    margin-top: 4px;
+  }
+
+  /* Main Workspace 2-Column Grid */
+  .dash-workspace-grid {
+    display: grid;
+    grid-template-columns: 2.2fr 1fr;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  @media (max-width: 1080px) {
+    .dash-workspace-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Generic Card Pad */
+  .dash-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid var(--dash-border);
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
+    overflow: hidden;
+  }
+
+  /* Modern Tab Buttons */
+  .dash-tab-btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 12.5px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    background: transparent;
+    color: var(--dash-text-muted);
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .dash-tab-btn.active {
+    background: #0B3D6E;
+    color: #ffffff;
+    font-weight: 800;
+    box-shadow: 0 3px 10px rgba(11, 61, 110, 0.2);
+  }
+  .dash-tab-btn:hover:not(.active) {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+
+  /* Pulse Dot Animation */
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    display: inline-block;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: pulseDot 2s infinite;
+  }
+  @keyframes pulseDot {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  }
+</style>
+
+{% if cur_user and cur_user.role == 'teacher' %}
+<!-- ======================================================= -->
+<!-- TEACHER DEDICATED PEDAGOGICAL DASHBOARD                 -->
+<!-- ======================================================= -->
+<div class="dash-hero-banner" style="background: linear-gradient(135deg, #0B3D6E 0%, #047857 100%);">
+  <div class="dash-hero-header">
+    <div>
+      <h2 class="dash-hero-title">
+        👨‍🏫 {{ 'مرحباً بالأستاذ(ة)' if lang=='ar' else 'Espace Enseignant' }} : {{ cur_user.full_name or cur_user.username }}
+      </h2>
+      <div class="dash-hero-meta">
+        <span>📅 {{ today.strftime('%d/%m/%Y') }}</span>
+        <span>🏫 {{ settings.inst_name }} ({{ settings.school_year }})</span>
+        <span class="chip chip-green" style="font-size:10px; font-weight:800; padding:2px 8px;">🎓 PROFESSEUR ACTIF</span>
+      </div>
+    </div>
+    <div class="dash-dock-group">
+      <a class="dash-dock-btn dash-dock-primary" href="{{ url_for('attendance') }}">
+        📍 Pointage Présence
+      </a>
+      <a class="dash-dock-btn dash-dock-glass" href="{{ url_for('teacher_student_lists') }}">
+        📜 Mes Listes d'Élèves
+      </a>
+      <a class="dash-dock-btn dash-dock-glass" href="{{ url_for('schedule') }}">
+        🗓️ Mon Planning
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="dash-kpi-grid mb-3">
+  <div class="dash-kpi-card" style="border-left: 4.5px solid #1f6feb;">
+    <div class="dash-kpi-top">
+      <span class="dash-kpi-label">Mes Classes & Groupes</span>
+      <div class="dash-kpi-icon" style="background:#dbeafe; color:#1d4ed8;">📚</div>
+    </div>
+    <div class="dash-kpi-val">{{ teacher_stats.courses_count }} <small>classes actives</small></div>
+    <div class="dash-kpi-sub">Groupes assignés cette année</div>
+  </div>
+
+  <div class="dash-kpi-card" style="border-left: 4.5px solid #10b981;">
+    <div class="dash-kpi-top">
+      <span class="dash-kpi-label">Mes Élèves au Total</span>
+      <div class="dash-kpi-icon" style="background:#d1fae5; color:#047857;">👥</div>
+    </div>
+    <div class="dash-kpi-val" style="color:#047857;">{{ teacher_stats.students_count }} <small>élèves</small></div>
+    <div class="dash-kpi-sub"><a href="{{ url_for('teacher_student_lists') }}" style="color:#047857; font-weight:700; text-decoration:none;">Consulter les listes →</a></div>
+  </div>
+
+  <div class="dash-kpi-card" style="border-left: 4.5px solid #f59e0b;">
+    <div class="dash-kpi-top">
+      <span class="dash-kpi-label">Séances Aujourd'hui</span>
+      <div class="dash-kpi-icon" style="background:#fef3c7; color:#b45309;">⏰</div>
+    </div>
+    <div class="dash-kpi-val" style="color:#b45309;">{{ teacher_stats.today_slots|length }} <small>cours</small></div>
+    <div class="dash-kpi-sub">
+      {% if teacher_stats.attend_today > 0 %}{{ teacher_stats.attend_today }} pointages faits{% else %}Pointage en attente{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="dash-card card-pad mb-3" style="padding:20px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+    <h3 style="margin:0; font-size:16px; color:#0B3D6E; font-weight:800;">
+      📚 Mes Classes & Feuilles d'Émargement
+    </h3>
+    <a href="{{ url_for('attendance') }}" class="btn btn-sm btn-primary" style="background:#10b981; border-color:#10b981; font-weight:700;">
+      📍 Ouvrir la Feuille de Présence
+    </a>
+  </div>
+
+  {% if teacher_courses %}
+  <div class="table-wrap">
+    <table style="font-size:13px; width:100%;">
+      <thead>
+        <tr style="background:#f8fafc; font-size:11px; color:#64748b; border-bottom:1.5px solid #e2e8f0; text-transform:uppercase;">
+          <th style="padding:10px 12px; text-align:left;">Classe / Groupe</th>
+          <th style="padding:10px 12px; text-align:left;">Matière & Niveau</th>
+          <th style="padding:10px 12px; text-align:center;">Salle</th>
+          <th style="padding:10px 12px; text-align:center;">Effectif</th>
+          <th style="padding:10px 12px; text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in teacher_courses %}
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:11px 12px; font-weight:800; color:#0B3D6E;">{{ c.display_name }}</td>
+          <td style="padding:11px 12px; color:#475569;">{{ c.subject or c.name }} · {{ c.level or 'Tous niveaux' }}</td>
+          <td style="padding:11px 12px; text-align:center;">
+            <span class="chip chip-gray" style="font-size:10px;">{{ c.room.name if c.room else '—' }}</span>
+          </td>
+          <td style="padding:11px 12px; text-align:center;">
+            <span class="chip chip-blue" style="font-size:11px; font-weight:800;">👥 {{ c.enrolled_count }} élève(s)</span>
+          </td>
+          <td style="padding:11px 12px; text-align:right;">
+            <div style="display:flex; justify-content:flex-end; gap:6px;">
+              <a href="{{ url_for('attendance', course_id=c.id) }}" class="btn btn-xs btn-primary" style="background:#10b981; border-color:#10b981; font-weight:700; padding:4px 10px;">
+                📍 Faire l'appel
+              </a>
+              <a href="{{ url_for('teacher_student_lists', q='', course_id=c.id) }}" class="btn btn-xs btn-outline" style="font-weight:700; padding:4px 10px;">
+                📜 Liste
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty" style="padding:30px;">Aucune classe ne vous est assignée actuellement.</div>
+  {% endif %}
+</div>
+
+{% else %}
+<!-- ======================================================= -->
+<!-- ADMIN & SECRETARY OPERATIONAL DASHBOARD (NO MONEY/EARNINGS) -->
+<!-- ======================================================= -->
+
+<!-- 1. HERO BANNER WITH OPERATIONAL ACTIONS DOCK -->
+<div class="dash-hero-banner">
+  <div class="dash-hero-header">
+    <div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <h1 class="dash-hero-title">
+          <span>📊</span>
+          <span>{{ 'لوحة القيادة والمتابعة' if lang=='ar' else 'Tableau de Bord Opérationnel' }}</span>
+        </h1>
+        <span class="chip" style="background:rgba(16,185,129,0.2); color:#a7f3d0; border:1px solid rgba(16,185,129,0.4); font-size:10.5px; font-weight:800; padding:2px 9px;">
+          <span class="pulse-dot" style="margin-right:4px;"></span> SYSTÈME OPÉRATIONNEL
+        </span>
+      </div>
+      <div class="dash-hero-meta">
+        <span>👤 <strong>{{ cur_user.full_name or cur_user.username }}</strong> ({{ 'Direction / Admin' if cur_user.role=='admin' else 'Secrétariat' }})</span>
+        <span>📅 {{ today.strftime('%d/%m/%Y') }}</span>
+        <span>🏫 {{ settings.inst_name }} · {{ settings.school_year }}</span>
+      </div>
+    </div>
+
+    <!-- Operational Quick Actions Dock -->
+    <div class="dash-dock-group">
+      <a class="dash-dock-btn dash-dock-primary" href="{{ url_for('express_enrollment') }}">
+        <span>⚡</span> <span>Inscription Express</span>
+      </a>
+      <a class="dash-dock-btn dash-dock-white" href="{{ url_for('attendance') }}">
+        <span>📍</span> <span>Pointage Présence</span>
+      </a>
+      <a class="dash-dock-btn dash-dock-glass" href="{{ url_for('students_by_date') }}">
+        <span>📅</span> <span>Échéances du Jour</span>
+      </a>
+      <a class="dash-dock-btn dash-dock-glass" href="{{ url_for('student_movements') }}">
+        <span>🔄</span> <span>{{ 'حركة التلاميذ' if lang == 'ar' else 'Mouvements Élèves' }}</span>
+      </a>
+      <a class="dash-dock-btn dash-dock-glass" href="{{ url_for('students') }}">
+        <span>👥</span> <span>Listes d'Élèves</span>
+      </a>
+      <a class="dash-dock-btn dash-dock-glass" href="{{ url_for('book_sell') }}">
+        <span>🛒</span> <span>Vente Livre</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- 2. HIGH-CONTRAST PEDAGOGICAL & OPERATIONAL KPI CARDS -->
+<div class="dash-kpi-grid">
+  <!-- KPI 1: Active Students -->
+  <div class="dash-kpi-card" style="border-left: 4px solid #1f6feb;">
+    <div class="dash-kpi-top">
+      <span class="dash-kpi-label">Effectif Élèves</span>
+      <div class="dash-kpi-icon" style="background:#eff6ff; color:#1d4ed8;">👥</div>
+    </div>
+    <div class="dash-kpi-val">
+      {{ stats.active_students }}
+      <small>/ {{ stats.students }} total</small>
+    </div>
+    <!-- Progress bar -->
+    <div style="background:#f1f5f9; border-radius:4px; height:6px; width:100%; overflow:hidden; margin:4px 0 6px 0;">
+      <div style="background:#1f6feb; height:100%; width:{{ stats.active_students_pct }}%;"></div>
+    </div>
+    <div class="dash-kpi-sub">
+      <span style="color:#047857; font-weight:800;">🟢 {{ stats.active_students_pct }}% Actifs</span>
+      <a href="{{ url_for('students') }}" style="color:#1f6feb; font-weight:700; text-decoration:none;">Consulter la liste →</a>
+    </div>
+  </div>
+
+  <!-- KPI 2: Active Courses & Groups -->
+  <div class="dash-kpi-card" style="border-left: 4px solid #8b5cf6;">
+    <div class="dash-kpi-top">
+      <span class="dash-kpi-label">Classes & Groupes</span>
+      <div class="dash-kpi-icon" style="background:#f5f3ff; color:#7c3aed;">📚</div>
+    </div>
+    <div class="dash-kpi-val" style="color:#5b21b6;">
+      {{ stats.courses }}
+      <small>groupes actifs</small>
+    </div>
+    <div class="dash-kpi-sub" style="flex-wrap:wrap; gap:4px; padding-top:4px;">
+      <span class="chip chip-blue" style="font-size:9.5px; padding:1px 6px;">🌍 {{ lang_courses }} Langues</span>
+      <span class="chip chip-amber" style="font-size:9.5px; padding:1px 6px;">🎓 {{ tut_courses }} Soutien</span>
+      <span class="chip chip-gray" style="font-size:9.5px; padding:1px 6px;">👨‍🏫 {{ stats.teachers }} Profs</span>
+    </div>
+  </div>
+
+  <!-- KPI 3: Pointage & Présence Aujourd'hui -->
+  <div class="dash-kpi-card" style="border-left: 4px solid #10b981;">
+    <div class="dash-kpi-top">
+      <span class="dash-kpi-label">Pointage Aujourd'hui</span>
+      <div class="dash-kpi-icon" style="background:#ecfdf5; color:#047857;">📍</div>
+    </div>
+    <div class="dash-kpi-val" style="color:#047857;">
+      {{ attend_today }}
+      <small>présences notées</small>
+    </div>
+    <div class="dash-kpi-sub">
+      <span style="color:{% if absent_today > 0 %}#dc2626{% else %}#64748b{% endif %}; font-weight:700;">
+        {{ absent_today }} absence(s) signalée(s)
+      </span>
+      <a href="{{ url_for('attendance') }}" style="color:#047857; font-weight:700; text-decoration:none;">Faire l'appel →</a>
+    </div>
+  </div>
+
+  <!-- KPI 4: Abonnements & Suivi Pédagogique -->
+  <div class="dash-kpi-card" style="border-left: 4px solid {% if stats.expired_enrollments_count and stats.expired_enrollments_count > 0 %}#f59e0b{% else %}#0ea5e9{% endif %};">
+    <div class="dash-kpi-top">
+      <span class="dash-kpi-label">Inscriptions & Suivi</span>
+      <div class="dash-kpi-icon" style="background:#e0f2fe; color:#0284c7;">🎯</div>
+    </div>
+    <div class="dash-kpi-val" style="color:#0284c7;">
+      {{ stats.enrollments }}
+      <small>abonnements actifs</small>
+    </div>
+    <div class="dash-kpi-sub">
+      {% if stats.expired_enrollments_count and stats.expired_enrollments_count > 0 %}
+        <span style="color:#dc2626; font-weight:800;">⚠️ {{ stats.expired_enrollments_count }} expirés à renouveler</span>
+        <a href="javascript:void(0)" onclick="switchDashTab('expiring')" style="color:#b45309; font-weight:700; text-decoration:none;">Retirer →</a>
+      {% else %}
+        <span style="color:#047857; font-weight:700;">✅ Tous les abonnements à jour</span>
+        <a href="{{ url_for('enrollments') }}" style="color:#0284c7; font-weight:700; text-decoration:none;">Consulter →</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if stats.expired_enrollments_count and stats.expired_enrollments_count > 0 %}
+<!-- ALERT STRIP: EXPIRED ACTIVE ENROLLMENTS -->
+<div class="dash-card mb-3" style="background: linear-gradient(135deg, #fff1f2 0%, #fee2e2 100%); border: 1.5px solid #fecdd3; padding: 14px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; box-shadow: 0 4px 14px rgba(225, 29, 72, 0.08);">
+  <div style="display:flex; align-items:center; gap:14px;">
+    <div style="width:42px; height:42px; border-radius:12px; background:#ffe4e6; color:#e11d48; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;">
+      ⏳
+    </div>
+    <div>
+      <div style="font-weight:900; font-size:14.5px; color:#9f1239; display:flex; align-items:center; gap:8px;">
+        <span>{{ stats.expired_enrollments_count }} Abonnement{{ 's' if stats.expired_enrollments_count > 1 else '' }} Expiré{{ 's' if stats.expired_enrollments_count > 1 else '' }} Encore Actif{{ 's' if stats.expired_enrollments_count > 1 else '' }}</span>
+        <span class="chip" style="background:#e11d48; color:#fff; font-size:10px; font-weight:800; padding:1px 7px;">Action Requise</span>
+      </div>
+      <div style="font-size:12px; color:#be123c; margin-top:2px;">
+        Ces élèves ont dépassé leur date limite d'abonnement mais continuent de figurer dans l'émargement et les listes de classe.
+      </div>
+    </div>
+  </div>
+  <button type="button" onclick="switchDashTab('expiring'); document.getElementById('dashTabExpiring').scrollIntoView({behavior:'smooth'});" class="btn btn-sm" style="background:#e11d48; color:#ffffff; font-weight:800; border-radius:8px; padding:8px 16px; font-size:12.5px; border:none; display:inline-flex; align-items:center; gap:6px; cursor:pointer; box-shadow:0 3px 10px rgba(225,29,72,0.3);">
+    <span>📋</span> <span>Voir & Retirer les Expirés ({{ stats.expired_enrollments_count }}) →</span>
+  </button>
+</div>
+{% endif %}
+
+<!-- ======================================================= -->
+<!-- 3. OPERATIONS CENTER & ACTIONS HUB                      -->
+<!-- ======================================================= -->
+{% set nb_urgent = stats.urgent_classes_count or 0 %}
+{% set nb_upcoming = upcoming_classes_alerts|length if upcoming_classes_alerts else 0 %}
+{% set nb_pending = stats.pending_enrollments or 0 %}
+{% set nb_trials = stats.trial_decision_needed or 0 %}
+{% set nb_notes = handover_notes|length if handover_notes else 0 %}
+{% set tot_ops = nb_upcoming + nb_pending + nb_trials + nb_notes %}
+
+{% if tot_ops > 0 %}
+<div class="dash-card mb-3" style="border: 1.5px solid #cbd5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.05);">
+  <!-- Header Bar -->
+  <div style="background: linear-gradient(135deg, #0B3D6E 0%, #1e40af 100%); color:#fff; padding: 12px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="font-size:22px;">⚡</span>
+      <div>
+        <h3 style="margin:0; font-size:15px; font-weight:800; color:#fff;">
+          Centre d'Opérations & Actions Requises (مركز المتابعة والقرارات)
+        </h3>
+        <p style="margin:2px 0 0 0; font-size:11.5px; color:#bfdbfe;">
+          {{ tot_ops }} point(s) opérationnel(s) nécessitant une attention immédiate
+        </p>
+      </div>
+    </div>
+
+    <!-- Active Summary Chips -->
+    <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+      {% if nb_urgent > 0 %}
+        <span class="chip" style="background:#ef4444; color:#fff; font-weight:900; font-size:11px; padding:3px 9px; border-radius:6px;">
+          🚨 {{ nb_urgent }} URGENT (4/4)
+        </span>
+      {% endif %}
+      {% if nb_upcoming > 0 %}
+        <span class="chip" style="background:rgba(255,255,255,0.2); color:#fff; font-weight:700; font-size:11px; padding:3px 8px; border-radius:6px;">
+          ⏳ {{ nb_upcoming }} Sans Prof
+        </span>
+      {% endif %}
+      {% if nb_pending > 0 %}
+        <span class="chip" style="background:rgba(255,255,255,0.2); color:#fff; font-weight:700; font-size:11px; padding:3px 8px; border-radius:6px;">
+          👥 {{ nb_pending }} Sans Groupe
+        </span>
+      {% endif %}
+      {% if nb_trials > 0 %}
+        <span class="chip" style="background:rgba(255,255,255,0.2); color:#fff; font-weight:700; font-size:11px; padding:3px 8px; border-radius:6px;">
+          🧪 {{ nb_trials }} Essais
+        </span>
+      {% endif %}
+      {% if nb_notes > 0 %}
+        <span class="chip" style="background:rgba(255,255,255,0.2); color:#fff; font-weight:700; font-size:11px; padding:3px 8px; border-radius:6px;">
+          📌 {{ nb_notes }} Consignes
+        </span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Interactive Sub-Tabs -->
+  <div style="background:#f8fafc; border-bottom:1px solid #e2e8f0; padding:8px 16px; display:flex; gap:6px; overflow-x:auto;">
+    {% if nb_upcoming > 0 %}
+    <button type="button" id="btnHubClasses" onclick="switchHubTab('classes')" 
+            class="dash-tab-btn active">
+      {% if nb_urgent > 0 %}🚨{% else %}⏳{% endif %} Classes Sans Formateur ({{ nb_upcoming }})
+    </button>
+    {% endif %}
+
+    {% if nb_pending > 0 %}
+    <button type="button" id="btnHubPending" onclick="switchHubTab('pending')" 
+            class="dash-tab-btn {% if nb_upcoming == 0 %}active{% endif %}">
+      ⏳ En Attente de Groupe ({{ nb_pending }})
+    </button>
+    {% endif %}
+
+    {% if nb_trials > 0 %}
+    <button type="button" id="btnHubTrials" onclick="switchHubTab('trials')" 
+            class="dash-tab-btn {% if nb_upcoming == 0 and nb_pending == 0 %}active{% endif %}">
+      🧪 Décisions Séance d'Essai ({{ nb_trials }})
+    </button>
+    {% endif %}
+
+    {% if nb_notes > 0 %}
+    <button type="button" id="btnHubNotes" onclick="switchHubTab('notes')" 
+            class="dash-tab-btn {% if nb_upcoming == 0 and nb_pending == 0 and nb_trials == 0 %}active{% endif %}">
+      📌 Cahier de Liaison ({{ nb_notes }})
+    </button>
+    {% endif %}
+  </div>
+
+  <!-- PANEL 1: CLASSES SANS PROF -->
+  {% if nb_upcoming > 0 %}
+  <div id="hubPanelClasses" style="padding:16px 20px;">
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      {% for item in upcoming_classes_alerts %}
+        {% set c = item.course %}
+        {% set cnt = item.enrolled_count %}
+        {% set needed = item.needed %}
+        {% set is_urgent = item.is_ready %}
+        
+        <div style="border: 1.5px solid {% if is_urgent %}#ef4444{% else %}#f59e0b{% endif %}; background: {% if is_urgent %}linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%){% else %}linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%){% endif %}; padding: 14px 18px; border-radius: 12px; box-shadow: 0 2px 8px {% if is_urgent %}rgba(239, 68, 68, 0.1){% else %}rgba(245, 158, 11, 0.06){% endif %}; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          
+          <div style="display:flex; align-items:center; gap:14px; flex:1; min-width:280px;">
+            <div style="width:42px; height:42px; border-radius:10px; background:{% if is_urgent %}#fecaca{% else %}#fde68a{% endif %}; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;">
+              {% if is_urgent %}🚨{% else %}⏳{% endif %}
+            </div>
+            
+            <div style="flex:1;">
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span style="font-weight:900; font-size:15px; color:{% if is_urgent %}#991b1b{% else %}#92400e{% endif %};">
+                  {{ c.name }}
+                </span>
+                {% if is_urgent %}
+                  <span class="chip" style="background:#dc2626; color:#fff; font-weight:900; font-size:10.5px; padding:2px 8px; border-radius:5px;">
+                    🚨 COMPLET 4/4 · AFFECTER PROF
+                  </span>
+                {% else %}
+                  <span class="chip" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-weight:800; font-size:10.5px; padding:2px 7px; border-radius:5px;">
+                    ⏳ En cours ({{ cnt }}/4 inscrits)
+                  </span>
+                {% endif %}
+                <span class="chip {% if c.category=='language' %}chip-blue{% else %}chip-green{% endif %}" style="font-size:9.5px; padding:1px 6px;">
+                  {{ '📘 Langue' if c.category=='language' else '📗 Soutien' }}
+                </span>
+                {% if c.level %}<span class="chip chip-gray" style="font-size:9.5px; padding:1px 6px;">{{ c.level }}</span>{% endif %}
+              </div>
+
+              <div style="margin-top:3px; font-size:12.5px; color:{% if is_urgent %}#b91c1c{% else %}#b45309{% endif %};">
+                {% if is_urgent %}
+                  <strong>Classe complète avec {{ cnt }} élèves. Affectez le formateur dès aujourd'hui pour valider les horaires et débuter les cours.</strong>
+                {% else %}
+                  <span>
+                    Déjà <strong>{{ cnt }} élève{{ 's' if cnt > 1 else '' }} inscrit{{ 's' if cnt > 1 else '' }}</strong> ({{ cnt }}/4) · 
+                    <strong style="color:#d97706; font-weight:800;">Reste {{ needed }} inscription{{ 's' if needed > 1 else '' }} pour lancer le groupe !</strong>
+                  </span>
+                {% endif %}
+              </div>
+
+              {% if item.students %}
+              <div style="margin-top:5px; display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
+                <span style="font-size:10.5px; font-weight:700; color:#64748b;">👥 Élèves inscrits :</span>
+                {% for st in item.students %}
+                  <a href="{{ url_for('student_view', sid=st.id) }}" style="text-decoration:none; background:#fff; border:1px solid #cbd5e1; color:#0B3D6E; font-size:10.5px; font-weight:700; padding:1px 6px; border-radius:4px; display:inline-flex; align-items:center; gap:3px;">
+                    👤 {{ st.full_name }}
+                  </a>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div>
+            <button type="button" 
+                    onclick="openAssignProfModal('{{ c.id }}', '{{ c.name|replace('\'', '\\\'') }}', '{{ (c.language or '') ~ ' · ' ~ (c.level or '') }}', '{{ cnt }}')"
+                    class="btn btn-sm" 
+                    style="background:{% if is_urgent %}#dc2626{% else %}#0B3D6E{% endif %}; border-color:{% if is_urgent %}#b91c1c{% else %}#0B3D6E{% endif %}; color:#fff; font-weight:800; font-size:12.5px; padding:8px 16px; border-radius:8px; box-shadow:0 3px 10px {% if is_urgent %}rgba(220,38,38,0.25){% else %}rgba(11,61,110,0.2){% endif %}; cursor:pointer; display:flex; align-items:center; gap:6px; white-space:nowrap;">
+              <span>👨‍🏫</span>
+              <span>Assigner un Professeur Directement</span>
+            </button>
+          </div>
+
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- PANEL 2: EN ATTENTE DE GROUPE -->
+  {% if nb_pending > 0 %}
+  <div id="hubPanelPending" style="display:{% if nb_upcoming == 0 %}block{% else %}none{% endif %}; padding:16px 20px;">
+    <div style="background:#fffbeb; border:1.5px solid #f59e0b; border-radius:10px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="width:38px; height:38px; border-radius:8px; background:#fde68a; display:flex; align-items:center; justify-content:center; font-size:20px;">⏳</div>
+        <div>
+          <div style="font-weight:800; color:#92400e; font-size:14px;">
+            {{ stats.pending_enrollments }} Inscription(s) en attente d'affectation au groupe (تسجيلات في انتظار تحديد الفوج)
+          </div>
+          <div style="font-size:12px; color:#b45309; margin-top:2px;">
+            Des élèves sont inscrits pour des matières sans classe assignée. Veuillez leur affecter un groupe définitif.
+          </div>
+        </div>
+      </div>
+      <a href="{{ url_for('enrollments', status='pending_assignment') }}" class="btn btn-sm btn-primary" style="background:#f59e0b; border-color:#d97706; font-weight:800; font-size:12px; padding:7px 16px; box-shadow:0 2px 8px rgba(245,158,11,0.25);">
+        ⚡ Voir & Affecter le groupe →
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- PANEL 3: DÉCISIONS SÉANCE D'ESSAI -->
+  {% if nb_trials > 0 %}
+  <div id="hubPanelTrials" style="display:{% if nb_upcoming == 0 and nb_pending == 0 %}block{% else %}none{% endif %}; padding:16px 20px;">
+    <div style="background:#fff7ed; border:1.5px solid #ea580c; border-radius:10px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="width:38px; height:38px; border-radius:8px; background:#fed7aa; display:flex; align-items:center; justify-content:center; font-size:20px;">🧪</div>
+        <div>
+          <div style="font-weight:800; color:#9a3412; font-size:14px;">
+            {{ stats.trial_decision_needed }} Élève(s) ayant terminé leur unique séance d'essai gratuite (1/1)
+          </div>
+          <div style="font-size:12px; color:#c2410c; margin-top:2px;">
+            L'essai est consommé. Veuillez valider leur inscription définitive ou marquer leur abandon dans le système.
+          </div>
+        </div>
+      </div>
+      <a href="{{ url_for('enrollments', status='trial') }}" class="btn btn-sm btn-primary" style="background:#ea580c; border-color:#c2410c; font-weight:800; font-size:12px; padding:7px 16px; box-shadow:0 2px 8px rgba(234,88,12,0.25);">
+        ⚡ Valider ou Marquer Abandon →
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- PANEL 4: CAHIER DE LIAISON -->
+  {% if nb_notes > 0 %}
+  <div id="hubPanelNotes" style="display:{% if nb_upcoming == 0 and nb_pending == 0 and nb_trials == 0 %}block{% else %}none{% endif %}; padding:16px 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+      <div style="font-size: 13px; color: #92400e; font-weight: 800;">
+        📌 {{ handover_notes|length }} note(s) et consigne(s) en attente de suivi d'équipe
+      </div>
+      <a href="{{ url_for('staff_notes') }}" class="btn btn-xs btn-primary" style="background: #d97706; border-color: #d97706; font-weight: 800; font-size: 11.5px; padding: 5px 12px;">
+        📝 Ouvrir le Cahier de Liaison Complet →
+      </a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px;">
+      {% for note in handover_notes %}
+      <div style="background: #f8fafc; border-radius: 10px; border-left: 4px solid {% if note.priority == 'urgent' %}#dc2626{% elif note.priority == 'high' %}#f59e0b{% else %}#1f6feb{% endif %}; padding: 12px 14px; border: 1px solid #e2e8f0; border-left-width: 4px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; margin-bottom: 4px;">
+            <span style="font-weight: 800; font-size: 13px; color: #1e293b;">
+              {% if note.is_pinned %}📌{% endif %} {{ note.title }}
+            </span>
+            {% if note.priority == 'urgent' %}
+              <span class="chip chip-red" style="font-size: 9.5px; padding: 1px 5px; font-weight: 800;">🚨 URGENT</span>
+            {% elif note.priority == 'high' %}
+              <span class="chip chip-amber" style="font-size: 9.5px; padding: 1px 5px; font-weight: 700;">⚠️ IMPORTANT</span>
+            {% endif %}
+          </div>
+          <p style="font-size: 12px; color: #475569; margin: 0 0 8px 0; line-height: 1.45; white-space: pre-line;">{{ note.content[:140] }}{% if note.content|length > 140 %}...{% endif %}</p>
+        </div>
+        <div style="font-size: 10.5px; color: #64748b; display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #e2e8f0; padding-top: 6px;">
+          <span>👤 {{ note.author.full_name or note.author.username if note.author else 'Système' }} · {{ note.created_at.strftime('%d/%m %H:%M') }}</span>
+          <a href="{{ url_for('staff_notes') }}#note-{{ note.id }}" style="font-weight: 700; color: #0284c7; text-decoration: none;">Voir →</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% else %}
+<!-- PEACEFUL STATUS BANNER -->
+<div class="dash-card mb-3" style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 1.5px solid #a7f3d0; padding: 12px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+  <div style="display:flex; align-items:center; gap:10px;">
+    <span style="font-size:20px;">🟢</span>
+    <span style="font-weight:800; font-size:13.5px; color:#065f46;">
+      Centre d'Opérations : Toutes les classes sont pourvues et le suivi pédagogique est 100% à jour. Aucun point bloquant aujourd'hui !
+    </span>
+  </div>
+  <span class="chip chip-green" style="font-size:10.5px; font-weight:800; padding:3px 9px;">✓ TOUT EST EN ORDRE</span>
+</div>
+{% endif %}
+
+<!-- ======================================================= -->
+<!-- 4. MAIN WORKSPACE 2-COLUMN GRID                         -->
+<!-- ======================================================= -->
+<div class="dash-workspace-grid mb-3">
+
+  <!-- ==================== LEFT COLUMN ==================== -->
+  <div style="display:flex; flex-direction:column; gap:18px; min-width:0;">
+
+    <!-- Operational Multi-Tabs Hub -->
+    <div class="dash-card card-pad" style="padding:18px 22px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1.5px solid #f1f5f9; padding-bottom:12px; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+        <!-- Tab Navigation Buttons -->
+        <div style="display:flex; gap:6px; overflow-x:auto; flex:1;">
+          <button type="button" id="tabBtnEnrolls" onclick="switchDashTab('enrolls')" class="dash-tab-btn active">
+            <span>📋</span> <span>Dernières Inscriptions ({{ recent_enrolls|length }})</span>
+          </button>
+          <button type="button" id="tabBtnExpiring" onclick="switchDashTab('expiring')" class="dash-tab-btn">
+            <span>⏳</span>
+            <span>Abonnements Expirés</span>
+            <span style="background:{% if expired_enrollments %}#e11d48{% else %}#64748b{% endif %}; color:#fff; font-size:10.5px; font-weight:800; padding:1px 7px; border-radius:10px;">{{ expired_enrollments|length }}</span>
+          </button>
+          <button type="button" id="tabBtnPending" onclick="switchDashTab('pending')" class="dash-tab-btn">
+            <span>👥</span> <span>Sans Groupe ({{ pending_enrolls|length }})</span>
+          </button>
+          <button type="button" id="tabBtnLogins" onclick="switchDashTab('logins')" class="dash-tab-btn">
+            <span class="pulse-dot"></span>
+            <span>Connexions Direct (Live)</span>
+          </button>
+        </div>
+        <span class="muted" style="font-size:11.5px; white-space:nowrap;">Flux en temps réel</span>
+      </div>
+
+      <!-- TAB 1 : RECENT ENROLLMENTS -->
+      <div id="dashTabEnrolls">
+        {% if recent_enrolls %}
+        <div class="table-wrap">
+          <table style="font-size:13px; width:100%;">
+            <thead>
+              <tr style="background:#f8fafc; font-size:11.5px; color:#64748b; border-bottom:1.5px solid #e2e8f0;">
+                <th style="padding:10px 12px;">Date Inscription</th>
+                <th style="padding:10px 12px;">Élève</th>
+                <th style="padding:10px 12px;">Classe / Cours</th>
+                <th style="padding:10px 12px;">Formateur</th>
+                <th style="padding:10px 12px; text-align:center;">Statut</th>
+                <th style="padding:10px 12px; text-align:right;">Fiche</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for e in recent_enrolls %}
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:10px 12px; color:#64748b; font-size:12px;">
+                  {{ e.enroll_date.strftime('%d/%m/%Y') if e.enroll_date else (e.created_at.strftime('%d/%m/%Y') if e.created_at else '-') }}
+                </td>
+                <td style="padding:10px 12px;">
+                  {% if e.student %}
+                    <a href="{{ url_for('student_view', sid=e.student.id) }}" style="font-weight:700; color:#0B3D6E; text-decoration:none;">
+                      {{ e.student.full_name }}
+                    </a>
+                  {% else %}
+                    <span class="muted">-</span>
+                  {% endif %}
+                </td>
+                <td style="padding:10px 12px; font-weight:600; color:#334155;">
+                  {{ e.course.display_name if e.course else (e.course_name_display or 'Formation') }}
+                </td>
+                <td style="padding:10px 12px; color:#64748b; font-size:12px;">
+                  {% if e.course and e.course.teacher %}
+                    👨‍🏫 {{ e.course.teacher.full_name }}
+                  {% else %}
+                    <span class="muted">À affecter</span>
+                  {% endif %}
+                </td>
+                <td style="padding:10px 12px; text-align:center;">
+                  <span class="chip chip-green" style="font-size:10px; font-weight:700; padding:2px 8px;">Actif</span>
+                </td>
+                <td style="padding:10px 12px; text-align:right;">
+                  {% if e.student %}
+                  <a class="btn btn-xs btn-outline" href="{{ url_for('student_view', sid=e.student.id) }}" style="padding:3px 8px; font-size:11px;">
+                    👁️ Voir
+                  </a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty" style="padding:26px; text-align:center;">Aucune inscription récente pour le moment.</div>
+        {% endif %}
+      </div>
+
+      <!-- TAB 2 : EXPIRING ENROLLMENTS -->
+      <div id="dashTabExpiring" style="display:none;">
+        <form id="batchRetireForm" method="post" action="{{ url_for('enrollments_batch_retire') }}" onsubmit="return confirmBatchRetire()">
+          <div style="background:#fff1f2; border:1.5px solid #fecdd3; border-radius:10px; padding:12px 16px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:20px;">⏳</span>
+              <div>
+                <strong style="color:#9f1239; font-size:13.5px;">{{ expired_enrollments|length }} Élève{{ 's' if expired_enrollments|length > 1 else '' }} avec abonnement expiré encore actif{{ 's' if expired_enrollments|length > 1 else '' }}</strong>
+                <div style="font-size:11.5px; color:#be123c;">Cochez les élèves et cliquez sur "Retirer" pour les marquer comme "Terminée" et les retirer de la classe et de l'émargement.</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button type="submit" id="btnBatchRetire" class="btn btn-sm" disabled style="background:#e11d48; color:#fff; border:none; font-weight:800; font-size:12px; padding:7px 16px; border-radius:8px; cursor:not-allowed; opacity:0.6; display:inline-flex; align-items:center; gap:6px;">
+                <span>❌</span> <span>Retirer la sélection (0)</span>
+              </button>
+              <a href="{{ url_for('enrollments', status='expired') }}" class="btn btn-sm btn-outline" style="font-weight:700; font-size:12px; padding:6px 12px; border-radius:8px; color:#9f1239; border-color:#fca5a5; background:#fff;">
+                Liste complète ↗
+              </a>
+            </div>
+          </div>
+
+          {% if expired_enrollments %}
+          <div class="table-wrap">
+            <table style="font-size:13px; width:100%;">
+              <thead>
+                <tr style="background:#f8fafc; font-size:11.5px; color:#64748b;">
+                  <th style="width:38px; text-align:center; padding:10px 8px;">
+                    <input type="checkbox" id="checkAllExpired" onclick="toggleAllExpired(this)" title="Tout sélectionner" style="cursor:pointer; width:16px; height:16px;">
+                  </th>
+                  <th style="padding:10px 8px;">Élève</th>
+                  <th style="padding:10px 8px;">Matière / Groupe & Professeur</th>
+                  <th style="padding:10px 8px;">Date d'échéance</th>
+                  <th style="padding:10px 8px; text-align:center;">Retard</th>
+                  <th style="padding:10px 8px; text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for e in expired_enrollments %}
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                  <td style="text-align:center; padding:10px 8px;">
+                    <input type="checkbox" name="enrollment_ids" value="{{ e.id }}" class="expired-check" onchange="updateBatchRetireBtn()" style="cursor:pointer; width:16px; height:16px;">
+                  </td>
+                  <td style="padding:10px 8px;">
+                    {% if e.student %}
+                      <a href="{{ url_for('student_view', sid=e.student.id) }}" style="font-weight:700; color:#0B3D6E; text-decoration:none;">
+                        {{ e.student.full_name }}
+                      </a>
+                    {% else %}
+                      <span class="muted">-</span>
+                    {% endif %}
+                  </td>
+                  <td style="padding:10px 8px;">
+                    <div style="font-weight:700; color:#334155;">{{ e.course.display_name if e.course else (e.course_name_display) }}</div>
+                    {% if e.course and e.course.teacher %}
+                      <div style="font-size:11px; color:#64748b;">👨‍🏫 {{ e.course.teacher.full_name }}</div>
+                    {% endif %}
+                  </td>
+                  <td style="padding:10px 8px;">
+                    <strong style="color:#e11d48;">{{ e.end_date.strftime('%d/%m/%Y') if e.end_date else '?' }}</strong>
+                  </td>
+                  <td style="padding:10px 8px; text-align:center;">
+                    {% set rem = e.days_remaining %}
+                    {% if rem is not none and rem < 0 %}
+                      <span class="chip chip-red" style="font-size:11px; font-weight:800; background:#ffe4e6; color:#be123c; border:1px solid #fecdd3;">
+                        ⚠️ Expiré ({{ -rem }}j)
+                      </span>
+                    {% else %}
+                      <span class="chip chip-amber" style="font-size:11px;">Aujourd'hui</span>
+                    {% endif %}
+                  </td>
+                  <td style="padding:10px 8px; text-align:right;">
+                    <div style="display:inline-flex; gap:6px; align-items:center;">
+                      <a class="btn btn-xs" href="{{ url_for('enrollment_renew', eid=e.id) }}" style="padding:5px 9px; font-size:11.5px; background:#10b981; color:#fff; border:none; border-radius:6px; font-weight:700; text-decoration:none;" title="Renouveler pour un nouveau mois">
+                        🔄 Renouveler
+                      </a>
+                      <button type="button" data-eid="{{ e.id }}" data-name="{{ e.student.full_name if e.student else '' }}" onclick="retireSingle(this)" class="btn btn-xs" style="padding:5px 9px; font-size:11.5px; background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; border-radius:6px; font-weight:800; cursor:pointer;" title="Retirer de la classe (Marquer Terminée)">
+                        ❌ Retirer
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="empty" style="padding:32px; text-align:center; color:#059669; font-weight:700;">
+            <div style="font-size:32px; margin-bottom:8px;">🎉</div>
+            Aucun abonnement actif n'est expiré ! Tous les élèves sont en règle.
+          </div>
+          {% endif %}
+        </form>
+
+        <!-- Hidden form for single enrollment retire -->
+        <form id="singleRetireForm" method="post" action="" style="display:none;">
+          <input type="hidden" name="status" value="completed">
+        </form>
+      </div>
+
+      <!-- TAB 3 : PENDING ASSIGNMENT ENROLLMENTS -->
+      <div id="dashTabPending" style="display:none;">
+        {% if pending_enrolls %}
+        <div class="table-wrap">
+          <table style="font-size:13px; width:100%;">
+            <thead>
+              <tr style="background:#f8fafc; font-size:11.5px; color:#64748b;">
+                <th style="padding:10px 12px;">Date Inscription</th>
+                <th style="padding:10px 12px;">Élève</th>
+                <th style="padding:10px 12px;">Matière Demandée</th>
+                <th style="padding:10px 12px; text-align:center;">Statut</th>
+                <th style="padding:10px 12px; text-align:right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for pe in pending_enrolls %}
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:10px 12px; color:#64748b; font-size:12px;">
+                  {{ pe.enroll_date.strftime('%d/%m/%Y') if pe.enroll_date else (pe.created_at.strftime('%d/%m/%Y') if pe.created_at else '-') }}
+                </td>
+                <td style="padding:10px 12px; font-weight:700; color:#0B3D6E;">
+                  {{ pe.student.full_name if pe.student else '-' }}
+                </td>
+                <td style="padding:10px 12px; color:#475569; font-weight:600;">
+                  {{ pe.course_name_display or (pe.tariff.name if pe.tariff else 'Matière à définir') }}
+                </td>
+                <td style="padding:10px 12px; text-align:center;">
+                  <span class="chip chip-amber" style="font-size:10.5px; font-weight:700;">En attente de groupe</span>
+                </td>
+                <td style="padding:10px 12px; text-align:right;">
+                  <a class="btn btn-xs btn-primary" href="{{ url_for('enrollment_edit', eid=pe.id) }}" style="padding:4px 10px; font-size:11px; background:#0B3D6E; border-color:#0B3D6E;">
+                    ⚡ Affecter Groupe
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty" style="padding:24px; color:#059669; font-weight:700; text-align:center;">
+          ✓ Tous les élèves sont correctement affectés à leurs groupes !
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- TAB 4 : LIVE LOGINS -->
+      <div id="dashTabLogins" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:#f8fafc; padding:10px 14px; border-radius:10px; border:1px solid #e2e8f0;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="pulse-dot"></span>
+            <span style="font-size:12.5px; font-weight:700; color:#0B3D6E;">Surveillance des Connexions en Temps Réel (Cloudflare & Local)</span>
+          </div>
+          <a href="{{ url_for('settings_security') }}" class="btn btn-xs btn-outline" style="font-size:11px; font-weight:700; background:#fff;">
+            Journal Complet 🛡️
+          </a>
+        </div>
+        <div class="table-wrap">
+          <table style="font-size:12.5px; width:100%;" id="dashLiveLoginsTable">
+            <thead>
+              <tr style="background:#f8fafc; font-size:11px; color:#64748b; text-transform:uppercase;">
+                <th style="padding:9px 12px;">Heure</th>
+                <th style="padding:9px 12px;">Utilisateur</th>
+                <th style="padding:9px 12px;">Adresse IP & Réseau</th>
+                <th style="padding:9px 12px; text-align:right;">Résultat</th>
+              </tr>
+            </thead>
+            <tbody id="dashLiveLoginsBody">
+              <tr>
+                <td colspan="4" style="text-align:center; padding:24px; color:#94a3b8; font-size:12px;">
+                  Chargement des connexions en direct...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ==================== RIGHT COLUMN (WIDGETS) ==================== -->
+  <div style="display:flex; flex-direction:column; gap:18px;">
+
+    <!-- Widget 1: Real-Time Live Logins Stream -->
+    <div class="dash-card card-pad" style="padding:16px 18px; border-top:3.5px solid #10b981;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h4 style="margin:0; font-size:13.5px; color:#0B3D6E; font-weight:800; display:flex; align-items:center; gap:6px;">
+          <span class="pulse-dot"></span>
+          <span>Connexions Direct</span>
+        </h4>
+        <span class="chip chip-green" style="font-size:9.5px; font-weight:800; padding:1px 6px;">EN DIRECT</span>
+      </div>
+      <div id="sideLiveLoginsList" style="display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto;">
+        <div style="text-align:center; padding:16px; font-size:11px; color:#94a3b8;">Chargement des accès...</div>
+      </div>
+      <div style="margin-top:10px; border-top:1px dashed #e2e8f0; padding-top:8px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:10.5px; color:#64748b;">Cloudflare & Réseau Local</span>
+        <a href="{{ url_for('settings_security') }}" style="font-size:11px; font-weight:700; color:#1f6feb; text-decoration:none;">Audit 🛡️ →</a>
+      </div>
+    </div>
+
+    <!-- Widget 2: Attendance Today -->
+    <div class="dash-card card-pad" style="padding:16px 18px; border-top:3.5px solid #25d366;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h4 style="margin:0; font-size:14px; color:#0B3D6E; font-weight:800; display:flex; align-items:center; gap:6px;">
+          <span>📍</span> <span>Pointage du Jour</span>
+        </h4>
+        <span class="chip chip-gray" style="font-size:10.5px;">{{ today.strftime('%d/%m') }}</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin:12px 0;">
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:10px; text-align:center;">
+          <div style="font-size:20px; font-weight:800; color:#15803d;">{{ attend_today }}</div>
+          <div style="font-size:11px; color:#166534; font-weight:700;">Pointages faits</div>
+        </div>
+        <div style="background:{% if absent_today > 0 %}#fef2f2{% else %}#f8fafc{% endif %}; border:1px solid {% if absent_today > 0 %}#fca5a5{% else %}#e2e8f0{% endif %}; border-radius:10px; padding:10px; text-align:center;">
+          <div style="font-size:20px; font-weight:800; color:{% if absent_today > 0 %}#b91c1c{% else %}#64748b{% endif %};">{{ absent_today }}</div>
+          <div style="font-size:11px; color:{% if absent_today > 0 %}#991b1b{% else %}#64748b{% endif %}; font-weight:700;">Absents notés</div>
+        </div>
+      </div>
+
+      <a class="btn btn-outline btn-sm" href="{{ url_for('attendance') }}" style="width:100%; text-align:center; justify-content:center; font-size:12px; font-weight:700; border-radius:8px;">
+        📲 Gérer la Présence & WhatsApp
+      </a>
+    </div>
+
+    <!-- Widget 3: Data & Backup Status -->
+    <div class="dash-card card-pad" style="padding:16px 18px; border-top:3.5px solid #0ea5e9;">
+      <h4 style="margin:0 0 8px 0; font-size:14px; color:#0B3D6E; font-weight:800; display:flex; align-items:center; gap:6px;">
+        <span>💾</span> <span>Données & Sauvegardes</span>
+      </h4>
+      
+      <div style="font-size:12px; color:#475569; display:flex; flex-direction:column; gap:5px; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between;">
+          <span>Statut BDD :</span>
+          <span style="color:#047857; font-weight:700;">🟢 Opérationnelle</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span>Dernière sauvegarde :</span>
+          <span style="font-weight:700; color:#0B3D6E; font-family:monospace; font-size:11px;">{{ last_backup_name[:18] ~ '...' if last_backup_name else 'Active' }}</span>
+        </div>
+      </div>
+
+      <div class="flex" style="gap:6px;">
+        <a class="btn btn-xs btn-outline" href="{{ url_for('settings_backups') }}" style="flex:1; text-align:center; justify-content:center; border-radius:6px; font-weight:700;">
+          ⚙️ Gérer BDD
+        </a>
+        <a class="btn btn-xs btn-primary" href="{{ url_for('settings_backups_download_current') }}" style="background:#1f6feb; border-color:#1f6feb; border-radius:6px; font-weight:700;" title="Télécharger la base">
+          📥 .db
+        </a>
+      </div>
+    </div>
+
+    <!-- Widget 4: Book Stock Alert -->
+    {% if low_stock_books %}
+    <div class="dash-card card-pad" style="padding:16px 18px; border-top:3.5px solid #ef4444; background:#fffaf0;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h4 style="margin:0; font-size:13.5px; color:#9a3412; font-weight:800;">⚠️ Alertes Stock Livres ({{ low_stock_books|length }})</h4>
+        <a href="{{ url_for('books') }}" style="font-size:11px; font-weight:700; color:#ea580c; text-decoration:none;">Voir tout →</a>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        {% for b in low_stock_books[:3] %}
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; background:#fff; padding:6px 10px; border-radius:8px; border:1px solid #fed7aa;">
+          <span style="font-weight:700; color:#0B3D6E; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px;">{{ b.title }}</span>
+          <span class="chip {% if b.stock_quantity <= 0 %}chip-red{% else %}chip-amber{% endif %}" style="font-size:9.5px; padding:1px 5px;">
+            {{ b.stock_quantity }} en stock
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Widget 5: Quick Direct Shortcuts Grid -->
+    <div class="dash-card card-pad" style="padding:16px 18px;">
+      <h4 style="margin:0 0 10px 0; font-size:12px; color:#64748b; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">RACCOURCIS DIRECTS</h4>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+        <a href="{{ url_for('student_form') }}" class="btn btn-outline btn-xs" style="justify-content:center; font-weight:700; padding:7px; border-radius:8px;">
+          ➕ Nouvel Élève
+        </a>
+        <a href="{{ url_for('teacher_form') }}" class="btn btn-outline btn-xs" style="justify-content:center; font-weight:700; padding:7px; border-radius:8px;">
+          ➕ Professeur
+        </a>
+        <a href="{{ url_for('course_form') }}" class="btn btn-outline btn-xs" style="justify-content:center; font-weight:700; padding:7px; border-radius:8px;">
+          ➕ Nouvelle Classe
+        </a>
+        <a href="{{ url_for('user_guide') }}" class="btn btn-outline btn-xs" style="justify-content:center; font-weight:700; padding:7px; border-color:#8b5cf6; color:#7c3aed; border-radius:8px;">
+          📖 Guide PDF
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- INTERACTIVE SCRIPTS -->
+<script>
+  function switchHubTab(hubTab) {
+    var pClasses = document.getElementById('hubPanelClasses');
+    var pPending = document.getElementById('hubPanelPending');
+    var pTrials = document.getElementById('hubPanelTrials');
+    var pNotes = document.getElementById('hubPanelNotes');
+
+    if (pClasses) pClasses.style.display = (hubTab === 'classes') ? 'block' : 'none';
+    if (pPending) pPending.style.display = (hubTab === 'pending') ? 'block' : 'none';
+    if (pTrials) pTrials.style.display = (hubTab === 'trials') ? 'block' : 'none';
+    if (pNotes) pNotes.style.display = (hubTab === 'notes') ? 'block' : 'none';
+
+    var bClasses = document.getElementById('btnHubClasses');
+    var bPending = document.getElementById('btnHubPending');
+    var bTrials = document.getElementById('btnHubTrials');
+    var bNotes = document.getElementById('btnHubNotes');
+
+    [bClasses, bPending, bTrials, bNotes].forEach(function(b) {
+      if (b) b.classList.remove('active');
+    });
+
+    if (hubTab === 'classes' && bClasses) bClasses.classList.add('active');
+    if (hubTab === 'pending' && bPending) bPending.classList.add('active');
+    if (hubTab === 'trials' && bTrials) bTrials.classList.add('active');
+    if (hubTab === 'notes' && bNotes) bNotes.classList.add('active');
+  }
+
+  function switchDashTab(tabName) {
+    var tabE = document.getElementById('dashTabEnrolls');
+    var tabExp = document.getElementById('dashTabExpiring');
+    var tabP = document.getElementById('dashTabPending');
+    var tabL = document.getElementById('dashTabLogins');
+
+    if (tabE) tabE.style.display = (tabName === 'enrolls') ? 'block' : 'none';
+    if (tabExp) tabExp.style.display = (tabName === 'expiring') ? 'block' : 'none';
+    if (tabP) tabP.style.display = (tabName === 'pending') ? 'block' : 'none';
+    if (tabL) tabL.style.display = (tabName === 'logins') ? 'block' : 'none';
+
+    var btnE = document.getElementById('tabBtnEnrolls');
+    var btnExp = document.getElementById('tabBtnExpiring');
+    var btnP = document.getElementById('tabBtnPending');
+    var btnL = document.getElementById('tabBtnLogins');
+
+    [btnE, btnExp, btnP, btnL].forEach(function(b) {
+      if (b) b.classList.remove('active');
+    });
+
+    if (tabName === 'enrolls' && btnE) btnE.classList.add('active');
+    if (tabName === 'expiring' && btnExp) btnExp.classList.add('active');
+    if (tabName === 'pending' && btnP) btnP.classList.add('active');
+    if (tabName === 'logins' && btnL) btnL.classList.add('active');
+  }
+
+  function renderDashLogins(list) {
+    if (!list || list.length === 0) return;
+    var tbody = document.getElementById('dashLiveLoginsBody');
+    var sideList = document.getElementById('sideLiveLoginsList');
+
+    if (tbody) {
+      tbody.innerHTML = list.map(function(item) {
+        var statusBadge = item.success 
+          ? '<span class="chip chip-green" style="font-size:10px; font-weight:800; padding:2px 8px;">🟢 Réussi</span>'
+          : '<span class="chip chip-red" style="font-size:10px; font-weight:800; padding:2px 8px;">❌ Échec Mot de passe</span>';
+        var ipTag = item.is_local 
+          ? '<span class="chip chip-gray" style="font-size:10px; font-weight:700;">🏠 Local (LAN)</span>'
+          : '<span class="chip chip-blue" style="font-size:10px; font-weight:700;">🌐 Cloudflare (En ligne)</span>';
+
+        return '<tr style="border-bottom:1px solid #f1f5f9;">' +
+          '<td style="padding:10px 12px; font-size:12px; color:#475569; font-weight:600;">' + item.time + ' · ' + item.date + '</td>' +
+          '<td style="padding:10px 12px;">' +
+            '<strong style="color:#0B3D6E; font-size:12.5px;">@' + item.username + '</strong> ' +
+            '<span style="font-size:11px; color:#64748b;">(' + item.full_name + ' · <span style="font-weight:700; color:#1f6feb;">' + item.role_display + '</span>)</span>' +
+          '</td>' +
+          '<td style="padding:10px 12px;"><code style="font-size:11.5px; font-weight:700; color:#0f172a; margin-right:6px;">' + item.ip_address + '</code>' + ipTag + '</td>' +
+          '<td style="padding:10px 12px; text-align:right;">' + statusBadge + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    if (sideList) {
+      sideList.innerHTML = list.slice(0, 6).map(function(item) {
+        var dotColor = item.success ? '#10b981' : '#ef4444';
+        var bgBox = item.success ? '#f8fafc' : '#fef2f2';
+        var borderBox = item.success ? '#f1f5f9' : '#fecaca';
+
+        return '<div style="background:' + bgBox + '; border:1px solid ' + borderBox + '; border-radius:8px; padding:7px 10px; display:flex; justify-content:space-between; align-items:center; transition:all 0.2s;">' +
+          '<div>' +
+            '<div style="font-weight:700; font-size:11.5px; color:#0f172a; display:flex; align-items:center; gap:5px;">' +
+              '<span style="width:7px; height:7px; border-radius:50%; background:' + dotColor + ';"></span>' +
+              '<span>@' + item.username + '</span>' +
+              '<span style="font-size:9.5px; color:#64748b; font-weight:600;">(' + item.role_display + ')</span>' +
+            '</div>' +
+            '<div style="font-size:10px; color:#64748b; font-family:monospace; margin-top:1px;">' + item.ip_address + (item.is_local ? ' · LAN' : ' · Web') + '</div>' +
+          '</div>' +
+          '<div style="text-align:right;">' +
+            '<div style="font-size:10px; font-weight:800; color:' + (item.success ? '#047857' : '#b91c1c') + ';">' + (item.success ? '✓ Succès' : '❌ Échec') + '</div>' +
+            '<div style="font-size:9.5px; color:#94a3b8;">' + item.time + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+  }
+
+  window.onLiveLoginsInitial = function(recentList) {
+    renderDashLogins(recentList);
+  };
+
+  window.onLiveLoginsNewEvents = function(newEvents, recentList) {
+    renderDashLogins(recentList);
+  };
+</script>
+
+{% endif %}
+
+<!-- ======================================================= -->
+<!-- MODAL ASSIGNATION DIRECTE PROFESSEUR                     -->
+<!-- ======================================================= -->
+<div id="assignProfModal" class="modal-backdrop" onclick="if(event.target===this) closeAssignProfModal();" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.65); z-index:99999; align-items:center; justify-content:center; backdrop-filter:blur(3px); padding:16px;">
+  <div class="dash-card" style="width:100%; max-width:500px; padding:22px 24px; border-radius:16px; background:#fff; box-shadow:0 20px 50px rgba(0,0,0,0.25); border-top:4px solid #0B3D6E;">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1.5px solid #f1f5f9; padding-bottom:12px; margin-bottom:14px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:22px;">👨‍🏫</span>
+        <h3 style="margin:0; font-size:16px; font-weight:800; color:#0B3D6E;">
+          {{ 'تعيين أستاذ للقسم' if lang=='ar' else 'Affecter un Professeur à la Classe' }}
+        </h3>
+      </div>
+      <button type="button" onclick="closeAssignProfModal()" style="border:none; background:none; font-size:18px; cursor:pointer; color:#94a3b8;">✕</button>
+    </div>
+
+    <form method="post" id="assignProfForm" action="">
+      <div style="background:#f0f9ff; border:1px solid #bae6fd; padding:12px 14px; border-radius:10px; margin-bottom:14px; font-size:12.5px;">
+        <div>🏫 <strong>{{ 'القسم :' if lang=='ar' else 'Classe :' }}</strong> <span id="assignProfCourseName" style="color:#0B3D6E; font-weight:800;">-</span></div>
+        <div style="margin-top:3px;">🎯 <strong>{{ 'المستوى والمادة :' if lang=='ar' else 'Détails :' }}</strong> <span id="assignProfCourseInfo" style="color:#0369a1; font-weight:700;">-</span></div>
+        <div style="margin-top:3px;">👥 <strong>{{ 'عدد المسجلين حالياً :' if lang=='ar' else 'Élèves inscrits :' }}</strong> <span id="assignProfEnrolledCount" style="color:#047857; font-weight:800;">-</span></div>
+      </div>
+
+      <div class="field mb-3">
+        <label style="font-size:12px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">
+          {{ 'اختيار الأستاذ' if lang=='ar' else 'Sélectionner l\'enseignant' }} <span style="color:#ef4444;">*</span>
+        </label>
+        <select name="teacher_id" id="assignProfTeacherSelect" required style="padding:9px 12px; font-size:13px; font-weight:700; width:100%; border:1.5px solid #cbd5e1; border-radius:8px; color:#0B3D6E; background:#fff; box-sizing:border-box;">
+          <option value="">{{ '-- اختر أستاذاً --' if lang=='ar' else '-- Choisir un professeur --' }}</option>
+          {% if active_teachers %}
+            {% for t in active_teachers %}
+            <option value="{{ t.id }}">👨‍🏫 {{ t.full_name }} ({{ t.specialty or 'Général' }})</option>
+            {% endfor %}
+          {% endif %}
+        </select>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:12px; margin-bottom:14px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">
+            {{ 'طريقة الأتعاب' if lang=='ar' else 'Modèle de Rémunération' }}
+          </label>
+          <select name="teacher_compensation_type" id="assignProfCompType" style="padding:8px; font-size:12px; font-weight:700; width:100%; border:1.5px solid #cbd5e1; border-radius:8px; background:#fff; box-sizing:border-box;">
+            <option value="percentage">{{ 'نسبة مئوية (%)' if lang=='ar' else 'Pourcentage (%)' }}</option>
+            <option value="fixed">{{ 'مبلغ ثابت شهرياً' if lang=='ar' else 'Montant fixe / mois' }}</option>
+            <option value="hourly">{{ 'بالساعة' if lang=='ar' else 'Par heure' }}</option>
+            <option value="per_student">{{ 'لكل تلميذ' if lang=='ar' else 'Par élève' }}</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">
+            {{ 'القيمة' if lang=='ar' else 'Valeur' }}
+          </label>
+          <input type="number" step="0.01" name="teacher_compensation_value" id="assignProfCompVal" value="50" style="padding:8px; font-size:12px; font-weight:700; width:100%; border:1.5px solid #cbd5e1; border-radius:8px; box-sizing:border-box;">
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
+        <button type="button" class="btn btn-light" onclick="closeAssignProfModal()" style="font-weight:700;">
+          {{ 'إلغاء' if lang=='ar' else 'Annuler' }}
+        </button>
+        <button type="submit" class="btn btn-primary" style="background:#0B3D6E; border-color:#0B3D6E; font-weight:800; padding:8px 18px; box-shadow:0 3px 10px rgba(11,61,110,0.3);">
+          ⚡ {{ 'تأكيد التعيين وبدء الفوج' if lang=='ar' else 'Valider l\'affectation' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openAssignProfModal(courseId, courseName, courseInfo, enrolledCount) {
+    var form = document.getElementById('assignProfForm');
+    if (form) form.action = '/courses/' + courseId + '/assign_teacher';
+    var nameElem = document.getElementById('assignProfCourseName');
+    if (nameElem) nameElem.textContent = courseName;
+    var infoElem = document.getElementById('assignProfCourseInfo');
+    if (infoElem) infoElem.textContent = courseInfo;
+    var countElem = document.getElementById('assignProfEnrolledCount');
+    if (countElem) countElem.textContent = enrolledCount + (enrolledCount > 1 ? ' élèves' : ' élève');
+    var modal = document.getElementById('assignProfModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function closeAssignProfModal() {
+    var modal = document.getElementById('assignProfModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeAssignProfModal();
+    }
+  });
+
+  function toggleAllExpired(master) {
+    var checks = document.querySelectorAll('.expired-check');
+    checks.forEach(function(c) { c.checked = master.checked; });
+    updateBatchRetireBtn();
+  }
+
+  function updateBatchRetireBtn() {
+    var selected = document.querySelectorAll('.expired-check:checked');
+    var btn = document.getElementById('btnBatchRetire');
+    if (btn) {
+      if (selected.length > 0) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+        btn.innerHTML = '<span>❌</span> <span>Retirer la sélection (' + selected.length + ')</span>';
+      } else {
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        btn.style.cursor = 'not-allowed';
+        btn.innerHTML = '<span>❌</span> <span>Retirer la sélection (0)</span>';
+      }
+    }
+  }
+
+  function confirmBatchRetire() {
+    var count = document.querySelectorAll('.expired-check:checked').length;
+    if (count === 0) return false;
+    return confirm('Voulez-vous retirer ces ' + count + ' élève(s) de leurs classes ?\nLeur inscription sera marquée comme "Terminée" et ils ne figureront plus dans les listes de cours ni le pointage.');
+  }
+
+  function retireSingle(btn) {
+    var eid = btn.getAttribute('data-eid');
+    var stuName = btn.getAttribute('data-name');
+    if (confirm('Retirer ' + (stuName ? stuName : 'cet élève') + ' de la classe ?\nSon inscription sera marquée comme "Terminée" et il ne figurera plus dans le pointage ni la liste de la classe.')) {
+      var f = document.getElementById('singleRetireForm');
+      f.action = '/enrollments/' + eid + '/status';
+      f.submit();
+    }
+  }
+</script>
+
+{% endblock %}

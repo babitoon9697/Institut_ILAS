@@ -1,0 +1,2199 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+/* ============================================================
+   NFC / RFID BADGE PAIRING STATION - ULTRA-FAST & INTUITIVE UX
+   ============================================================ */
+
+:root {
+  --nfc-purple: #7c3aed;
+  --nfc-indigo: #6366f1;
+  --nfc-emerald: #10b981;
+  --nfc-amber: #f59e0b;
+  --nfc-rose: #ef4444;
+  --nfc-navy: #0b3d6e;
+}
+
+/* Page Header */
+.nfc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* ============================================================
+   EXPRESS LINK STATION (STUDENT ID ➔ SCAN NFC)
+   ============================================================ */
+.nfc-express-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 2.5px solid #e2e8f0;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+.nfc-express-card.ready-for-scan {
+  border-color: #10b981;
+  box-shadow: 0 12px 36px rgba(16, 185, 129, 0.2);
+}
+.nfc-express-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-bottom: 18px;
+  border-bottom: 1.5px solid #f1f5f9;
+  margin-bottom: 20px;
+}
+.nfc-flash-badge {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 12.5px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(3, 105, 161, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+.nfc-flash-badge.role-student {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  box-shadow: 0 2px 8px rgba(3, 105, 161, 0.35);
+}
+.nfc-flash-badge.role-teacher {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  box-shadow: 0 2px 8px rgba(180, 83, 9, 0.35);
+}
+.nfc-flash-badge.role-employee {
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  box-shadow: 0 2px 8px rgba(4, 120, 87, 0.35);
+}
+.nfc-status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+.nfc-live-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+  animation: pulseDot 1.4s infinite ease-in-out;
+}
+@keyframes pulseDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
+
+/* Two-Column Express Grid */
+.nfc-express-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: 20px;
+}
+@media (max-width: 900px) {
+  .nfc-express-grid {
+    grid-template-columns: 1fr;
+  }
+  .nfc-express-separator {
+    display: none;
+  }
+}
+.nfc-express-col {
+  display: flex;
+  flex-direction: column;
+}
+.nfc-field-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+.step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #0B3D6E;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+.nfc-big-input {
+  width: 100%;
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  padding: 13px 18px;
+  border-radius: 14px;
+  border: 2px solid #cbd5e1;
+  outline: none;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+  letter-spacing: 0.5px;
+}
+.nfc-big-input:focus {
+  border-color: #7c3aed;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+}
+.nfc-big-input.matched {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+/* Tag Input specific */
+.nfc-tag-input {
+  font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+  color: #0B3D6E;
+  letter-spacing: 1px;
+}
+.nfc-tag-input:focus {
+  border-color: #10b981;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.25);
+}
+.tag-input-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 22px;
+  pointer-events: none;
+}
+.tag-helper-text {
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* Student Live Match Box */
+.express-student-box {
+  margin-top: 12px;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  animation: fadeIn 0.2s ease-out;
+}
+.express-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #e0f2fe;
+  color: #0369a1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 800;
+  flex-shrink: 0;
+  border: 1px solid #bae6fd;
+}
+.express-not-found {
+  margin-top: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecdd3;
+  color: #991b1b;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  animation: fadeIn 0.2s ease;
+}
+
+/* Middle Separator Arrow */
+.nfc-express-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.arrow-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: 1.5px solid #e2e8f0;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* Result Flash Banner */
+.express-result-banner {
+  margin-top: 20px;
+  padding: 14px 20px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  animation: slideDown 0.25s ease-out;
+}
+@keyframes slideDown {
+  0% { transform: translateY(-12px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.banner-success {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.3);
+}
+.result-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+/* KPI Grid */
+.nfc-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.nfc-kpi-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1.5px solid #e2e8f0;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.nfc-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+  border-color: #cbd5e1;
+}
+.nfc-kpi-card.active-kpi {
+  border-color: var(--nfc-purple);
+  box-shadow: 0 0 0 2.5px rgba(124, 58, 237, 0.22);
+  background: #faf5ff;
+}
+.nfc-kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.nfc-kpi-text h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+}
+.nfc-kpi-text p {
+  margin: 2px 0 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* Toolbar & Filters */
+.nfc-toolbar {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1.5px solid #e2e8f0;
+  padding: 14px 18px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.nfc-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.nfc-filter-pills {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+}
+.nfc-filter-pill {
+  padding: 7px 14px;
+  border-radius: 9px;
+  font-weight: 700;
+  font-size: 13px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+}
+.nfc-filter-pill:hover {
+  color: #0f172a;
+  background: #ffffff;
+}
+.nfc-filter-pill.active {
+  background: var(--nfc-navy);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(11, 61, 110, 0.25);
+}
+.nfc-search-box {
+  position: relative;
+  min-width: 280px;
+  flex: 1;
+  max-width: 480px;
+}
+.nfc-search-box input {
+  width: 100%;
+  padding: 9px 14px 9px 38px;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  font-size: 13.5px;
+  font-weight: 600;
+  outline: none;
+  transition: all 0.2s ease;
+}
+.nfc-search-box input:focus {
+  border-color: var(--nfc-purple);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+.nfc-search-ico {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 15px;
+  pointer-events: none;
+}
+
+/* Student Directory Table */
+.nfc-table-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+.nfc-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.nfc-table th {
+  background: #f8fafc;
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1.5px solid #e2e8f0;
+}
+.nfc-table td {
+  padding: 13px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  font-size: 13.5px;
+  transition: background 0.18s ease;
+}
+.nfc-row {
+  transition: all 0.2s ease;
+}
+.nfc-row:hover td {
+  background: #f8fafc;
+}
+.nfc-row.just-paired td {
+  background: #ecfdf5 !important;
+  animation: highlightFlash 1.6s ease forwards;
+}
+@keyframes highlightFlash {
+  0% { background: #6ee7b7 !important; }
+  100% { background: #ecfdf5 !important; }
+}
+
+/* NFC UID Badge Pills */
+.uid-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.uid-pill-assigned {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1.5px solid #bbf7d0;
+}
+.uid-pill-unassigned {
+  background: #fffdf5;
+  color: #b45309;
+  border: 1.5px dashed #fde68a;
+}
+
+/* Action Buttons */
+.btn-select-express {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+}
+.btn-select-express:hover {
+  background: #dbeafe;
+}
+.btn-unpair {
+  background: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.btn-unpair:hover {
+  background: #ffe4e6;
+  color: #9f1239;
+}
+.btn-test-kiosk {
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.btn-test-kiosk:hover {
+  background: #e0f2fe;
+}
+
+/* Modals */
+.nfc-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+.nfc-modal-card {
+  background: #ffffff;
+  border-radius: 20px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  border: 1.5px solid #e2e8f0;
+  animation: modalPop 0.22s ease-out;
+}
+@keyframes modalPop {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Toast Notification */
+.nfc-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #1e293b;
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  z-index: 10000;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nfc-toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Role Tabs Bar */
+.nfc-role-tabs-bar {
+  display: flex;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 6px;
+  gap: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+}
+.nfc-role-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.nfc-role-tab:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+.nfc-role-tab.active {
+  background: linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(31, 111, 235, 0.3);
+}
+.nfc-role-tab.teacher.active {
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
+}
+.nfc-role-tab.employee.active {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+}
+.role-badge-count {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+}
+.nfc-role-tab.active .role-badge-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Distinct NFC Code Badges */
+.badge-code-pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.badge-code-pill.ilas {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+.badge-code-pill.prf {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.badge-code-pill.emp {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+</style>
+
+<!-- HEADER -->
+<div class="nfc-header">
+  <div>
+    <div style="font-size:12px; margin-bottom:4px; color:#64748b;">
+      <a href="{{ url_for('dashboard') }}" style="color:#64748b; text-decoration:none;">{{ t('dashboard') }}</a>
+      <span style="margin:0 4px;">/</span>
+      <a href="{{ url_for('badges') }}" style="color:#64748b; text-decoration:none;">{{ 'الاستوديو' if lang=='ar' else 'Badges Studio' }}</a>
+      <span style="margin:0 4px;">/</span>
+      <span style="color:#0B3D6E; font-weight:700;">NFC & RFID</span>
+    </div>
+    <h2 style="margin:0; font-size:24px; color:#0B3D6E; font-weight:800; display:flex; align-items:center; gap:10px;">
+      <span style="font-size:26px;">📡</span>
+      <span>{{ 'محطة ربط البطاقات الذكية NFC / RFID' if lang=='ar' else 'Station d\'Association des Badges NFC & RFID' }}</span>
+    </h2>
+    <p style="margin:4px 0 0 0; color:#64748b; font-size:13.5px;">
+      {{ 'اكتب رقم التلميذ ثم اضغط Entrée ومرر البطاقة على القارئ USB ليتم ربطها تلقائياً فورا' if lang=='ar' else 'Tapez le numéro élève, appuyez sur Entrée ↵, passez la carte sur le lecteur USB : lié automatiquement !' }}
+    </p>
+  </div>
+
+  <div style="display:flex; align-items:center; gap:10px;">
+    <!-- Sound Toggle -->
+    <button type="button" class="btn" id="btnSoundToggle" onclick="toggleSound()" style="background:#f8fafc; border:1.5px solid #cbd5e1; color:#334155; padding:8px 14px; border-radius:10px; font-weight:700; font-size:13px; display:inline-flex; align-items:center; gap:6px;">
+      <span id="soundIcon">🔊</span>
+      <span id="soundLabel">{{ 'الصوت مفعل' if lang=='ar' else 'Son Activé' }}</span>
+    </button>
+
+    <!-- Studio Badges Link -->
+    <a href="{{ url_for('badges') }}" class="btn" style="background:#ffffff; border:1.5px solid #cbd5e1; color:#0f172a; padding:8px 14px; border-radius:10px; font-weight:700; font-size:13px; display:inline-flex; align-items:center; gap:6px; text-decoration:none;">
+      <span>🖨️</span>
+      <span>{{ 'استوديو الطباعة' if lang=='ar' else 'Studio Badges' }}</span>
+    </a>
+
+    <!-- Badge Distribution in Classrooms -->
+    <a href="{{ url_for('badge_distribution') }}" class="btn" style="background:linear-gradient(135deg, #0b3d6e 0%, #06b6d4 100%); border:none; padding:8px 15px; border-radius:10px; font-weight:700; font-size:13px; display:inline-flex; align-items:center; gap:6px; color:#ffffff; text-decoration:none; box-shadow:0 2px 8px rgba(6,182,212,0.3);" title="Tournée de distribution des badges imprimés en salle">
+      <span>🚀</span>
+      <span>{{ 'توزيع بالقسم' if lang=='ar' else 'Distribution en Salle' }}</span>
+    </a>
+
+    <!-- Kiosk Link -->
+    <a href="{{ url_for('kiosk_page') }}" target="_blank" class="btn" style="background:#0B3D6E; border:none; color:#ffffff; padding:8px 14px; border-radius:10px; font-weight:700; font-size:13px; display:inline-flex; align-items:center; gap:6px; text-decoration:none; box-shadow:0 2px 8px rgba(11,61,110,0.3);">
+      <span>📍</span>
+      <span>{{ 'شاشة الحضور Kiosk' if lang=='ar' else 'Kiosk Pointage' }}</span>
+    </a>
+  </div>
+</div>
+
+<!-- ============================================================
+     SÉLECTEUR DE RÔLE : ÉLÈVES • ENSEIGNANTS • PERSONNEL
+     ============================================================ -->
+<div class="nfc-role-tabs-bar" id="roleTabsBar">
+  <button type="button" class="nfc-role-tab active" id="tabRoleStudent" onclick="switchPairingRole('student')">
+    <span>🎓</span>
+    <span>{{ 'التلاميذ (ILAS...)' if lang=='ar' else 'Élèves (Préfixe : ILAS)' }}</span>
+    <span class="role-badge-count" id="tabCountStudent">{{ total_students }}</span>
+  </button>
+
+  <button type="button" class="nfc-role-tab teacher" id="tabRoleTeacher" onclick="switchPairingRole('teacher')">
+    <span>👨‍🏫</span>
+    <span>{{ 'الأساتذة (PRF...)' if lang=='ar' else 'Enseignants (Préfixe : PRF)' }}</span>
+    <span class="role-badge-count" id="tabCountTeacher">{{ total_teachers }}</span>
+  </button>
+
+  <button type="button" class="nfc-role-tab employee" id="tabRoleEmployee" onclick="switchPairingRole('employee')">
+    <span>👔</span>
+    <span>{{ 'الموظفون (EMP...)' if lang=='ar' else 'Personnel / Staff (Préfixe : EMP)' }}</span>
+    <span class="role-badge-count" id="tabCountEmployee">{{ total_employees }}</span>
+  </button>
+</div>
+
+<!-- ============================================================
+     STATION D'ASSOCIATION FLASH (STUDENT ID ➔ SCAN NFC)
+     ============================================================ -->
+<div class="nfc-express-card" id="expressCardContainer">
+  <div class="nfc-express-header">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div class="nfc-flash-badge" id="expressFlashBadge">⚡ FLASH LINK — ÉLÈVE (ILAS)</div>
+      <div>
+        <h3 style="margin:0; font-size:19px; font-weight:800; color:#0f172a;">
+          {{ 'الربط السريع برقم التلميذ (Student ID ➔ Scan NFC Tag)' if lang=='ar' else 'Association Express par ID Élève (Student ID ➔ Bip Tag)' }}
+        </h3>
+        <p style="margin:2px 0 0 0; font-size:13px; color:#64748b;">
+          {{ 'اكتب رقم التلميذ (مثال: 441) واضغط Entrée ثم مرر البطاقة على القارئ USB ليتم ربطها تلقائياً فورا!' if lang=='ar' else 'Tapez le numéro ou code élève (ex: 441 ou ILAS441) + Entrée ↵, puis passez la carte sur le lecteur USB pour lier instantanément !' }}
+        </p>
+      </div>
+    </div>
+    <div class="nfc-status-indicator">
+      <span class="nfc-live-dot"></span>
+      <span style="font-weight:700; font-size:13px; color:#10b981;">{{ 'القارئ USB متصل وفي الانتظار' if lang=='ar' else 'Lecteur USB Prêt' }}</span>
+    </div>
+  </div>
+
+  <!-- The Two Interactive Zones: ID Input & Tag Bip -->
+  <div class="nfc-express-grid">
+    <!-- Zone 1: Student ID Input -->
+    <div class="nfc-express-col" id="colStudentId">
+      <label class="nfc-field-label">
+        <span class="step-num">1</span>
+        <span>{{ 'رقم أو كود التلميذ (Student ID) :' if lang=='ar' else '1. Numéro ou Code Élève :' }}</span>
+      </label>
+      <div style="display:flex; gap:8px;">
+        <input type="text" 
+               id="expressStudentInput" 
+               class="nfc-big-input" 
+               placeholder="{{ 'اكتب 441 ثم اضغط Entrée...' if lang=='ar' else 'Tapez 441 puis Entrée ↵...' }}" 
+               autocomplete="off" 
+               autofocus />
+        <button type="button" 
+                id="btnValidateStudent" 
+                onclick="submitStudentSearch()" 
+                style="background:#0B3D6E; color:#ffffff; border:none; padding:0 20px; border-radius:14px; font-weight:800; font-size:14px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; flex-shrink:0; box-shadow:0 2px 8px rgba(11,61,110,0.25); transition:all 0.15s ease;"
+                title="Valider la recherche de l'élève (Touche Entrée)">
+          <span>🔍</span>
+          <span>{{ 'تأكيد ↵' if lang=='ar' else 'Valider ↵' }}</span>
+        </button>
+      </div>
+      <div style="font-size:12px; color:#64748b; margin-top:6px; font-weight:600;">
+        💡 {{ 'اكتب الرقم كاملاً ثم اضغط Entrée للبحث' if lang=='ar' else 'Tapez le numéro complet puis appuyez sur Entrée ↵' }}
+      </div>
+
+      <!-- Live Matched Student Feedback Card -->
+      <div id="expressStudentCard" class="express-student-box" style="display:none;">
+        <div id="expressStudentAvatar" class="express-avatar">👤</div>
+        <div style="flex:1; min-width:0;">
+          <div id="expressStudentName" style="font-weight:800; font-size:16px; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">--</div>
+          <div style="font-size:12.5px; color:#64748b; display:flex; align-items:center; gap:8px;">
+            <span id="expressStudentCode" style="font-family:monospace; font-weight:800; color:#0B3D6E; background:#e0f2fe; padding:1px 6px; border-radius:4px;">--</span>
+            <span id="expressStudentLevel">--</span>
+          </div>
+          <div id="expressStudentCurrentBadge" style="margin-top:4px; font-size:12px;">--</div>
+        </div>
+      </div>
+      <div id="expressStudentNotFound" class="express-not-found" style="display:none;">
+        ❌ {{ 'لم يتم العثور على أي تلميذ بهذا الرقم' if lang=='ar' else 'Aucun élève trouvé avec ce code.' }}
+      </div>
+    </div>
+
+    <!-- Arrow or Separator -->
+    <div class="nfc-express-separator">
+      <div class="arrow-circle">➔</div>
+    </div>
+
+    <!-- Zone 2: Scan Tag Input -->
+    <div class="nfc-express-col" id="colNfcTag">
+      <label class="nfc-field-label">
+        <span class="step-num">2</span>
+        <span>{{ 'تمرير البطاقة على القارئ USB :' if lang=='ar' else '2. Bip de la Carte (Lecteur USB) :' }}</span>
+      </label>
+      <div style="position:relative;">
+        <input type="text" 
+               id="expressTagInput" 
+               class="nfc-big-input nfc-tag-input" 
+               placeholder="{{ '📡 مرر البطاقة على القارئ USB...' if lang=='ar' else '📡 Approchez la carte du lecteur USB...' }}" 
+               autocomplete="off" />
+        <span class="tag-input-icon">📡</span>
+      </div>
+      <div id="tagHelperText" class="tag-helper-text">
+        {{ 'سيتم الربط تلقائياً بمجرد تمرير البطاقة.' if lang=='ar' else 'Le badge sera automatiquement associé dès le bip sur le lecteur USB.' }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Flash Result Banner (Success / Info) -->
+  <div id="expressSuccessBanner" class="express-result-banner banner-success" style="display:none;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div class="result-icon">✓</div>
+      <div>
+        <div style="font-weight:800; font-size:15px;" id="expressSuccessTitle">Badge associé avec succès !</div>
+        <div style="font-size:13px; opacity:0.95;" id="expressSuccessSub">Le badge est maintenant actif pour cet élève.</div>
+      </div>
+    </div>
+    <div style="font-size:12px; font-weight:700; background:rgba(255,255,255,0.25); padding:4px 10px; border-radius:6px;">
+      {{ 'جاهز للتلميذ التالي ➔' if lang=='ar' else 'Prêt pour l\'élève suivant ➔' }}
+    </div>
+  </div>
+</div>
+
+<!-- KPI CARDS -->
+<div class="nfc-kpi-grid">
+  <!-- Total Students -->
+  <div class="nfc-kpi-card" onclick="filterByStatus('all')" id="kpiCardAll">
+    <div class="nfc-kpi-icon" style="background:#eff6ff; color:#1d4ed8;">👥</div>
+    <div class="nfc-kpi-text">
+      <h3 id="kpiTotalCount">{{ total_students }}</h3>
+      <p>{{ 'إجمالي التلاميذ المسجلين' if lang=='ar' else 'Total élèves actifs' }}</p>
+    </div>
+  </div>
+
+  <!-- Paired Cards (With NFC UID) -->
+  <div class="nfc-kpi-card" onclick="filterByStatus('paired')" id="kpiCardPaired">
+    <div class="nfc-kpi-icon" style="background:#f0fdf4; color:#15803d;">📡</div>
+    <div class="nfc-kpi-text">
+      <h3 style="color:#15803d;"><span id="kpiPairedCount">{{ total_paired }}</span> <span style="font-size:14px; color:#16a34a; font-weight:700;">({{ paired_pct }}%)</span></h3>
+      <p>{{ 'بطاقات مفعلة ومربوطة' if lang=='ar' else 'Badges NFC associés' }}</p>
+    </div>
+  </div>
+
+  <!-- Unpaired Cards (Needs Pairing) -->
+  <div class="nfc-kpi-card active-kpi" onclick="filterByStatus('unpaired')" id="kpiCardUnpaired">
+    <div class="nfc-kpi-icon" style="background:#fffdf5; color:#d97706;">⏳</div>
+    <div class="nfc-kpi-text">
+      <h3 style="color:#d97706;" id="kpiUnpairedCount">{{ total_unpaired }}</h3>
+      <p>{{ 'في انتظار ربط البطاقة' if lang=='ar' else 'À associer (Sans badge)' }}</p>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLBAR: SEARCH & FILTERS -->
+<div class="nfc-toolbar">
+  <div class="nfc-toolbar-row">
+    <!-- Filter Pills: All / Unpaired / Paired -->
+    <div class="nfc-filter-pills">
+      <button type="button" class="nfc-filter-pill" id="filterPillAll" onclick="filterByStatus('all')">
+        <span>{{ 'الكل' if lang=='ar' else 'Tous' }}</span>
+        <span style="font-size:11px; background:#e2e8f0; padding:1px 6px; border-radius:6px;">{{ total_students }}</span>
+      </button>
+      <button type="button" class="nfc-filter-pill active" id="filterPillUnpaired" onclick="filterByStatus('unpaired')">
+        <span>⏳ {{ 'بدون بطاقة' if lang=='ar' else 'Sans badge' }}</span>
+        <span style="font-size:11px; background:#fef3c7; color:#92400e; padding:1px 6px; border-radius:6px;" id="badgePillUnpairedCount">{{ total_unpaired }}</span>
+      </button>
+      <button type="button" class="nfc-filter-pill" id="filterPillPaired" onclick="filterByStatus('paired')">
+        <span>✓ {{ 'مع بطاقة' if lang=='ar' else 'Avec badge' }}</span>
+        <span style="font-size:11px; background:#dcfce7; color:#166534; padding:1px 6px; border-radius:6px;" id="badgePillPairedCount">{{ total_paired }}</span>
+      </button>
+    </div>
+
+    <!-- Search Box -->
+    <div class="nfc-search-box">
+      <span class="nfc-search-ico">🔍</span>
+      <input type="text" id="studentSearchInput" placeholder="{{ 'ابحث بالاسم، الكود (ILAS166) أو المعرف...' if lang=='ar' else 'Rechercher par nom, code ILAS, téléphone ou UID...' }}" oninput="applyFilters()" autocomplete="off" />
+    </div>
+  </div>
+
+  <div class="nfc-toolbar-row" id="teacherFilterRow" style="padding-top:8px; border-top:1px solid #f1f5f9;">
+    <!-- Teacher filter -->
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <span style="font-size:12.5px; font-weight:700; color:#64748b;">👨‍🏫 {{ 'الأستاذ :' if lang=='ar' else 'Professeur :' }}</span>
+      <select id="teacherFilter" onchange="applyFilters()" style="padding:6px 12px; border-radius:8px; border:1.5px solid #cbd5e1; font-size:13px; font-weight:600; outline:none; background:#fff;">
+        <option value="">{{ '-- جميع الأساتذة --' if lang=='ar' else '-- Tous les professeurs --' }}</option>
+        {% for t in teachers %}
+        <option value="{{ t.id }}">{{ t.full_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="font-size:12.5px; color:#64748b; font-weight:600;">
+      <span id="filteredCountDisplay">{{ total_students }}</span> {{ 'تلميذ معروض' if lang=='ar' else 'élèves affichés' }}
+    </div>
+  </div>
+</div>
+
+<!-- STUDENTS DIRECTORY TABLE -->
+<div class="nfc-table-card" id="tableContainerStudent">
+  <div style="overflow-x:auto;">
+    <table class="nfc-table" id="studentsTable">
+      <thead>
+        <tr>
+          <th style="width:50px; text-align:center;">#</th>
+          <th>{{ 'التلميذ' if lang=='ar' else 'Élève' }}</th>
+          <th>{{ 'الكود' if lang=='ar' else 'Code' }}</th>
+          <th>{{ 'المادة / الفوج' if lang=='ar' else 'Cours / Groupes' }}</th>
+          <th>{{ 'معرف البطاقة (NFC UID)' if lang=='ar' else 'Badge NFC (UID Matériel)' }}</th>
+          <th style="text-align:right;">{{ 'إجراءات سريعة' if lang=='ar' else 'Actions Rapides' }}</th>
+        </tr>
+      </thead>
+      <tbody id="studentsTbody">
+        {% for s in students %}
+        {% set courses_list = [] %}
+        {% set teachers_ids = [] %}
+        {% for enr in s.enrollments %}
+          {% if enr.status == 'active' and enr.course %}
+            {% set _ = courses_list.append(enr.course.name) %}
+            {% if enr.course.teacher_id %}
+              {% set _ = teachers_ids.append(enr.course.teacher_id|string) %}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+        <tr class="nfc-row" 
+            id="studentRow-{{ s.id }}" 
+            data-student-id="{{ s.id }}"
+            data-student-name="{{ s.full_name }}"
+            data-student-code="{{ s.code }}"
+            data-student-photo="{{ s.photo or '' }}"
+            data-student-nfc="{{ s.nfc_uid or '' }}"
+            data-has-nfc="{{ '1' if s.nfc_uid else '0' }}"
+            data-teachers="{{ teachers_ids|join(',') }}"
+            data-courses="{{ courses_list|join(', ') }}"
+            data-phone="{{ s.phone or s.parent_phone or '' }}">
+          
+          <!-- Index / Number -->
+          <td style="text-align:center; color:#94a3b8; font-weight:700; font-size:12px;">
+            {{ loop.index }}
+          </td>
+
+          <!-- Student Name & Photo -->
+          <td>
+            <div style="display:flex; align-items:center; gap:12px;">
+              {% if s.photo %}
+              <img src="/static/uploads/photos/{{ s.photo }}" alt="{{ s.full_name }}" style="width:38px; height:38px; border-radius:10px; object-fit:cover; border:1px solid #e2e8f0; flex-shrink:0;">
+              {% else %}
+              <div style="width:38px; height:38px; border-radius:10px; background:#e0f2fe; color:#0369a1; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; flex-shrink:0;">
+                {{ (s.first_name[:1] + s.last_name[:1])|upper }}
+              </div>
+              {% endif %}
+              <div>
+                <div style="font-weight:800; color:#0f172a;" class="student-name-text">{{ s.full_name }}</div>
+                <div style="font-size:11.5px; color:#64748b;">
+                  {{ s.school_level or 'Institut ILAS' }}
+                  {% if s.phone %} • <span style="font-family:monospace;">{{ s.phone }}</span>{% endif %}
+                </div>
+              </div>
+            </div>
+          </td>
+
+          <!-- Code ILAS -->
+          <td>
+            <span style="font-family:monospace; font-weight:800; background:#f1f5f9; color:#0B3D6E; padding:3px 8px; border-radius:6px; font-size:12.5px;">
+              {{ s.code }}
+            </span>
+          </td>
+
+          <!-- Courses -->
+          <td>
+            {% if courses_list %}
+              <div style="display:flex; flex-wrap:wrap; gap:4px; max-width:280px;">
+                {% for c in courses_list[:2] %}
+                <span style="font-size:11.5px; background:#eff6ff; color:#1e40af; padding:2px 7px; border-radius:5px; font-weight:600;">{{ c }}</span>
+                {% endfor %}
+                {% if courses_list|length > 2 %}
+                <span style="font-size:11px; background:#f1f5f9; color:#475569; padding:2px 5px; border-radius:5px;">+{{ courses_list|length - 2 }}</span>
+                {% endif %}
+              </div>
+            {% else %}
+              <span style="color:#94a3b8; font-size:12px;">--</span>
+            {% endif %}
+          </td>
+
+          <!-- NFC UID Status -->
+          <td id="nfcStatusCell-{{ s.id }}">
+            {% if s.nfc_uid %}
+              <span class="uid-pill uid-pill-assigned" title="UID matériel détecté">
+                <span>📡</span>
+                <span>{{ s.nfc_uid }}</span>
+              </span>
+            {% else %}
+              <span class="uid-pill uid-pill-unassigned">
+                <span>⏳</span>
+                <span>{{ 'غير مربوط' if lang=='ar' else 'Non associé' }}</span>
+              </span>
+            {% endif %}
+          </td>
+
+          <!-- Actions -->
+          <td style="text-align:right;">
+            <div style="display:inline-flex; align-items:center; gap:6px;">
+              <!-- Select in Express Bar -->
+              <button type="button" class="btn-select-express" onclick="selectStudentForExpress('{{ s.code }}', '{{ s.full_name|replace("'", "\\'") }}', {{ s.id }})" title="Sélectionner dans la barre express">
+                <span>⚡</span>
+                <span>{{ 'اختيار' if lang=='ar' else 'Sélectionner' }}</span>
+              </button>
+
+              <!-- Test on Kiosk button -->
+              {% if s.nfc_uid %}
+              <button type="button" class="btn-test-kiosk" onclick="testKioskModal({{ s.id }}, '{{ s.nfc_uid }}', '{{ s.full_name|replace("'", "\\'") }}')" title="Tester le pointage kiosk">
+                <span>👁️</span>
+                <span>{{ 'اختبار' if lang=='ar' else 'Tester' }}</span>
+              </button>
+
+              <!-- Unpair button -->
+              <button type="button" class="btn-unpair" id="btnUnpair-{{ s.id }}" onclick="unpairNfcBadge({{ s.id }}, '{{ s.full_name|replace("'", "\\'") }}')" title="Dissocier ce badge">
+                <span>✕</span>
+              </button>
+              {% else %}
+              <button type="button" class="btn-unpair" id="btnUnpair-{{ s.id }}" style="display:none;" onclick="unpairNfcBadge({{ s.id }}, '{{ s.full_name|replace("'", "\\'") }}')" title="Dissocier ce badge">
+                <span>✕</span>
+              </button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- TEACHERS DIRECTORY TABLE (Préfixe PRF) -->
+<div class="nfc-table-card" id="tableContainerTeacher" style="display:none;">
+  <div style="overflow-x:auto;">
+    <table class="nfc-table" id="teachersTable">
+      <thead>
+        <tr>
+          <th style="width:50px; text-align:center;">#</th>
+          <th>{{ 'الأستاذ' if lang=='ar' else 'Enseignant' }}</th>
+          <th>{{ 'رمز الشارة (Préfixe PRF)' if lang=='ar' else 'NFC ID (Préfixe PRF)' }}</th>
+          <th>{{ 'المادة / التخصص' if lang=='ar' else 'Matière / Spécialité' }}</th>
+          <th>{{ 'معرف البطاقة (NFC UID)' if lang=='ar' else 'Badge NFC (UID Matériel)' }}</th>
+          <th style="text-align:right;">{{ 'إجراءات سريعة' if lang=='ar' else 'Actions Rapides' }}</th>
+        </tr>
+      </thead>
+      <tbody id="teachersTbody">
+        {% for t in teachers %}
+        {% set prf_code = 'PRF%03d'|format(t.id) %}
+        <tr class="nfc-row teacher-row"
+            id="teacherRow-{{ t.id }}"
+            data-person-id="{{ t.id }}"
+            data-person-name="{{ t.full_name }}"
+            data-person-code="{{ prf_code }}"
+            data-person-orig-code="{{ t.code or '' }}"
+            data-person-nfc="{{ t.nfc_uid or '' }}"
+            data-has-nfc="{{ '1' if t.nfc_uid else '0' }}"
+            data-phone="{{ t.phone or '' }}"
+            data-cin="{{ t.cin or '' }}"
+            data-specialty="{{ t.specialty or t.primary_matiere or '' }}">
+
+          <td style="text-align:center; color:#94a3b8; font-weight:700; font-size:12px;">
+            {{ loop.index }}
+          </td>
+
+          <td>
+            <div style="display:flex; align-items:center; gap:12px;">
+              {% if t.photo %}
+              <img src="/static/uploads/{{ t.photo }}" alt="{{ t.full_name }}" style="width:38px; height:38px; border-radius:10px; object-fit:cover; border:1px solid #e2e8f0; flex-shrink:0;">
+              {% else %}
+              <div style="width:38px; height:38px; border-radius:10px; background:#fef3c7; color:#b45309; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; flex-shrink:0;">
+                {{ (t.first_name[:1] + t.last_name[:1])|upper }}
+              </div>
+              {% endif %}
+              <div>
+                <div style="font-weight:800; color:#0f172a;" class="person-name-text">{{ t.full_name }}</div>
+                <div style="font-size:11.5px; color:#64748b;">
+                  {{ t.specialty or t.primary_matiere or 'Professeur' }}
+                  {% if t.phone %} • <span style="font-family:monospace;">{{ t.phone }}</span>{% endif %}
+                  {% if t.cin %} • <span>CIN: {{ t.cin }}</span>{% endif %}
+                </div>
+              </div>
+            </div>
+          </td>
+
+          <td>
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <span class="badge-code-pill prf">
+                🏷️ {{ prf_code }}
+              </span>
+              {% if t.code and t.code != prf_code %}
+              <span style="font-size:10.5px; color:#64748b; font-family:monospace;">Ref: {{ t.code }}</span>
+              {% endif %}
+            </div>
+          </td>
+
+          <td>
+            <span style="font-size:12.5px; font-weight:700; color:#475569;">
+              {{ t.specialty or t.primary_matiere or 'Enseignant' }}
+            </span>
+          </td>
+
+          <td class="col-nfc-uid" id="teacherNfcCell-{{ t.id }}">
+            {% if t.nfc_uid %}
+              <span class="uid-tag uid-active" title="Badge actif pour ce professeur">
+                <span class="uid-tag-dot"></span>
+                <span>{{ t.nfc_uid }}</span>
+              </span>
+            {% else %}
+              <span class="uid-tag uid-none">
+                <span>⏳</span>
+                <span>{{ 'بدون بطاقة' if lang=='ar' else 'Sans badge' }}</span>
+              </span>
+            {% endif %}
+          </td>
+
+          <td style="text-align:right;">
+            <div style="display:inline-flex; align-items:center; gap:6px;">
+              <button type="button" 
+                      class="btn-nfc-quick-link" 
+                      onclick="selectPersonForExpress('teacher', {{ t.id }}, '{{ t.full_name|replace("'", "\\'") }}', '{{ prf_code }}', '{{ t.nfc_uid or '' }}')" 
+                      title="Associer un badge NFC à cet enseignant">
+                <span>⚡</span>
+                <span>{{ 'ربط ➔' if lang=='ar' else 'Lier ➔' }}</span>
+              </button>
+              <button type="button" 
+                      id="btnTeacherUnpair-{{ t.id }}"
+                      class="btn-nfc-unlink" 
+                      style="{{ '' if t.nfc_uid else 'display:none;' }}"
+                      onclick="unlinkNfcTag('teacher', {{ t.id }}, '{{ t.full_name|replace("'", "\\'") }}', '{{ prf_code }}')" 
+                      title="Dissocier ce badge">
+                ✕
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- EMPLOYEES DIRECTORY TABLE (Préfixe EMP) -->
+<div class="nfc-table-card" id="tableContainerEmployee" style="display:none;">
+  <div style="overflow-x:auto;">
+    <table class="nfc-table" id="employeesTable">
+      <thead>
+        <tr>
+          <th style="width:50px; text-align:center;">#</th>
+          <th>{{ 'الموظف / الإداري' if lang=='ar' else 'Personnel / Staff' }}</th>
+          <th>{{ 'رمز الشارة (Préfixe EMP)' if lang=='ar' else 'NFC ID (Préfixe EMP)' }}</th>
+          <th>{{ 'الوظيفة / القسم' if lang=='ar' else 'Fonction & Département' }}</th>
+          <th>{{ 'معرف البطاقة (NFC UID)' if lang=='ar' else 'Badge NFC (UID Matériel)' }}</th>
+          <th style="text-align:right;">{{ 'إجراءات سريعة' if lang=='ar' else 'Actions Rapides' }}</th>
+        </tr>
+      </thead>
+      <tbody id="employeesTbody">
+        {% for e in employees %}
+        {% set emp_code = e.code or ('EMP%03d'|format(e.id)) %}
+        <tr class="nfc-row employee-row"
+            id="employeeRow-{{ e.id }}"
+            data-person-id="{{ e.id }}"
+            data-person-name="{{ e.full_name }}"
+            data-person-code="{{ emp_code }}"
+            data-person-orig-code="{{ e.code or '' }}"
+            data-person-nfc="{{ e.nfc_uid or '' }}"
+            data-has-nfc="{{ '1' if e.nfc_uid else '0' }}"
+            data-phone="{{ e.phone or '' }}"
+            data-cin="{{ e.cin or '' }}"
+            data-dept="{{ e.department or '' }}">
+
+          <td style="text-align:center; color:#94a3b8; font-weight:700; font-size:12px;">
+            {{ loop.index }}
+          </td>
+
+          <td>
+            <div style="display:flex; align-items:center; gap:12px;">
+              {% if e.photo %}
+              <img src="/static/uploads/{{ e.photo }}" alt="{{ e.full_name }}" style="width:38px; height:38px; border-radius:10px; object-fit:cover; border:1px solid #e2e8f0; flex-shrink:0;">
+              {% else %}
+              <div style="width:38px; height:38px; border-radius:10px; background:#dcfce7; color:#15803d; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; flex-shrink:0;">
+                {{ (e.first_name[:1] + e.last_name[:1])|upper }}
+              </div>
+              {% endif %}
+              <div>
+                <div style="font-weight:800; color:#0f172a;" class="person-name-text">{{ e.full_name }}</div>
+                <div style="font-size:11.5px; color:#64748b;">
+                  {{ e.job_title }} • {{ e.department }}
+                  {% if e.phone %} • <span style="font-family:monospace;">{{ e.phone }}</span>{% endif %}
+                  {% if e.cin %} • <span>CIN: {{ e.cin }}</span>{% endif %}
+                </div>
+              </div>
+            </div>
+          </td>
+
+          <td>
+            <span class="badge-code-pill emp">
+              🏷️ {{ emp_code }}
+            </span>
+          </td>
+
+          <td>
+            <div>
+              <span style="font-weight:800; color:#0f172a; font-size:13px;">{{ e.job_title }}</span>
+              <div style="font-size:11.5px; color:#64748b;">{{ e.department }}</div>
+            </div>
+          </td>
+
+          <td class="col-nfc-uid" id="employeeNfcCell-{{ e.id }}">
+            {% if e.nfc_uid %}
+              <span class="uid-tag uid-active" title="Badge actif pour ce personnel">
+                <span class="uid-tag-dot"></span>
+                <span>{{ e.nfc_uid }}</span>
+              </span>
+            {% else %}
+              <span class="uid-tag uid-none">
+                <span>⏳</span>
+                <span>{{ 'بدون بطاقة' if lang=='ar' else 'Sans badge' }}</span>
+              </span>
+            {% endif %}
+          </td>
+
+          <td style="text-align:right;">
+            <div style="display:inline-flex; align-items:center; gap:6px;">
+              <button type="button" 
+                      class="btn-nfc-quick-link" 
+                      onclick="selectPersonForExpress('employee', {{ e.id }}, '{{ e.full_name|replace("'", "\\'") }}', '{{ emp_code }}', '{{ e.nfc_uid or '' }}')" 
+                      title="Associer un badge NFC à cet employé">
+                <span>⚡</span>
+                <span>{{ 'ربط ➔' if lang=='ar' else 'Lier ➔' }}</span>
+              </button>
+              <button type="button" 
+                      id="btnEmployeeUnpair-{{ e.id }}"
+                      class="btn-nfc-unlink" 
+                      style="{{ '' if e.nfc_uid else 'display:none;' }}"
+                      onclick="unlinkNfcTag('employee', {{ e.id }}, '{{ e.full_name|replace("'", "\\'") }}', '{{ emp_code }}')" 
+                      title="Dissocier ce badge">
+                ✕
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: CONFLICT RESOLUTION (ALREADY LINKED - CANCEL OR CONTINUE)
+     ============================================================ -->
+<div class="nfc-modal-backdrop" id="conflictModal">
+  <div class="nfc-modal-card" style="border-top:5px solid #f59e0b;">
+    <div style="padding:22px 24px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:40px; height:40px; border-radius:10px; background:#fef3c7; color:#b45309; display:flex; align-items:center; justify-content:center; font-size:20px;">
+          ⚠️
+        </div>
+        <div>
+          <h4 style="margin:0; font-size:17px; font-weight:800; color:#0f172a;">
+            {{ 'البطاقة مخصصة بالفعل لتلميذ آخر !' if lang=='ar' else 'Badge Déjà Associé !' }}
+          </h4>
+          <p style="margin:2px 0 0 0; font-size:12.5px; color:#64748b;">
+            {{ 'يوجد تضارب في رقم البطاقة' if lang=='ar' else 'Ce badge appartient déjà à un autre élève.' }}
+          </p>
+        </div>
+      </div>
+      <button type="button" onclick="closeConflictModal()" style="background:none; border:none; font-size:20px; color:#94a3b8; cursor:pointer;">✕</button>
+    </div>
+
+    <div style="padding:20px 24px;">
+      <p style="margin:0 0 16px 0; font-size:14px; color:#334155; line-height:1.5;">
+        {{ 'البطاقة ذات المعرف' if lang=='ar' else 'Le badge' }} <strong id="conflictUidDisplay" style="font-family:monospace; color:#0B3D6E; font-size:16px;">--</strong>
+        {{ 'مسندة حالياً لـ :' if lang=='ar' else 'est actuellement lié à :' }}
+      </p>
+
+      <div style="background:#fffdf5; border:1.5px solid #fde68a; border-radius:12px; padding:14px 18px; margin-bottom:18px;">
+        <div style="font-size:16px; font-weight:800; color:#92400e;" id="conflictOtherName">--</div>
+        <div style="font-size:12.5px; color:#b45309; margin-top:2px;">
+          {{ 'الكود :' if lang=='ar' else 'Code :' }} <span id="conflictOtherCode" style="font-weight:700;">--</span>
+        </div>
+      </div>
+
+      <p style="margin:0 0 6px 0; font-size:14px; color:#1e293b; font-weight:700;">
+        {{ 'هل تريد إلغاء العملية أم المتابعة ونقل البطاقة إلى :' if lang=='ar' else 'Voulez-vous annuler ou continuer et associer la carte à :' }}
+      </p>
+      <div style="font-size:16px; font-weight:800; color:#0B3D6E;" id="conflictTargetName">--</div>
+    </div>
+
+    <div style="padding:16px 24px; background:#f8fafc; border-top:1px solid #f1f5f9; display:flex; justify-content:flex-end; gap:12px;">
+      <!-- Cancel Button -->
+      <button type="button" class="btn" onclick="closeConflictModal()" style="background:#e2e8f0; border:none; color:#334155; padding:9px 18px; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer;">
+        {{ '✕ إلغاء (Echap)' if lang=='ar' else '✕ Annuler (Echap)' }}
+      </button>
+
+      <!-- Continue and Link Button -->
+      <button type="button" class="btn" id="btnConfirmConflictTransfer" style="background:#f59e0b; border:none; color:#ffffff; padding:9px 20px; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer; box-shadow:0 2px 8px rgba(245,158,11,0.35);">
+        {{ '🔄 متابعة ونقل البطاقة (Entrée)' if lang=='ar' else '🔄 Continuer et Lier (Entrée)' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: KIOSK TEST SIMULATOR
+     ============================================================ -->
+<div class="nfc-modal-backdrop" id="kioskTestModal">
+  <div class="nfc-modal-card" style="border-top:5px solid #10b981; max-width:440px;">
+    <div style="padding:22px 24px; text-align:center;">
+      <div style="width:58px; height:58px; border-radius:50%; background:#dcfce7; color:#15803d; font-size:28px; display:flex; align-items:center; justify-content:center; margin:0 auto 14px auto;">
+        ✓
+      </div>
+      <h3 style="margin:0; font-size:20px; font-weight:800; color:#0f172a;">
+        {{ 'محاكاة قارئ الحضور (Kiosk)' if lang=='ar' else 'Simulation Pointage Kiosk' }}
+      </h3>
+      <p style="margin:4px 0 16px 0; font-size:13px; color:#64748b;">
+        {{ 'نتيجة المسح الفوري بالبطاقة' if lang=='ar' else 'Résultat du scan instantané' }}
+      </p>
+
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; text-align:left; margin-bottom:18px;">
+        <div style="font-size:11px; text-transform:uppercase; color:#64748b; font-weight:700;">{{ 'التلميذ المعترف به' if lang=='ar' else 'ÉLÈVE RECONNU' }}</div>
+        <div style="font-size:17px; font-weight:800; color:#0B3D6E; margin:2px 0;" id="kioskTestStudentName">--</div>
+        <div style="font-size:12.5px; color:#475569; font-family:monospace;" id="kioskTestUid">UID: --</div>
+        <div style="margin-top:10px; display:inline-flex; align-items:center; gap:6px; background:#dcfce7; color:#166534; font-size:12px; font-weight:700; padding:4px 10px; border-radius:6px;">
+          ✓ {{ 'تم تسجيل الحضور بنجاح' if lang=='ar' else 'Présence validée instantanément' }}
+        </div>
+      </div>
+
+      <button type="button" class="btn" onclick="closeKioskTestModal()" style="background:#0B3D6E; color:#fff; border:none; padding:9px 24px; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer;">
+        {{ 'إغلاق' if lang=='ar' else 'Fermer' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="nfc-toast" id="nfcToast">
+  <span id="toastIcon">✓</span>
+  <span id="toastMsg">Action terminée</span>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT LOGIC & AUDIO SYNTHESIS
+     ============================================================ -->
+<script>
+// --- GLOBAL STATE ---
+var activePairingRole = 'student'; // 'student' | 'teacher' | 'employee'
+var lockedPerson = null;           // Selected person {id, code, full_name, photo, nfc_uid, specialty, role}
+var lockedStudent = null;          // backward compatibility alias
+var pendingScannedUid = null;     // UID if scanned before person ID was entered
+var isSoundMuted = localStorage.getItem('nfc_sound_muted') === 'true';
+var pendingConflictData = null;
+var currentStatusFilter = 'unpaired';
+
+var expressStudentInput = document.getElementById('expressStudentInput');
+var expressTagInput = document.getElementById('expressTagInput');
+
+var roleStats = {
+  student: {
+    total: {{ total_students or 0 }},
+    paired: {{ total_paired or 0 }},
+    unpaired: {{ total_unpaired or 0 }},
+    prefix: 'ILAS',
+    label: "{{ 'تلميذ' if lang=='ar' else 'Élève' }}",
+    placeholder: "{{ 'اكتب 441 أو ILAS441 ثم اضغط Entrée...' if lang=='ar' else 'Tapez 441 ou ILAS441 puis Entrée ↵...' }}",
+    flashBadge: "⚡ FLASH LINK — ÉLÈVE (ILAS)",
+    fieldLabel: "{{ '1. رقم أو كود التلميذ :' if lang=='ar' else '1. Numéro ou Code Élève :' }}"
+  },
+  teacher: {
+    total: {{ total_teachers or 0 }},
+    paired: {{ teachers_paired or total_teachers_paired or 0 }},
+    unpaired: {{ teachers_unpaired or total_teachers_unpaired or 0 }},
+    prefix: 'PRF',
+    label: "{{ 'أستاذ' if lang=='ar' else 'Enseignant' }}",
+    placeholder: "{{ 'اكتب 1 أو PRF001 ثم اضغط Entrée...' if lang=='ar' else 'Tapez 1 ou PRF001 puis Entrée ↵...' }}",
+    flashBadge: "⚡ FLASH LINK — ENSEIGNANT (PRF)",
+    fieldLabel: "{{ '1. رقم أو كود الأستاذ (PRF) :' if lang=='ar' else '1. Numéro ou Code Enseignant (PRF) :' }}"
+  },
+  employee: {
+    total: {{ total_employees or 0 }},
+    paired: {{ employees_paired or total_employees_paired or 0 }},
+    unpaired: {{ employees_unpaired or total_employees_unpaired or 0 }},
+    prefix: 'EMP',
+    label: "{{ 'موظف' if lang=='ar' else 'Personnel / Staff' }}",
+    placeholder: "{{ 'اكتب 1 أو EMP-001 ثم اضغط Entrée...' if lang=='ar' else 'Tapez 1 ou EMP-001 puis Entrée ↵...' }}",
+    flashBadge: "⚡ FLASH LINK — PERSONNEL (EMP)",
+    fieldLabel: "{{ '1. رقم أو كود الموظف (EMP) :' if lang=='ar' else '1. Numéro ou Code Personnel (EMP) :' }}"
+  }
+};
+
+// --- AUDIO SYNTHESIS VIA WEB AUDIO API ---
+var audioCtx = null;
+function getAudioContext() {
+  if (!audioCtx) {
+    var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) audioCtx = new AudioContextClass();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playTone(freq, duration, type, startDelay) {
+  if (isSoundMuted) return;
+  try {
+    var ctx = getAudioContext();
+    if (!ctx) return;
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, ctx.currentTime + (startDelay || 0));
+    gain.gain.setValueAtTime(0.18, ctx.currentTime + (startDelay || 0));
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (startDelay || 0) + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime + (startDelay || 0));
+    osc.stop(ctx.currentTime + (startDelay || 0) + duration);
+  } catch(e) {
+    console.warn('Audio play error:', e);
+  }
+}
+
+function playSuccessChime() {
+  playTone(880, 0.12, 'sine', 0);
+  playTone(1320, 0.22, 'sine', 0.1);
+}
+
+function playWarningChime() {
+  playTone(440, 0.15, 'sawtooth', 0);
+  playTone(330, 0.2, 'sawtooth', 0.16);
+}
+
+function playErrorChime() {
+  playTone(220, 0.25, 'square', 0);
+}
+
+function toggleSound() {
+  isSoundMuted = !isSoundMuted;
+  localStorage.setItem('nfc_sound_muted', isSoundMuted ? 'true' : 'false');
+  updateSoundUI();
+  if (!isSoundMuted) playSuccessChime();
+}
+
+function updateSoundUI() {
+  var icon = document.getElementById('soundIcon');
+  var label = document.getElementById('soundLabel');
+  if (isSoundMuted) {
+    if (icon) icon.innerText = '🔇';
+    if (label) label.innerText = "{{ 'الصوت معطل' if lang=='ar' else 'Son Désactivé' }}";
+  } else {
+    if (icon) icon.innerText = '🔊';
+    if (label) label.innerText = "{{ 'الصوت مفعل' if lang=='ar' else 'Son Activé' }}";
+  }
+}
+
+function showToast(msg, isSuccess) {
+  var toast = document.getElementById('nfcToast');
+  var toastIcon = document.getElementById('toastIcon');
+  var toastMsg = document.getElementById('toastMsg');
+  if (!toast) return;
+  toastMsg.innerText = msg;
+  toastIcon.innerText = isSuccess ? '✓' : '⚠️';
+  toast.style.background = isSuccess ? '#065f46' : '#991b1b';
+  toast.classList.add('show');
+  setTimeout(function() { toast.classList.remove('show'); }, 3200);
+}
+
+// ============================================================
+// 1. ROLE SWITCHING (STUDENT / TEACHER / EMPLOYEE)
+// ============================================================
+function switchPairingRole(role) {
+  console.log("Switching pairing role to:", role);
+  if (!roleStats[role]) role = 'student';
+  activePairingRole = role;
+
+  // 1. Update Tabs styling
+  var tabStu = document.getElementById('tabRoleStudent');
+  var tabTea = document.getElementById('tabRoleTeacher');
+  var tabEmp = document.getElementById('tabRoleEmployee');
+  if (tabStu) tabStu.classList.toggle('active', role === 'student');
+  if (tabTea) tabTea.classList.toggle('active', role === 'teacher');
+  if (tabEmp) tabEmp.classList.toggle('active', role === 'employee');
+
+  // 2. Switch Directory Tables
+  var tStu = document.getElementById('tableContainerStudent');
+  var tTea = document.getElementById('tableContainerTeacher');
+  var tEmp = document.getElementById('tableContainerEmployee');
+  if (tStu) tStu.style.display = (role === 'student') ? 'block' : 'none';
+  if (tTea) tTea.style.display = (role === 'teacher') ? 'block' : 'none';
+  if (tEmp) tEmp.style.display = (role === 'employee') ? 'block' : 'none';
+
+  // 3. Show / Hide Teacher Filter Row (only for students)
+  var tfRow = document.getElementById('teacherFilterRow');
+  if (tfRow) tfRow.style.display = (role === 'student') ? 'flex' : 'none';
+
+  // 4. Update Express Input & Labels
+  var meta = roleStats[role];
+  var flashBadge = document.getElementById('expressFlashBadge');
+  if (flashBadge) {
+    flashBadge.innerText = meta.flashBadge;
+    flashBadge.className = 'nfc-flash-badge role-' + role;
+  }
+  var colLabel = document.querySelector('#colStudentId .nfc-field-label span:nth-child(2)');
+  if (colLabel) colLabel.innerText = meta.fieldLabel;
+  if (expressStudentInput) expressStudentInput.placeholder = meta.placeholder;
+
+  // 5. Update KPI Cards and Counters
+  updateKpiDisplay();
+
+  // 6. Reset search / lock state for the new role
+  resetPersonState();
+
+  // 7. Re-apply status / text filter on active table
+  applyFilters();
+
+  if (expressStudentInput) {
+    expressStudentInput.focus();
+  }
+}
+
+function getActiveRows() {
+  if (activePairingRole === 'teacher') {
+    return document.querySelectorAll('#teachersTbody tr.teacher-row');
+  } else if (activePairingRole === 'employee') {
+    return document.querySelectorAll('#employeesTbody tr.employee-row');
+  } else {
+    return document.querySelectorAll('#studentsTbody tr.nfc-row');
+  }
+}
+
+function updateKpiDisplay() {
+  var rows = getActiveRows();
+  var total = rows.length;
+  var paired = 0;
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i].getAttribute('data-has-nfc') === '1') paired++;
+  }
+  var unpaired = total - paired;
+  var pct = total > 0 ? ((paired / total) * 100).toFixed(1) : '0.0';
+
+  var kpiTotalEl = document.getElementById('kpiTotalCount');
+  if (kpiTotalEl) kpiTotalEl.innerText = total;
+
+  var kpiPairedEl = document.getElementById('kpiPairedCount');
+  if (kpiPairedEl) kpiPairedEl.innerHTML = paired + ' <span style="font-size:14px; color:#16a34a; font-weight:700;">(' + pct + '%)</span>';
+
+  var kpiUnpairedEl = document.getElementById('kpiUnpairedCount');
+  if (kpiUnpairedEl) kpiUnpairedEl.innerText = unpaired;
+
+  var badgePillUnpairedCount = document.getElementById('badgePillUnpairedCount');
+  if (badgePillUnpairedCount) badgePillUnpairedCount.innerText = unpaired;
+
+  var badgePillPairedCount = document.getElementById('badgePillPairedCount');
+  if (badgePillPairedCount) badgePillPairedCount.innerText = paired;
+
+  // Update role tab counts
+  var tabCountStu = document.getElementById('tabCountStudent');
+  var tabCountTea = document.getElementById('tabCountTeacher');
+  var tabCountEmp = document.getElementById('tabCountEmployee');
+  if (tabCountStu) tabCountStu.innerText = document.querySelectorAll('#studentsTbody tr.nfc-row').length;
+  if (tabCountTea) tabCountTea.innerText = document.querySelectorAll('#teachersTbody tr.teacher-row').length;
+  if (tabCountEmp) tabCountEmp.innerText = document.querySelectorAll('#employeesTbody tr.employee-row').length;
+}
+
+// ============================================================
+// 2. PERSON ID INPUT: SEARCH ON ENTER OR CLICK VALIDER
+// ============================================================
+function submitStudentSearch() {
+  var val = expressStudentInput.value.trim();
+  if (!val) {
+    resetPersonState();
+    return;
+  }
+  lookupPerson(val, function(person) {
+    if (person) {
+      if (pendingScannedUid) {
+        var uidToLink = pendingScannedUid;
+        pendingScannedUid = null;
+        executeLink(person.id, uidToLink, false, person.role || activePairingRole);
+      } else {
+        expressTagInput.focus();
+        expressTagInput.select();
+      }
+    }
+  });
+}
+
+// Pressing Enter in student input triggers search
+expressStudentInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    submitStudentSearch();
+  }
+});
+
+// Fail-safe: In case the USB reader scanned directly into expressStudentInput
+expressStudentInput.addEventListener('input', function() {
+  var raw = this.value.trim();
+  var digits = raw.replace(/[^0-9]/g, '');
+
+  if (digits.length >= 10 && raw.length > 5) {
+    var detectedUid = digits.slice(-10);
+    var personPart = raw.slice(0, raw.lastIndexOf(detectedUid)).trim();
+
+    var codeToKeep = (lockedPerson ? lockedPerson.code : (personPart || '1'));
+    this.value = codeToKeep;
+    expressTagInput.value = detectedUid;
+
+    if (lockedPerson) {
+      executeLink(lockedPerson.id, detectedUid, false, lockedPerson.role || activePairingRole);
+    } else {
+      lookupPerson(personPart || '1', function(person) {
+        if (person) {
+          executeLink(person.id, detectedUid, false, person.role || activePairingRole);
+        }
+      });
+    }
+  }
+});
+
+function lookupPerson(query, callback) {
+  var clean = query.trim().toUpperCase();
+
+  // 1. Instant client-side check from table DOM
+  var matchedRow = findPersonInDOM(clean, activePairingRole);
+  if (matchedRow) {
+    var person = extractPersonFromRow(matchedRow, activePairingRole);
+    onPersonMatched(person);
+    if (callback) callback(person);
+    return;
+  }
+
+  // 2. Server API fallback
+  fetch('/api/badge/lookup_person?person_type=' + encodeURIComponent(activePairingRole) + '&q=' + encodeURIComponent(clean))
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.success && data.found) {
+      var p = data.person || data.student;
+      onPersonMatched(p);
+      if (callback) callback(p);
+    } else {
+      onPersonNotFound();
+      if (callback) callback(null);
+    }
+  })
+  .catch(function(err) {
+    console.error(err);
+    onPersonNotFound();
+  });
+}
+
+function lookupStudent(query, callback) {
+  lookupPerson(query, callback);
+}
+
+function findPersonInDOM(query, role) {
+  var clean = query.trim().toUpperCase();
+  var digits = clean.replace(/[^0-9]/g, '');
+  var rows = getActiveRows();
+
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    var code = (r.getAttribute('data-person-code') || r.getAttribute('data-student-code') || '').toUpperCase();
+    var origCode = (r.getAttribute('data-person-orig-code') || '').toUpperCase();
+    var id = String(r.getAttribute('data-person-id') || r.getAttribute('data-student-id') || '');
+    var name = (r.getAttribute('data-person-name') || r.getAttribute('data-student-name') || '').toUpperCase();
+
+    // Exact code or name match
+    if (code === clean || origCode === clean || name.indexOf(clean) !== -1) {
+      return r;
+    }
+
+    // Number matching
+    if (digits) {
+      if (role === 'student') {
+        if (code === 'ILAS' + digits || code === 'ILAS' + digits.padStart(3, '0') || id === digits) return r;
+      } else if (role === 'teacher') {
+        if (code === 'PRF' + digits.padStart(3, '0') || id === digits || origCode === clean) return r;
+      } else if (role === 'employee') {
+        if (code === 'EMP-' + digits.padStart(3, '0') || code === 'EMP' + digits.padStart(3, '0') || id === digits || origCode === clean) return r;
+      }
+    }
+  }
+  return null;
+}
+
+function extractPersonFromRow(row, role) {
+  if (role === 'teacher') {
+    var imgEl = row.querySelector('img');
+    return {
+      id: parseInt(row.getAttribute('data-person-id'), 10),
+      code: row.getAttribute('data-person-code'),
+      full_name: row.getAttribute('data-person-name'),
+      photo: imgEl ? imgEl.src : null,
+      nfc_uid: row.getAttribute('data-person-nfc') || null,
+      level: row.getAttribute('data-specialty') || 'Enseignant',
+      role: 'teacher'
+    };
+  } else if (role === 'employee') {
+    var imgEl = row.querySelector('img');
+    return {
+      id: parseInt(row.getAttribute('data-person-id'), 10),
+      code: row.getAttribute('data-person-code'),
+      full_name: row.getAttribute('data-person-name'),
+      photo: imgEl ? imgEl.src : null,
+      nfc_uid: row.getAttribute('data-person-nfc') || null,
+      level: row.getAttribute('data-dept') || 'Personnel / Staff',
+      role: 'employee'
+    };
+  } else {
+    return {
+      id: parseInt(row.getAttribute('data-student-id'), 10),
+      code: row.getAttribute('data-student-code'),
+      full_name: row.getAttribute('data-student-name'),
+      photo: row.getAttribute('data-student-photo'),
+      nfc_uid: row.getAttribute('data-student-nfc') || null,
+      phone: row.getAttribute('data-phone'),
+      level: row.querySelector('td:nth-child(2) div div:nth-child(2)') ? row.querySelector('td:nth-child(2) div div:nth-child(2)').innerText.split('•')[0].trim() : '',
+      role: 'student'
+    };
+  }
+}
+
+function onPersonMatched(person) {
+  lockedPerson = person;
+  lockedStudent = person; // backward compatibility
+  expressStudentInput.classList.add('matched');
+  document.getElementById('expressStudentNotFound').style.display = 'none';
+
+  // Show matched card
+  var card = document.getElementById('expressStudentCard');
+  card.style.display = 'flex';
+  document.getElementById('expressStudentName').innerText = person.full_name;
+
+  var codeEl = document.getElementById('expressStudentCode');
+  var roleClass = person.role === 'teacher' ? 'prf' : (person.role === 'employee' ? 'emp' : 'ilas');
+  codeEl.className = 'badge-code-pill ' + roleClass;
+  codeEl.innerText = person.code;
+
+  document.getElementById('expressStudentLevel').innerText = person.level || '';
+
+  var badgeEl = document.getElementById('expressStudentCurrentBadge');
+  if (person.nfc_uid) {
+    badgeEl.innerHTML = '<span style="color:#166534; font-weight:700;">📡 Badge actuel : ' + person.nfc_uid + '</span>';
+  } else {
+    badgeEl.innerHTML = '<span style="color:#b45309; font-weight:700;">⏳ Aucun badge lié pour l'instant</span>';
+  }
+
+  var avatarEl = document.getElementById('expressStudentAvatar');
+  if (person.photo) {
+    var src = (person.photo.startsWith('http') || person.photo.startsWith('/')) ? person.photo : ('/static/uploads/photos/' + person.photo);
+    avatarEl.innerHTML = '<img src="' + src + '" style="width:100%; height:100%; border-radius:12px; object-fit:cover;" />';
+  } else {
+    var initial = (person.first_name ? person.first_name[0] : (person.full_name[0] || '👤')).toUpperCase();
+    avatarEl.innerText = initial;
+  }
+
+  document.getElementById('expressCardContainer').classList.add('ready-for-scan');
+  document.getElementById('tagHelperText').innerHTML = "<strong style='color:#10b981;'>🟢 PRÊT !</strong> Approchez la carte du lecteur USB pour lier à <strong>" + person.full_name + " (" + person.code + ")</strong>.";
+
+  // Automatically shift focus to tag input!
+  setTimeout(function() {
+    expressTagInput.focus();
+  }, 100);
+}
+
+function onStudentMatched(student) { onPersonMatched(student); }
+
+function onPersonNotFound() {
+  lockedPerson = null;
+  lockedStudent = null;
+  expressStudentInput.classList.remove('matched');
+  document.getElementById('expressStudentCard').style.display = 'none';
+  document.getElementById('expressStudentNotFound').style.display = 'block';
+  document.getElementById('expressCardContainer').classList.remove('ready-for-scan');
+  document.getElementById('tagHelperText').innerText = "Tapez le numéro ou code puis appuyez sur Entrée.";
+  playErrorChime();
+}
+function onStudentNotFound() { onPersonNotFound(); }
+
+function resetPersonState() {
+  lockedPerson = null;
+  lockedStudent = null;
+  expressStudentInput.value = '';
+  expressStudentInput.classList.remove('matched');
+  expressTagInput.value = '';
+  document.getElementById('expressStudentCard').style.display = 'none';
+  document.getElementById('expressStudentNotFound').style.display = 'none';
+  document.getElementById('expressCardContainer').classList.remove('ready-for-scan');
+  document.getElementById('tagHelperText').innerText = "Passez le badge sur le lecteur USB pour lier automatiquement.";
+}
+function resetStudentState() { resetPersonState(); }
+
+function selectPersonForExpress(role, id, name, code, nfcUid) {
+  if (role !== activePairingRole) {
+    switchPairingRole(role);
+  }
+  expressStudentInput.value = code;
+  submitStudentSearch();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function selectStudentForExpress(code, name, id) {
+  selectPersonForExpress('student', id, name, code, null);
+}
+
+// ============================================================
+// 3. NFC TAG INPUT (USB READER SCAN CAPTURE)
+// ============================================================
+expressTagInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    var uid = this.value.trim();
+    if (uid.length >= 6) {
+      handleTagScan(uid);
+    }
+  }
+});
+
+expressTagInput.addEventListener('input', function() {
+  var uid = this.value.trim();
+  if (uid.length >= 10) {
+    var self = this;
+    setTimeout(function() {
+      var val = self.value.trim();
+      if (val.length >= 10) {
+        handleTagScan(val);
+      }
+    }, 40);
+  }
+});
+
+function handleTagScan(nfcUid) {
+  nfcUid = nfcUid.trim();
+  if (!nfcUid) return;
+
+  // If person is selected
+  if (lockedPerson) {
+    executeLink(lockedPerson.id, nfcUid, false, lockedPerson.role || activePairingRole);
+    return;
+  }
+
+  // If person was NOT selected yet
+  pendingScannedUid = nfcUid;
+  fetch('/api/badge/check_nfc?uid=' + encodeURIComponent(nfcUid))
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.assigned) {
+      playWarningChime();
+      var roleText = data.role_label ? (' (' + data.role_label + ')') : '';
+      showToast("⚠️ Ce badge (" + nfcUid + ") appartient déjà à " + data.full_name + roleText + " (" + data.code + ")", false);
+    } else {
+      playTone(660, 0.12, 'triangle', 0);
+      showToast("📡 Badge détecté (" + nfcUid + "). Tapez maintenant le numéro ou code puis Entrée.", true);
+    }
+    expressStudentInput.focus();
+    expressStudentInput.select();
+  });
+}
+
+// ============================================================
+// 4. EXECUTE LINKING API
+// ============================================================
+function executeLink(personIdOrCode, nfcUid, force, personType) {
+  var pType = personType || (lockedPerson ? lockedPerson.role : null) || activePairingRole;
+  var payload = {
+    person_type: pType,
+    student_id: (typeof personIdOrCode === 'number' ? personIdOrCode : (lockedPerson ? lockedPerson.id : null)),
+    student_code: String(personIdOrCode || (lockedPerson ? lockedPerson.code : '')),
+    nfc_uid: String(nfcUid).trim(),
+    force: force ? 'true' : 'false'
+  };
+
+  fetch('/api/badge/assign_nfc', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(function(res) {
+    return res.json().then(function(data) {
+      return { status: res.status, data: data };
+    });
+  })
+  .then(function(result) {
+    var data = result.data;
+
+    // CONFLICT: Badge is already linked to another person!
+    if (result.status === 409 || data.conflict) {
+      playWarningChime();
+      openConflictModal(data);
+      return;
+    }
+
+    if (!data.success) {
+      playErrorChime();
+      showToast(data.error || "Erreur lors de l'association", false);
+      return;
+    }
+
+    // SUCCESS!
+    playSuccessChime();
+
+    var personName = data.target_name || data.student_name || 'Personne';
+    var banner = document.getElementById('expressSuccessBanner');
+    document.getElementById('expressSuccessTitle').innerText = "{{ '✓ تم ربط البطاقة بنجاح !' if lang=='ar' else '✓ Badge associé avec succès !' }}";
+    document.getElementById('expressSuccessSub').innerText = personName + " (" + data.code + ") ➔ UID: " + data.nfc_uid;
+    banner.style.display = 'flex';
+    setTimeout(function() { banner.style.display = 'none'; }, 4500);
+
+    // Update row in table DOM
+    updatePersonRowInDOM(data.person_type || pType, data.target_id || data.student_id, data.nfc_uid);
+    updateKpiDisplay();
+
+    // Reset express state and autofocus ready for NEXT person!
+    resetPersonState();
+    expressStudentInput.focus();
+  })
+  .catch(function(err) {
+    console.error(err);
+    playErrorChime();
+    showToast("Erreur réseau avec le serveur", false);
+  });
+}
+
+// ============================================================
+// 5. CONFLICT RESOLUTION MODAL
+// ============================================================
+function openConflictModal(data) {
+  pendingConflictData = data;
+  document.getElementById('conflictUidDisplay').innerText = data.nfc_uid;
+  var otherRole = data.other_role ? (' - ' + data.other_role) : '';
+  document.getElementById('conflictOtherName').innerText = (data.other_name || 'Autre titulaire') + otherRole;
+  document.getElementById('conflictOtherCode').innerText = data.other_code || '';
+
+  var targetName = data.target_name || (lockedPerson ? lockedPerson.full_name : 'cette personne');
+  var targetCode = data.target_code || (lockedPerson ? lockedPerson.code : '');
+  document.getElementById('conflictTargetName').innerText = targetName + " (" + targetCode + ")";
+
+  document.getElementById('btnConfirmConflictTransfer').onclick = function() {
+    closeConflictModal();
+    executeLink(data.target_id || data.target_code, data.nfc_uid, true, data.person_type || activePairingRole);
+  };
+
+  document.getElementById('conflictModal').style.display = 'flex';
+}
+
+function closeConflictModal() {
+  document.getElementById('conflictModal').style.display = 'none';
+  pendingConflictData = null;
+  expressTagInput.value = '';
+  expressStudentInput.focus();
+  expressStudentInput.select();
+}
+
+// Modal keyboard shortcuts: Esc to cancel, Enter to confirm transfer
+document.addEventListener('keydown', function(e) {
+  var modal = document.getElementById('conflictModal');
+  if (modal && modal.style.display === 'flex') {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeConflictModal();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      document.getElementById('btnConfirmConflictTransfer').click();
+    }
+  }
+});
+
+// ============================================================
+// 6. UNPAIR BADGE
+// ============================================================
+function unlinkNfcTag(personType, personId, personName, personCode) {
+  var pType = personType || activePairingRole;
+  var roleLabel = pType === 'teacher' ? 'l\'enseignant' : (pType === 'employee' ? 'l\'employé' : 'l\'élève');
+  var confirmMsg = "Êtes-vous sûr de vouloir dissocier le badge de " + roleLabel + " " + personName + " (" + personCode + ") ?";
+  if (!confirm(confirmMsg)) return;
+
+  fetch('/api/badge/assign_nfc', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ person_type: pType, student_id: personId, nfc_uid: '' })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.success) {
+      playSuccessChime();
+      showToast("Badge dissocié avec succès", true);
+      updatePersonRowInDOM(pType, personId, null);
+      updateKpiDisplay();
+    } else {
+      playErrorChime();
+      showToast(data.error || "Erreur lors de la dissociation", false);
+    }
+  })
+  .catch(function(err) {
+    console.error(err);
+    playErrorChime();
+    showToast("Erreur réseau", false);
+  });
+}
+
+function unpairNfcBadge(studentId, studentName) {
+  unlinkNfcTag('student', studentId, studentName, 'ILAS' + studentId);
+}
+
+function updatePersonRowInDOM(role, id, nfcUid) {
+  if (role === 'teacher') {
+    var row = document.getElementById('teacherRow-' + id);
+    if (!row) return;
+    row.setAttribute('data-person-nfc', nfcUid || '');
+    row.setAttribute('data-has-nfc', nfcUid ? '1' : '0');
+    var cell = document.getElementById('teacherNfcCell-' + id) || row.querySelector('.col-nfc-uid');
+    var unpairBtn = document.getElementById('btnTeacherUnpair-' + id);
+    if (cell) {
+      if (nfcUid) {
+        cell.innerHTML = '<span class="uid-tag uid-active" title="Badge actif pour ce professeur"><span class="uid-tag-dot"></span><span>' + nfcUid + '</span></span>';
+      } else {
+        cell.innerHTML = '<span class="uid-tag uid-none"><span>⏳</span><span>' + ("{{ 'بدون بطاقة' if lang=='ar' else 'Sans badge' }}") + '</span></span>';
+      }
+    }
+    if (unpairBtn) unpairBtn.style.display = nfcUid ? 'inline-flex' : 'none';
+    row.classList.add('just-paired');
+    setTimeout(function() { row.classList.remove('just-paired'); }, 2200);
+
+  } else if (role === 'employee') {
+    var row = document.getElementById('employeeRow-' + id);
+    if (!row) return;
+    row.setAttribute('data-person-nfc', nfcUid || '');
+    row.setAttribute('data-has-nfc', nfcUid ? '1' : '0');
+    var cell = document.getElementById('employeeNfcCell-' + id) || row.querySelector('.col-nfc-uid');
+    var unpairBtn = document.getElementById('btnEmployeeUnpair-' + id);
+    if (cell) {
+      if (nfcUid) {
+        cell.innerHTML = '<span class="uid-tag uid-active" title="Badge actif pour ce personnel"><span class="uid-tag-dot"></span><span>' + nfcUid + '</span></span>';
+      } else {
+        cell.innerHTML = '<span class="uid-tag uid-none"><span>⏳</span><span>' + ("{{ 'بدون بطاقة' if lang=='ar' else 'Sans badge' }}") + '</span></span>';
+      }
+    }
+    if (unpairBtn) unpairBtn.style.display = nfcUid ? 'inline-flex' : 'none';
+    row.classList.add('just-paired');
+    setTimeout(function() { row.classList.remove('just-paired'); }, 2200);
+
+  } else {
+    // Student
+    var row = document.getElementById('studentRow-' + id);
+    if (!row) return;
+    row.setAttribute('data-student-nfc', nfcUid || '');
+    row.setAttribute('data-has-nfc', nfcUid ? '1' : '0');
+    var statusCell = document.getElementById('nfcStatusCell-' + id);
+    var unpairBtn = document.getElementById('btnUnpair-' + id);
+    if (statusCell) {
+      if (nfcUid) {
+        statusCell.innerHTML = '<span class="uid-pill uid-pill-assigned" title="UID matériel détecté"><span>📡</span><span>' + nfcUid + '</span></span>';
+      } else {
+        statusCell.innerHTML = '<span class="uid-pill uid-pill-unassigned"><span>⏳</span><span>' + ("{{ 'غير مربوط' if lang=='ar' else 'Non associé' }}") + '</span></span>';
+      }
+    }
+    if (unpairBtn) unpairBtn.style.display = nfcUid ? 'inline-flex' : 'none';
+    row.classList.add('just-paired');
+    setTimeout(function() { row.classList.remove('just-paired'); }, 2200);
+  }
+}
+
+function updateStudentRowInDOM(studentId, nfcUid) {
+  updatePersonRowInDOM('student', studentId, nfcUid);
+}
+
+// ============================================================
+// 7. FILTERS & SEARCH
+// ============================================================
+function filterByStatus(status) {
+  currentStatusFilter = status;
+  document.getElementById('filterPillAll').classList.toggle('active', status === 'all');
+  document.getElementById('filterPillUnpaired').classList.toggle('active', status === 'unpaired');
+  document.getElementById('filterPillPaired').classList.toggle('active', status === 'paired');
+
+  document.getElementById('kpiCardAll').classList.toggle('active-kpi', status === 'all');
+  document.getElementById('kpiCardUnpaired').classList.toggle('active-kpi', status === 'unpaired');
+  document.getElementById('kpiCardPaired').classList.toggle('active-kpi', status === 'paired');
+
+  applyFilters();
+}
+
+function applyFilters() {
+  var searchQuery = (document.getElementById('studentSearchInput').value || '').toLowerCase().trim();
+  var teacherFilterEl = document.getElementById('teacherFilter');
+  var teacherId = teacherFilterEl ? teacherFilterEl.value : '';
+
+  var rows = getActiveRows();
+  var visibleCount = 0;
+
+  rows.forEach(function(r) {
+    var hasNfc = r.getAttribute('data-has-nfc') === '1';
+    var name = (r.getAttribute('data-person-name') || r.getAttribute('data-student-name') || '').toLowerCase();
+    var code = (r.getAttribute('data-person-code') || r.getAttribute('data-student-code') || '').toLowerCase();
+    var origCode = (r.getAttribute('data-person-orig-code') || '').toLowerCase();
+    var nfc = (r.getAttribute('data-person-nfc') || r.getAttribute('data-student-nfc') || '').toLowerCase();
+    var phone = (r.getAttribute('data-phone') || '').toLowerCase();
+    var cin = (r.getAttribute('data-cin') || '').toLowerCase();
+    var specialty = (r.getAttribute('data-specialty') || r.getAttribute('data-dept') || '').toLowerCase();
+    var teachers = (r.getAttribute('data-teachers') || '').split(',');
+
+    var matchStatus = true;
+    if (currentStatusFilter === 'unpaired') matchStatus = !hasNfc;
+    if (currentStatusFilter === 'paired') matchStatus = hasNfc;
+
+    var matchTeacher = true;
+    if (activePairingRole === 'student' && teacherId) {
+      matchTeacher = teachers.includes(teacherId);
+    }
+
+    var matchSearch = true;
+    if (searchQuery) {
+      matchSearch = name.includes(searchQuery) ||
+                    code.includes(searchQuery) ||
+                    origCode.includes(searchQuery) ||
+                    nfc.includes(searchQuery) ||
+                    phone.includes(searchQuery) ||
+                    cin.includes(searchQuery) ||
+                    specialty.includes(searchQuery);
+    }
+
+    var show = matchStatus && matchTeacher && matchSearch;
+    r.style.display = show ? '' : 'none';
+    if (show) visibleCount++;
+  });
+
+  var countEl = document.getElementById('filteredCountDisplay');
+  if (countEl) countEl.innerText = visibleCount;
+}
+
+function updateKpiCounters() {
+  updateKpiDisplay();
+}
+
+// --- KIOSK TEST MODAL ---
+function testKioskModal(studentId, nfcUid, studentName) {
+  document.getElementById('kioskTestStudentName').innerText = studentName;
+  document.getElementById('kioskTestUid').innerText = 'UID: ' + nfcUid;
+  document.getElementById('kioskTestModal').style.display = 'flex';
+  playSuccessChime();
+}
+
+function closeKioskTestModal() {
+  document.getElementById('kioskTestModal').style.display = 'none';
+  expressStudentInput.focus();
+}
+
+// --- INIT ON PAGE LOAD ---
+window.switchPairingRole = switchPairingRole;
+window.selectPersonForExpress = selectPersonForExpress;
+window.unlinkNfcTag = unlinkNfcTag;
+
+window.addEventListener('DOMContentLoaded', function() {
+  // Attach direct click listeners to tabs as well
+  var tabStu = document.getElementById('tabRoleStudent');
+  if (tabStu) tabStu.onclick = function(e) { e.preventDefault(); switchPairingRole('student'); };
+  var tabTea = document.getElementById('tabRoleTeacher');
+  if (tabTea) tabTea.onclick = function(e) { e.preventDefault(); switchPairingRole('teacher'); };
+  var tabEmp = document.getElementById('tabRoleEmployee');
+  if (tabEmp) tabEmp.onclick = function(e) { e.preventDefault(); switchPairingRole('employee'); };
+
+  updateSoundUI();
+  switchPairingRole('student');
+  filterByStatus('unpaired');
+  setTimeout(function() {
+    expressStudentInput.focus();
+  }, 150);
+});
+</script>
+
+{% endblock %}

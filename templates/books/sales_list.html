@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- TOP HEADER & ACTIONS -->
+<div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('books') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ t('books') }}</a></div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+      <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800;">
+        📋 Journal des Ventes de Manuels (سجل مبيعات الكتب)
+      </h2>
+      <span class="chip chip-blue" style="font-size:11px; font-weight:800;">{{ sales|length }} vente(s)</span>
+    </div>
+    <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">Historique chronologique des sorties de stock et encaissements des manuels scolaires</p>
+  </div>
+
+  <div class="flex wrap" style="gap:8px;">
+    <a class="btn btn-primary" href="{{ url_for('book_sell') }}" style="background:#10b981; border-color:#10b981; font-weight:800; font-size:13px; padding:7px 16px; box-shadow:0 4px 12px rgba(16,185,129,0.3);">
+      🛒 Nouvelle Vente au Comptoir
+    </a>
+  </div>
+</div>
+
+<!-- SALES KPIS -->
+<div class="grid grid-3 mb-3" style="gap:12px;">
+  <div class="card stat" style="border-left:4px solid #10b981; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">RECETTES TOTALES DES VENTES</div>
+    <div class="value" style="font-size:22px; font-weight:800; color:#047857; margin:2px 0;">{{ '%.2f'|format(total_sales_revenue) }} <span style="font-size:12px;">{{ settings.currency }}</span></div>
+    <div class="sub" style="font-size:11px; color:#047857; font-weight:700;">Chiffre d'affaires livres</div>
+  </div>
+
+  <div class="card stat" style="border-left:4px solid #1f6feb; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">EXEMPLAIRES DISTRIBUÉS</div>
+    <div class="value" style="font-size:22px; font-weight:800; color:#0B3D6E; margin:2px 0;">{{ total_items_sold }} <span style="font-size:12px; font-weight:600; color:#64748b;">manuels</span></div>
+    <div class="sub" style="font-size:11px; color:#1f6feb; font-weight:600;">Sorties physiques de stock</div>
+  </div>
+
+  <div class="card stat" style="border-left:4px solid #8b5cf6; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">NOMBRE D'OPÉRATIONS</div>
+    <div class="value" style="font-size:22px; font-weight:800; color:#6d28d9; margin:2px 0;">{{ sales|length }} <span style="font-size:12px; font-weight:600; color:#64748b;">reçus</span></div>
+    <div class="sub" style="font-size:11px; color:#6d28d9; font-weight:600;">Transactions comptabilisées</div>
+  </div>
+</div>
+
+<!-- SEARCH & MONTH FILTER BAR -->
+<div class="card card-pad mb-3" style="padding:14px 18px;">
+  <form method="get" action="{{ url_for('book_sales') }}" class="flex wrap between" style="gap:10px; align-items:center;">
+    
+    <div class="flex wrap" style="gap:10px; flex:1;">
+      <!-- Search Input -->
+      <div class="input-field has-ico" style="min-width:240px; flex:1.2;">
+        <span class="f-ico">🔍</span>
+        <input type="text" name="q" value="{{ q }}" placeholder="Rechercher par élève, titre de manuel, N° reçu..." style="font-size:13px; font-weight:600;">
+      </div>
+
+      <!-- Month Filter -->
+      <div class="input-field has-ico" style="max-width:180px;">
+        <span class="f-ico">📅</span>
+        <input type="month" name="month" value="{{ month }}" onchange="this.form.submit()" style="font-size:13px; font-weight:700; color:#0B3D6E;">
+      </div>
+
+      {% if cur_user and cur_user.role == 'admin' %}
+      <!-- Agent / Secrétaire Filter -->
+      <div class="input-field has-ico" style="max-width:180px;">
+        <span class="f-ico">👤</span>
+        <select name="user_id" onchange="this.form.submit()" style="font-size:12.5px; font-weight:700; color:#0B3D6E;">
+          <option value="">-- Tous les agents --</option>
+          {% for u in staff_users %}
+            <option value="{{ u.id }}" {% if req_user_id == u.id %}selected{% endif %}>
+              {{ u.full_name or u.username }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="flex" style="gap:6px;">
+      <button class="btn btn-primary btn-sm" type="submit" style="font-weight:700;">Filtrer</button>
+      {% if q or month or req_user_id %}
+      <a class="btn btn-outline btn-sm" href="{{ url_for('book_sales') }}">Réinitialiser</a>
+      {% endif %}
+    </div>
+
+  </form>
+</div>
+
+<!-- SALES LEDGER TABLE -->
+<div class="card card-pad" style="padding:18px 20px;">
+  {% if sales %}
+  <div class="table-wrap">
+    <table style="font-size:13px;">
+      <thead>
+        <tr style="background:#f8fafc; font-size:11.5px; color:#64748b; border-bottom:1.5px solid #e2e8f0;">
+          <th>Reçu N°</th>
+          <th>Date Vente</th>
+          <th>Manuel Scolaire</th>
+          <th>Bénéficiaire / Acheteur</th>
+          <th style="text-align:center;">Quantité</th>
+          <th style="text-align:right;">Prix Unit.</th>
+          <th style="text-align:right;">Total Encaissé</th>
+          <th style="text-align:center;">Part Prof / École</th>
+          <th style="text-align:center;">Règlement</th>
+          <th>Agent</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sales %}
+        <tr>
+          <!-- 1. Receipt No -->
+          <td>
+            <span class="chip chip-blue" style="font-weight:800; font-size:11px;">
+              {{ s.receipt_no or ('REC-' ~ s.id) }}
+            </span>
+          </td>
+
+          <!-- 2. Date -->
+          <td style="color:#475569; font-weight:600; font-size:12.5px;">
+            {{ s.sale_date.strftime('%d/%m/%Y') if s.sale_date else '' }}
+          </td>
+
+          <!-- 3. Book Title -->
+          <td>
+            <strong style="color:#0B3D6E; font-size:13.5px;">{{ s.book.title if s.book else 'Manuel' }}</strong>
+            {% if s.book and s.book.publisher %}<div class="muted" style="font-size:11px;">Éditeur : {{ s.book.publisher }}</div>{% endif %}
+          </td>
+
+          <!-- 4. Student -->
+          <td>
+            {% if s.student %}
+              <a href="{{ url_for('student_view', sid=s.student.id) }}" style="font-weight:700; color:#0B3D6E; text-decoration:none;">
+                {{ s.student.full_name }}
+              </a>
+              <div style="font-size:10.5px; color:#64748b;"><code>{{ s.student.code }}</code></div>
+            {% else %}
+              <span class="chip chip-gray" style="font-size:10px;">Comptoir Libre</span>
+            {% endif %}
+          </td>
+
+          <!-- 5. Quantity -->
+          <td style="text-align:center;">
+            <span class="chip chip-green" style="font-weight:800; font-size:11.5px;">x{{ s.quantity }}</span>
+          </td>
+
+          <!-- 6. Unit Price -->
+          <td style="text-align:right; color:#475569;">
+            {{ '%.2f'|format(s.unit_price) }} DH
+          </td>
+
+          <!-- 7. Total Amount -->
+          <td style="text-align:right; font-weight:800; color:#047857; font-size:14px;">
+            {{ '%.2f'|format(s.total_amount) }} {{ settings.currency }}
+          </td>
+
+          <!-- 8. Split Prof / École -->
+          <td style="text-align:center;">
+            {% if s.teacher %}
+              <div style="font-size:11px; font-weight:800; color:#6d28d9;">
+                👨‍🏫 {{ '%.2f'|format(s.teacher_earned or 0.0) }} DH
+              </div>
+              <div style="font-size:10px; color:#64748b; font-weight:600;">
+                Prof. {{ s.teacher.full_name }}
+              </div>
+              <div style="font-size:9.5px; color:#047857;">
+                École: {{ '%.2f'|format(s.school_earned or 0.0) }} DH
+              </div>
+            {% else %}
+              <span class="chip chip-gray" style="font-size:10px;">100% École</span>
+            {% endif %}
+          </td>
+
+          <!-- 9. Payment Mode -->
+          <td style="text-align:center;">
+            <span class="chip chip-gray" style="font-size:10.5px;">{{ s.payment_method }}</span>
+          </td>
+
+          <!-- 9. User Agent -->
+          <td style="font-size:11.5px; color:#64748b;">
+            {{ s.user.full_name if s.user else (s.user.username if s.user else 'Admin') }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty" style="padding:30px;">
+    Aucune vente enregistrée pour cette période.
+    <div style="margin-top:10px;">
+      <a class="btn btn-primary btn-sm" href="{{ url_for('book_sell') }}">🛒 Nouvelle Vente au Comptoir</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

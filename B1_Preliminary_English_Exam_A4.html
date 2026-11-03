@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEFR B1 Preliminary English Examination - Official Mock Paper</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ==========================================================================
+       CSS RESET & BASE CONFIGURATION
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --primary: #0d2b45;
+      --primary-light: #1d4e79;
+      --accent: #205493;
+      --accent-gold: #c59b27;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #cbd5e1;
+      --border-light: #e2e8f0;
+      --bg-canvas: #e2e8f0;
+      --bg-card: #f8fafc;
+      --page-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      line-height: 1.5;
+      font-size: 13.5px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ==========================================================================
+       TOP CONTROL TOOLBAR (SCREEN ONLY)
+       ========================================================================== */
+    .top-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(13, 43, 69, 0.95);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      padding: 12px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .toolbar-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+    }
+
+    .toolbar-badge {
+      background: var(--accent-gold);
+      color: #000;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-gold {
+      background: #f59e0b;
+      color: #000;
+    }
+    .btn-gold:hover {
+      background: #d97706;
+    }
+
+    /* Timer Widget */
+    .exam-timer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: #38bdf8;
+    }
+
+    /* Filter Tabs */
+    .filter-tabs {
+      display: flex;
+      gap: 4px;
+      background: rgba(0,0,0,0.25);
+      padding: 3px;
+      border-radius: 6px;
+    }
+
+    .filter-tab {
+      background: transparent;
+      border: none;
+      color: #cbd5e1;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .filter-tab.active, .filter-tab:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+
+    /* ==========================================================================
+       A4 PAGE CONTAINER & SHEET SIMULATION
+       ========================================================================== */
+    .document-viewport {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+      padding: 30px 16px 80px;
+    }
+
+    .a4-page {
+      background: #ffffff;
+      width: 210mm;
+      min-height: 297mm;
+      padding: 16mm 18mm 18mm 18mm;
+      box-shadow: var(--page-shadow);
+      position: relative;
+      border-radius: 2px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-sizing: border-box;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    /* Modern Examination Header */
+    .exam-header {
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .exam-org {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .exam-logo-box {
+      width: 44px;
+      height: 44px;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: -1px;
+      border-radius: 4px;
+      box-shadow: 0 2px 6px rgba(13, 43, 69, 0.3);
+    }
+
+    .exam-org-meta h1 {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--primary);
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    .exam-org-meta p {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .exam-session-info {
+      text-align: right;
+    }
+
+    .paper-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      background: #f1f5f9;
+      padding: 3px 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+
+    .paper-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    /* Candidate Form Header (Page 1) */
+    .candidate-grid-container {
+      border: 1.5px solid var(--primary);
+      border-radius: 4px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      background: #fafbfc;
+    }
+
+    .candidate-grid-title {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--primary);
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .candidate-fields {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .candidate-field-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .char-boxes {
+      display: flex;
+      gap: 3px;
+    }
+
+    .char-box {
+      width: 19px;
+      height: 24px;
+      border: 1px solid #94a3b8;
+      background: #fff;
+      border-radius: 2px;
+    }
+
+    .char-box.long {
+      flex: 1;
+      height: 24px;
+      border: 1px solid #94a3b8;
+      background: #fff;
+      border-radius: 2px;
+    }
+
+    /* Page Footer */
+    .page-footer {
+      border-top: 1px solid var(--border-light);
+      padding-top: 8px;
+      margin-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Typography inside content */
+    .paper-title-hero {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: #fff;
+      padding: 14px 18px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .paper-title-hero h2 {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .paper-title-hero .meta {
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0.9;
+    }
+
+    .part-banner {
+      background: #f1f5f9;
+      border-left: 4px solid var(--accent);
+      padding: 7px 12px;
+      margin: 14px 0 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .part-instruction {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    /* Reading Signs & Notices (Part 1) */
+    .notice-card {
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .notice-box {
+      background: #fdfefe;
+      border: 1.5px dashed #64748b;
+      padding: 10px 14px;
+      border-radius: 4px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      margin-bottom: 10px;
+      color: #0f172a;
+    }
+
+    .notice-box.email-preview {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      font-size: 11.5px;
+    }
+
+    .notice-box.email-preview .header-meta {
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .question-options {
+      margin-left: 4px;
+    }
+
+    .option-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 5px;
+      font-size: 12px;
+    }
+
+    .option-letter {
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 18px;
+    }
+
+    /* Candidate Profiles & Matching (Part 2) */
+    .matching-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .profile-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 9px 11px;
+      font-size: 11.5px;
+    }
+
+    .profile-name {
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 3px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .course-card {
+      border-left: 3px solid var(--accent-gold);
+      background: #fff;
+      border-top: 1px solid #e2e8f0;
+      border-right: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e2e8f0;
+      border-radius: 0 4px 4px 0;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      font-size: 11px;
+    }
+
+    .course-title {
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 2px;
+    }
+
+    /* Long Reading Text (Part 3) */
+    .reading-article {
+      font-family: 'Merriweather', Georgia, serif;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #1e293b;
+      column-count: 2;
+      column-gap: 20px;
+      text-align: justify;
+      margin-bottom: 14px;
+      background: #ffffff;
+      padding: 8px 0;
+    }
+
+    .article-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 2px;
+      text-align: left;
+    }
+
+    .article-byline {
+      font-family: 'Inter', sans-serif;
+      font-size: 10.5px;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+
+    /* Gapped Text (Part 4) */
+    .gapped-text {
+      font-size: 12px;
+      line-height: 1.65;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 12px 14px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+
+    .gap-marker {
+      font-weight: 700;
+      color: #2563eb;
+      background: #eff6ff;
+      border: 1px dashed #3b82f6;
+      padding: 1px 7px;
+      border-radius: 3px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
+    .sentence-bank {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .sentence-item {
+      font-size: 11px;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      border-radius: 4px;
+      display: flex;
+      gap: 6px;
+    }
+
+    .sentence-letter {
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* Cloze Tables (Part 5) */
+    .cloze-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 11.5px;
+    }
+
+    .cloze-table th, .cloze-table td {
+      border: 1px solid #e2e8f0;
+      padding: 6px 10px;
+      text-align: left;
+    }
+
+    .cloze-table th {
+      background: #f1f5f9;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* Writing Section (Paper 2) */
+    .email-prompt-box {
+      border: 1.5px solid #cbd5e1;
+      background: #ffffff;
+      border-radius: 6px;
+      padding: 14px;
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .email-prompt-header {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+    }
+
+    .prompt-callout {
+      display: inline-block;
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      color: #92400e;
+      font-weight: 700;
+      font-size: 10.5px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin: 2px 0;
+    }
+
+    .lined-response-area {
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 23px,
+        #e2e8f0 23px,
+        #e2e8f0 24px
+      );
+      min-height: 190px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-family: 'Merriweather', serif;
+      font-size: 13px;
+      line-height: 24px;
+    }
+
+    /* Speaking Visual Prompt Cards */
+    .speaking-card-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .photo-mockup {
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #f8fafc;
+    }
+
+    .photo-mockup-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 6px 10px;
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    .photo-mockup-body {
+      padding: 12px;
+      font-size: 11.5px;
+      color: #334155;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: #fdfefe;
+    }
+
+    .mindmap-box {
+      border: 2px dashed #94a3b8;
+      border-radius: 8px;
+      padding: 14px;
+      background: #fafbfc;
+      text-align: center;
+      margin: 12px 0;
+    }
+
+    .mindmap-center {
+      background: var(--primary);
+      color: #fff;
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 12.5px;
+      margin-bottom: 12px;
+    }
+
+    .mindmap-ideas {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .mindmap-idea-pill {
+      background: #fff;
+      border: 1px solid #3b82f6;
+      color: #1d4ed8;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Answer Key Styles */
+    .answer-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #22c55e;
+      color: #fff;
+      font-weight: 700;
+      font-size: 11px;
+      margin-right: 6px;
+    }
+
+    .model-answer-block {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-left: 4px solid #16a34a;
+      border-radius: 4px;
+      padding: 12px 14px;
+      font-size: 12px;
+      margin: 10px 0;
+      line-height: 1.55;
+    }
+
+    /* Print Specific Styling */
+    @media print {
+      body {
+        background: #ffffff !important;
+        font-size: 11pt;
+      }
+
+      .no-print, .top-toolbar {
+        display: none !important;
+      }
+
+      .document-viewport {
+        padding: 0 !important;
+        gap: 0 !important;
+      }
+
+      .a4-page {
+        width: 100% !important;
+        min-height: auto !important;
+        height: auto !important;
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+        padding: 12mm 15mm !important;
+        page-break-after: always !important;
+        break-after: page !important;
+      }
+
+      .reading-article {
+        column-gap: 24px;
+      }
+    }
+
+    /* Responsive for Small Screens (Mobile/Tablet View) */
+    @media screen and (max-width: 860px) {
+      .a4-page {
+        width: 96vw;
+        min-height: auto;
+        padding: 20px 16px;
+      }
+      .matching-grid, .sentence-bank, .speaking-card-grid, .candidate-fields {
+        grid-template-columns: 1fr;
+      }
+      .reading-article {
+        column-count: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================================================
+       INTERACTIVE FLOATING CONTROLS (SCREEN VIEW)
+       ========================================================================== -->
+  <header class="top-toolbar no-print">
+    <div class="toolbar-title">
+      <div class="exam-logo-box" style="width:32px; height:32px; font-size:14px;">B1</div>
+      <span>CEFR B1 Official Examination Paper</span>
+      <span class="toolbar-badge">Cambridge PET Standard</span>
+    </div>
+
+    <!-- Exam Timer Widget -->
+    <div class="exam-timer" id="timerWidget">
+      <span>⏱️</span>
+      <span id="timerDisplay">45:00</span>
+      <button class="btn btn-outline" style="padding: 2px 6px; font-size:10px;" onclick="toggleTimer()">Start / Pause</button>
+      <button class="btn btn-outline" style="padding: 2px 6px; font-size:10px;" onclick="resetTimer(45)">Reset (45m)</button>
+    </div>
+
+    <!-- Filter View Tabs -->
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="filterSections('all')">All Papers</button>
+      <button class="filter-tab" onclick="filterSections('reading')">Reading</button>
+      <button class="filter-tab" onclick="filterSections('writing')">Writing</button>
+      <button class="filter-tab" onclick="filterSections('listening')">Listening</button>
+      <button class="filter-tab" onclick="filterSections('speaking')">Speaking</button>
+      <button class="filter-tab" onclick="filterSections('answers')">Answer Key</button>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="toolbar-actions">
+      <button class="btn btn-gold" onclick="toggleKeys()">
+        <span id="keyIcon">👁️</span> <span id="keyText">Show/Hide Answer Key</span>
+      </button>
+      <button class="btn btn-primary" onclick="window.print()">
+        <span>🖨️</span> Print / Save PDF
+      </button>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       A4 PAGES CONTAINER
+       ========================================================================== -->
+  <main class="document-viewport">
+
+    <!-- ==========================================================================
+         PAGE 1: EXAM COVER & CANDIDATE REGISTRATION
+         ========================================================================== -->
+    <article class="a4-page section-cover">
+      <div>
+        <!-- Official Examination Header -->
+        <div class="exam-header">
+          <div class="exam-org">
+            <div class="exam-logo-box">B1</div>
+            <div class="exam-org-meta">
+              <h1>International English Assessment</h1>
+              <p>Common European Framework of Reference (CEFR) &bull; Level B1</p>
+              <p>Preliminary English Test (PET) Standard Specification</p>
+            </div>
+          </div>
+          <div class="exam-session-info">
+            <span class="paper-code">PET-B1 / 2026-ENG</span><br>
+            <span class="paper-badge">Four-Skill Comprehensive Exam</span>
+          </div>
+        </div>
+
+        <!-- Candidate Registration Boxes -->
+        <div class="candidate-grid-container">
+          <div class="candidate-grid-title">Candidate Details (Please write in BLOCK CAPITALS using a black or blue pen)</div>
+          <div class="candidate-fields">
+            <div>
+              <div class="candidate-field-label">Candidate Family Name & Given Name:</div>
+              <div class="char-box long"></div>
+            </div>
+            <div>
+              <div class="candidate-field-label">Centre Number:</div>
+              <div class="char-boxes">
+                <div class="char-box"></div><div class="char-box"></div><div class="char-box"></div><div class="char-box"></div><div class="char-box"></div>
+              </div>
+            </div>
+            <div>
+              <div class="candidate-field-label">Candidate Number:</div>
+              <div class="char-boxes">
+                <div class="char-box"></div><div class="char-box"></div><div class="char-box"></div><div class="char-box"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Examination Specification Overview Card -->
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; margin-bottom: 20px;">
+          <h2 style="font-size: 14px; font-weight: 800; color: var(--primary); text-transform: uppercase; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+            Examination Components & Time Allotment
+          </h2>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <thead>
+              <tr style="background: #e2e8f0; text-align: left; color: var(--primary); font-weight: 700;">
+                <th style="padding: 7px 10px;">Paper</th>
+                <th style="padding: 7px 10px;">Skill</th>
+                <th style="padding: 7px 10px;">Tasks</th>
+                <th style="padding: 7px 10px;">Time Allowed</th>
+                <th style="padding: 7px 10px;">Weight</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 7px 10px; font-weight: 700;">Paper 1</td>
+                <td style="padding: 7px 10px;">Reading</td>
+                <td style="padding: 7px 10px;">6 Parts / 32 Questions</td>
+                <td style="padding: 7px 10px;">45 Minutes</td>
+                <td style="padding: 7px 10px;">25%</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 7px 10px; font-weight: 700;">Paper 2</td>
+                <td style="padding: 7px 10px;">Writing</td>
+                <td style="padding: 7px 10px;">2 Parts (Email + Choice of Article/Story)</td>
+                <td style="padding: 7px 10px;">45 Minutes</td>
+                <td style="padding: 7px 10px;">25%</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 7px 10px; font-weight: 700;">Paper 3</td>
+                <td style="padding: 7px 10px;">Listening</td>
+                <td style="padding: 7px 10px;">4 Parts / 25 Questions (Audio Script provided)</td>
+                <td style="padding: 7px 10px;">~30 Minutes</td>
+                <td style="padding: 7px 10px;">25%</td>
+              </tr>
+              <tr>
+                <td style="padding: 7px 10px; font-weight: 700;">Paper 4</td>
+                <td style="padding: 7px 10px;">Speaking</td>
+                <td style="padding: 7px 10px;">4 Parts (Interactive Paired Assessment)</td>
+                <td style="padding: 7px 10px;">10–12 Minutes</td>
+                <td style="padding: 7px 10px;">25%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Instructions to Candidates -->
+        <div style="border-left: 4px solid var(--accent); background: #f8fafc; padding: 14px; border-radius: 0 6px 6px 0; margin-bottom: 20px;">
+          <h3 style="font-size: 13px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">READ THESE INSTRUCTIONS CAREFULLY BEFORE YOU BEGIN:</h3>
+          <ul style="padding-left: 18px; font-size: 12px; line-height: 1.6; color: #334155;">
+            <li>Do not open this examination booklet until you are instructed to do so by the invigilator.</li>
+            <li>Write your name, centre number, and candidate number in the boxes at the top of this page.</li>
+            <li>Answer all questions in Paper 1 (Reading) and Paper 3 (Listening) directly on the paper.</li>
+            <li>For Paper 2 (Writing), adhere strictly to the word count guidance (approximately 100 words per task).</li>
+            <li>No dictionaries or electronic devices are permitted inside the examination room.</li>
+            <li>Candidates must stop writing immediately when the invigilator announces the conclusion of the test.</li>
+          </ul>
+        </div>
+
+        <!-- Official Security Code & Barcode Mock -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 30px; padding: 10px 0; border-top: 1px dashed #cbd5e1;">
+          <div>
+            <div style="font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Official Exam Security Seal</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: #475569;">AUTH-B1-CAM-99420-ILAS-2026</div>
+          </div>
+          <div style="letter-spacing: 3px; font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 900; color: #1e293b;">
+            ||||| | |||| || |||||| | ||| ||||
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>B1 Preliminary English &bull; Official Practice Examination</span>
+        <span>Page 1 of 8</span>
+      </div>
+    </article>
+
+
+    <!-- ==========================================================================
+         PAGE 2: PAPER 1 - READING (PARTS 1 & 2)
+         ========================================================================== -->
+    <article class="a4-page section-reading">
+      <div>
+        <div class="paper-title-hero">
+          <div>
+            <h2>PAPER 1: READING &bull; PART 1 & PART 2</h2>
+            <div class="meta">Total Duration: 45 Minutes &bull; Questions 1 – 10</div>
+          </div>
+          <span class="paper-code">READING 1/3</span>
+        </div>
+
+        <!-- PART 1 -->
+        <div class="part-banner">
+          <span>PART 1: Questions 1 – 5</span>
+          <span>5 Marks</span>
+        </div>
+        <p class="part-instruction">For each question, choose the correct answer (A, B, or C).</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <!-- Question 1 -->
+          <div class="notice-card">
+            <div class="notice-box">
+              <strong>RIVERSIDE GYM</strong><br>
+              Lockers must be cleared at the end of every visit. Any items left overnight will be removed and donated to charity after 7 days. Padlocks will be cut.
+            </div>
+            <div style="font-weight: 700; font-size: 11.5px; margin-bottom: 6px;">1. What does this notice say?</div>
+            <div class="question-options">
+              <div class="option-item"><span class="option-letter">A</span> <span>Members may hire a locker permanently if they bring a lock.</span></div>
+              <div class="option-item"><span class="option-letter">B</span> <span>Belongings left behind at closing time will not remain in lockers.</span></div>
+              <div class="option-item"><span class="option-letter">C</span> <span>The gym is asking members to donate unwanted sportswear.</span></div>
+            </div>
+          </div>
+
+          <!-- Question 2 -->
+          <div class="notice-card">
+            <div class="notice-box email-preview">
+              <div class="header-meta">From: Coach Miller &bull; Subject: Friday's Practice</div>
+              The sports hall floor is being resurfaced tomorrow. Instead of 5:00 PM, we meet at 6:30 PM on the outdoor court. If it rains, we will move to the fitness suite.
+            </div>
+            <div style="font-weight: 700; font-size: 11.5px; margin-bottom: 6px;">2. Coach Miller is informing the squad that:</div>
+            <div class="question-options">
+              <div class="option-item"><span class="option-letter">A</span> <span>The training session has been cancelled due to rain.</span></div>
+              <div class="option-item"><span class="option-letter">B</span> <span>The time and location of practice have both changed.</span></div>
+              <div class="option-item"><span class="option-letter">C</span> <span>They will train in the gym because the outdoor court is wet.</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+          <!-- Question 3 -->
+          <div class="notice-card" style="margin-bottom:0;">
+            <div class="notice-box" style="font-size:11px;">
+              <strong>MESSAGE FROM LIAM:</strong><br>
+              Sarah, express was booked so we took the 07:40 slow train via Oxford instead of 08:00. Meet at the coffee cart at 07:40 sharp!
+            </div>
+            <div style="font-weight: 700; font-size: 11px; margin-bottom: 4px;">3. Why is Liam writing?</div>
+            <div class="question-options" style="font-size:11px;">
+              <div class="option-item"><span class="option-letter">A</span> <span>To buy new tickets.</span></div>
+              <div class="option-item"><span class="option-letter">B</span> <span>To meet earlier due to timetable.</span></div>
+              <div class="option-item"><span class="option-letter">C</span> <span>To reschedule the Oxford trip.</span></div>
+            </div>
+          </div>
+
+          <!-- Question 4 -->
+          <div class="notice-card" style="margin-bottom:0;">
+            <div class="notice-box" style="font-size:11px;">
+              <strong>GREENWOOD LIBRARY:</strong><br>
+              2nd floor silent area reserved for school exam groups until 3:00 PM today. Other visitors use Meeting Room B downstairs.
+            </div>
+            <div style="font-weight: 700; font-size: 11px; margin-bottom: 4px;">4. According to notice:</div>
+            <div class="question-options" style="font-size:11px;">
+              <div class="option-item"><span class="option-letter">A</span> <span>Library closed to public.</span></div>
+              <div class="option-item"><span class="option-letter">B</span> <span>Room B unavailable today.</span></div>
+              <div class="option-item"><span class="option-letter">C</span> <span>Visitors use different room.</span></div>
+            </div>
+          </div>
+
+          <!-- Question 5 -->
+          <div class="notice-card" style="margin-bottom:0;">
+            <div class="notice-box" style="font-size:11px;">
+              <strong>SOUNDWAVE PROMISE:</strong><br>
+              Found identical headphones cheaper in high-street within 14 days? We refund difference + 10% with receipt.
+            </div>
+            <div style="font-weight: 700; font-size: 11px; margin-bottom: 4px;">5. Soundwave offers:</div>
+            <div class="question-options" style="font-size:11px;">
+              <div class="option-item"><span class="option-letter">A</span> <span>Partial refund if rival is cheaper.</span></div>
+              <div class="option-item"><span class="option-letter">B</span> <span>Full replacement in 30 days.</span></div>
+              <div class="option-item"><span class="option-letter">C</span> <span>10% discount on new items.</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PART 2 -->
+        <div class="part-banner">
+          <span>PART 2: Questions 6 – 10 (Matching Profiles to Courses)</span>
+          <span>5 Marks</span>
+        </div>
+        <p class="part-instruction">The five people below want an evening/weekend course. Match each person (6–10) with the best course (A–H).</p>
+
+        <div class="matching-grid">
+          <div>
+            <div class="profile-card" style="margin-bottom: 6px;">
+              <div class="profile-name"><span>6. Marcus (19, Student)</span> <span class="gap-marker">Course: [ &nbsp; ]</span></div>
+              Wants a weekend course to edit promotional videos and mix audio using pro software on his laptop with project critiques.
+            </div>
+            <div class="profile-card" style="margin-bottom: 6px;">
+              <div class="profile-name"><span>7. Elena (34, Accountant)</span> <span class="gap-marker">Course: [ &nbsp; ]</span></div>
+              Wants a weekday evening creative pottery hobby to sculpt and throw ceramic plates and mugs. Complete beginner.
+            </div>
+            <div class="profile-card" style="margin-bottom: 6px;">
+              <div class="profile-name"><span>8. Tariq (28, Engineer)</span> <span class="gap-marker">Course: [ &nbsp; ]</span></div>
+              Wants Saturday outdoor wilderness survival, topographic map navigation, compass bearings, and wilderness first aid.
+            </div>
+            <div class="profile-card" style="margin-bottom: 6px;">
+              <div class="profile-name"><span>9. Chloe (22, Graduate)</span> <span class="gap-marker">Course: [ &nbsp; ]</span></div>
+              Wants to start an online vintage clothing shop: smartphone lighting, Instagram branding, and digital marketing.
+            </div>
+            <div class="profile-card">
+              <div class="profile-name"><span>10. Beatrice (45, Teacher)</span> <span class="gap-marker">Course: [ &nbsp; ]</span></div>
+              Wants conversational Spanish for a family holiday in Andalusia: restaurant ordering, hotel dialogues, without heavy grammar drills.
+            </div>
+          </div>
+
+          <div>
+            <div class="course-card">
+              <div class="course-title">A) Clay & Wheel Studio (Tue/Thu evenings)</div>
+              Absolute beginners pottery. Hand-building, coil sculpting, wheel throwing plates/mugs. Take home glazed pieces.
+            </div>
+            <div class="course-card">
+              <div class="course-title">B) Digital Video Editing & Audio Design (Saturdays)</div>
+              Master timeline cutting, colour grading, audio mixing on your laptop with weekly mentor critiques.
+            </div>
+            <div class="course-card">
+              <div class="course-title">C) Conversational Spanish for Travellers (Wednesdays)</div>
+              Focus on holiday spoken dialogues: transport, restaurants, hotels, and Spanish etiquette without grammar drills.
+            </div>
+            <div class="course-card">
+              <div class="course-title">D) Outdoor Navigation & Wilderness Safety (Saturdays)</div>
+              Field course in National Park: map reading, compass bearings, route finding, and emergency wilderness first-aid.
+            </div>
+            <div class="course-card">
+              <div class="course-title">E) E-Commerce & Smartphone Marketing (Mondays)</div>
+              Smartphone photography, Instagram branding, and low-budget digital advertising for online retail shops.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>B1 Preliminary English &bull; Paper 1: Reading</span>
+        <span>Page 2 of 8</span>
+      </div>
+    </article>
+
+
+    <!-- ==========================================================================
+         PAGE 3: PAPER 1 - READING (PARTS 3 & 4)
+         ========================================================================== -->
+    <article class="a4-page section-reading">
+      <div>
+        <div class="paper-title-hero">
+          <div>
+            <h2>PAPER 1: READING &bull; PART 3 & PART 4</h2>
+            <div class="meta">Questions 11 – 20 &bull; Comprehension & Gapped Text</div>
+          </div>
+          <span class="paper-code">READING 2/3</span>
+        </div>
+
+        <!-- PART 3 -->
+        <div class="part-banner">
+          <span>PART 3: Questions 11 – 15</span>
+          <span>5 Marks</span>
+        </div>
+        <p class="part-instruction">Read the text and choose the correct answer (A, B, C, or D) for questions 11–15.</p>
+
+        <div style="background: #fafbfc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 16px; margin-bottom: 12px;">
+          <div class="article-title">Maya’s Zero-Waste Journey: The Story of GreenCrumb Bakery</div>
+          <div class="article-byline">By environmental correspondent Hannah Jenkins</div>
+          
+          <div class="reading-article">
+            Four years ago, Maya Lindqvist was working seventy hours a week as a corporate financial analyst in central Manchester. Although her salary was generous, Maya felt increasingly disconnected from her community and disturbed by the sheer volume of single-use plastic and food packaging she encountered daily. An enthusiastic home baker on weekends, Maya decided to make a dramatic career pivot: she would open Britain’s first certified zero-waste artisan bakery.
+            <br><br>
+            "People thought I had lost my mind," laughs Maya. "Banks were reluctant to approve commercial loans because they assumed a business operating without plastic packaging, clingfilm, or disposable baking paper would be unhygienic and financially unviable." To prove her concept, Maya launched a community crowdfunding campaign, offering fresh sourdough bread subscriptions to local supporters. Within twenty-one days, she had raised £35,000, allowing her to secure a small high-street premises in suburban Didsbury.
+            <br><br>
+            GreenCrumb Bakery opened its doors in September 2022 with three strict principles: every ingredient must be organic and sourced within an eighty-mile radius; all dry goods must arrive in reusable cotton sacks or metal drums; and customers must bring their own containers or purchase reusable linen bread bags at cost price. "The first month was chaotic," Maya recalls. "Some older customers were annoyed that we didn't provide thin plastic bags, and we had to explain our mission patiently dozens of times each morning. But once neighbours tasted the quality of our forty-eight-hour fermented loaves, their initial resistance vanished."
+            <br><br>
+            Surplus food management is another area where GreenCrumb breaks tradition. Instead of throwing unsold pastries into commercial waste bins at closing time, Maya partners with a local shelter and an urban community farm. Unsold bread is sliced and transformed into crunchy croutons, breadcrumbs, or donated to the shelter’s soup kitchen. Today, GreenCrumb employs eight full-time staff and turns a healthy profit, proving that sustainability and commercial success can thrive together.
+          </div>
+        </div>
+
+        <!-- Questions 11-15 -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; font-size: 11.5px;">
+          <div>
+            <strong>11. What motivated Maya to change her profession?</strong>
+            <div class="option-item"><span class="option-letter">A</span> She was dismissed from her banking role.</div>
+            <div class="option-item"><span class="option-letter">B</span> She wanted to earn a much higher salary.</div>
+            <div class="option-item"><span class="option-letter">C</span> She was unhappy with her lifestyle and excessive waste.</div>
+            <div class="option-item"><span class="option-letter">D</span> Her family ran a long-standing bakery.</div>
+
+            <strong style="margin-top: 6px; display: block;">12. Why did banks refuse to lend money initially?</strong>
+            <div class="option-item"><span class="option-letter">A</span> They doubted a plastic-free bakery could be clean and profitable.</div>
+            <div class="option-item"><span class="option-letter">B</span> Maya had an inadequate personal credit score.</div>
+            <div class="option-item"><span class="option-letter">C</span> The rented building was structurally unsafe.</div>
+            <div class="option-item"><span class="option-letter">D</span> Local supermarket competition was too fierce.</div>
+          </div>
+
+          <div>
+            <strong>13. How did early customers react to the bakery?</strong>
+            <div class="option-item"><span class="option-letter">A</span> They loved the policy immediately without hesitation.</div>
+            <div class="option-item"><span class="option-letter">B</span> Some were annoyed at first, but the great taste won them over.</div>
+            <div class="option-item"><span class="option-letter">C</span> They boycotted until prices were lowered.</div>
+            <div class="option-item"><span class="option-letter">D</span> They refused to bring their own bags.</div>
+
+            <strong style="margin-top: 6px; display: block;">14. What happens to unsold baked goods?</strong>
+            <div class="option-item"><span class="option-letter">A</span> Sold at half-price before closing.</div>
+            <div class="option-item"><span class="option-letter">B</span> Reheated the following morning.</div>
+            <div class="option-item"><span class="option-letter">C</span> Made into croutons or donated to a shelter.</div>
+            <div class="option-item"><span class="option-letter">D</span> Composted in Maya's back garden.</div>
+          </div>
+        </div>
+
+        <!-- PART 4 -->
+        <div class="part-banner">
+          <span>PART 4: Questions 16 – 20 (Gapped Text)</span>
+          <span>5 Marks</span>
+        </div>
+        <p class="part-instruction">Five sentences have been removed. Choose from sentences (A–H) the one which fits each gap (16–20).</p>
+
+        <div class="gapped-text">
+          Artificial illumination in modern cities makes stars invisible to millions of urban dwellers. 
+          <span class="gap-marker">[ 16 ]</span>. Fortunately, you do not need an expensive degree to rediscover the night sky. 
+          First, select a dark location. Light pollution washes out faint stars. <span class="gap-marker">[ 17 ]</span>. 
+          Once at your viewing spot, allow twenty minutes for your eyes to produce rhodopsin. 
+          <span class="gap-marker">[ 18 ]</span>. Looking at a mobile screen will reset your night vision. 
+          Many novices think they must buy a giant telescope. <span class="gap-marker">[ 19 ]</span>. 
+          Standard binoculars offer a much wider view and are easier to handle. Finally, remember weather conditions matter. 
+          <span class="gap-marker">[ 20 ]</span>. Pack warm layers and enjoy the sky.
+        </div>
+
+        <div class="sentence-bank">
+          <div class="sentence-item"><span class="sentence-letter">A</span> In reality, a good pair of binoculars is far more practical for beginners.</div>
+          <div class="sentence-item"><span class="sentence-letter">B</span> This substance enables our retinas to detect faint pinpricks of light.</div>
+          <div class="sentence-item"><span class="sentence-letter">C</span> Atmospheric moisture and high winds can blur your view of distant galaxies.</div>
+          <div class="sentence-item"><span class="sentence-letter">E</span> This phenomenon is known as skyglow, and it obscures the Milky Way.</div>
+          <div class="sentence-item"><span class="sentence-letter">F</span> Therefore, finding an unobstructed horizon away from urban glare is vital.</div>
+          <div class="sentence-item"><span class="sentence-letter">H</span> Professional astronomers rarely look through optical eyepieces anymore.</div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>B1 Preliminary English &bull; Paper 1: Reading</span>
+        <span>Page 3 of 8</span>
+      </div>
+    </article>
+
+
+    <!-- ==========================================================================
+         PAGE 4: PAPER 1 - READING (PARTS 5 & 6)
+         ========================================================================== -->
+    <article class="a4-page section-reading">
+      <div>
+        <div class="paper-title-hero">
+          <div>
+            <h2>PAPER 1: READING &bull; PART 5 & PART 6</h2>
+            <div class="meta">Questions 21 – 32 &bull; Vocabulary & Grammar Cloze</div>
+          </div>
+          <span class="paper-code">READING 3/3</span>
+        </div>
+
+        <!-- PART 5 -->
+        <div class="part-banner">
+          <span>PART 5: Questions 21 – 26 (Multiple-Choice Vocabulary Cloze)</span>
+          <span>6 Marks</span>
+        </div>
+        <p class="part-instruction">Read the text below and choose the correct word (A, B, C, or D) for each numbered space.</p>
+
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px 14px; border-radius: 6px; font-size: 12px; line-height: 1.7; margin-bottom: 12px;">
+          <strong>The Origins of the Modern Bicycle</strong><br>
+          In 1817, Baron Karl von Drais invented a wooden two-wheeled machine with no pedals. Riders propelled it forward by 
+          <strong>(21)</strong> ________ their feet against the ground. During the 1860s, pedals were added to the front axle, creating the "velocipede." 
+          This rough machine earned the <strong>(22)</strong> ________ "the boneshaker." Later, the front wheel was enlarged to create the penny-farthing, 
+          but falls were frequent and <strong>(23)</strong> ________. The design transformed in 1885 with the Rover Safety Bicycle, featuring two equal-sized 
+          wheels connected by a chain <strong>(24)</strong> ________ to the rear wheel. Today, bicycles are an essential <strong>(25)</strong> ________ 
+          in reducing urban pollution and traffic around the <strong>(26)</strong> ________.
+        </div>
+
+        <table class="cloze-table">
+          <thead>
+            <tr>
+              <th style="width: 10%;">Question</th>
+              <th style="width: 22.5%;">Option A</th>
+              <th style="width: 22.5%;">Option B</th>
+              <th style="width: 22.5%;">Option C</th>
+              <th style="width: 22.5%;">Option D</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>21</strong></td><td>pushing</td><td>kicking</td><td>throwing</td><td>climbing</td></tr>
+            <tr><td><strong>22</strong></td><td>surname</td><td>nickname</td><td>signature</td><td>slogan</td></tr>
+            <tr><td><strong>23</strong></td><td>painful</td><td>anxious</td><td>stressful</td><td>sensitive</td></tr>
+            <tr><td><strong>24</strong></td><td>pushed</td><td>tied</td><td>linked</td><td>joined</td></tr>
+            <tr><td><strong>25</strong></td><td>tool</td><td>weapon</td><td>machinery</td><td>toy</td></tr>
+            <tr><td><strong>26</strong></td><td>planet</td><td>climate</td><td>universe</td><td>atmosphere</td></tr>
+          </tbody>
+        </table>
+
+        <!-- PART 6 -->
+        <div class="part-banner" style="margin-top: 24px;">
+          <span>PART 6: Questions 27 – 32 (Open Grammar Cloze)</span>
+          <span>6 Marks</span>
+        </div>
+        <p class="part-instruction">Read the text below. Write <strong>ONLY ONE WORD</strong> in each space (27–32).</p>
+
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 14px; border-radius: 6px; font-size: 12.5px; line-height: 1.8; margin-bottom: 16px;">
+          <strong>Volunteering at the Sea Turtle Sanctuary</strong><br>
+          Last summer, I decided to do something completely different. Instead <strong>(27)</strong> [ ____________ ] relaxing on a beach resort, 
+          I flew to Greece to spend three weeks volunteering at an animal conservation sanctuary. Every morning at dawn, we walked along the shore 
+          <strong>(28)</strong> [ ____________ ] look for fresh turtle tracks in the sand. When we discovered a nest situated 
+          <strong>(29)</strong> [ ____________ ] close to the water, we carefully moved the delicate eggs to an artificial hatchery higher up the beach. 
+          It was one of the <strong>(30)</strong> [ ____________ ] rewarding experiences of my life. I <strong>(31)</strong> [ ____________ ] 
+          definitely return next summer if I have time. I recommend this programme to anyone <strong>(32)</strong> [ ____________ ] loves nature.
+        </div>
+
+        <!-- Candidate Reading Answer Grid Sample -->
+        <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 14px; background: #fafbfc;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 6px;">
+            Candidate Quick Answer Grid (Mark with a cross / write words clearly)
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; font-size: 11px; font-family: 'JetBrains Mono', monospace;">
+            <div style="border:1px solid #e2e8f0; padding:3px; background:#fff;">27: _________</div>
+            <div style="border:1px solid #e2e8f0; padding:3px; background:#fff;">28: _________</div>
+            <div style="border:1px solid #e2e8f0; padding:3px; background:#fff;">29: _________</div>
+            <div style="border:1px solid #e2e8f0; padding:3px; background:#fff;">30: _________</div>
+            <div style="border:1px solid #e2e8f0; padding:3px; background:#fff;">31: _________</div>
+            <div style="border:1px solid #e2e8f0; padding:3px; background:#fff;">32: _________</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>B1 Preliminary English &bull; Paper 1: Reading</span>
+        <span>Page 4 of 8</span>
+      </div>
+    </article>
+
+
+    <!-- ==========================================================================
+         PAGE 5: PAPER 2 - WRITING (PARTS 1 & 2)
+         ========================================================================== -->
+    <article class="a4-page section-writing">
+      <div>
+        <div class="paper-title-hero">
+          <div>
+            <h2>PAPER 2: WRITING &bull; TWO TASKS</h2>
+            <div class="meta">Total Duration: 45 Minutes &bull; Target: ~100 Words per Task</div>
+          </div>
+          <span class="paper-code">WRITING 1/1</span>
+        </div>
+
+        <!-- PART 1: COMPULSORY EMAIL -->
+        <div class="part-banner">
+          <span>PART 1: Compulsory Task (Question 1)</span>
+          <span>20 Marks (Assessed on 4 Criteria)</span>
+        </div>
+        <p class="part-instruction">You must answer this question. Write your email in about <strong>100 words</strong> answering all four prompt notes.</p>
+
+        <div class="email-prompt-box">
+          <div class="email-prompt-header">
+            <strong>From:</strong> Alex Campbell &lt;alex.campbell@email.com&gt;<br>
+            <strong>Subject:</strong> Camping trip next weekend!
+          </div>
+          <div style="font-size: 12px; line-height: 1.6; color: #1e293b;">
+            Hi!<br>
+            I’m so excited about our camping trip in the Lake District next weekend! I checked the forecast and it will be sunny and warm. 
+            <span class="prompt-callout">&rarr; NOTE 1: Great!</span><br><br>
+            Should we stay at the official campsite near the lake, or do you prefer camping in the forest up in the hills? 
+            <span class="prompt-callout">&rarr; NOTE 2: Say which and explain why</span><br><br>
+            Also, what kind of activities would you like us to do during the day? 
+            <span class="prompt-callout">&rarr; NOTE 3: Suggest something fun</span><br><br>
+            Let me know what camping equipment you have so we don't bring double of everything. 
+            <span class="prompt-callout">&rarr; NOTE 4: Tell Alex what gear you have</span><br><br>
+            Write back soon,<br>
+            Alex
+          </div>
+        </div>
+
+        <!-- Lined Area for Part 1 -->
+        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase;">
+          Candidate Response Area - Question 1 (Email):
+        </div>
+        <div class="lined-response-area" style="min-height: 150px; margin-bottom: 16px;"></div>
+
+        <!-- PART 2: CHOICE TASK -->
+        <div class="part-banner">
+          <span>PART 2: Choose ONE Task (Question 2 OR Question 3)</span>
+          <span>20 Marks &bull; ~100 Words</span>
+        </div>
+        <p class="part-instruction">Choose <strong>either</strong> Question 2 (Article) <strong>OR</strong> Question 3 (Story). Do not write both.</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <!-- Question 2: Article -->
+          <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; background: #fafbfc;">
+            <div style="font-weight: 800; font-size: 12px; color: var(--primary); margin-bottom: 4px;">QUESTION 2: ARTICLE</div>
+            <div style="font-size: 11.5px; line-height: 1.5; color: #334155;">
+              You see this announcement in an international magazine:
+              <blockquote style="background:#fff; border-left:3px solid var(--accent); padding:6px 8px; margin:6px 0; font-style:italic;">
+                <strong>A Memorable Family Celebration!</strong><br>
+                What is the most memorable celebration you attended? Who was there, what special food did you eat, and why was it unforgettable?
+              </blockquote>
+              Write your article answering these questions.
+            </div>
+          </div>
+
+          <!-- Question 3: Story -->
+          <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; background: #fafbfc;">
+            <div style="font-weight: 800; font-size: 12px; color: var(--primary); margin-bottom: 4px;">QUESTION 3: STORY</div>
+            <div style="font-size: 11.5px; line-height: 1.5; color: #334155;">
+              Your English teacher has asked you to write a story. Your story must begin with this exact sentence:
+              <blockquote style="background:#fff; border-left:3px solid var(--accent-gold); padding:6px 8px; margin:6px 0; font-weight:600;">
+                "As the train pulled away from the platform, Liam realised he was holding the wrong bag."
+              </blockquote>
+              Write your story continuing from this sentence.
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase;">
+          Candidate Response Area - Part 2 (Indicate chosen question: [ &nbsp; ]):
+        </div>
+        <div class="lined-response-area" style="min-height: 140px;"></div>
+      </div>
+
+      <div class="page-footer">
+        <span>B1 Preliminary English &bull; Paper 2: Writing</span>
+        <span>Page 5 of 8</span>
+      </div>
+    </article>
+
+
+    <!-- ==========================================================================
+         PAGE 6: PAPER 3 - LISTENING (PARTS 1 TO 4)
+         ========================================================================== -->
+    <article class="a4-page section-listening">
+      <div>
+        <div class="paper-title-hero">
+          <div>
+            <h2>PAPER 3: LISTENING &bull; QUESTIONS SHEET</h2>
+            <div class="meta">Approx. 30 Minutes &bull; 25 Questions &bull; Hear each part TWICE</div>
+          </div>
+          <span class="paper-code">LISTENING 1/2</span>
+        </div>
+
+        <!-- PART 1 -->
+        <div class="part-banner">
+          <span>PART 1: Short Dialogues (Questions 1 – 7)</span>
+          <span>7 Marks</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 11px; margin-bottom: 12px;">
+          <div style="border:1px solid #e2e8f0; padding:6px 10px; border-radius:4px;">
+            <strong>1. What time will the film start this evening?</strong><br>
+            A) 19:15 &nbsp;&bull;&nbsp; B) 19:45 &nbsp;&bull;&nbsp; C) 20:15
+          </div>
+          <div style="border:1px solid #e2e8f0; padding:6px 10px; border-radius:4px;">
+            <strong>2. Which sport does the girl decide to take up?</strong><br>
+            A) Volleyball &nbsp;&bull;&nbsp; B) Badminton &nbsp;&bull;&nbsp; C) Table tennis
+          </div>
+          <div style="border:1px solid #e2e8f0; padding:6px 10px; border-radius:4px;">
+            <strong>3. What item did the man leave on the bus?</strong><br>
+            A) His woollen scarf &nbsp;&bull;&nbsp; B) His leather wallet &nbsp;&bull;&nbsp; C) His umbrella
+          </div>
+          <div style="border:1px solid #e2e8f0; padding:6px 10px; border-radius:4px;">
+            <strong>4. What will the weather be on Saturday afternoon?</strong><br>
+            A) Heavy thunderstorms &nbsp;&bull;&nbsp; B) Sunny & clear &nbsp;&bull;&nbsp; C) Overcast
+          </div>
+          <div style="border:1px solid #e2e8f0; padding:6px 10px; border-radius:4px;">
+            <strong>5. What does the boy buy for his mother's birthday?</strong><br>
+            A) Silver necklace &nbsp;&bull;&nbsp; B) Cookery book &nbsp;&bull;&nbsp; C) Potted plant
+          </div>
+          <div style="border:1px solid #e2e8f0; padding:6px 10px; border-radius:4px;">
+            <strong>6. Where did the couple spend anniversary dinner?</strong><br>
+            A) Italian pizzeria &nbsp;&bull;&nbsp; B) Seafood restaurant &nbsp;&bull;&nbsp; C) Hotel room
+          </div>
+          <div style="border:1px solid #e2e8f0; padding:6px 10px; border-radius:4px; grid-column: span 2;">
+            <strong>7. Which train platform should passengers for Manchester go to?</strong>
+            &nbsp;&bull;&nbsp; A) Platform 3B &nbsp;&bull;&nbsp; B) Platform 4A &nbsp;&bull;&nbsp; C) Platform 7
+          </div>
+        </div>
+
+        <!-- PART 2 -->
+        <div class="part-banner">
+          <span>PART 2: Opinions & Everyday Contexts (Questions 8 – 13)</span>
+          <span>6 Marks</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px; margin-bottom: 12px;">
+          <div style="border:1px solid #e2e8f0; padding:6px 8px; border-radius:4px;">
+            <strong>8. Boy's opinion on the new video game:</strong><br>
+            A) Graphics are blocky<br>
+            B) Storyline is repetitive and unoriginal<br>
+            C) Servers keep disconnecting
+          </div>
+          <div style="border:1px solid #e2e8f0; padding:6px 8px; border-radius:4px;">
+            <strong>9. Colleague complaint about workplace:</strong><br>
+            A) Lack of natural lighting<br>
+            B) Poor coffee in staff canteen<br>
+            C) Noisy open-plan seating without partitions
+          </div>
+          <div style="border:1px solid #e2e8f0; padding:6px 8px; border-radius:4px;">
+            <strong>10. Girl's feeling during violin exam:</strong><br>
+            A) Relieved she made no errors<br>
+            B) Terrified because examiner looked strict<br>
+            C) Fully confident from daily practice
+          </div>
+          <div style="border:1px solid #e2e8f0; padding:6px 8px; border-radius:4px;">
+            <strong>11. Man's highlight at photo gallery:</strong><br>
+            A) Historical portraits<br>
+            B) Colourful mountain aerial shots<br>
+            C) Innovative hidden spotlight illumination
+          </div>
+        </div>
+
+        <!-- PART 3 -->
+        <div class="part-banner">
+          <span>PART 3: Form Completion (Questions 14 – 19)</span>
+          <span>6 Marks</span>
+        </div>
+        <div style="border: 1.5px solid #0d2b45; background: #fafbfc; border-radius: 6px; padding: 10px 14px; font-size: 11.5px; margin-bottom: 12px;">
+          <strong style="color:var(--primary); text-transform:uppercase;">STONEFIELD CASTLE &bull; VISITOR FACT SHEET</strong>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; line-height: 1.6;">
+            <div>Year construction finished: <strong>(14)</strong> [ _______________ ]</div>
+            <div>Special falconry show time: <strong>(17)</strong> [ ____________ PM ]</div>
+            <div>Oldest room: The Great <strong>(15)</strong> [ _______________ ]</div>
+            <div>Discounted student entry: <strong>(18)</strong> £ [ ____________ ]</div>
+            <div>Afternoon tea served in: The <strong>(16)</strong> [ _______________ ]</div>
+            <div>Gift shop located beside: The <strong>(19)</strong> [ ____________ ]</div>
+          </div>
+        </div>
+
+        <!-- PART 4 -->
+        <div class="part-banner">
+          <span>PART 4: Extended Interview (Questions 20 – 25)</span>
+          <span>6 Marks</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+          <div style="border:1px solid #e2e8f0; padding:6px 8px; border-radius:4px;">
+            <strong>20. Why did Clara choose Montreal?</strong><br>
+            A) Her brother studied there &bull; B) Practice English & French &bull; C) Play hockey
+          </div>
+          <div style="border:1px solid #e2e8f0; padding:6px 8px; border-radius:4px;">
+            <strong>21. Clara's biggest first-month challenge:</strong><br>
+            A) Rapid Canadian French accent/slang &bull; B) Sub-zero cold &bull; C) Finding friends
+          </div>
+          <div style="border:1px solid #e2e8f0; padding:6px 8px; border-radius:4px;">
+            <strong>22. Clara's feeling about host family:</strong><br>
+            A) Rules too strict &bull; B) Exceptionally warm & helpful &bull; C) Disappointed in food
+          </div>
+          <div style="border:1px solid #e2e8f0; padding:6px 8px; border-radius:4px;">
+            <strong>23. What Clara enjoyed about Canadian school:</strong><br>
+            A) Sports clubs &bull; B) No exams &bull; C) Friendly, approachable teachers
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>B1 Preliminary English &bull; Paper 3: Listening</span>
+        <span>Page 6 of 8</span>
+      </div>
+    </article>
+
+
+    <!-- ==========================================================================
+         PAGE 7: PAPER 4 - SPEAKING (EXAMINER SCRIPT & VISUAL PROMPTS)
+         ========================================================================== -->
+    <article class="a4-page section-speaking">
+      <div>
+        <div class="paper-title-hero">
+          <div>
+            <h2>PAPER 4: SPEAKING &bull; PAIRED ASSESSMENT</h2>
+            <div class="meta">Duration: 10 – 12 Minutes &bull; 4 Distinct Phases &bull; Interlocutor & Assessor</div>
+          </div>
+          <span class="paper-code">SPEAKING 1/1</span>
+        </div>
+
+        <!-- PART 1 -->
+        <div class="part-banner">
+          <span>PART 1: Social & Personal Interaction (2–3 Minutes)</span>
+          <span>Warm-up & Everyday Topics</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 11.5px; margin-bottom: 12px;">
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:8px 10px; border-radius:4px;">
+            <strong style="color:var(--primary);">Phase 1: Verification & Background</strong>
+            <ul style="padding-left:14px; margin-top:4px;">
+              <li>What is your full name? Where do you live?</li>
+              <li>Do you work or are you a student? What do you study?</li>
+            </ul>
+          </div>
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:8px 10px; border-radius:4px;">
+            <strong style="color:var(--primary);">Phase 2: Daily Life & Hobbies</strong>
+            <ul style="padding-left:14px; margin-top:4px;">
+              <li>What do you usually enjoy doing with your friends at weekends?</li>
+              <li>Do you prefer watching movies at home or at the cinema? Why?</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- PART 2: PHOTO DESCRIPTIONS -->
+        <div class="part-banner">
+          <span>PART 2: Individual Long Turn / Photo Description (2–3 Minutes)</span>
+          <span>1 Minute Continuous Monologue each</span>
+        </div>
+        <p class="part-instruction">Each candidate speaks for 1 minute about their assigned colour photograph.</p>
+
+        <div class="speaking-card-grid">
+          <div class="photo-mockup">
+            <div class="photo-mockup-header">CANDIDATE A: FAMILY COOKING IN THE KITCHEN</div>
+            <div class="photo-mockup-body">
+              <div style="font-weight:700; color:var(--primary); margin-bottom:4px;">Visual Scene Description:</div>
+              <p style="font-size:11px; line-height:1.45;">
+                A mother, father, and teenage son standing around a brightly sunlit kitchen island. The father is chopping red peppers, the mother is tasting pasta sauce with a wooden spoon, and the son is tearing basil leaves. Lots of fresh ingredients and olive oil bottles on the counter.
+              </p>
+              <div style="margin-top:6px; font-size:10.5px; font-weight:700; color:#2563eb;">
+                Key Prompts: Describe the setting, what each person is doing, the atmosphere, and feelings.
+              </div>
+            </div>
+          </div>
+
+          <div class="photo-mockup">
+            <div class="photo-mockup-header">CANDIDATE B: STUDENTS STUDYING IN THE PARK</div>
+            <div class="photo-mockup-body">
+              <div style="font-weight:700; color:var(--primary); margin-bottom:4px;">Visual Scene Description:</div>
+              <p style="font-size:11px; line-height:1.45;">
+                Four university students sitting on a chequered blanket under a shady oak tree in a green park. Two are working on open laptops, while two others are discussing notes and highlighting textbooks. People are jogging in the sunny background.
+              </p>
+              <div style="margin-top:6px; font-size:10.5px; font-weight:700; color:#2563eb;">
+                Key Prompts: Describe the weather, study habits, interaction, and outdoor surroundings.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PART 3: COLLABORATIVE TASK -->
+        <div class="part-banner">
+          <span>PART 3: Collaborative Decision Task (3 Minutes)</span>
+          <span>Interactive Discussion & Decision</span>
+        </div>
+        <div class="mindmap-box">
+          <div class="mindmap-center">
+            SCENARIO: How can Sam improve his English speaking skills over the summer holidays?
+          </div>
+          <div class="mindmap-ideas">
+            <div class="mindmap-idea-pill">💬 Attending a weekly English exchange café</div>
+            <div class="mindmap-idea-pill">🎮 Joining an online gaming group with voice chat</div>
+            <div class="mindmap-idea-pill">🎬 Watching TV series in English with subtitles</div>
+            <div class="mindmap-idea-pill">🏛️ Volunteering as an assistant city tour guide</div>
+            <div class="mindmap-idea-pill">📖 Reading graded novels and keeping a diary</div>
+          </div>
+          <div style="font-size:11px; margin-top:10px; font-weight:600; color:#475569;">
+            Task: Discuss together why each idea would or wouldn't help, and choose the <strong>TWO best options</strong>.
+          </div>
+        </div>
+
+        <!-- PART 4 -->
+        <div class="part-banner">
+          <span>PART 4: Thematic Discussion (3 Minutes)</span>
+          <span>Opinions & Broad Perspectives</span>
+        </div>
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:8px 12px; border-radius:4px; font-size:11.5px;">
+          <strong>Examiner Questions for Both Candidates:</strong>
+          <span style="display:block; margin-top:3px;">
+            1. Do you think learning a language is easier for young children or adults? Why?<br>
+            2. Will smartphone translation apps make foreign language learning unnecessary? Why / why not?
+          </span>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>B1 Preliminary English &bull; Paper 4: Speaking</span>
+        <span>Page 7 of 8</span>
+      </div>
+    </article>
+
+
+    <!-- ==========================================================================
+         PAGE 8: AUDIO SCRIPTS & COMPREHENSIVE ANSWER KEY
+         ========================================================================== -->
+    <article class="a4-page section-answers" id="answerKeyPage">
+      <div>
+        <div class="paper-title-hero" style="background: linear-gradient(135deg, #166534 0%, #15803d 100%);">
+          <div>
+            <h2>TEACHER'S PACK: AUDIO SCRIPTS & FULL ANSWER KEY</h2>
+            <div class="meta">Official CEFR B1 Scoring Criteria & Band 5 Model Writing Samples</div>
+          </div>
+          <span class="paper-code" style="background:#14532d; color:#fff; border:none;">KEY & SCRIPTS</span>
+        </div>
+
+        <!-- LISTENING SCRIPT EXCERPTS -->
+        <div class="part-banner">
+          <span>PAPER 3 LISTENING &bull; EXACT AUDIO TRANSCRIPT CUES</span>
+          <span>Audio Cues</span>
+        </div>
+        <div style="font-size:10.5px; line-height:1.45; background:#f8fafc; border:1px solid #e2e8f0; padding:8px 10px; border-radius:4px; margin-bottom:10px; max-height:130px; overflow-y:auto;">
+          <strong>Part 1 Cue Q1:</strong> "adverts begin at 7:15, but the feature film itself doesn't actually kick off until quarter to eight (19:45)."<br>
+          <strong>Part 1 Cue Q2:</strong> "sports centre hall booked on Tuesdays... What about volleyball? School looking for 2 players... I'll speak to coach at lunch!"<br>
+          <strong>Part 1 Cue Q3:</strong> "It's my leather wallet—I set it on the empty seat beside me while paying my fare and walked off without it!"<br>
+          <strong>Part 3 Form Cues:</strong> Finished in <strong>1412</strong>; Oldest room: <strong>Great Hall</strong>; Tea in: <strong>Orangery</strong>; Falconry: <strong>3:15 PM</strong>; Student fare: <strong>£9.20</strong>; Shop next to: <strong>stable</strong> block.
+        </div>
+
+        <!-- READING & LISTENING KEYS -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+          <div>
+            <div class="part-banner" style="margin:4px 0 6px;"><span>PAPER 1: READING KEYS (32 Marks)</span></div>
+            <div style="font-size: 11px; line-height: 1.6; background:#fff; border:1px solid #cbd5e1; padding:8px 10px; border-radius:4px;">
+              <strong>Part 1:</strong> 1.B | 2.B | 3.B | 4.C | 5.A<br>
+              <strong>Part 2:</strong> 6.B | 7.A | 8.D | 9.E | 10.C<br>
+              <strong>Part 3:</strong> 11.C | 12.A | 13.B | 14.C | 15.C<br>
+              <strong>Part 4:</strong> 16.E | 17.F | 18.B | 19.A | 20.C<br>
+              <strong>Part 5:</strong> 21.A | 22.B | 23.A | 24.C | 25.A | 26.A<br>
+              <strong>Part 6:</strong> 27. of | 28. to | 29. too | 30. most | 31. will/would | 32. who/that
+            </div>
+          </div>
+
+          <div>
+            <div class="part-banner" style="margin:4px 0 6px;"><span>PAPER 3: LISTENING KEYS (25 Marks)</span></div>
+            <div style="font-size: 11px; line-height: 1.6; background:#fff; border:1px solid #cbd5e1; padding:8px 10px; border-radius:4px;">
+              <strong>Part 1:</strong> 1.B (19:45) | 2.A (Volleyball) | 3.B (Wallet) | 4.B (Sunny) | 5.C (Plant) | 6.B (Seafood) | 7.B (4A)<br>
+              <strong>Part 2:</strong> 8.B (Repetitive) | 9.C (Open-plan) | 10.B (Nervous) | 11.C (Spotlights) | 12.C (Tiny portions) | 13.B (Local birds)<br>
+              <strong>Part 3:</strong> 14. 1412 | 15. Hall | 16. Orangery | 17. 3:15 / 3.15 | 18. 9.20 | 19. stable / stables<br>
+              <strong>Part 4:</strong> 20.B | 21.A | 22.B | 23.C | 24.A | 25.C
+            </div>
+          </div>
+        </div>
+
+        <!-- MODEL ANSWERS FOR WRITING -->
+        <div class="part-banner" style="margin:4px 0 6px;">
+          <span>PAPER 2: MODEL WRITING SAMPLES (Band 5 - Full Marks Standard)</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 11px;">
+          <div class="model-answer-block" style="margin:0;">
+            <strong>Part 1 Model Email (105 words):</strong><br>
+            Hi Alex, It’s fantastic to hear from you! Sunny weather will make our camping trip wonderful. 
+            Personally, I'd prefer camping in the forest up in the hills. The tall pine trees provide shade from the midday heat, and there are far fewer mosquitoes than near the lake water. 
+            During the daytime, why don't we rent mountain bikes and explore the high forest trails? 
+            Regarding equipment, I already have a spacious two-person tent, a double camping stove, and lanterns, so you only need to bring your sleeping bag! See you Friday, Sam.
+          </div>
+
+          <div class="model-answer-block" style="margin:0;">
+            <strong>Part 2 Model Story (Liam's Bag - 105 words):</strong><br>
+            As the train pulled away from the platform, Liam realised he was holding the wrong bag. 
+            Instead of his scuffed student backpack, he was gripping a heavy leather briefcase. His heart raced as he opened the silver lock. 
+            Inside, instead of textbooks, lay an antique brass key wrapped in velvet and a hand-drawn map of the city’s underground tunnels. 
+            Suddenly, his phone vibrated with a message from an unsaved number: "Keep the bag safe. I am watching you." Liam stared out into the darkness as the train sped forward.
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>B1 Preliminary English &bull; Scoring Pack & Audio Scripts</span>
+        <span>Page 8 of 8</span>
+      </div>
+    </article>
+
+  </main>
+
+  <!-- ==========================================================================
+       CLIENT-SIDE JAVASCRIPT LOGIC
+       ========================================================================== -->
+  <script>
+    // Timer Logic
+    let timerSeconds = 45 * 60;
+    let timerInterval = null;
+    let isRunning = false;
+
+    function updateTimerDisplay() {
+      const mins = Math.floor(timerSeconds / 60);
+      const secs = timerSeconds % 60;
+      document.getElementById('timerDisplay').textContent = 
+        `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function toggleTimer() {
+      if (isRunning) {
+        clearInterval(timerInterval);
+        isRunning = false;
+      } else {
+        isRunning = true;
+        timerInterval = setInterval(() => {
+          if (timerSeconds > 0) {
+            timerSeconds--;
+            updateTimerDisplay();
+          } else {
+            clearInterval(timerInterval);
+            isRunning = false;
+            alert("Time is up for this examination paper!");
+          }
+        }, 1000);
+      }
+    }
+
+    function resetTimer(minutes) {
+      clearInterval(timerInterval);
+      isRunning = false;
+      timerSeconds = minutes * 60;
+      updateTimerDisplay();
+    }
+
+    // Toggle Answer Key Visibility
+    let keysVisible = true;
+    function toggleKeys() {
+      const keyPage = document.getElementById('answerKeyPage');
+      const keyText = document.getElementById('keyText');
+      const keyIcon = document.getElementById('keyIcon');
+
+      if (keysVisible) {
+        keyPage.style.display = 'none';
+        keyText.textContent = 'Show Answer Key';
+        keyIcon.textContent = '👁️‍🗨️';
+        keysVisible = false;
+      } else {
+        keyPage.style.display = 'flex';
+        keyText.textContent = 'Hide Answer Key';
+        keyIcon.textContent = '👁️';
+        keysVisible = true;
+      }
+    }
+
+    // Section Filters
+    function filterSections(section) {
+      const pages = document.querySelectorAll('.a4-page');
+      const tabs = document.querySelectorAll('.filter-tab');
+      
+      tabs.forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+
+      pages.forEach(page => {
+        if (section === 'all') {
+          page.style.display = 'flex';
+        } else if (section === 'reading' && page.classList.contains('section-reading')) {
+          page.style.display = 'flex';
+        } else if (section === 'writing' && page.classList.contains('section-writing')) {
+          page.style.display = 'flex';
+        } else if (section === 'listening' && page.classList.contains('section-listening')) {
+          page.style.display = 'flex';
+        } else if (section === 'speaking' && page.classList.contains('section-speaking')) {
+          page.style.display = 'flex';
+        } else if (section === 'answers' && page.classList.contains('section-answers')) {
+          page.style.display = 'flex';
+        } else if (section === 'all' || page.classList.contains('section-' + section)) {
+          page.style.display = 'flex';
+        } else {
+          page.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex between wrap mb-3" style="align-items:center;">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('books') }}">← {{ t('books') }}</a></div>
+    <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E;">
+      {% if book %}✏️ Modifier le Manuel : {{ book.title }}{% else %}➕ {{ t('add_book') }}{% endif %}
+    </h2>
+    <p class="muted" style="margin:2px 0 0 0; font-size:13px;">Enregistrement d'un manuel scolaire avec prix et gestion des seuils d'alerte</p>
+  </div>
+</div>
+
+<form method="post" class="card card-pad" style="max-w:800px; padding:24px;">
+  <div class="form-row">
+    <div class="field">
+      <label>Code Manuel / Référence</label>
+      <div class="input-field has-ico">
+        <span class="f-ico">🏷️</span>
+        <input type="text" name="code" value="{{ book.code if book else '' }}" placeholder="Auto-généré (ex: LIV-001)">
+      </div>
+    </div>
+
+    <div class="field full">
+      <label>Titre complet du Manuel / Livre <span class="req">*</span></label>
+      <div class="input-field has-ico">
+        <span class="f-ico">📖</span>
+        <input type="text" name="title" value="{{ book.title if book else '' }}" required placeholder="Ex : English File Elementary 4th Edition (Student's Book)">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Éditeur / Maison d'édition</label>
+      <div class="input-field has-ico">
+        <span class="f-ico">🏢</span>
+        <input type="text" name="publisher" value="{{ book.publisher if book else '' }}" placeholder="Ex : Oxford, Cambridge, Pearson, Hachette...">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Catégorie</label>
+      <div class="input-field has-ico">
+        <span class="f-ico">📂</span>
+        <select name="category">
+          <option value="language" {% if book and book.category == 'language' %}selected{% endif %}>Langues vivantes (Anglais, Français...)</option>
+          <option value="tutoring" {% if book and book.category == 'tutoring' %}selected{% endif %}>Soutien scolaire (Math, PC, SVT...)</option>
+          <option value="general" {% if book and book.category == 'general' %}selected{% endif %}>Fournitures / Général</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Niveau scolaire / Pédagogique</label>
+      <div class="input-field has-ico">
+        <span class="f-ico">🎓</span>
+        <input type="text" name="level" value="{{ book.level if book else '' }}" placeholder="Ex : A1, A2, B1, 2Bac, Collège...">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Prix d'achat unitaire (Coût Institut) ({{ settings.currency }})</label>
+      <div class="input-field has-ico">
+        <span class="f-ico">📥</span>
+        <input type="number" step="0.01" name="purchase_price" value="{{ book.purchase_price if book else '0.00' }}" placeholder="0.00">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Prix de vente public (Élève) ({{ settings.currency }}) <span class="req">*</span></label>
+      <div class="input-field has-ico">
+        <span class="f-ico">🏷️</span>
+        <input type="number" step="0.01" name="sale_price" value="{{ book.sale_price if book else '0.00' }}" required placeholder="0.00" style="font-weight:700; color:#047857;">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Quantité initiale en stock <span class="req">*</span></label>
+      <div class="input-field has-ico">
+        <span class="f-ico">📦</span>
+        <input type="number" name="stock_quantity" value="{{ book.stock_quantity if book else '10' }}" required min="0" style="font-weight:700;">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Seuil d'alerte de stock faible (Seuil minimum)</label>
+      <div class="input-field has-ico">
+        <span class="f-ico">⚠️</span>
+        <input type="number" name="min_stock_alert" value="{{ book.min_stock_alert if book else '5' }}" min="1">
+      </div>
+    </div>
+
+    <!-- TEACHER DEPOSITION & COMMISSION BOX -->
+    <div class="field full" style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:14px; padding:16px 20px; margin:8px 0;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:20px;">👨‍🏫</span>
+          <div>
+            <strong style="color:#166534; font-size:14px;">Dépôt-Vente Enseignant (Commission Professeur)</strong>
+            <p style="margin:2px 0 0; font-size:11.5px; color:#15803d;">Si ce livre/manuel est déposé par un professeur, sélectionnez-le pour lui verser automatiquement sa part lors de chaque vente sur sa paie.</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1.5fr 1fr 1fr; gap:14px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#166534; display:block; margin-bottom:4px;">Enseignant Propriétaire / Déposant</label>
+          <select name="teacher_id" id="teacherSelect" style="width:100%; border:1.5px solid #86efac; border-radius:9px; padding:8px 12px; font-weight:700; color:#0B3D6E; background:#fff;" onchange="updateCommissionPreview()">
+            <option value="">🏫 Aucun (Article propre à l'institut ILAS)</option>
+            {% for t in teachers %}
+            <option value="{{ t.id }}" {% if book and book.teacher_id == t.id %}selected{% endif %}>
+              Prof. {{ t.full_name }} ({{ t.specialty or 'Général' }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#166534; display:block; margin-bottom:4px;">Mode de Calcul de la Part Prof</label>
+          <select name="payout_type" id="payoutTypeSelect" style="width:100%; border:1.5px solid #86efac; border-radius:9px; padding:8px 12px; font-weight:700; color:#0B3D6E; background:#fff;" onchange="updateCommissionPreview()">
+            <option value="fixed" {% if not book or book.payout_type == 'fixed' %}selected{% endif %}>Montant Fixe (DH par exemplaire)</option>
+            <option value="percentage" {% if book and book.payout_type == 'percentage' %}selected{% endif %}>Pourcentage (% du prix de vente)</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#166534; display:block; margin-bottom:4px;" id="shareLabel">Part Enseignant (DH)</label>
+          <input type="number" step="0.01" name="teacher_share" id="teacherShareInput" value="{{ book.teacher_share if book else '0.00' }}" style="width:100%; border:1.5px solid #86efac; border-radius:9px; padding:8px 12px; font-weight:800; color:#059669; background:#fff; box-sizing:border-box;" oninput="updateCommissionPreview()">
+        </div>
+      </div>
+
+      <!-- Real-time Split Preview Banner -->
+      <div id="splitPreviewBanner" style="margin-top:12px; background:#ffffff; border:1px solid #bbf7d0; border-radius:10px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; font-size:12.5px;">
+        <span style="color:#166534; font-weight:700;">💰 Répartition estimée par exemplaire vendu :</span>
+        <div style="display:flex; gap:16px;">
+          <span style="color:#059669; font-weight:800;">👨‍🏫 Part Prof : <span id="profShareDisp">0.00</span> DH</span>
+          <span style="color:#0B3D6E; font-weight:800;">🏫 Marge École : <span id="schoolShareDisp">0.00</span> DH</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="field full">
+      <label>Remarques / Emplacement de rangement</label>
+      <div class="input-field has-ico">
+        <span class="f-ico">📝</span>
+        <textarea name="notes" rows="2" placeholder="Étagère A2, Armoire bureau, etc.">{{ book.notes if book else '' }}</textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function updateCommissionPreview() {
+      const teacherId = document.getElementById('teacherSelect').value;
+      const payoutType = document.getElementById('payoutTypeSelect').value;
+      const shareInput = parseFloat(document.getElementById('teacherShareInput').value) || 0.0;
+      const salePrice = parseFloat(document.querySelector('input[name="sale_price"]').value) || 0.0;
+      const banner = document.getElementById('splitPreviewBanner');
+      const shareLabel = document.getElementById('shareLabel');
+
+      if (payoutType === 'percentage') {
+        shareLabel.innerText = "Part Enseignant (%)";
+      } else {
+        shareLabel.innerText = "Part Enseignant (DH)";
+      }
+
+      if (!teacherId) {
+        document.getElementById('profShareDisp').innerText = "0.00";
+        document.getElementById('schoolShareDisp').innerText = salePrice.toFixed(2);
+        return;
+      }
+
+      let profAmt = 0.0;
+      if (payoutType === 'percentage') {
+        const pct = Math.min(100, Math.max(0, shareInput));
+        profAmt = salePrice * (pct / 100);
+      } else {
+        profAmt = Math.min(salePrice, Math.max(0, shareInput));
+      }
+
+      let schoolAmt = Math.max(0, salePrice - profAmt);
+      document.getElementById('profShareDisp').innerText = profAmt.toFixed(2);
+      document.getElementById('schoolShareDisp').innerText = schoolAmt.toFixed(2);
+    }
+    document.addEventListener('DOMContentLoaded', updateCommissionPreview);
+  </script>
+
+  <div class="form-actions" style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end;">
+    <a class="btn btn-outline" href="{{ url_for('books') }}">{{ t('cancel') }}</a>
+    <button class="btn btn-primary" type="submit" style="background:#10b981; border-color:#10b981; font-weight:700;">
+      💾 {{ t('save') }}
+    </button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex between wrap mb-3">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('teachers') }}">← {{ t('teachers') }}</a></div>
+    <h2 class="mt-0 mb-0" style="font-size:22px">🤝 Affectations & Rémunération des Enseignants (تعيين الأساتذة والأجور)</h2>
+  </div>
+</div>
+
+<div class="grid col-2 gap-3" style="display:grid; grid-template-columns: 360px 1fr; gap:20px;">
+  <!-- Formulaire d'affectation -->
+  <div class="card p-3" style="background:#fff; border-radius:12px; border:1px solid #eef1f6; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+    <h3 style="margin-top:0; font-size:16px; color:#0B3D6E;">Nouvelle Affectation / Modèle d'أجر</h3>
+    <form method="post" action="{{ url_for('teacher_assignments') }}">
+      <div class="field mb-3" style="display:flex; flex-direction:column; gap:6px;">
+        <label style="font-weight:600; font-size:13px;">Enseignant (الأستاذ)</label>
+        <select name="teacher_id" required style="padding:8px; border-radius:6px; border:1px solid #ccc;">
+          <option value="">-- Choisir un enseignant --</option>
+          {% for t in teachers %}
+          <option value="{{ t.id }}">{{ t.full_name }} ({{ t.specialty or 'Général' }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field mb-3" style="display:flex; flex-direction:column; gap:6px;">
+        <label style="font-weight:600; font-size:13px;">Matière / Cours (المادة)</label>
+        <select name="course_id" required style="padding:8px; border-radius:6px; border:1px solid #ccc;">
+          <option value="">-- Choisir un cours --</option>
+          {% for c in courses %}
+          <option value="{{ c.id }}">{{ c.display_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field mb-3" style="display:flex; flex-direction:column; gap:6px;">
+        <label style="font-weight:600; font-size:13px;">Type de Rémunération (نوع الأجر)</label>
+        <select name="compensation_type" required style="padding:8px; border-radius:6px; border:1px solid #ccc;">
+          <option value="percentage">٪ نسبة مئوية من المدخول (Percentage)</option>
+          <option value="per_student">👤 مبلغ لكل تلميذ (Per Student)</option>
+          <option value="hourly">⏱️ أجر بالساعة (Hourly)</option>
+          <option value="fixed">📌 مبلغ ثابت للمادة (Fixed Amount)</option>
+        </select>
+      </div>
+
+      <div class="field mb-3" style="display:flex; flex-direction:column; gap:6px;">
+        <label style="font-weight:600; font-size:13px;">Valeur de la Rémunération (القيمة)</label>
+        <input type="number" step="0.01" name="compensation_value" value="50" required style="padding:8px; border-radius:6px; border:1px solid #ccc;" placeholder="Ex: 50% ou 150 MAD">
+        <span class="muted" style="font-size:11px; color:#888;">Pour 50%, entrer 50. Pour 150 DH/élève, entrer 150.</span>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%; margin-top:10px;">💾 Enregistrer l'affectation</button>
+    </form>
+  </div>
+
+  <!-- Liste des affectations actives -->
+  <div class="card p-3" style="background:#fff; border-radius:12px; border:1px solid #eef1f6; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+    <h3 style="margin-top:0; font-size:16px; color:#0B3D6E;">Liste des Affectations Actives</h3>
+    <table class="table" style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f4f6f9; text-align:left; font-size:12px; color:#5b6472;">
+          <th style="padding:10px;">Enseignant</th>
+          <th style="padding:10px;">Cours</th>
+          <th style="padding:10px;">Modèle d'أجر</th>
+          <th style="padding:10px;">Valeur</th>
+          <th style="padding:10px; text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in assignments %}
+        <tr style="border-bottom:1px solid #eef1f6;">
+          <td style="padding:10px; font-weight:600;">{{ a.teacher.full_name }}</td>
+          <td style="padding:10px;">{{ a.course.display_name }}</td>
+          <td style="padding:10px;">
+            {% if a.compensation_type == 'percentage' %}<span class="chip chip-blue">٪ النسبة المئوية</span>
+            {% elif a.compensation_type == 'per_student' %}<span class="chip chip-green">👤 لكل تلميذ</span>
+            {% elif a.compensation_type == 'hourly' %}<span class="chip chip-orange">⏱️ بالساعة</span>
+            {% else %}<span class="chip">📌 ثابت</span>{% endif %}
+          </td>
+          <td style="padding:10px; font-weight:700; color:#0B3D6E;">
+            {% if a.compensation_type == 'percentage' %}{{ a.compensation_value }} %
+            {% else %}{{ a.compensation_value }} {{ settings.currency }}{% endif %}
+          </td>
+          <td style="padding:10px; text-align:right;">
+            <form method="post" action="{{ url_for('teacher_assignment_delete', aid=a.id) }}" onsubmit="return confirm('Supprimer cette affectation ?')" style="display:inline;">
+              <button class="btn btn-sm btn-outline-danger" style="padding:4px 8px; font-size:11px;">🗑️ Supprimer</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="padding:20px; text-align:center; color:#888;">Aucune affectation spécifique. Le modèle de salaire général de l'enseignant sera utilisé.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

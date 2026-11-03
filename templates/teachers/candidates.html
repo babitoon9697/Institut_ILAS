@@ -1,0 +1,460 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.cand-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:24px; }
+.cand-header h2 { margin:0; font-size:1.5rem; font-weight:700; }
+.stats-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+.stat-chip { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:50px; font-size:0.83rem; font-weight:600; cursor:pointer; border:2px solid transparent; transition:all .18s; text-decoration:none; }
+.stat-chip:hover, .stat-chip.active { filter:brightness(.88); border-color:currentColor; }
+.stat-chip .cnt { background:rgba(255,255,255,.35); border-radius:50px; padding:1px 8px; font-size:.8rem; }
+
+.filter-bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:20px; }
+.filter-bar input[type=text] { border:1.5px solid #dee2e6; border-radius:8px; padding:7px 13px; font-size:.93rem; flex:1; min-width:180px; }
+.filter-bar select { border:1.5px solid #dee2e6; border-radius:8px; padding:7px 12px; font-size:.93rem; }
+.filter-bar button { padding:7px 16px; border-radius:8px; font-size:.93rem; }
+
+.cand-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:16px; }
+.cand-card { background:#fff; border-radius:14px; box-shadow:0 2px 12px rgba(0,0,0,.08); padding:18px; border-left:5px solid #dee2e6; transition:box-shadow .18s; position:relative; }
+.cand-card:hover { box-shadow:0 4px 22px rgba(0,0,0,.13); }
+.cand-card .card-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+.cand-card .cand-name { font-size:1.05rem; font-weight:700; color:#1a1a2e; }
+.cand-card .cand-specialty { font-size:.85rem; color:#666; margin-top:2px; }
+.status-badge { display:inline-block; padding:3px 11px; border-radius:50px; font-size:.77rem; font-weight:600; color:#fff; }
+.cand-meta { display:flex; flex-wrap:wrap; gap:6px 14px; font-size:.82rem; color:#555; margin:8px 0; }
+.cand-meta span { display:flex; align-items:center; gap:4px; }
+.cand-actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; padding-top:10px; border-top:1px solid #f0f0f0; }
+.cand-actions .btn { font-size:.8rem; padding:4px 11px; border-radius:7px; }
+
+.add-btn { background:var(--primary); color:#fff; border:none; border-radius:10px; padding:9px 20px; font-size:.93rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:7px; }
+.add-btn:hover { opacity:.9; }
+
+/* Modal */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:3000; align-items:center; justify-content:center; backdrop-filter:blur(3px); }
+.modal-overlay.open { display:flex; }
+.modal-box { background:#fff; border-radius:16px; width:min(680px,96vw); max-height:92vh; overflow-y:auto; box-shadow:0 8px 50px rgba(0,0,0,.22); }
+.modal-head { padding:18px 22px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:#fff; z-index:1; border-radius:16px 16px 0 0; }
+.modal-head h4 { margin:0; font-size:1.08rem; font-weight:700; }
+.modal-close { background:none; border:none; font-size:1.4rem; cursor:pointer; color:#888; line-height:1; }
+.modal-body { padding:22px; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.form-grid .full { grid-column:1/-1; }
+.form-group label { display:block; font-size:.83rem; font-weight:600; color:#444; margin-bottom:4px; }
+.form-group input, .form-group select, .form-group textarea {
+  width:100%; border:1.5px solid #dee2e6; border-radius:8px; padding:8px 12px; font-size:.91rem; box-sizing:border-box;
+}
+.form-group textarea { resize:vertical; min-height:70px; }
+.modal-foot { padding:14px 22px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; }
+
+/* Status quick-change */
+.status-select-inline { border:1.5px solid #dee2e6; border-radius:7px; padding:3px 8px; font-size:.8rem; cursor:pointer; }
+
+/* Empty state */
+.empty-state { text-align:center; padding:60px 20px; color:#aaa; }
+.empty-state .icon { font-size:3.5rem; margin-bottom:12px; }
+.empty-state p { font-size:1rem; margin:0; }
+
+/* Hired card */
+.cand-card.hired { opacity:.75; }
+</style>
+
+<div class="cand-header">
+  <h2>📂 Pré-inscriptions & Banque CV Enseignants</h2>
+  <button class="add-btn" onclick="openAddModal()">➕ Nouveau Candidat</button>
+</div>
+
+{# Flash messages #}
+{% with msgs = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in msgs %}
+    <div style="padding:10px 16px;border-radius:9px;margin-bottom:12px;font-size:.92rem;
+      background:{{'#d4edda' if cat=='success' else '#f8d7da' if cat=='danger' else '#fff3cd' if cat=='warning' else '#d1ecf1'}};
+      color:{{'#155724' if cat=='success' else '#721c24' if cat=='danger' else '#856404' if cat=='warning' else '#0c5460'}};">
+      {{ msg }}
+    </div>
+  {% endfor %}
+{% endwith %}
+
+{# Status filter chips #}
+<div class="stats-row">
+  <a href="{{ url_for('teacher_candidates', q=q_search, specialty=q_specialty) }}"
+     class="stat-chip {{ 'active' if not q_status }}"
+     style="background:#667eea;color:#fff;">
+    🌐 Tous <span class="cnt">{{ candidates|length if not q_status else (stats.values()|sum) }}</span>
+  </a>
+  {% set chip_colors = {'pending':'#f39c12','contacted':'#3498db','interview':'#9b59b6','hired':'#27ae60','rejected':'#e74c3c','archived':'#95a5a6'} %}
+  {% for s in statuses %}
+  <a href="{{ url_for('teacher_candidates', status=s, q=q_search, specialty=q_specialty) }}"
+     class="stat-chip {{ 'active' if q_status == s }}"
+     style="background:{{ chip_colors.get(s,'#666') }};color:#fff;">
+    {{ status_labels[s] }} <span class="cnt">{{ stats[s] }}</span>
+  </a>
+  {% endfor %}
+</div>
+
+{# Filter bar #}
+<form method="get" action="{{ url_for('teacher_candidates') }}" class="filter-bar">
+  <input type="text" name="q" value="{{ q_search }}" placeholder="🔍 Rechercher nom, téléphone, spécialité…">
+  <select name="specialty" data-no-tomselect>
+    <option value="">— Toutes spécialités —</option>
+    {% for sp in specialties %}
+    <option value="{{ sp }}" {{ 'selected' if q_specialty == sp }}>{{ sp }}</option>
+    {% endfor %}
+  </select>
+  {% if q_status %}<input type="hidden" name="status" value="{{ q_status }}">{% endif %}
+  <button type="submit" class="btn btn-primary">Filtrer</button>
+  {% if q_search or q_specialty or q_status %}
+  <a href="{{ url_for('teacher_candidates') }}" class="btn btn-outline-secondary">✕ Réinitialiser</a>
+  {% endif %}
+</form>
+
+{# Candidates Grid #}
+{% if candidates %}
+<div class="cand-grid">
+  {% for c in candidates %}
+  <div class="cand-card {{ 'hired' if c.status == 'hired' }}" id="card-{{ c.id }}"
+       style="border-left-color:{{ c.status_color }};">
+    <div class="card-top">
+      <div>
+        <div class="cand-name">{{ c.first_name }} {{ c.last_name }}</div>
+        <div class="cand-specialty">{{ c.specialty or '—' }}</div>
+      </div>
+      <span class="status-badge" style="background:{{ c.status_color }};" id="badge-{{ c.id }}">
+        {{ c.status_label }}
+      </span>
+    </div>
+
+    <div class="cand-meta">
+      {% if c.phone %}<span>📞 {{ c.phone }}</span>{% endif %}
+      {% if c.email %}<span>✉️ {{ c.email }}</span>{% endif %}
+      {% if c.city %}<span>📍 {{ c.city }}</span>{% endif %}
+      {% if c.years_experience %}<span>🎓 {{ c.years_experience }} an(s)</span>{% endif %}
+      {% if c.availability %}<span>🕐 {{ c.availability }}</span>{% endif %}
+      {% if c.expected_salary %}<span>💰 {{ "%.0f"|format(c.expected_salary) }} {{ settings.currency }}</span>{% endif %}
+      <span>📅 {{ c.deposit_date.strftime('%d/%m/%Y') if c.deposit_date else '—' }}</span>
+      <span>🏷️ {{ sources.get(c.source, c.source) }}</span>
+    </div>
+
+    {% if c.diplomas %}
+    <div style="font-size:.8rem;color:#555;margin:4px 0;">📜 {{ c.diplomas|truncate(80) }}</div>
+    {% endif %}
+
+    {% if c.status_note %}
+    <div style="font-size:.8rem;color:#888;font-style:italic;margin:4px 0;">💬 {{ c.status_note }}</div>
+    {% endif %}
+
+    <div class="cand-actions">
+      {# Quick status change #}
+      <form method="post" action="{{ url_for('teacher_candidate_status', cid=c.id) }}" style="display:inline-flex;align-items:center;gap:4px;">
+        <select name="status" class="status-select-inline" data-no-tomselect
+                onchange="this.form.submit()" title="Changer statut">
+          {% for s in statuses %}
+          <option value="{{ s }}" {{ 'selected' if c.status == s }}>{{ status_labels[s] }}</option>
+          {% endfor %}
+        </select>
+      </form>
+
+      {# CV download #}
+      {% if c.cv_filename %}
+      <a href="{{ url_for('teacher_candidate_cv', filename=c.cv_filename) }}"
+         class="btn btn-sm btn-outline-primary" target="_blank" title="Voir CV">📄 CV</a>
+      {% endif %}
+
+      {# Edit #}
+      <button class="btn btn-sm btn-outline-secondary"
+              onclick="openEditModal({{ c.id }},
+                {{ c.first_name|tojson }}, {{ c.last_name|tojson }},
+                {{ (c.phone or '')|tojson }}, {{ (c.email or '')|tojson }},
+                {{ (c.cin or '')|tojson }}, {{ (c.gender or 'M')|tojson }},
+                {{ (c.date_of_birth.strftime('%Y-%m-%d') if c.date_of_birth else '')|tojson }},
+                {{ (c.city or '')|tojson }}, {{ (c.specialty or '')|tojson }},
+                {{ (c.diplomas or '')|tojson }}, {{ (c.years_experience or 0)|tojson }},
+                {{ (c.availability or '')|tojson }}, {{ (c.expected_salary or '')|tojson }},
+                {{ (c.source or 'walk-in')|tojson }},
+                {{ (c.deposit_date.strftime('%Y-%m-%d') if c.deposit_date else '')|tojson }},
+                {{ (c.notes or '')|tojson }}, {{ c.status|tojson }},
+                {{ (c.status_note or '')|tojson }}
+              )">✏️</button>
+
+      {# Hire (admin only) #}
+      {% if not c.converted_teacher_id %}
+      <form method="post" action="{{ url_for('teacher_candidate_hire', cid=c.id) }}" style="display:inline;"
+            onsubmit="return confirm('Recruter {{ c.first_name }} {{ c.last_name }} et créer une fiche enseignant ?')">
+        <button type="submit" class="btn btn-sm btn-success" title="Recruter">🎉 Recruter</button>
+      </form>
+      {% else %}
+      <a href="{{ url_for('teachers') }}" class="btn btn-sm btn-outline-success" title="Voir fiche enseignant">👨‍🏫 Prof #{{ c.converted_teacher_id }}</a>
+      {% endif %}
+
+      {# Delete (admin only) #}
+      <form method="post" action="{{ url_for('teacher_candidate_delete', cid=c.id) }}" style="display:inline;"
+            onsubmit="return confirm('Supprimer le dossier de {{ c.first_name }} {{ c.last_name }} ?')">
+        <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">🗑️</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="icon">📂</div>
+  <p>Aucun candidat trouvé{% if q_search or q_specialty or q_status %} pour ces filtres{% endif %}.</p>
+  <button class="add-btn" style="display:inline-flex;margin:16px auto 0;" onclick="openAddModal()">➕ Ajouter un candidat</button>
+</div>
+{% endif %}
+
+
+{# ===== ADD MODAL ===== #}
+<div class="modal-overlay" id="addModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h4>➕ Nouveau Candidat</h4>
+      <button class="modal-close" onclick="closeModal('addModal')">✕</button>
+    </div>
+    <form method="post" action="{{ url_for('teacher_candidate_new') }}" enctype="multipart/form-data">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Prénom *</label>
+            <input type="text" name="first_name" required>
+          </div>
+          <div class="form-group">
+            <label>Nom *</label>
+            <input type="text" name="last_name" required>
+          </div>
+          <div class="form-group">
+            <label>Téléphone</label>
+            <input type="tel" name="phone">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="email">
+          </div>
+          <div class="form-group">
+            <label>CIN</label>
+            <input type="text" name="cin">
+          </div>
+          <div class="form-group">
+            <label>Genre</label>
+            <select name="gender" data-no-tomselect>
+              <option value="M">Masculin</option>
+              <option value="F">Féminin</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date de naissance</label>
+            <input type="date" name="date_of_birth">
+          </div>
+          <div class="form-group">
+            <label>Ville</label>
+            <input type="text" name="city">
+          </div>
+          <div class="form-group full">
+            <label>Spécialité</label>
+            <input type="text" name="specialty" placeholder="ex: Mathématiques, Physique-Chimie, Anglais…"
+                   list="specialty-list-add">
+            <datalist id="specialty-list-add">
+              {% for sp in specialties %}<option value="{{ sp }}">{% endfor %}
+              <option value="Mathématiques"><option value="Physique-Chimie"><option value="Sciences de la Vie et de la Terre">
+              <option value="Français"><option value="Anglais"><option value="Arabe"><option value="Histoire-Géographie">
+              <option value="Informatique"><option value="Économie"><option value="Gestion">
+            </datalist>
+          </div>
+          <div class="form-group full">
+            <label>Diplômes &amp; Formation</label>
+            <textarea name="diplomas" placeholder="ex: Licence Mathématiques (Université Hassan II 2018), Master Éducation 2020…"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Années d'expérience</label>
+            <input type="number" name="years_experience" min="0" max="50" value="0">
+          </div>
+          <div class="form-group">
+            <label>Salaire espéré ({{ settings.currency }})</label>
+            <input type="number" name="expected_salary" step="0.01" min="0">
+          </div>
+          <div class="form-group full">
+            <label>Disponibilités</label>
+            <input type="text" name="availability" placeholder="ex: Lundi-Vendredi matin, Samedi tout le jour…">
+          </div>
+          <div class="form-group">
+            <label>Source du dossier</label>
+            <select name="source" data-no-tomselect>
+              {% for k,v in sources.items() %}
+              <option value="{{ k }}">{{ v }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date de dépôt du dossier</label>
+            <input type="date" name="deposit_date" value="{{ '' }}">
+          </div>
+          <div class="form-group full">
+            <label>CV / Pièces jointes (PDF, Word, Image)</label>
+            <input type="file" name="cv_file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+          </div>
+          <div class="form-group full">
+            <label>Notes internes</label>
+            <textarea name="notes" placeholder="Observations, impression lors de l'entretien…"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-outline-secondary" onclick="closeModal('addModal')">Annuler</button>
+        <button type="submit" class="btn btn-primary">✅ Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+{# ===== EDIT MODAL ===== #}
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h4>✏️ Modifier le Dossier</h4>
+      <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+    </div>
+    <form id="editForm" method="post" action="" enctype="multipart/form-data">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Prénom *</label>
+            <input type="text" name="first_name" id="e_first_name" required>
+          </div>
+          <div class="form-group">
+            <label>Nom *</label>
+            <input type="text" name="last_name" id="e_last_name" required>
+          </div>
+          <div class="form-group">
+            <label>Téléphone</label>
+            <input type="tel" name="phone" id="e_phone">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="email" id="e_email">
+          </div>
+          <div class="form-group">
+            <label>CIN</label>
+            <input type="text" name="cin" id="e_cin">
+          </div>
+          <div class="form-group">
+            <label>Genre</label>
+            <select name="gender" id="e_gender" data-no-tomselect>
+              <option value="M">Masculin</option>
+              <option value="F">Féminin</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date de naissance</label>
+            <input type="date" name="date_of_birth" id="e_dob">
+          </div>
+          <div class="form-group">
+            <label>Ville</label>
+            <input type="text" name="city" id="e_city">
+          </div>
+          <div class="form-group full">
+            <label>Spécialité</label>
+            <input type="text" name="specialty" id="e_specialty"
+                   list="specialty-list-edit">
+            <datalist id="specialty-list-edit">
+              {% for sp in specialties %}<option value="{{ sp }}">{% endfor %}
+              <option value="Mathématiques"><option value="Physique-Chimie"><option value="Sciences de la Vie et de la Terre">
+              <option value="Français"><option value="Anglais"><option value="Arabe"><option value="Histoire-Géographie">
+              <option value="Informatique"><option value="Économie"><option value="Gestion">
+            </datalist>
+          </div>
+          <div class="form-group full">
+            <label>Diplômes &amp; Formation</label>
+            <textarea name="diplomas" id="e_diplomas"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Années d'expérience</label>
+            <input type="number" name="years_experience" id="e_exp" min="0" max="50">
+          </div>
+          <div class="form-group">
+            <label>Salaire espéré ({{ settings.currency }})</label>
+            <input type="number" name="expected_salary" id="e_salary" step="0.01" min="0">
+          </div>
+          <div class="form-group full">
+            <label>Disponibilités</label>
+            <input type="text" name="availability" id="e_availability">
+          </div>
+          <div class="form-group">
+            <label>Source</label>
+            <select name="source" id="e_source" data-no-tomselect>
+              {% for k,v in sources.items() %}
+              <option value="{{ k }}">{{ v }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date de dépôt</label>
+            <input type="date" name="deposit_date" id="e_deposit">
+          </div>
+          <div class="form-group">
+            <label>Statut</label>
+            <select name="status" id="e_status" data-no-tomselect>
+              {% for s in statuses %}
+              <option value="{{ s }}">{{ status_labels[s] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Note de statut</label>
+            <input type="text" name="status_note" id="e_status_note" placeholder="Raison du changement…">
+          </div>
+          <div class="form-group full">
+            <label>Remplacer le CV (optionnel)</label>
+            <input type="file" name="cv_file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+          </div>
+          <div class="form-group full">
+            <label>Notes internes</label>
+            <textarea name="notes" id="e_notes"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-outline-secondary" onclick="closeModal('editModal')">Annuler</button>
+        <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<script>
+function openAddModal() {
+  document.getElementById('addModal').classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+// Close on backdrop click
+['addModal','editModal'].forEach(function(id) {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) closeModal(id);
+  });
+});
+
+function openEditModal(id, fn, ln, phone, email, cin, gender, dob, city, spec, dips, exp, avail, sal, src, dep, notes, status, stnote) {
+  document.getElementById('editForm').action = '/teachers/candidates/' + id + '/edit';
+  document.getElementById('e_first_name').value = fn;
+  document.getElementById('e_last_name').value = ln;
+  document.getElementById('e_phone').value = phone;
+  document.getElementById('e_email').value = email;
+  document.getElementById('e_cin').value = cin;
+  document.getElementById('e_gender').value = gender;
+  document.getElementById('e_dob').value = dob;
+  document.getElementById('e_city').value = city;
+  document.getElementById('e_specialty').value = spec;
+  document.getElementById('e_diplomas').value = dips;
+  document.getElementById('e_exp').value = exp;
+  document.getElementById('e_availability').value = avail;
+  document.getElementById('e_salary').value = sal || '';
+  document.getElementById('e_source').value = src;
+  document.getElementById('e_deposit').value = dep;
+  document.getElementById('e_notes').value = notes;
+  document.getElementById('e_status').value = status;
+  document.getElementById('e_status_note').value = stnote;
+  document.getElementById('editModal').classList.add('open');
+}
+</script>
+{% endblock %}

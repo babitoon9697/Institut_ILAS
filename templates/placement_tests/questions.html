@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+  .qb-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+  .qb-header h2 { margin:0; font-size:1.45rem; font-weight:800; color:var(--primary); }
+
+  .filter-bar {
+    background:#fff; border-radius:14px; padding:14px 18px; box-shadow:0 2px 8px rgba(0,0,0,0.04);
+    border:1px solid #e2e8f0; display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:20px;
+  }
+  .filter-bar select {
+    border:1.5px solid #cbd5e1; border-radius:10px; padding:8px 12px; font-size:0.9rem; background:#fff;
+  }
+
+  .q-card {
+    background:#fff; border-radius:14px; padding:18px 20px; border:1px solid #e2e8f0;
+    box-shadow:0 2px 8px rgba(0,0,0,0.03); margin-bottom:14px;
+  }
+  .q-meta { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .q-txt { font-size:1.02rem; font-weight:700; color:#0f172a; margin-bottom:12px; }
+  .opts-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.88rem; }
+  .opt-box { padding:8px 12px; border-radius:8px; border:1px solid #e2e8f0; background:#f8fafc; }
+  .opt-box.correct { background:#dcfce7; border-color:#86efac; color:#166534; font-weight:700; }
+</style>
+
+<div class="qb-header">
+  <div>
+    <div style="margin-bottom:4px;">
+      <a href="{{ url_for('placement_tests') }}" style="color:#64748b; font-size:0.85rem; text-decoration:none; font-weight:600;">
+        ← Retour aux tests
+      </a>
+    </div>
+    <h2>📚 Banque des Questions de Tests de Niveau</h2>
+    <p style="margin:2px 0 0 0; font-size:0.88rem; color:#64748b;">
+      Questions officielles standardisées par langue et niveau CECRL (A1, A2, B1, B2).
+    </p>
+  </div>
+  <div>
+    <span class="badge" style="background:#eff6ff; color:#1d4ed8; font-size:0.9rem; padding:6px 14px; border-radius:999px; font-weight:700;">
+      Total : {{ questions|length }} questions
+    </span>
+  </div>
+</div>
+
+<form method="GET" action="{{ url_for('placement_questions_list') }}" class="filter-bar">
+  <select name="lang" onchange="this.form.submit()">
+    <option value="">Toutes les langues</option>
+    {% for l in ['Anglais', 'Français', 'Espagnol', 'Allemand'] %}
+      <option value="{{ l }}" {% if selected_lang == l %}selected{% endif %}>{{ l }}</option>
+    {% endfor %}
+  </select>
+
+  <select name="level" onchange="this.form.submit()">
+    <option value="">Tous les niveaux</option>
+    {% for lv in ['A1', 'A2', 'B1', 'B2'] %}
+      <option value="{{ lv }}" {% if selected_level == lv %}selected{% endif %}>Niveau {{ lv }}</option>
+    {% endfor %}
+  </select>
+
+  {% if selected_lang or selected_level %}
+    <a href="{{ url_for('placement_questions_list') }}" class="btn btn-link" style="color:#64748b; text-decoration:none; font-size:0.85rem;">Réinitialiser</a>
+  {% endif %}
+</form>
+
+<div class="questions-list">
+  {% if questions %}
+    {% for q in questions %}
+    <div class="q-card">
+      <div class="q-meta">
+        <div>
+          <span style="font-weight:800; font-size:0.83rem; background:#eff6ff; color:#1e40af; padding:3px 9px; border-radius:6px; margin-right:6px;">
+            {{ q.language }}
+          </span>
+          <span style="font-weight:800; font-size:0.83rem; background:#fef3c7; color:#92400e; padding:3px 9px; border-radius:6px; margin-right:6px;">
+            Niveau {{ q.level }}
+          </span>
+          <span style="font-size:0.8rem; color:#64748b; font-weight:600;">
+            {{ q.category }}
+          </span>
+        </div>
+        <div style="font-size:0.8rem; font-weight:700; color:#64748b;">
+          #{{ q.order_num }}
+        </div>
+      </div>
+
+      <div class="q-txt">
+        {{ q.question_text }}
+      </div>
+
+      {% if q.audio_url or q.audio_script %}
+      <div style="margin: 10px 0; padding: 10px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+        <div style="font-size: 0.85rem; color: #166534; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+          <span>🎧 Support Audio (Listening) :</span>
+          {% if q.audio_url %}
+            <span style="background: #dcfce7; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">Fichier Audio</span>
+          {% else %}
+            <span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">TTS Synthèse</span>
+          {% endif %}
+        </div>
+        {% if q.audio_url %}
+          <audio controls src="{{ q.audio_url }}" style="height: 32px; max-width: 250px;"></audio>
+        {% elif q.audio_script %}
+          <button type="button" class="btn btn-sm btn-secondary" onclick="speakScript('{{ q.id }}', '{{ q.language }}')" style="font-size: 0.78rem; padding: 4px 10px; border-radius: 6px; cursor: pointer;">
+            ▶ Écouter script TTS
+          </button>
+          <div id="script-txt-{{ q.id }}" style="display:none;">{{ q.audio_script }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <div class="opts-grid">
+        <div class="opt-box {% if q.correct_option == 'A' %}correct{% endif %}">
+          <strong>A:</strong> {{ q.option_a }} {% if q.correct_option == 'A' %}✓{% endif %}
+        </div>
+        <div class="opt-box {% if q.correct_option == 'B' %}correct{% endif %}">
+          <strong>B:</strong> {{ q.option_b }} {% if q.correct_option == 'B' %}✓{% endif %}
+        </div>
+        <div class="opt-box {% if q.correct_option == 'C' %}correct{% endif %}">
+          <strong>C:</strong> {{ q.option_c }} {% if q.correct_option == 'C' %}✓{% endif %}
+        </div>
+        {% if q.option_d %}
+        <div class="opt-box {% if q.correct_option == 'D' %}correct{% endif %}">
+          <strong>D:</strong> {{ q.option_d }} {% if q.correct_option == 'D' %}✓{% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div style="background:#fff; border-radius:14px; padding:40px; text-align:center; color:#94a3b8;">
+      Aucune question trouvée pour ces critères.
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  function speakScript(qId, lang) {
+    if (!('speechSynthesis' in window)) {
+      alert("Synthèse vocale non supportée sur ce navigateur.");
+      return;
+    }
+    const el = document.getElementById('script-txt-' + qId);
+    if (!el) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(el.textContent.trim());
+    const l = lang.toLowerCase();
+    if (l.includes('ang') || l.includes('eng')) utter.lang = 'en-US';
+    else if (l.includes('esp') || l.includes('spa')) utter.lang = 'es-ES';
+    else if (l.includes('all') || l.includes('ger')) utter.lang = 'de-DE';
+    else utter.lang = 'fr-FR';
+    utter.rate = 0.92;
+    window.speechSynthesis.speak(utter);
+  }
+</script>
+{% endblock %}

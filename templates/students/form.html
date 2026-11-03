@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- BREADCRUMB & HEADER -->
+<div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('students') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ t('students') }}</a></div>
+    <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800;">
+      {{ '✏️ Modifier la Fiche Élève' if stu else '➕ Nouveau Dossier Élève' }}
+    </h2>
+    {% if stu %}<div class="muted" style="font-size:12px; margin-top:2px;">Code Système : <strong>{{ stu.code }}</strong></div>{% endif %}
+  </div>
+  <a class="btn btn-outline" href="{{ url_for('students') }}">← Annuler & Retour</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" style="max-width:960px;">
+  
+  <!-- 1. IDENTITÉ & PHOTO -->
+  <div class="card card-pad mb-3" style="padding:20px; border-top:4px solid #1f6feb;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+      <div style="width:28px; height:28px; border-radius:6px; background:#dbeafe; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:14px; font-weight:800;">1</div>
+      <h3 style="margin:0; font-size:15.5px; color:#0B3D6E; font-weight:800;">Identité & Photo de l'Élève (الهوية الشخصية)</h3>
+    </div>
+
+    <div style="display:flex; gap:20px; align-items:center; margin-bottom:16px; background:#f8fafc; padding:14px; border-radius:12px; border:1px solid #e2e8f0; flex-wrap:wrap;">
+      <div id="avPrev" style="width:70px; height:70px; border-radius:50%; overflow:hidden; border:2.5px solid #1f6feb; background:#e2e8f0; display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0;">
+        {% if stu and stu.photo %}
+          <img src="{{ url_for('static', filename='uploads/'+stu.photo) }}" style="width:100%; height:100%; object-fit:cover;">
+        {% else %}
+          <span>👤</span>
+        {% endif %}
+      </div>
+      <div style="flex:1;">
+        <label style="font-weight:700; font-size:13px; color:#0B3D6E; display:block; margin-bottom:4px;">Photo de profil / Badge QR</label>
+        <input type="file" name="photo" accept="image/*" id="photoInput" onchange="previewPhoto(this)" style="font-size:12px;">
+        <div class="muted" style="font-size:11px; margin-top:2px;">Format JPG, PNG ou WEBP · Utilisée pour l'impression de la carte d'étudiant</div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Prénom (الاسم الشخصي) <span class="req">*</span></label>
+        <div class="input-field has-ico">
+          <span class="f-ico">👤</span>
+          <input name="first_name" required value="{{ stu.first_name if stu }}" placeholder="Ex : Sara" style="font-weight:600;">
+        </div>
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Nom (الاسم العائلي) <span class="req">*</span></label>
+        <div class="input-field has-ico">
+          <span class="f-ico">👤</span>
+          <input name="last_name" required value="{{ stu.last_name if stu }}" placeholder="Ex : Alaoui" style="font-weight:600;">
+        </div>
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Genre (الجنس)</label>
+        <select name="gender" style="font-size:13px;">
+          <option value="M" {{ 'selected' if stu and stu.gender=='M' }}>Masculin (ذكر)</option>
+          <option value="F" {{ 'selected' if stu and stu.gender=='F' }}>Féminin (أنثى)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Date de naissance (تاريخ الازدياد)</label>
+        <div class="input-field has-ico">
+          <span class="f-ico">🎂</span>
+          <input type="date" name="birth_date" id="birthDateInput" value="{{ stu.birth_date.strftime('%Y-%m-%d') if (stu and stu.birth_date) else '' }}" onchange="updateAgePreview(this.value)" style="font-weight:600;">
+        </div>
+        <div id="agePreviewBadge" style="font-size:11.5px; font-weight:700; color:#1d4ed8; margin-top:4px; display:{{ 'block' if (stu and stu.age is not none) else 'none' }};">
+          🎂 Âge calculé : <span id="calculatedAge">{{ stu.age if (stu and stu.age is not none) else '' }}</span> ans
+        </div>
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">CIN (رقم البطاقة الوطنية)</label>
+        <div class="input-field has-ico">
+          <span class="f-ico">🪪</span>
+          <input name="cin" value="{{ stu.cin if stu }}" placeholder="Ex : BK123456">
+        </div>
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Statut du compte</label>
+        <select name="status" style="font-size:13px; font-weight:700;">
+          <option value="active" {{ 'selected' if not stu or stu.status=='active' }}>🟢 Actif (En cours d'études)</option>
+          <option value="inactive" {{ 'selected' if stu and stu.status=='inactive' }}>🔴 Inactif (Archivé / Quitté)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. CONTACTS & FAMILLE -->
+  <div class="card card-pad mb-3" style="padding:20px; border-top:4px solid #10b981;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+      <div style="width:28px; height:28px; border-radius:6px; background:#d1fae5; display:flex; align-items:center; justify-content:center; color:#047857; font-size:14px; font-weight:800;">2</div>
+      <h3 style="margin:0; font-size:15.5px; color:#0B3D6E; font-weight:800;">Contacts & Coordonnées Parents (التواصل والعائلة)</h3>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Téléphone Élève (هاتف التلميذ)</label>
+        <div class="input-field has-ico">
+          <span class="f-ico">📱</span>
+          <input type="tel" name="phone" value="{{ stu.phone if stu }}" placeholder="06 XX XX XX XX">
+        </div>
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Téléphone Parent WhatsApp (هاتف الولي) <span class="req" style="color:#10b981;">*</span></label>
+        <div class="input-field has-ico">
+          <span class="f-ico">💬</span>
+          <input type="tel" name="parent_phone" value="{{ stu.parent_phone if stu }}" placeholder="06 XX XX XX XX">
+        </div>
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Nom du Parent / Tuteur (اسم ولي الأمر)</label>
+        <div class="input-field has-ico">
+          <span class="f-ico">👨‍👩‍👧</span>
+          <input name="parent_name" value="{{ stu.parent_name if stu }}" placeholder="Ex : Mohamed Alaoui">
+        </div>
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Ville (المدينة)</label>
+        <div class="input-field has-ico">
+          <span class="f-ico">📍</span>
+          <input name="city" value="{{ stu.city if stu else 'Deroua' }}" placeholder="Deroua, Nouaceur...">
+        </div>
+      </div>
+
+      <div class="field" style="grid-column: 1 / -1;">
+        <label style="font-size:12px; font-weight:700;">Adresse du domicile (العنوان)</label>
+        <div class="input-field has-ico">
+          <span class="f-ico">🏠</span>
+          <input name="address" value="{{ stu.address if stu }}" placeholder="Quartier, résidence, rue, n°...">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. SCOLARITÉ & OBSERVATIONS -->
+  <div class="card card-pad mb-3" style="padding:20px; border-top:4px solid #8b5cf6;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+      <div style="width:28px; height:28px; border-radius:6px; background:#f3e8ff; display:flex; align-items:center; justify-content:center; color:#7c3aed; font-size:14px; font-weight:800;">3</div>
+      <h3 style="margin:0; font-size:15.5px; color:#0B3D6E; font-weight:800;">Scolarité & Remarques (المستوى الدراسي)</h3>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Niveau Scolaire (المستوى)</label>
+        <input name="school_level" value="{{ stu.school_level if stu }}" placeholder="Ex : 2BAC PC, 1BAC SVT, 3AC, A1..." style="font-weight:600;">
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Établissement scolaire d'origine (المؤسسة الأصلية)</label>
+        <input name="school_name" value="{{ stu.school_name if stu }}" placeholder="Ex : Lycée Al Khawarizmi...">
+      </div>
+
+      <div class="field" style="grid-column: 1 / -1;">
+        <label style="font-size:12px; font-weight:700;">Notes & Observations administratives (ملاحظات)</label>
+        <textarea name="notes" rows="2" placeholder="Observations particulières sur l'élève..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit; font-size:13px;">{{ stu.notes if stu else '' }}</textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBMIT BUTTONS -->
+  <div style="display:flex; gap:10px; margin-top:20px;">
+    <button class="btn btn-primary" type="submit" style="font-size:15px; font-weight:800; padding:10px 24px; background:#10b981; border-color:#10b981;">
+      💾 Enregistrer la Fiche Élève
+    </button>
+    <a class="btn btn-outline" href="{{ url_for('students') }}" style="padding:10px 18px; font-weight:700;">
+      Annuler
+    </a>
+  </div>
+
+</form>
+
+<script>
+  function previewPhoto(input) {
+    if (input.files && input.files[0]) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('avPrev').innerHTML = '<img src="' + e.target.result + '" style="width:100%; height:100%; object-fit:cover;">';
+      }
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  function updateAgePreview(val) {
+    var badge = document.getElementById('agePreviewBadge');
+    var valSpan = document.getElementById('calculatedAge');
+    if (!val) {
+      if (badge) badge.style.display = 'none';
+      return;
+    }
+    var bDate = new Date(val);
+    var today = new Date();
+    var age = today.getFullYear() - bDate.getFullYear();
+    var m = today.getMonth() - bDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < bDate.getDate())) {
+      age--;
+    }
+    if (age >= 0 && !isNaN(age)) {
+      if (valSpan) valSpan.textContent = age;
+      if (badge) badge.style.display = 'block';
+    } else {
+      if (badge) badge.style.display = 'none';
+    }
+  }
+</script>
+
+{% endblock %}

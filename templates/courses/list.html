@@ -1,0 +1,1131 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- COURSES CUSTOM MODERN STYLES -->
+<style>
+  .courses-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  /* KPI Cards Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+  }
+  .kpi-blue::before { background: #2563eb; }
+  .kpi-emerald::before { background: #059669; }
+  .kpi-purple::before { background: #7c3aed; }
+  .kpi-amber::before { background: #d97706; }
+
+  .kpi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .kpi-icon {
+    font-size: 18px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .kpi-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
+    margin-bottom: 6px;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+  .kpi-sub {
+    font-size: 11.5px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Filters Toolbar */
+  .filter-panel {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+  }
+  .status-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+  }
+  .status-pill:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #cbd5e1;
+  }
+  .status-pill.active {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
+  }
+
+  .filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .search-box {
+    position: relative;
+    flex: 1;
+    min-width: 240px;
+    max-width: 380px;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border-radius: 10px;
+    border: 1.5px solid #cbd5e1;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #f8fafc;
+    transition: all 0.2s;
+    box-sizing: border-box;
+  }
+  .search-box input:focus {
+    background: #ffffff;
+    border-color: #2563eb;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+  .search-box .icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #94a3b8;
+    pointer-events: none;
+  }
+
+  .filter-select {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1.5px solid #cbd5e1;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #f8fafc;
+    min-width: 180px;
+    max-width: 250px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-select:focus {
+    border-color: #2563eb;
+    background: #fff;
+    outline: none;
+  }
+
+  /* Table Card & Modern Table */
+  .table-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+    overflow: visible;
+  }
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 16px;
+  }
+  .modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+  }
+  body.rtl .modern-table {
+    text-align: right;
+  }
+  .modern-table th {
+    background: #f8fafc;
+    padding: 12px 14px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1.5px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  .modern-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    transition: background-color 0.15s ease;
+  }
+  .modern-table tr:hover td {
+    background-color: #f8fbff;
+  }
+  .modern-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Course Cell */
+  .course-name-link {
+    font-weight: 800;
+    color: #0b3d6e;
+    font-size: 13.5px;
+    text-decoration: none;
+    line-height: 1.25;
+    display: block;
+    transition: color 0.15s;
+  }
+  .course-name-link:hover {
+    color: #2563eb;
+  }
+  .course-tags {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 3px;
+    flex-wrap: wrap;
+  }
+  .group-tag {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  .code-tag {
+    font-size: 10px;
+    color: #64748b;
+    font-family: monospace;
+  }
+
+  /* Discipline Badges */
+  .cat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 10.5px;
+    font-weight: 800;
+  }
+  .cat-lang {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+  }
+  .cat-tut {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+  }
+  .level-sub {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 2px;
+  }
+
+  /* Teacher Cell */
+  .teacher-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .teacher-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: #f3e8ff;
+    color: #7c3aed;
+    font-weight: 800;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .teacher-name-link {
+    font-weight: 700;
+    color: #0b3d6e;
+    text-decoration: none;
+    font-size: 12.5px;
+  }
+  .teacher-name-link:hover {
+    color: #7c3aed;
+  }
+
+  /* Fill Rate Micro Bar */
+  .fill-badge {
+    font-weight: 800;
+    font-size: 12.5px;
+    line-height: 1.2;
+  }
+  .progress-track {
+    background: #e2e8f0;
+    border-radius: 4px;
+    height: 5px;
+    width: 80px;
+    margin: 3px auto 0 auto;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  /* Price Cell */
+  .price-main {
+    font-size: 14px;
+    font-weight: 800;
+    color: #0b3d6e;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+  .fee-sub {
+    font-size: 10.5px;
+    color: #7c3aed;
+    font-weight: 700;
+  }
+
+  /* Actions Cluster & Modern Dropdown */
+  .actions-cell {
+    position: relative;
+    white-space: nowrap;
+    text-align: right;
+    width: 155px;
+    min-width: 155px;
+  }
+  body.rtl .actions-cell {
+    text-align: left;
+  }
+  .action-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    position: relative;
+  }
+  .btn-primary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 110px;
+    min-width: 110px;
+    max-width: 110px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 800;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-sizing: border-box;
+    text-align: center;
+    flex-shrink: 0;
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  }
+  .btn-primary-action:hover {
+    background: #1d4ed8;
+    color: #ffffff;
+  }
+
+  /* Dropdown Trigger Button */
+  .btn-menu-trigger {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1.5px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    font-size: 16px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+    box-sizing: border-box;
+    flex-shrink: 0;
+  }
+  .btn-menu-trigger:hover, .btn-menu-trigger.active {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+  }
+
+  /* Floating Dropdown Menu */
+  .dropdown-menu-float {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 5px);
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 11px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
+    min-width: 200px;
+    z-index: 1000;
+    padding: 5px;
+    text-align: left;
+  }
+  body.rtl .dropdown-menu-float {
+    right: auto;
+    left: 0;
+    text-align: right;
+  }
+  .dropdown-menu-float.show {
+    display: block;
+    animation: dropdownFadeIn 0.15s ease;
+  }
+  @keyframes dropdownFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 9px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+    text-decoration: none;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: background 0.12s;
+  }
+  .dropdown-item:hover {
+    background: #f1f5f9;
+    color: #0b3d6e;
+  }
+  .dropdown-item.danger {
+    color: #dc2626;
+  }
+  .dropdown-item.danger:hover {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+  .dropdown-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 4px 0;
+  }
+  .dropdown-label {
+    font-size: 10px;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 9px 2px;
+  }
+
+  /* Mobile labels - hidden on desktop */
+  .mobile-card-label {
+    display: none;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #94a3b8;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  @media (max-width: 900px) {
+    .kpi-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 600px) {
+    .kpi-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 8px !important;
+    }
+    .kpi-card {
+      padding: 10px 12px !important;
+    }
+    .kpi-value {
+      font-size: 19px !important;
+    }
+    .filter-controls {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .search-box, .filter-select {
+      max-width: 100%;
+    }
+  }
+
+  /* Refined Mobile Card Organization for Courses */
+  @media (max-width: 768px) {
+    .mobile-card-label {
+      display: block !important;
+    }
+
+    .modern-table tr {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 10px !important;
+      background: #ffffff !important;
+      border-radius: 18px !important;
+      border: 1.5px solid #cbd5e1 !important;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
+      padding: 15px !important;
+      position: relative !important;
+      margin-bottom: 8px !important;
+    }
+
+    /* 1. Header: Course Title, Group, Code */
+    .modern-table td.cell-course-name {
+      grid-column: 1 / -1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      padding-bottom: 10px !important;
+      border-bottom: 1px solid #f1f5f9 !important;
+      padding-right: 95px !important;
+    }
+    body.rtl .modern-table td.cell-course-name {
+      padding-right: 0 !important;
+      padding-left: 95px !important;
+    }
+
+    .modern-table td.cell-course-name .course-name-link {
+      font-size: 15.5px !important;
+      font-weight: 800 !important;
+      color: #0b3d6e !important;
+    }
+
+    /* 2. Price Badge pinned to Top Right */
+    .modern-table td.cell-price {
+      position: absolute !important;
+      top: 14px !important;
+      right: 14px !important;
+      padding: 0 !important;
+      border: none !important;
+      background: #ecfdf5 !important;
+      border: 1px solid #a7f3d0 !important;
+      border-radius: 10px !important;
+      padding: 4px 8px !important;
+      width: auto !important;
+      text-align: right !important;
+    }
+    body.rtl .modern-table td.cell-price {
+      right: auto !important;
+      left: 14px !important;
+      text-align: left !important;
+    }
+    .modern-table td.cell-price .price-main {
+      font-size: 13px !important;
+      font-weight: 850 !important;
+      color: #047857 !important;
+    }
+    .modern-table td.cell-price .fee-sub {
+      font-size: 9.5px !important;
+      color: #059669 !important;
+    }
+
+    /* 3. Category & Discipline (Col 1 or 2) */
+    .modern-table td.cell-discipline {
+      grid-column: 1 / -1 !important;
+      display: flex !important;
+      align-items: center !important;
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+      padding: 0 !important;
+    }
+
+    /* 4. Teacher Box */
+    .modern-table td.cell-teacher {
+      grid-column: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      background: #f8fafc !important;
+      padding: 9px 11px !important;
+      border-radius: 12px !important;
+      border: 1px solid #e2e8f0 !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 5. Room & Schedule Box */
+    .modern-table td.cell-room {
+      grid-column: 2 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      background: #f8fafc !important;
+      padding: 9px 11px !important;
+      border-radius: 12px !important;
+      border: 1px solid #e2e8f0 !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 6. Fill Rate Banner */
+    .modern-table td.cell-fill {
+      grid-column: 1 / -1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 4px !important;
+      background: #f0f7ff !important;
+      border: 1px solid #bfdbfe !important;
+      border-radius: 12px !important;
+      padding: 8px 12px !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 7. Action Buttons */
+    .modern-table td.cell-actions {
+      grid-column: 1 / -1 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      border-top: 1.5px solid #f1f5f9 !important;
+      padding-top: 10px !important;
+      margin-top: 2px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .modern-table .action-group {
+      width: 100% !important;
+      display: flex !important;
+      gap: 8px !important;
+    }
+
+    .modern-table .btn-primary-action {
+      flex: 1 1 auto !important;
+      height: 42px !important;
+      font-size: 14px !important;
+      font-weight: 800 !important;
+      border-radius: 12px !important;
+      justify-content: center !important;
+    }
+
+    .modern-table .btn-menu-trigger {
+      width: 42px !important;
+      min-width: 42px !important;
+      height: 42px !important;
+      border-radius: 12px !important;
+      font-size: 20px !important;
+    }
+  }
+
+  @media (max-width: 440px) {
+    .modern-table tr {
+      grid-template-columns: 1fr !important;
+    }
+    .modern-table td.cell-teacher {
+      grid-column: 1 / -1 !important;
+    }
+    .modern-table td.cell-room {
+      grid-column: 1 / -1 !important;
+    }
+  }
+</style>
+
+<div class="courses-container">
+
+  <!-- TOP HEADER & ACTIONS -->
+  <div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+    <div>
+      <div class="muted" style="font-size:12px">
+        <a href="{{ url_for('dashboard') }}" style="text-decoration:none; color:#2563eb; font-weight:700;">← {{ t('dashboard') }}</a>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+        <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800; letter-spacing:-0.4px;">
+          {% if cur_user and cur_user.role == 'teacher' %}
+            📚 {{ 'أفواجي ودروسي' if lang=='ar' else 'Mes Classes & Matières' }}
+          {% else %}
+            📚 {{ 'إدارة الأقسام والأفواج والمواد' if lang=='ar' else 'Gestion des Classes & Cours' }}
+          {% endif %}
+        </h2>
+        <span class="status-pill active" style="padding:2px 8px; font-size:11px;">
+          {{ courses|length }} {{ 'فوج' if lang=='ar' else 'classe(s)' }}
+        </span>
+        {% if current_teacher %}
+        <span class="status-pill" style="padding:2px 8px; font-size:11px; background:#ecfdf5; color:#047857; border-color:#a7f3d0;">
+          👨‍🏫 {{ current_teacher.full_name }}
+        </span>
+        {% endif %}
+      </div>
+      <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">
+        {% if cur_user and cur_user.role == 'teacher' %}
+          {{ 'الفصول والأفواج المسندة إليك لتسجيل الحضور وتتبع قائمة التلاميذ' if lang=='ar' else 'Liste des classes qui vous sont affectées avec accès direct au pointage de présence' }}
+        {% else %}
+          {{ 'التنظيم البيداغوجي للأفواج، التسعيرات الشهرية، وتعيين الأساتذة والقاعات' if lang=='ar' else 'Organisation pédagogique des groupes, tarification, affectation des professeurs et des salles' }}
+        {% endif %}
+      </p>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="flex wrap" style="gap:8px;">
+      {% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+      <a class="btn btn-primary" href="{{ url_for('express_enrollment') }}" style="background:#10b981; border-color:#10b981; font-weight:800; font-size:13px; padding:7px 14px; border-radius:9px; box-shadow:0 3px 10px rgba(16,185,129,0.25);">
+        ⚡ {{ 'تسجيل سريع' if lang=='ar' else 'Inscription Express' }}
+      </a>
+      <a class="btn btn-outline" href="{{ url_for('import_page') }}" style="background:#fff; font-weight:700; font-size:13px; padding:7px 12px; border-radius:9px;">
+        📥 {{ 'استيراد' if lang=='ar' else 'Importer Excel' }}
+      </a>
+      <a class="btn btn-primary" href="{{ url_for('course_form') }}" style="background:#2563eb; border-color:#2563eb; font-weight:800; font-size:13px; padding:7px 14px; border-radius:9px;">
+        + {{ 'فوج جديد' if lang=='ar' else 'Nouvelle Classe' }}
+      </a>
+      {% elif cur_user and cur_user.role == 'teacher' %}
+      <a class="btn btn-primary" href="{{ url_for('attendance') }}" style="background:#2563eb; border-color:#2563eb; font-weight:800; font-size:13px; padding:7px 14px; border-radius:9px;">
+        📋 {{ 'ورقة الحضور' if lang=='ar' else 'Faire l\'appel' }}
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- KPI SUMMARY CARDS -->
+  <div class="kpi-grid">
+    
+    <!-- 1. Pedagogical Offer -->
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'أفواجي' if cur_user and cur_user.role == 'teacher' else ('العرض البيداغوجي' if lang=='ar' else 'Offre Pédagogique') }}</span>
+        <div class="kpi-icon" style="background:#eff6ff; color:#2563eb;">📚</div>
+      </div>
+      <div class="kpi-value">
+        {{ total_courses_count }} <span style="font-size:13px; font-weight:600; color:#64748b;">{{ 'فوج' if lang=='ar' else 'classes' }}</span>
+      </div>
+      <div class="kpi-sub" style="color:#2563eb;">
+        <span>🌍 {{ lang_courses_count }} {{ 'لغات' if lang=='ar' else 'Langues' }}</span>
+        <span style="color:#94a3b8;">·</span>
+        <span>🎓 {{ tut_courses_count }} {{ 'دعم' if lang=='ar' else 'Soutien' }}</span>
+      </div>
+    </div>
+
+    <!-- 2. Enrolled Students Count -->
+    <div class="kpi-card kpi-emerald">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'تلاميذي المسجلون' if cur_user and cur_user.role == 'teacher' else ('إجمالي التلاميذ النشطين' if lang=='ar' else 'Effectif Global d\'Élèves') }}</span>
+        <div class="kpi-icon" style="background:#ecfdf5; color:#059669;">👥</div>
+      </div>
+      <div class="kpi-value" style="color:#047857;">{{ total_enrolled_students }}</div>
+      <div class="kpi-sub" style="color:#047857;">
+        <span>{{ 'تلاميذ مسجلون يتابعون دراستهم' if lang=='ar' else 'Inscriptions actives au total' }}</span>
+      </div>
+    </div>
+
+    <!-- 3. Teachers / Attendance -->
+    <div class="kpi-card kpi-purple">
+      {% if cur_user and cur_user.role == 'teacher' %}
+        <div class="kpi-header">
+          <span class="kpi-label">{{ 'الغياب والحضور' if lang=='ar' else 'Pointage & Présences' }}</span>
+          <div class="kpi-icon" style="background:#f5f3ff; color:#7c3aed;">📍</div>
+        </div>
+        <div class="kpi-value" style="font-size:19px; color:#6d28d9; margin:3px 0;">
+          {{ 'تسجيل الغياب' if lang=='ar' else 'Feuille d\'appel' }}
+        </div>
+        <div class="kpi-sub" style="color:#7c3aed;">
+          <a href="{{ url_for('attendance') }}" style="color:#7c3aed; text-decoration:none; font-weight:700;">
+            {{ 'فتح ورقة الحضور →' if lang=='ar' else 'Faire l\'appel →' }}
+          </a>
+        </div>
+      {% else %}
+        <div class="kpi-header">
+          <span class="kpi-label">{{ 'هيئة التدريس' if lang=='ar' else 'Corps Enseignant' }}</span>
+          <div class="kpi-icon" style="background:#f5f3ff; color:#7c3aed;">👨‍🏫</div>
+        </div>
+        <div class="kpi-value" style="color:#6d28d9;">
+          {{ all_teachers|length }} <span style="font-size:13px; font-weight:600; color:#64748b;">{{ 'أستاذ' if lang=='ar' else 'profs' }}</span>
+        </div>
+        <div class="kpi-sub" style="color:#7c3aed;">
+          <a href="{{ url_for('teachers') }}" style="color:#7c3aed; text-decoration:none; font-weight:700;">
+            {{ 'إدارة الأساتذة والمستحقات →' if lang=='ar' else 'Gérer les professeurs →' }}
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- 4. Schedule & Rooms -->
+    <div class="kpi-card kpi-amber">
+      <div class="kpi-header">
+        <span class="kpi-label">{{ 'جدول الأوقات والقاعات' if lang=='ar' else 'Planning & Salles' }}</span>
+        <div class="kpi-icon" style="background:#fffbeb; color:#d97706;">🗓️</div>
+      </div>
+      <div class="kpi-value" style="font-size:19px; color:#b45309; margin:3px 0;">
+        {{ 'استعمال الزمن' if lang=='ar' else 'Emploi du temps' }}
+      </div>
+      <div class="kpi-sub" style="color:#b45309;">
+        <a href="{{ url_for('schedule') }}" style="text-decoration:none; color:#b45309; font-weight:700;">
+          {{ 'عرض التوزيع الأسبوعي →' if lang=='ar' else 'Voir le planning hebdomadaire →' }}
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FILTERS & SEARCH PANEL -->
+  <div class="filter-panel">
+    
+    <!-- Category Tabs -->
+    <div class="status-pills">
+      <a href="{{ url_for('courses', q=search_q, teacher_id=teacher_id) }}" class="status-pill {{ 'active' if not cat and not selected_subject else '' }}">
+        <span>📋</span>
+        <span>{{ 'جميع الأفواج' if lang=='ar' else 'Toutes les Classes' }}</span>
+      </a>
+      <a href="{{ url_for('courses', cat='language', q=search_q, teacher_id=teacher_id) }}" class="status-pill {{ 'active' if cat=='language' and not selected_subject else '' }}">
+        <span>🌍</span>
+        <span>{{ 'اللغات الحية' if lang=='ar' else 'Langues Vivantes' }}</span>
+      </a>
+      <a href="{{ url_for('courses', cat='tutoring', q=search_q, teacher_id=teacher_id) }}" class="status-pill {{ 'active' if cat=='tutoring' and not selected_subject else '' }}">
+        <span>🎓</span>
+        <span>{{ 'الدعم والتقوية' if lang=='ar' else 'Soutien Scolaire' }}</span>
+      </a>
+    </div>
+
+    <!-- Matière Quick Filter Pills -->
+    {% if all_matieres %}
+    <div class="status-pills" style="padding-top:4px;">
+      <span style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; display:flex; align-items:center; gap:4px; margin-right:4px;">
+        🎯 {{ 'المادة :' if lang=='ar' else 'Matière :' }}
+      </span>
+      {% for m in all_matieres %}
+      <a href="{{ url_for('courses', subject=m.name, cat=cat, teacher_id=teacher_id, q=search_q) }}" 
+         class="status-pill {{ 'active' if selected_subject==m.name else '' }}"
+         style="{{ ('background:' ~ m.color ~ '; border-color:' ~ m.color ~ '; color:#fff;') if selected_subject==m.name else '' }}">
+        <span>{{ m.icon }}</span>
+        <span>{{ m.name_ar if lang=='ar' else m.name }}</span>
+        <span style="font-size:10.5px; opacity:0.85; font-weight:800;">({{ m.count }})</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Form Inputs -->
+    <form method="get" action="{{ url_for('courses') }}" class="filter-controls">
+      <input type="hidden" name="cat" value="{{ cat }}">
+      <input type="hidden" name="subject" value="{{ selected_subject or '' }}">
+
+      <!-- Search Input -->
+      <div class="search-box">
+        <span class="icon">🔍</span>
+        <input type="text" name="q" value="{{ search_q }}" placeholder="{{ 'بحث بالاسم، المادة، الكود...' if lang=='ar' else 'Nom, matière, code...' }}">
+      </div>
+
+      <div class="flex wrap" style="gap:8px; align-items:center;">
+        
+        <!-- Teacher Filter -->
+        <select name="teacher_id" onchange="this.form.submit()" class="filter-select">
+          <option value="">{{ 'جميع الأساتذة' if lang=='ar' else 'Tous les professeurs' }}</option>
+          {% for t in all_teachers %}
+          <option value="{{ t.id }}" {{ 'selected' if teacher_id == t.id else '' }}>{{ t.full_name }}</option>
+          {% endfor %}
+        </select>
+
+        <button type="submit" class="btn btn-primary btn-sm" style="font-weight:700; padding:7px 14px; border-radius:8px;">
+          {{ 'تصفية' if lang=='ar' else 'Filtrer' }}
+        </button>
+
+        {% if search_q or teacher_id or cat or selected_subject %}
+        <a href="{{ url_for('courses') }}" class="btn btn-outline btn-sm" style="padding:7px 10px; border-radius:8px;" title="Réinitialiser les filtres">✕</a>
+        {% endif %}
+      </div>
+    </form>
+
+  </div>
+
+  <!-- COURSES TABLE (ZERO SCROLL, MODERN SAAS DESIGN) -->
+  <div class="table-card">
+    {% if courses %}
+    <div class="table-responsive">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th style="width:25%;">{{ 'الفوج والكود' if lang=='ar' else 'Classe & Code' }}</th>
+            <th style="width:16%;">{{ 'المادة والمستوى' if lang=='ar' else 'Discipline & Niveau' }}</th>
+            <th style="width:20%;">{{ 'الأستاذ المسند' if lang=='ar' else 'Professeur Assigné' }}</th>
+            <th style="width:14%;">{{ 'القاعة والتوقيت' if lang=='ar' else 'Salle & Rythme' }}</th>
+            <th style="width:12%; text-align:center;">{{ 'الملء والعدد' if lang=='ar' else 'Remplissage' }}</th>
+            <th style="width:13%; text-align:right;">{{ 'الواجب الشهري' if lang=='ar' else 'Tarif Mensuel' }}</th>
+            <th style="width:10%; text-align:right; min-width:155px;">{{ 'إجراءات' if lang=='ar' else 'Actions' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in courses %}
+          {% set occ = c.enrolled_count %}
+          {% set cap = c.max_students or 20 %}
+          {% set pct = ((occ / cap) * 100)|round if cap else 0 %}
+          <tr>
+            
+            <!-- 1. Code & Name -->
+            <td class="cell-course-name">
+              <div>
+                <a href="{{ url_for('course_view', cid=c.id) }}" class="course-name-link" title="{{ c.name }}">
+                  {{ c.name }}
+                </a>
+                <div class="course-tags">
+                  {% if c.group_name %}
+                    <span class="group-tag">👥 {{ c.group_name }}</span>
+                  {% endif %}
+                  <span class="code-tag">#{{ c.code }}</span>
+                </div>
+              </div>
+            </td>
+
+            <!-- 2. Discipline & Level -->
+            <td class="cell-discipline">
+              <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
+                <span class="cat-badge {% if c.category=='language' %}cat-lang{% else %}cat-tut{% endif %}">
+                  {{ '🌍 لغات' if c.category=='language' else '🎓 دعم' if lang=='ar' else ('🌍 Langue' if c.category=='language' else '🎓 Soutien') }}
+                </span>
+                <span style="font-size:11px; font-weight:800; background:#f1f5f9; color:#0B3D6E; border:1px solid #cbd5e1; padding:1px 6px; border-radius:4px;">
+                  {{ c.matiere }}
+                </span>
+                {% if c.level %}
+                  <span class="level-sub" style="margin:0;">
+                    · <strong>{{ c.level }}</strong>
+                  </span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- 3. Teacher -->
+            <td class="cell-teacher">
+              <div class="mobile-card-label">👨‍🏫 {{ 'الأستاذ' if lang=='ar' else 'Professeur' }}</div>
+              {% if c.teacher %}
+                <div class="teacher-cell">
+                  <span class="teacher-avatar">
+                    {{ c.teacher.first_name[0]|upper }}
+                  </span>
+                  <div style="min-width:0;">
+                    <a href="{{ url_for('teacher_form', tid=c.teacher.id) }}" class="teacher-name-link" title="{{ c.teacher.full_name }}">
+                      {{ c.teacher.full_name }}
+                    </a>
+                    {% if c.teacher.phone %}
+                      <div style="font-size:10.5px; color:#64748b;">
+                        <a href="tel:{{ c.teacher.phone }}" style="color:#64748b; text-decoration:none;">📞 {{ c.teacher.phone }}</a>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              {% else %}
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <span class="cat-badge" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a;">
+                    ⏳ {{ 'قيد التشكيل' if lang=='ar' else 'Sans prof' }} ({{ c.enrolled_count }}/4)
+                  </span>
+                  <a href="{{ url_for('course_form', cid=c.id) }}" class="btn btn-xs btn-outline" style="color:#0B3D6E; border-color:#0B3D6E; font-weight:700; padding:1px 6px; font-size:10.5px;" title="Assigner un professeur">
+                    + Prof
+                  </a>
+                </div>
+              {% endif %}
+            </td>
+
+            <!-- 4. Room & Rythme -->
+            <td class="cell-room">
+              <div class="mobile-card-label">🚪 {{ 'القاعة والتوقيت' if lang=='ar' else 'Salle & Rythme' }}</div>
+              <div style="font-size:12px; color:#334155;">
+                {% if c.room %}
+                  <span>🚪 <strong>{{ c.room.name }}</strong></span>
+                {% else %}
+                  <span class="muted" style="font-size:11px;">{{ 'قاعة غير محددة' if lang=='ar' else 'Salle non définie' }}</span>
+                {% endif %}
+                <div style="font-size:10.5px; color:#64748b; margin-top:2px;">
+                  ⏱️ {{ c.sessions_per_week }} {{ 'حصص/س' if lang=='ar' else 's/sem' }} ({{ c.session_duration or '1h30' }})
+                </div>
+              </div>
+            </td>
+
+            <!-- 5. Fill Rate Micro Progress Bar -->
+            <td class="cell-fill" style="text-align:center;">
+              <div class="mobile-card-label" style="margin-bottom:0;">👥 {{ 'الملء' if lang=='ar' else 'Remplissage' }}</div>
+              <div class="fill-badge" style="color:{% if occ >= cap %}#dc2626{% else %}#047857{% endif %};">
+                {{ occ }}/{{ cap }} <span style="font-size:10.5px; font-weight:600; color:#64748b;">{{ 'تلميذ' if lang=='ar' else 'élèves' }} ({{ pct }}%)</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" style="background:{% if occ >= cap %}#ef4444{% elif pct > 75 %}#f59e0b{% else %}#10b981{% endif %}; width:{{ pct if pct <= 100 else 100 }}%;"></div>
+              </div>
+            </td>
+
+            <!-- 6. Price -->
+            <td class="cell-price" style="text-align:right;">
+              <div class="price-main">
+                {{ '%.0f'|format(c.price) }} <span style="font-size:11px; font-weight:600; color:#64748b;">{{ settings.currency }}</span>
+              </div>
+              <div class="fee-sub">
+                +{{ '%.0f'|format(c.registration_fee or (40 if c.category=='tutoring' else 200)) }} DH {{ 'تسجيل' if lang=='ar' else 'Frais' }}
+              </div>
+            </td>
+
+            <!-- 7. Actions Cluster (110px Primary Button + 32px Dropdown Menu) -->
+            <td class="actions-cell cell-actions">
+              <div class="action-group">
+                
+                <!-- Primary Action Button: 110px fixed width -->
+                <a class="btn-primary-action" href="{{ url_for('teacher_class_lists', course_id=c.id, teacher_id=c.teacher_id or '') }}" title="Liste d'appel sans prix">
+                  <span>📋</span><span>{{ 'اللائحة' if lang=='ar' else 'Liste' }}</span>
+                </a>
+
+                <!-- Dropdown Trigger Button (⋮) -->
+                <button type="button" class="btn-menu-trigger" onclick="toggleActionDropdown(event, 'course-dropdown-{{ c.id }}')" title="Plus d'actions">
+                  ⋮
+                </button>
+
+                <!-- Floating Dropdown Menu -->
+                <div class="dropdown-menu-float" id="course-dropdown-{{ c.id }}">
+                  <div class="dropdown-label">{{ 'العمليات' if lang=='ar' else 'Actions classe' }}</div>
+
+                  <!-- Fiche classe & Inscrits -->
+                  <a class="dropdown-item" href="{{ url_for('course_view', cid=c.id) }}">
+                    <span>👁️</span><span>{{ 'تفاصيل الفوج والتلاميذ' if lang=='ar' else 'Dossier classe & inscrits' }}</span>
+                  </a>
+
+                  <!-- Feuille d'appel -->
+                  <a class="dropdown-item" href="{{ url_for('teacher_class_lists', course_id=c.id, teacher_id=c.teacher_id or '') }}">
+                    <span>📋</span><span>{{ 'ورقة تفقد الحضور' if lang=='ar' else 'Feuille d\'appel (sans prix)' }}</span>
+                  </a>
+
+                  <!-- Pointage présence -->
+                  <a class="dropdown-item" href="{{ url_for('attendance', course_id=c.id) }}">
+                    <span>📅</span><span>{{ 'تسجيل الغياب الفوري' if lang=='ar' else 'Pointage présence' }}</span>
+                  </a>
+
+                  {% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+                  <div class="dropdown-divider"></div>
+                  <!-- Inscrire un élève -->
+                  <a class="dropdown-item" href="{{ url_for('express_enrollment') }}">
+                    <span>⚡</span><span>{{ 'تسجيل تلميذ جديد' if lang=='ar' else 'Inscrire un élève' }}</span>
+                  </a>
+
+                  <!-- Modifier -->
+                  <a class="dropdown-item" href="{{ url_for('course_form', cid=c.id) }}">
+                    <span>✏️</span><span>{{ 'تعديل الفوج' if lang=='ar' else 'Modifier la classe' }}</span>
+                  </a>
+
+                  <!-- Supprimer -->
+                  <div class="dropdown-divider"></div>
+                  <form method="post" action="{{ url_for('course_delete', cid=c.id) }}" onsubmit="return confirm('{{ 'هل أنت متأكد من حذف أو أرشفت هذا الفوج؟' if lang=='ar' else 'Désactiver ou supprimer ce cours ?' }}');" style="margin:0;">
+                    <button class="dropdown-item danger" type="submit">
+                      <span>🗑️</span><span>{{ 'حذف أو أرشفة' if lang=='ar' else 'Supprimer le cours' }}</span>
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+
+              </div>
+            </td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:45px 20px; color:#64748b;">
+      <div style="font-size:36px; margin-bottom:10px;">📚</div>
+      <h3 style="margin:0 0 6px 0; color:#0b3d6e; font-size:16px; font-weight:800;">
+        {{ 'لا يوجد أي فوج دراسي مسجل في هذه الفئة' if lang=='ar' else 'Aucun cours trouvé avec ces critères' }}
+      </h3>
+      <p style="margin:0 0 16px 0; font-size:12.5px;">
+        {{ 'يمكنك تغيير معايير البحث أو إضافة فوج دراسي جديد' if lang=='ar' else 'Modifiez vos filtres ou créez une nouvelle classe.' }}
+      </p>
+      <div class="flex" style="justify-content:center; gap:8px;">
+        {% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+        <a class="btn btn-primary btn-sm" href="{{ url_for('course_form') }}" style="background:#2563eb; border-color:#2563eb; font-weight:700;">
+          + {{ 'فوج جديد' if lang=='ar' else 'Créer une classe' }}
+        </a>
+        {% endif %}
+        <a class="btn btn-outline btn-sm" href="{{ url_for('courses') }}">
+          {{ 'تصفير الفلاتر' if lang=='ar' else 'Réinitialiser les filtres' }}
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- JAVASCRIPT FOR ACTIONS DROPDOWN -->
+<script>
+  function toggleActionDropdown(event, dropdownId) {
+    event.stopPropagation();
+    if (window.openFloatingDropdown) {
+      window.openFloatingDropdown(event.currentTarget, document.getElementById(dropdownId));
+    }
+  }
+</script>
+
+{% endblock %}

@@ -1,0 +1,1210 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+/* ============================================================
+   MODERN & ATTRACTIVE TEACHER FORM STYLES
+   ============================================================ */
+:root {
+  --primary-navy: #0B3D6E;
+  --primary-blue: #1f6feb;
+  --accent-emerald: #10b981;
+  --accent-purple: #8b5cf6;
+  --accent-amber: #f59e0b;
+}
+
+.teacher-page-wrap {
+  max-width: 1220px;
+  margin: 0 auto;
+  padding-bottom: 40px;
+}
+
+/* Header Banner */
+.tf-hero-header {
+  background: linear-gradient(135deg, #0B3D6E 0%, #1e40af 60%, #3b82f6 100%);
+  border-radius: 18px;
+  padding: 24px 28px;
+  color: #ffffff;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 25px rgba(11, 61, 110, 0.18);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.tf-hero-header::after {
+  content: '';
+  position: absolute;
+  right: -50px;
+  top: -50px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.tf-hero-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -0.5px;
+}
+
+.tf-hero-sub {
+  margin: 4px 0 0 0;
+  font-size: 13.5px;
+  color: #bfdbfe;
+  font-weight: 500;
+}
+
+/* Two-Column Grid */
+.tf-main-grid {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .tf-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card Containers */
+.tf-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 3px 14px rgba(15, 23, 42, 0.04);
+  padding: 22px;
+  margin-bottom: 20px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.tf-card:hover {
+  box-shadow: 0 6px 22px rgba(15, 23, 42, 0.07);
+}
+
+.tf-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1.5px solid #f1f5f9;
+}
+
+.tf-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tf-icon-badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  flex-shrink: 0;
+}
+
+.tf-card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0B3D6E;
+  letter-spacing: -0.3px;
+}
+
+.tf-card-sub {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+/* Avatar Section */
+.tf-avatar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 16px;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 14px;
+  border: 1.5px dashed #cbd5e1;
+  margin-bottom: 18px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.tf-avatar-wrapper:hover {
+  border-color: #1f6feb;
+  background: #f0f7ff;
+}
+
+.tf-avatar-circle {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  border: 4px solid #ffffff;
+  box-shadow: 0 6px 18px rgba(11, 61, 110, 0.15);
+  background: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44px;
+  color: #64748b;
+  margin-bottom: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.tf-avatar-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tf-photo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1f6feb;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 10px rgba(31, 111, 235, 0.3);
+}
+
+.tf-photo-btn:hover {
+  background: #174eb8;
+  transform: translateY(-1px);
+}
+
+/* Form Controls & Grids */
+.tf-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.tf-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 650px) {
+  .tf-grid-2, .tf-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tf-field {
+  margin-bottom: 14px;
+}
+
+.tf-field label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 5px;
+}
+
+.tf-field label .ar-tag {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+  direction: rtl;
+}
+
+.tf-input-box {
+  position: relative;
+}
+
+.tf-input-box .input-icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  color: #64748b;
+  pointer-events: none;
+}
+
+.tf-field input, .tf-field select, .tf-field textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  font-size: 13px;
+  color: #0f172a;
+  background: #ffffff;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.tf-field input.has-icon, .tf-field select.has-icon {
+  padding-left: 36px;
+}
+
+.tf-field input:focus, .tf-field select:focus, .tf-field textarea:focus {
+  outline: none;
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.14);
+  background: #fdfdfe;
+}
+
+/* ============================================================
+   VIRTUAL MOROCCAN BANK CARD SPECIMEN
+   ============================================================ */
+.v-bank-card {
+  width: 100%;
+  background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #10b981 100%);
+  border-radius: 16px;
+  padding: 18px 20px;
+  color: #ffffff;
+  box-shadow: 0 10px 25px rgba(6, 78, 59, 0.25);
+  margin-bottom: 18px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.v-bank-card::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.vbc-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.vbc-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 28px;
+  background: linear-gradient(135deg, #ffd700 0%, #d4af37 100%);
+  border-radius: 5px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  font-size: 14px;
+}
+
+.vbc-bank-badge {
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #ecfdf5;
+  background: rgba(255,255,255,0.15);
+  padding: 4px 10px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.vbc-rib-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #a7f3d0;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.vbc-rib-display {
+  font-family: 'SF Mono', 'Courier New', monospace;
+  font-size: 14.5px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.15);
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  word-break: break-all;
+}
+
+.vbc-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-size: 11px;
+}
+
+.vbc-holder-name {
+  font-weight: 800;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  max-width: 190px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vbc-agency-name {
+  font-size: 11px;
+  color: #d1fae5;
+  font-weight: 600;
+}
+
+/* Quick Select Pills */
+.tf-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.tf-pill-item {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 16px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.tf-pill-item:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.tf-pill-item.active {
+  background: #0B3D6E;
+  color: #ffffff;
+  border-color: #0B3D6E;
+  box-shadow: 0 2px 6px rgba(11, 61, 110, 0.25);
+}
+
+/* RIB Validation Helper */
+.rib-feedback-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.rib-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.rib-chip-valid {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.rib-chip-warn {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+</style>
+
+<div class="teacher-page-wrap">
+
+  <!-- ================= TOP HERO BANNER ================= -->
+  <div class="tf-hero-header">
+    <div>
+      <div style="margin-bottom:6px;">
+        <a href="{{ url_for('teachers') }}" style="color:#bfdbfe; font-size:12px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+          ← Retour à la liste des enseignants
+        </a>
+      </div>
+      <h1 class="tf-hero-title">
+        {% if teacher %}
+          <span>✏️ Modifier : {{ teacher.full_name }}</span>
+          <span class="chip" style="background:rgba(255,255,255,0.2); color:#fff; font-size:12px; border:1px solid rgba(255,255,255,0.3); font-family:monospace;">
+            {{ teacher.code }}
+          </span>
+        {% else %}
+          <span>👨‍🏫 Nouvel Enseignant (إضافة أستاذ جديد)</span>
+          <span class="chip" style="background:#10b981; color:#fff; font-size:11px; font-weight:800;">Nouveau Dossier</span>
+        {% endif %}
+      </h1>
+      <p class="tf-hero-sub">
+        Fiche administrative complète : État civil, contact WhatsApp, spécialités, coordonnées bancaires (RIB) et rémunération.
+      </p>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div style="display:flex; gap:10px; align-items:center;">
+      <a href="{{ url_for('teachers') }}" class="btn" style="background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); font-weight:700; font-size:13px; padding:9px 18px; border-radius:10px;">
+        Annuler
+      </a>
+      <button type="submit" form="teacherMainForm" class="btn" style="background:#10b981; color:#fff; border:none; font-weight:800; font-size:13.5px; padding:9px 24px; border-radius:10px; box-shadow:0 4px 14px rgba(16,185,129,0.35); cursor:pointer;">
+        💾 {{ 'Mettre à jour' if teacher else 'Enregistrer l\'Enseignant' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= FORM CONTENT ================= -->
+  <form id="teacherMainForm" method="post" enctype="multipart/form-data">
+    <div class="tf-main-grid">
+
+      <!-- ================= LEFT COLUMN: PHOTO, STATUT & COORDONNÉES BANCAIRES ================= -->
+      <div>
+        
+        <!-- CARD 1: PHOTO & STATUT RH -->
+        <div class="tf-card" style="border-top:4px solid #1f6feb;">
+          <div class="tf-card-header">
+            <div class="tf-card-title-group">
+              <div class="tf-icon-badge" style="background:#dbeafe; color:#1d4ed8;">📸</div>
+              <div>
+                <h3 class="tf-card-title">Photo & Statut RH</h3>
+                <div class="tf-card-sub">الصورة والوضعية المهنية</div>
+              </div>
+            </div>
+            {% if teacher and teacher.active %}
+              <span class="chip chip-green" style="font-size:10px; font-weight:800;">Actif</span>
+            {% elif teacher %}
+              <span class="chip chip-gray" style="font-size:10px;">Inactif</span>
+            {% endif %}
+          </div>
+
+          <!-- Avatar Uploader -->
+          <div class="tf-avatar-wrapper">
+            <div class="tf-avatar-circle" id="avatarPreviewBox">
+              {% if teacher and teacher.avatar_url %}
+                <img id="avatarImg" src="{{ teacher.avatar_url }}" alt="Photo {{ teacher.full_name }}">
+              {% else %}
+                <span id="avatarPlaceholder">👨‍🏫</span>
+                <img id="avatarImg" src="" style="display:none;" alt="Preview">
+              {% endif %}
+            </div>
+
+            <label class="tf-photo-btn">
+              <span>📁 Sélectionner une photo</span>
+              <input type="file" name="photo" id="photoInput" accept="image/*" style="display:none;" onchange="previewTeacherPhoto(this)">
+            </label>
+            <div style="font-size:11px; color:#64748b; margin-top:6px;">JPG, PNG ou WebP (Max 3 Mo)</div>
+          </div>
+
+          <!-- Active Switch & Code Badge -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px 14px; margin-bottom:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11.5px; font-weight:700; color:#64748b;">Matricule / Identifiant :</span>
+              <strong style="color:#0B3D6E; font-size:13px; font-family:monospace; background:#e0f2fe; padding:2px 8px; border-radius:6px;">
+                {{ teacher.code if teacher else 'ENS-XXX (Automatique)' }}
+              </strong>
+            </div>
+
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700; font-size:12.5px; color:#047857; margin:0;">
+              <input type="checkbox" name="active" {{ 'checked' if not teacher or teacher.active }} style="width:17px; height:17px; cursor:pointer;">
+              <span>🟢 Enseignant Actif (ممارس بالمعهد)</span>
+            </label>
+          </div>
+
+          <!-- Type de contrat & Embauche -->
+          <div class="tf-field">
+            <label>Type de contrat <span class="ar-tag">(نوع العقد)</span></label>
+            <select name="contract_type" style="font-weight:700;">
+              <option value="vacation" {{ 'selected' if not teacher or teacher.contract_type == 'vacation' }}>Vacataire - Heures sup (ساعات إضافية)</option>
+              <option value="cdi" {{ 'selected' if teacher and teacher.contract_type == 'cdi' }}>CDI - Contrat Indéterminé (عقد دائم)</option>
+              <option value="cdd" {{ 'selected' if teacher and teacher.contract_type == 'cdd' }}>CDD - Contrat Déterminé (عقد محدد)</option>
+              <option value="prestataire" {{ 'selected' if teacher and teacher.contract_type == 'prestataire' }}>Prestataire / Auto-entrepreneur (خدماتي)</option>
+            </select>
+          </div>
+
+          <div class="tf-field" style="margin-bottom:0;">
+            <label>Date de recrutement <span class="ar-tag">(تاريخ الالتحاق)</span></label>
+            <input type="date" name="hire_date" value="{{ teacher.hire_date if teacher }}">
+          </div>
+
+        </div>
+
+        <!-- ================= CARD 2: COORDONNÉES BANCAIRES & RIB (MODERN & ATTRACTIVE) ================= -->
+        <div class="tf-card" style="border-top:4px solid #10b981;">
+          <div class="tf-card-header">
+            <div class="tf-card-title-group">
+              <div class="tf-icon-badge" style="background:#d1fae5; color:#059669;">🏦</div>
+              <div>
+                <h3 class="tf-card-title">Coordonnées Bancaires & RIB</h3>
+                <div class="tf-card-sub">الحساب البنكي والتحويل المالي</div>
+              </div>
+            </div>
+            <span class="chip chip-green" style="font-size:10px; font-weight:800;">Virement Sécurisé</span>
+          </div>
+
+          <!-- VIRTUAL BANK SPECIMEN PREVIEW CARD -->
+          <div class="v-bank-card" id="virtualBankCard">
+            <div class="vbc-top">
+              <div class="vbc-chip">💳</div>
+              <div class="vbc-bank-badge" id="cardBankBadge">
+                {{ teacher.bank_name if (teacher and teacher.bank_name) else 'BANQUE POPULAIRE' }}
+              </div>
+            </div>
+
+            <div class="vbc-rib-label">RIB MAROCAIN (24 CHIFFRES)</div>
+            <div class="vbc-rib-display" id="cardRibText">
+              {{ teacher.bank_rib if (teacher and teacher.bank_rib) else '••• ••• •••••••••••••••• ••' }}
+            </div>
+
+            <div class="vbc-bottom">
+              <div>
+                <div class="vbc-rib-label">TITULAIRE DU COMPTE</div>
+                <div class="vbc-holder-name" id="cardHolderText">
+                  {{ teacher.bank_account_holder if (teacher and teacher.bank_account_holder) else (teacher.full_name if teacher else 'NOM ET PRÉNOM DU PROF') }}
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div class="vbc-rib-label">AGENCE / VILLE</div>
+                <div class="vbc-agency-name" id="cardAgencyText">
+                  {{ teacher.bank_agency if (teacher and teacher.bank_agency) else 'MAROC' }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Banque Input with Quick Datalist -->
+          <div class="tf-field">
+            <label>Établissement Bancaire <span class="ar-tag">(اسم المؤسسة البنكية)</span></label>
+            <div class="tf-input-box">
+              <span class="input-icon">🏛️</span>
+              <input name="bank_name" id="inpBankName" list="moroccanBanksList" class="has-icon"
+                     value="{{ teacher.bank_name if teacher }}" 
+                     placeholder="Sélectionner ou saisir la banque..." 
+                     oninput="updateBankCardPreview()" style="font-weight:700; color:#0B3D6E;">
+            </div>
+            <datalist id="moroccanBanksList">
+              <option value="Attijariwafa Bank">Attijariwafa Bank (التجاري وفا بنك)</option>
+              <option value="Banque Populaire (BCP)">Banque Populaire (البنك الشعبي)</option>
+              <option value="Bank of Africa (BMCE)">Bank of Africa - BMCE (بنك أفريقيا)</option>
+              <option value="CIH Bank">CIH Bank (القرض العقاري والسياحي)</option>
+              <option value="Société Générale Maroc">Société Générale Maroc (الشركة العامة)</option>
+              <option value="Crédit Agricole du Maroc (CAM)">Crédit Agricole du Maroc (القرض الفلاحي)</option>
+              <option value="Crédit du Maroc (CDM)">Crédit du Maroc (مصرف المغرب)</option>
+              <option value="Al Barid Bank">Al Barid Bank (بريد بنك)</option>
+              <option value="CFG Bank">CFG Bank</option>
+              <option value="Umnia Bank">Umnia Bank (أمنية بنك)</option>
+              <option value="Bank Assafa">Bank Assafa (بنك الصفاء)</option>
+            </datalist>
+          </div>
+
+          <!-- Titulaire du compte -->
+          <div class="tf-field">
+            <label>Titulaire du compte (Nom sur l'attestation RIB) <span class="ar-tag">(صاحب الحساب)</span></label>
+            <div class="tf-input-box">
+              <span class="input-icon">👤</span>
+              <input name="bank_account_holder" id="inpAccountHolder" class="has-icon"
+                     value="{{ teacher.bank_account_holder if (teacher and teacher.bank_account_holder) else '' }}" 
+                     placeholder="Ex : AHMED BENNIS" 
+                     oninput="updateBankCardPreview()" style="text-transform:uppercase; font-weight:700;">
+            </div>
+            <div style="font-size:10.5px; color:#64748b; margin-top:2px;">
+              💡 Laissez vide pour utiliser automatiquement le Nom & Prénom du professeur.
+            </div>
+          </div>
+
+          <!-- Relevé RIB (24 Chiffres) -->
+          <div class="tf-field">
+            <label>Relevé d'Identité Bancaire - RIB <span class="ar-tag">(رقم الحساب الكامل - 24 رقماً)</span></label>
+            <div class="tf-input-box">
+              <span class="input-icon">🔢</span>
+              <input name="bank_rib" id="inpBankRib" maxlength="32" class="has-icon"
+                     value="{{ teacher.bank_rib if teacher }}" 
+                     placeholder="Ex : 230 780 0001234567890123 45" 
+                     oninput="handleRibInput(this)" 
+                     style="font-family:'SF Mono', 'Courier New', monospace; font-size:13.5px; font-weight:800; color:#065f46; letter-spacing:1px;">
+            </div>
+
+            <!-- Live Status & Digits Count -->
+            <div class="rib-feedback-box">
+              <span id="ribStatusChip" class="rib-status-chip rib-chip-warn">
+                ⚠️ <span id="ribDigitsCount">0</span>/24 chiffres
+              </span>
+              <button type="button" onclick="copyRibToClipboard()" class="btn btn-xs" style="padding:2px 8px; font-size:10.5px; font-weight:700; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; cursor:pointer;">
+                📋 Copier
+              </button>
+            </div>
+          </div>
+
+          <!-- Agence Bancaire -->
+          <div class="tf-field">
+            <label>Agence Bancaire & Ville <span class="ar-tag">(الوكالة والمدينة)</span></label>
+            <div class="tf-input-box">
+              <span class="input-icon">📍</span>
+              <input name="bank_agency" id="inpBankAgency" class="has-icon"
+                     value="{{ teacher.bank_agency if (teacher and teacher.bank_agency) else '' }}" 
+                     placeholder="Ex : Agence Zerktouni, Casablanca" 
+                     oninput="updateBankCardPreview()">
+            </div>
+          </div>
+
+          <!-- Contact d'Urgence -->
+          <div class="tf-field" style="margin-bottom:0;">
+            <label>Personne à contacter en cas d'urgence <span class="ar-tag">(طوارئ)</span></label>
+            <div class="tf-input-box">
+              <span class="input-icon">🚨</span>
+              <input name="emergency_contact" class="has-icon"
+                     value="{{ teacher.emergency_contact if teacher }}" 
+                     placeholder="Nom, relation et n° tél (Ex : Épouse 06 11 22 33 44)">
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ================= RIGHT COLUMN: IDENTITÉ, PÉDAGOGIE & RÉMUNÉRATION ================= -->
+      <div>
+
+        <!-- CARD 3: IDENTITÉ & ÉTAT CIVIL -->
+        <div class="tf-card" style="border-top:4px solid #0B3D6E;">
+          <div class="tf-card-header">
+            <div class="tf-card-title-group">
+              <div class="tf-icon-badge" style="background:#e0f2fe; color:#0369a1;">👤</div>
+              <div>
+                <h3 class="tf-card-title">Identité & Coordonnées Personnelles</h3>
+                <div class="tf-card-sub">البيانات الشخصية ومعلومات الاتصال</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tf-grid-3">
+            <div class="tf-field">
+              <label>Civilité <span class="ar-tag">(الصفة)</span></label>
+              <select name="title" style="font-weight:700;">
+                <option value="M." {{ 'selected' if not teacher or teacher.title=='M.' }}>M. (السيد)</option>
+                <option value="Mme" {{ 'selected' if teacher and teacher.title=='Mme' }}>Mme (السيدة)</option>
+                <option value="Mlle" {{ 'selected' if teacher and teacher.title=='Mlle' }}>Mlle (الآنسة)</option>
+                <option value="Dr" {{ 'selected' if teacher and teacher.title=='Dr' }}>Dr (الدكتور)</option>
+                <option value="Pr" {{ 'selected' if teacher and teacher.title=='Pr' }}>Pr (الأستاذ)</option>
+              </select>
+            </div>
+
+            <div class="tf-field">
+              <label>Prénom <span style="color:#ef4444;">*</span> <span class="ar-tag">(الاسم الشخصي)</span></label>
+              <input name="first_name" id="inpFirstName" required 
+                     value="{{ teacher.first_name if teacher }}" 
+                     placeholder="Ex : Ahmed" 
+                     oninput="syncHolderDefault()"
+                     style="font-weight:700;">
+            </div>
+
+            <div class="tf-field">
+              <label>Nom de famille <span style="color:#ef4444;">*</span> <span class="ar-tag">(الاسم العائلي)</span></label>
+              <input name="last_name" id="inpLastName" required 
+                     value="{{ teacher.last_name if teacher }}" 
+                     placeholder="Ex : Bennis" 
+                     oninput="syncHolderDefault()"
+                     style="font-weight:700;">
+            </div>
+          </div>
+
+          <div class="tf-grid-3">
+            <div class="tf-field">
+              <label>Genre <span class="ar-tag">(الجنس)</span></label>
+              <select name="gender">
+                <option value="M" {{ 'selected' if not teacher or teacher.gender=='M' }}>Homme (ذكر)</option>
+                <option value="F" {{ 'selected' if teacher and teacher.gender=='F' }}>Femme (أنثى)</option>
+              </select>
+            </div>
+
+            <div class="tf-field">
+              <label>Date de naissance <span class="ar-tag">(تاريخ الازدياد)</span></label>
+              <input type="date" name="birth_date" id="inpBirthDate" 
+                     value="{{ teacher.birth_date if teacher }}" 
+                     onchange="calculateTeacherAge(this.value)">
+              <div id="teacherAgeBadge" style="display:none; font-size:11px; font-weight:700; color:#0369a1; margin-top:2px;">
+                🎂 Âge : <span id="teacherAgeVal"></span> ans
+              </div>
+            </div>
+
+            <div class="tf-field">
+              <label>N° CIN <span class="ar-tag">(رقم البطاقة الوطنية)</span></label>
+              <div class="tf-input-box">
+                <span class="input-icon">🪪</span>
+                <input name="cin" class="has-icon"
+                       value="{{ teacher.cin if teacher }}" 
+                       placeholder="Ex : BK123456" 
+                       style="text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">
+              </div>
+            </div>
+          </div>
+
+          <div class="tf-grid-2">
+            <div class="tf-field">
+              <label>Téléphone Mobile (WhatsApp) <span style="color:#ef4444;">*</span> <span class="ar-tag">(الهاتف وواتساب)</span></label>
+              <div class="tf-input-box">
+                <span class="input-icon" style="color:#10b981;">💬</span>
+                <input type="tel" name="phone" required class="has-icon"
+                       value="{{ teacher.phone if teacher }}" 
+                       placeholder="Ex : 06 12 34 56 78" 
+                       style="font-weight:700; color:#047857; font-size:13.5px;">
+              </div>
+            </div>
+
+            <div class="tf-field">
+              <label>Adresse Email <span class="ar-tag">(البريد الإلكتروني)</span></label>
+              <div class="tf-input-box">
+                <span class="input-icon">✉️</span>
+                <input type="email" name="email" class="has-icon"
+                       value="{{ teacher.email if teacher }}" 
+                       placeholder="professeur@email.com">
+              </div>
+            </div>
+          </div>
+
+          <div class="tf-grid-2">
+            <div class="tf-field" style="margin-bottom:0;">
+              <label>Ville de résidence <span class="ar-tag">(المدينة)</span></label>
+              <div class="tf-input-box">
+                <span class="input-icon">🏙️</span>
+                <input name="city" class="has-icon"
+                       value="{{ teacher.city if teacher }}" 
+                       placeholder="Ex : Casablanca, Rabat, Marrakech...">
+              </div>
+            </div>
+
+            <div class="tf-field" style="margin-bottom:0;">
+              <label>Adresse complète <span class="ar-tag">(العنوان)</span></label>
+              <div class="tf-input-box">
+                <span class="input-icon">🏠</span>
+                <input name="address" class="has-icon"
+                       value="{{ teacher.address if teacher }}" 
+                       placeholder="Quartier, Boulevard, Immeuble, N°...">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 4: PROFIL ACADÉMIQUE & PÉDAGOGIQUE -->
+        <div class="tf-card" style="border-top:4px solid #8b5cf6;">
+          <div class="tf-card-header">
+            <div class="tf-card-title-group">
+              <div class="tf-icon-badge" style="background:#f3e8ff; color:#7c3aed;">🎓</div>
+              <div>
+                <h3 class="tf-card-title">Profil Pédagogique & Spécialités</h3>
+                <div class="tf-card-sub">المسار الأكاديمي، المواد والمستويات المدرسّة</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tf-grid-2">
+            <div class="tf-field">
+              <label>Matière / Spécialité Principale <span class="ar-tag">(المادة الأساسية)</span></label>
+              <input name="specialty" id="inpSpecialty" list="specialtiesList"
+                     value="{{ teacher.specialty if teacher }}" 
+                     placeholder="Ex : Mathématiques, Français, Physique-Chimie, Anglais..." 
+                     style="font-weight:700; color:#6d28d9;">
+              <datalist id="specialtiesList">
+                <option value="Mathématiques">
+                <option value="Physique-Chimie (PC)">
+                <option value="Français">
+                <option value="Sciences de la Vie et de la Terre (SVT)">
+                <option value="Anglais">
+                <option value="Philosophie">
+                <option value="Arabe">
+                <option value="Éducation Islamique">
+                <option value="Histoire-Géographie">
+                <option value="Informatique & Programmation">
+                <option value="Économie & Comptabilité">
+                <option value="Espagnol / Allemand">
+              </datalist>
+            </div>
+
+            <div class="tf-field">
+              <label>Dernier Diplôme / Niveau d'Études <span class="ar-tag">(أعلى شهادة محصل عليها)</span></label>
+              <input name="diploma" 
+                     value="{{ teacher.diploma if teacher }}" 
+                     placeholder="Ex : Master en Didactique, Doctorat, Licence d'État...">
+            </div>
+          </div>
+
+          <div class="tf-grid-2">
+            <div class="tf-field">
+              <label>Années d'expérience professionnelle <span class="ar-tag">(سنوات الخبرة في التدريس)</span></label>
+              <input type="number" min="0" max="60" name="years_experience" 
+                     value="{{ teacher.years_experience if teacher and teacher.years_experience is not none else '' }}" 
+                     placeholder="Ex : 7 ans">
+            </div>
+
+            <div class="tf-field">
+              <label>Niveaux assurés <span class="ar-tag">(المستويات الدراسية)</span></label>
+              <input name="subjects_taught" id="inpSubjectsTaught" 
+                     value="{{ teacher.subjects_taught if teacher }}" 
+                     placeholder="Ex : Collège, 1BAC, 2BAC...">
+              
+              <!-- Quick Level Selection Pills -->
+              <div class="tf-pills-row">
+                <span class="tf-pill-item" onclick="toggleSubjectPill(this, 'Primaire')">Primaire</span>
+                <span class="tf-pill-item" onclick="toggleSubjectPill(this, 'Collège')">Collège</span>
+                <span class="tf-pill-item" onclick="toggleSubjectPill(this, 'Tronc Commun')">Tronc Commun</span>
+                <span class="tf-pill-item" onclick="toggleSubjectPill(this, '1BAC')">1BAC</span>
+                <span class="tf-pill-item" onclick="toggleSubjectPill(this, '2BAC')">2BAC</span>
+                <span class="tf-pill-item" onclick="toggleSubjectPill(this, 'Adultes')">Adultes / Langues</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Disponibilités horaires hebdomadaires -->
+          <div class="tf-field" style="margin-bottom:0;">
+            <label>Disponibilités Hebdomadaires <span class="ar-tag">(أيام وأوقات التفرغ)</span></label>
+            <input name="availability" id="inpAvailability" 
+                   value="{{ teacher.availability if teacher }}" 
+                   placeholder="Ex : Mercredi soir, Samedi & Dimanche toute la journée...">
+            
+            <!-- Quick Day Pills -->
+            <div class="tf-pills-row">
+              <span class="tf-pill-item" onclick="toggleDayPill(this, 'Lundi')">Lundi</span>
+              <span class="tf-pill-item" onclick="toggleDayPill(this, 'Mardi')">Mardi</span>
+              <span class="tf-pill-item" onclick="toggleDayPill(this, 'Mercredi')">Mercredi</span>
+              <span class="tf-pill-item" onclick="toggleDayPill(this, 'Jeudi')">Jeudi</span>
+              <span class="tf-pill-item" onclick="toggleDayPill(this, 'Vendredi')">Vendredi</span>
+              <span class="tf-pill-item" onclick="toggleDayPill(this, 'Samedi')">Samedi</span>
+              <span class="tf-pill-item" onclick="toggleDayPill(this, 'Dimanche')">Dimanche</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 5: RÉMUNÉRATION (ADMIN ONLY) -->
+        {% if cur_user and cur_user.role == 'admin' %}
+        <div class="tf-card" style="border-top:4px solid #f59e0b;">
+          <div class="tf-card-header">
+            <div class="tf-card-title-group">
+              <div class="tf-icon-badge" style="background:#fef3c7; color:#b45309;">💰</div>
+              <div>
+                <h3 class="tf-card-title">Rémunération & Modèle de Salaire</h3>
+                <div class="tf-card-sub">طريقة التعويض المالي والأجر الافتراضي</div>
+              </div>
+            </div>
+            <span class="chip chip-amber" style="font-size:10px; font-weight:800;">Administration</span>
+          </div>
+
+          <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:10px 14px; margin-bottom:14px; font-size:12px; color:#92400e;">
+            💡 <strong>Règle de gestion :</strong> Ce modèle de rémunération est appliqué par défaut pour l'enseignant. Vous pouvez aussi le personnaliser classe par classe dans la gestion des affectations.
+          </div>
+
+          <div class="tf-grid-2">
+            <div class="tf-field">
+              <label>Modèle de calcul de salaire <span class="ar-tag">(نموذج الأجر)</span></label>
+              <select name="salary_type" id="salaryTypeSelect" onchange="updateSalaryUi()" style="font-weight:700;">
+                <option value="percentage" {{ 'selected' if not teacher or teacher.salary_type=='percentage' }}>Pourcentage sur Recettes (%) (نسبة مئوية من المدخول)</option>
+                <option value="fixed" {{ 'selected' if teacher and teacher.salary_type=='fixed' }}>Salaire Fixe Mensuel (DH) (راتب شهري قار)</option>
+                <option value="hourly" {{ 'selected' if teacher and teacher.salary_type=='hourly' }}>Tarif Horaire (DH / h) (أجر بالساعة)</option>
+                <option value="per_student" {{ 'selected' if teacher and teacher.salary_type=='per_student' }}>Tarif par Élève (DH / élève) (أجر لكل تلميذ)</option>
+              </select>
+            </div>
+
+            <div class="tf-field">
+              <label id="salaryAmountLabel">Valeur par défaut <span class="ar-tag">(النسبة أو المبلغ)</span></label>
+              <div class="tf-input-box">
+                <span class="input-icon" id="salaryIcoBadge">📊</span>
+                <input type="number" step="0.01" min="0" name="salary_amount" id="salaryAmountInput" class="has-icon"
+                       value="{{ teacher.salary_amount if teacher and teacher.salary_amount is not none else 50.0 }}" 
+                       required style="font-weight:800; color:#0B3D6E; font-size:14px;">
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- CARD 6: NOTES & REMARQUES ADMINISTRATIVES -->
+        <div class="tf-card" style="border-top:4px solid #64748b;">
+          <div class="tf-card-header">
+            <div class="tf-card-title-group">
+              <div class="tf-icon-badge" style="background:#f1f5f9; color:#475569;">📝</div>
+              <div>
+                <h3 class="tf-card-title">Remarques & Accords Particuliers</h3>
+                <div class="tf-card-sub">ملاحظات إدارية، شروط خاصة أو اتفاقات</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tf-field" style="margin-bottom:0;">
+            <textarea name="notes" rows="3" placeholder="Informations complémentaires, historique, accords particuliers, diplômes certifiés...">{{ teacher.notes if teacher }}</textarea>
+          </div>
+        </div>
+
+        <!-- BOTTOM SUBMIT BAR -->
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
+          <a class="btn" href="{{ url_for('teachers') }}" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; font-weight:700; font-size:14px; padding:11px 24px; border-radius:10px;">
+            Annuler
+          </a>
+          <button type="submit" class="btn" style="background:#1f6feb; color:#ffffff; border:none; font-weight:800; font-size:14px; padding:11px 36px; border-radius:10px; box-shadow:0 4px 14px rgba(31,111,235,0.3); cursor:pointer;">
+            💾 {{ 'Enregistrer les Modifications' if teacher else 'Créer le Profil Enseignant' }}
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </form>
+
+</div>
+
+<script>
+// ============================================================
+// DYNAMIC JAVASCRIPT LOGIC FOR TEACHER FORM
+// ============================================================
+
+// 1. Photo Live Preview
+function previewTeacherPhoto(input) {
+  if (input.files && input.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = document.getElementById('avatarImg');
+      var ph = document.getElementById('avatarPlaceholder');
+      img.src = e.target.result;
+      img.style.display = 'block';
+      if (ph) ph.style.display = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+// 2. Age Calculator
+function calculateTeacherAge(birthDateStr) {
+  var badge = document.getElementById('teacherAgeBadge');
+  var valSpan = document.getElementById('teacherAgeVal');
+  if (!birthDateStr) {
+    if (badge) badge.style.display = 'none';
+    return;
+  }
+  var dob = new Date(birthDateStr);
+  if (isNaN(dob.getTime())) return;
+  var today = new Date();
+  var age = today.getFullYear() - dob.getFullYear();
+  var m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+  if (age >= 0 && age < 120) {
+    valSpan.textContent = age;
+    badge.style.display = 'block';
+  }
+}
+
+// 3. Moroccan Bank Card Live Specimen Update
+function updateBankCardPreview() {
+  var bName = document.getElementById('inpBankName').value.trim() || 'BANQUE DU MAROC';
+  var bBadge = document.getElementById('cardBankBadge');
+  if (bBadge) bBadge.textContent = bName.toUpperCase();
+
+  var card = document.getElementById('virtualBankCard');
+  // Dynamic gradient theme based on bank
+  if (card) {
+    var lower = bName.toLowerCase();
+    if (lower.includes('attijari')) {
+      card.style.background = 'linear-gradient(135deg, #b45309 0%, #d97706 50%, #f59e0b 100%)'; // Amber/Gold
+    } else if (lower.includes('populaire') || lower.includes('bcp')) {
+      card.style.background = 'linear-gradient(135deg, #c2410c 0%, #ea580c 50%, #f97316 100%)'; // Orange BCP
+    } else if (lower.includes('cih')) {
+      card.style.background = 'linear-gradient(135deg, #0369a1 0%, #0284c7 50%, #f97316 100%)'; // Blue-Orange CIH
+    } else if (lower.includes('africa') || lower.includes('bmce')) {
+      card.style.background = 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #3b82f6 100%)'; // Deep Blue
+    } else if (lower.includes('société') || lower.includes('sgmb')) {
+      card.style.background = 'linear-gradient(135deg, #991b1b 0%, #dc2626 50%, #000000 100%)'; // Red & Black
+    } else if (lower.includes('barid')) {
+      card.style.background = 'linear-gradient(135deg, #854d0e 0%, #ca8a04 50%, #eab308 100%)'; // Yellow Barid
+    } else {
+      card.style.background = 'linear-gradient(135deg, #064e3b 0%, #047857 50%, #10b981 100%)'; // Emerald default
+    }
+  }
+
+  // Account Holder Display
+  var holderInp = document.getElementById('inpAccountHolder').value.trim();
+  var fn = document.getElementById('inpFirstName').value.trim();
+  var ln = document.getElementById('inpLastName').value.trim();
+  var defaultHolder = (fn || ln) ? (fn + ' ' + ln).trim() : 'NOM DU PROFESSEUR';
+  var finalHolder = holderInp || defaultHolder;
+  var cardHolder = document.getElementById('cardHolderText');
+  if (cardHolder) cardHolder.textContent = finalHolder.toUpperCase();
+
+  // Agency Display
+  var agencyInp = document.getElementById('inpBankAgency').value.trim();
+  var cardAgency = document.getElementById('cardAgencyText');
+  if (cardAgency) cardAgency.textContent = agencyInp || 'MAROC';
+}
+
+function syncHolderDefault() {
+  updateBankCardPreview();
+}
+
+// 4. Moroccan 24-Digit RIB Formatter & Validator
+function handleRibInput(input) {
+  var raw = input.value.replace(/\D/g, '').substring(0, 24);
+  var formatted = '';
+  for (var i = 0; i < raw.length; i++) {
+    if (i > 0 && (i === 3 || i === 6 || i === 22)) {
+      formatted += ' ';
+    }
+    formatted += raw[i];
+  }
+  input.value = formatted;
+
+  // Update Specimen Preview
+  var cardRib = document.getElementById('cardRibText');
+  if (cardRib) {
+    cardRib.textContent = formatted.length > 0 ? formatted : '••• ••• •••••••••••••••• ••';
+  }
+
+  // Update Digit Counter & Status
+  var countSpan = document.getElementById('ribDigitsCount');
+  var chip = document.getElementById('ribStatusChip');
+  if (countSpan) countSpan.textContent = raw.length;
+
+  if (chip) {
+    if (raw.length === 24) {
+      chip.className = 'rib-status-chip rib-chip-valid';
+      chip.innerHTML = '✓ RIB complet (24 chiffres)';
+    } else if (raw.length === 0) {
+      chip.className = 'rib-status-chip rib-chip-warn';
+      chip.innerHTML = '⚠️ Non renseigné';
+    } else {
+      chip.className = 'rib-status-chip rib-chip-warn';
+      chip.innerHTML = `⚠️ Incomplet (${raw.length}/24 chiffres)`;
+    }
+  }
+}
+
+// 5. Copy RIB to Clipboard
+function copyRibToClipboard() {
+  var inp = document.getElementById('inpBankRib');
+  if (!inp || !inp.value.trim()) {
+    alert("Aucun RIB à copier pour l'instant.");
+    return;
+  }
+  var clean = inp.value.replace(/\s+/g, '');
+  navigator.clipboard.writeText(clean).then(function() {
+    alert('✓ RIB (' + clean + ') copié dans le presse-papiers !');
+  }).catch(function() {
+    prompt('Copiez le RIB manuellement :', clean);
+  });
+}
+
+// 6. Quick Level Pills Handler
+function toggleSubjectPill(pill, val) {
+  var inp = document.getElementById('inpSubjectsTaught');
+  if (!inp) return;
+  var current = inp.value.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+  var idx = current.indexOf(val);
+  if (idx === -1) {
+    current.push(val);
+    pill.classList.add('active');
+  } else {
+    current.splice(idx, 1);
+    pill.classList.remove('active');
+  }
+  inp.value = current.join(', ');
+}
+
+// 7. Quick Day Pills Handler
+function toggleDayPill(pill, val) {
+  var inp = document.getElementById('inpAvailability');
+  if (!inp) return;
+  var current = inp.value.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+  var idx = current.indexOf(val);
+  if (idx === -1) {
+    current.push(val);
+    pill.classList.add('active');
+  } else {
+    current.splice(idx, 1);
+    pill.classList.remove('active');
+  }
+  inp.value = current.join(', ');
+}
+
+// 8. Dynamic Salary UI
+function updateSalaryUi() {
+  var sel = document.getElementById('salaryTypeSelect');
+  if (!sel) return;
+  var type = sel.value;
+  var lbl = document.getElementById('salaryAmountLabel');
+  var ico = document.getElementById('salaryIcoBadge');
+  if (!lbl || !ico) return;
+
+  if (type === 'percentage') {
+    lbl.innerHTML = 'Pourcentage par défaut (%) <span class="ar-tag">(النسبة المئوية)</span>';
+    ico.innerText = '📊';
+  } else if (type === 'fixed') {
+    lbl.innerHTML = 'Montant Fixe Mensuel (DH) <span class="ar-tag">(الراتب الشهري)</span>';
+    ico.innerText = '💵';
+  } else if (type === 'hourly') {
+    lbl.innerHTML = 'Taux Horaire (DH / h) <span class="ar-tag">(سعر الساعة)</span>';
+    ico.innerText = '⏱️';
+  } else if (type === 'per_student') {
+    lbl.innerHTML = 'Montant par Élève (DH / élève) <span class="ar-tag">(أجر لكل تلميذ)</span>';
+    ico.innerText = '👥';
+  }
+}
+
+// Init on load
+document.addEventListener('DOMContentLoaded', function() {
+  var ribInp = document.getElementById('inpBankRib');
+  if (ribInp) handleRibInput(ribInp);
+  updateBankCardPreview();
+  updateSalaryUi();
+
+  var dobInp = document.getElementById('inpBirthDate');
+  if (dobInp && dobInp.value) calculateTeacherAge(dobInp.value);
+
+  // Mark already active pills
+  var subjInp = document.getElementById('inpSubjectsTaught');
+  if (subjInp && subjInp.value) {
+    document.querySelectorAll('.tf-pills-row .tf-pill-item').forEach(function(p) {
+      if (subjInp.value.includes(p.textContent.trim())) {
+        p.classList.add('active');
+      }
+    });
+  }
+
+  var availInp = document.getElementById('inpAvailability');
+  if (availInp && availInp.value) {
+    document.querySelectorAll('.tf-pills-row .tf-pill-item').forEach(function(p) {
+      if (availInp.value.includes(p.textContent.trim())) {
+        p.classList.add('active');
+      }
+    });
+  }
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,362 @@
+{# ============================================================
+   MULTI-TAB HUB NAVIGATION COMPONENT (INSTITUT ILAS)
+   Renders clean, modern SaaS horizontal tab bars for grouped modules
+   ============================================================ #}
+{% if cur_user and cur_user.role != 'teacher' and not hide_hub_tabs %}
+
+<style>
+.hub-nav-wrapper {
+  margin: 0 0 20px 0;
+  width: 100%;
+}
+.hub-tabs-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #f1f5f9;
+  padding: 4px 6px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+.hub-tabs-container::-webkit-scrollbar {
+  height: 4px;
+}
+.hub-tabs-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.hub-tab-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.16s ease;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+}
+.hub-tab-item:hover {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.65);
+}
+.hub-tab-item.active {
+  background: #ffffff;
+  color: #1f6feb;
+  font-weight: 800;
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+.hub-tab-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+.hub-tab-badge {
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 10px;
+  line-height: 1.2;
+}
+body.rtl .hub-tab-item {
+  direction: rtl;
+}
+@media (max-width: 768px) {
+  .hub-tab-item {
+    padding: 6px 11px;
+    font-size: 12px;
+    gap: 5px;
+  }
+}
+</style>
+
+{# --- 1. HUB: ÉLÈVES & INSCRIPTIONS --- #}
+{% if request.endpoint in [
+  'students', 'student_new', 'student_view', 'student_edit',
+  'enrollments', 'enrollment_new', 'enrollment_view', 'enrollment_edit',
+  'student_movements', 'student_movements_print',
+  'students_by_date', 'students_by_date_print',
+  'teacher_student_requests',
+  'placement_tests', 'placement_test_view', 'placement_test_new', 'placement_questions_list'
+] %}
+<div class="hub-nav-wrapper no-print">
+  <div class="hub-tabs-container">
+    <a href="{{ url_for('students') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['students', 'student_new', 'student_view', 'student_edit'] else '' }}">
+      <span class="hub-tab-icon">👤</span>
+      <span class="hub-tab-label">{{ 'التلاميذ والإخوة' if lang=='ar' else 'Répertoire Élèves' }}</span>
+    </a>
+    <a href="{{ url_for('enrollments') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['enrollments', 'enrollment_new', 'enrollment_view', 'enrollment_edit'] else '' }}">
+      <span class="hub-tab-icon">📋</span>
+      <span class="hub-tab-label">{{ 'لائحة المسجلين' if lang=='ar' else 'Inscriptions Actives' }}</span>
+    </a>
+    <a href="{{ url_for('student_movements') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['student_movements', 'student_movements_print'] else '' }}">
+      <span class="hub-tab-icon">🔄</span>
+      <span class="hub-tab-label">{{ 'حركة التلاميذ (دخول/خروج)' if lang=='ar' else 'Mouvements & Flux' }}</span>
+    </a>
+    <a href="{{ url_for('students_by_date') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['students_by_date', 'students_by_date_print'] else '' }}">
+      <span class="hub-tab-icon">📅</span>
+      <span class="hub-tab-label">{{ 'نهاية الاشتراك باليوم' if lang=='ar' else 'Échéances par Jour' }}</span>
+    </a>
+    <a href="{{ url_for('teacher_student_requests') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['teacher_student_requests'] else '' }}">
+      <span class="hub-tab-icon">📥</span>
+      <span class="hub-tab-label">{{ 'طلبات الأساتذة' if lang=='ar' else 'Demandes des Profs' }}</span>
+      {% if pending_teacher_requests_count and pending_teacher_requests_count > 0 %}
+        <span class="hub-tab-badge">{{ pending_teacher_requests_count }}</span>
+      {% endif %}
+    </a>
+    <a href="{{ url_for('placement_tests') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['placement_tests', 'placement_test_view', 'placement_test_new', 'placement_questions_list'] else '' }}">
+      <span class="hub-tab-icon">🎯</span>
+      <span class="hub-tab-label">{{ 'اختبارات تحديد المستوى' if lang=='ar' else 'Tests de Niveau' }}</span>
+    </a>
+  </div>
+</div>
+
+{# --- 2. HUB: ENSEIGNANTS & PÉDAGOGIE --- #}
+{% elif request.endpoint in [
+  'teachers', 'teacher_new', 'teacher_view', 'teacher_edit',
+  'teachers_payroll', 'teachers_payroll_print', 'teacher_salary_receipt',
+  'teacher_advances', 'teacher_advance_receipt',
+  'teacher_expenses', 'teacher_expense_receipt',
+  'teacher_class_lists', 'teacher_class_lists_print',
+  'teacher_student_lists', 'teacher_student_lists_print',
+  'teacher_candidates',
+  'teacher_payment_visibility'
+] %}
+<div class="hub-nav-wrapper no-print">
+  <div class="hub-tabs-container">
+    <a href="{{ url_for('teachers') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['teachers', 'teacher_new', 'teacher_view', 'teacher_edit'] else '' }}">
+      <span class="hub-tab-icon">👨‍🏫</span>
+      <span class="hub-tab-label">{{ 'الأساتذة والمحاضرون' if lang=='ar' else 'Liste Enseignants' }}</span>
+    </a>
+    {% if cur_user.role == 'admin' %}
+    <a href="{{ url_for('teachers_payroll') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['teachers_payroll', 'teachers_payroll_print', 'teacher_salary_receipt'] else '' }}">
+      <span class="hub-tab-icon">💰</span>
+      <span class="hub-tab-label">{{ 'كشف الأجور' if lang=='ar' else 'Rémunérations & Paie' }}</span>
+    </a>
+    <a href="{{ url_for('teacher_advances') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['teacher_advances', 'teacher_advance_receipt'] else '' }}">
+      <span class="hub-tab-icon">💸</span>
+      <span class="hub-tab-label">{{ 'التسبيقات' if lang=='ar' else 'Avances sur Salaire' }}</span>
+    </a>
+    {% endif %}
+    {% if cur_user.role in ['admin', 'secretary'] %}
+    <a href="{{ url_for('teacher_expenses') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['teacher_expenses', 'teacher_expense_receipt'] else '' }}">
+      <span class="hub-tab-icon">🖨️</span>
+      <span class="hub-tab-label">{{ 'المصاريف والنسخ' if lang=='ar' else 'Frais & Copies' }}</span>
+    </a>
+    {% endif %}
+    <a href="{{ url_for('teacher_class_lists') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['teacher_class_lists', 'teacher_class_lists_print'] else '' }}">
+      <span class="hub-tab-icon">📋</span>
+      <span class="hub-tab-label">{{ 'لوائح الأقسام' if lang=='ar' else 'Listes par Classe' }}</span>
+    </a>
+    <a href="{{ url_for('teacher_student_lists') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['teacher_student_lists', 'teacher_student_lists_print'] else '' }}">
+      <span class="hub-tab-icon">📜</span>
+      <span class="hub-tab-label">{{ 'لوائح التلاميذ' if lang=='ar' else 'Listes par Prof' }}</span>
+    </a>
+    <a href="{{ url_for('teacher_candidates') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['teacher_candidates'] else '' }}">
+      <span class="hub-tab-icon">📂</span>
+      <span class="hub-tab-label">{{ 'الترشيحات' if lang=='ar' else 'Candidatures' }}</span>
+    </a>
+    {% if cur_user.role == 'admin' %}
+    <a href="{{ url_for('teacher_payment_visibility') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['teacher_payment_visibility'] else '' }}">
+      <span class="hub-tab-icon">👁️</span>
+      <span class="hub-tab-label">{{ 'إظهار المستحقات' if lang=='ar' else 'Visibilité Paie' }}</span>
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+{# --- 3. HUB: PERSONNEL & STAFF --- #}
+{% elif request.endpoint in [
+  'employees', 'employee_new', 'employee_edit',
+  'employees_payroll', 'employees_payroll_print', 'employee_salary_receipt',
+  'employee_advances', 'employee_advance_receipt'
+] %}
+<div class="hub-nav-wrapper no-print">
+  <div class="hub-tabs-container">
+    <a href="{{ url_for('employees') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['employees', 'employee_new', 'employee_edit'] else '' }}">
+      <span class="hub-tab-icon">👥</span>
+      <span class="hub-tab-label">{{ 'مستخدمو المعهد' if lang=='ar' else 'Liste du Personnel' }}</span>
+    </a>
+    {% if cur_user.role == 'admin' %}
+    <a href="{{ url_for('employees_payroll') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['employees_payroll', 'employees_payroll_print', 'employee_salary_receipt'] else '' }}">
+      <span class="hub-tab-icon">💼</span>
+      <span class="hub-tab-label">{{ 'أجور الموظفين' if lang=='ar' else 'Paie du Staff' }}</span>
+    </a>
+    <a href="{{ url_for('employee_advances') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['employee_advances', 'employee_advance_receipt'] else '' }}">
+      <span class="hub-tab-icon">💸</span>
+      <span class="hub-tab-label">{{ 'تسبيقات الموظفين' if lang=='ar' else 'Avances Staff' }}</span>
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+{# --- 4. HUB: CLASSES & SALLES --- #}
+{% elif request.endpoint in ['courses', 'course_new', 'course_view', 'course_edit', 'rooms'] %}
+<div class="hub-nav-wrapper no-print">
+  <div class="hub-tabs-container">
+    <a href="{{ url_for('courses') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['courses', 'course_new', 'course_view', 'course_edit'] else '' }}">
+      <span class="hub-tab-icon">📚</span>
+      <span class="hub-tab-label">{{ 'الصفوف والأفواج' if lang=='ar' else 'Classes & Cours' }}</span>
+    </a>
+    <a href="{{ url_for('rooms') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['rooms'] else '' }}">
+      <span class="hub-tab-icon">🚪</span>
+      <span class="hub-tab-label">{{ 'القاعات والمقاعد' if lang=='ar' else 'Salles & Capacité' }}</span>
+    </a>
+  </div>
+</div>
+
+{# --- 5. HUB: EMPLOIS DU TEMPS & DIFFUSION --- #}
+{% elif request.endpoint in [
+  'schedule', 'schedule_print',
+  'teachers_whatsapp_daily_timetable',
+  'teachers_whatsapp_vacances_timetable',
+  'students_whatsapp_vacances_timetable'
+] %}
+<div class="hub-nav-wrapper no-print">
+  <div class="hub-tabs-container">
+    <a href="{{ url_for('schedule') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['schedule', 'schedule_print'] else '' }}">
+      <span class="hub-tab-icon">🗓️</span>
+      <span class="hub-tab-label">{{ 'جدول الحصص' if lang=='ar' else 'Emploi du Temps' }}</span>
+    </a>
+    <a href="{{ url_for('teachers_whatsapp_daily_timetable') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['teachers_whatsapp_daily_timetable'] else '' }}">
+      <span class="hub-tab-icon">📱</span>
+      <span class="hub-tab-label">{{ 'برنامج اليوم (WhatsApp)' if lang=='ar' else 'WhatsApp Quotidien Profs' }}</span>
+    </a>
+    <a href="{{ url_for('teachers_whatsapp_vacances_timetable') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['teachers_whatsapp_vacances_timetable'] else '' }}">
+      <span class="hub-tab-icon">🏖️</span>
+      <span class="hub-tab-label">{{ 'عطل الأساتذة' if lang=='ar' else 'Vacances Profs' }}</span>
+    </a>
+    <a href="{{ url_for('students_whatsapp_vacances_timetable') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['students_whatsapp_vacances_timetable'] else '' }}">
+      <span class="hub-tab-icon">🏖️</span>
+      <span class="hub-tab-label">{{ 'عطل التلاميذ' if lang=='ar' else 'Vacances Élèves' }}</span>
+    </a>
+  </div>
+</div>
+
+{# --- 6. HUB: PRÉSENCES & BORNE --- #}
+{% elif request.endpoint in ['attendance', 'attendance_save', 'attendance_admin', 'kiosk_page'] %}
+<div class="hub-nav-wrapper no-print">
+  <div class="hub-tabs-container">
+    <a href="{{ url_for('attendance') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['attendance', 'attendance_save'] else '' }}">
+      <span class="hub-tab-icon">📍</span>
+      <span class="hub-tab-label">{{ 'تسجيل الحضور والغياب' if lang=='ar' else "Faire l'Appel" }}</span>
+    </a>
+    <a href="{{ url_for('attendance_admin') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['attendance_admin'] else '' }}">
+      <span class="hub-tab-icon">📑</span>
+      <span class="hub-tab-label">{{ 'سجل الغيابات والتبريرات' if lang=='ar' else 'Historique & Justifications' }}</span>
+    </a>
+    <a href="{{ url_for('kiosk_page') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['kiosk_page'] else '' }}">
+      <span class="hub-tab-icon">⚡</span>
+      <span class="hub-tab-label">{{ 'نقطة الحضور (Borne)' if lang=='ar' else 'Borne de Pointage' }}</span>
+    </a>
+  </div>
+</div>
+
+{# --- 7. HUB: DOCUMENTS SCOLAIRES --- #}
+{% elif request.endpoint in ['badges', 'badges_print', 'certificates', 'certificate_new', 'certificate_print'] %}
+<div class="hub-nav-wrapper no-print">
+  <div class="hub-tabs-container">
+    <a href="{{ url_for('badges') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['badges', 'badges_print'] else '' }}">
+      <span class="hub-tab-icon">🪪</span>
+      <span class="hub-tab-label">{{ 'طباعة الشارات والبطاقات' if lang=='ar' else 'Badges Scolaires' }}</span>
+    </a>
+    <a href="{{ url_for('certificates') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['certificates', 'certificate_new', 'certificate_print'] else '' }}">
+      <span class="hub-tab-icon">📜</span>
+      <span class="hub-tab-label">{{ 'الشواهد والشهادات' if lang=='ar' else 'Attestations & Certificats' }}</span>
+    </a>
+  </div>
+</div>
+
+{# --- 8. HUB: FINANCES & CAISSE --- #}
+{% elif request.endpoint in [
+  'payments', 'payment_new', 'payment_view', 'payment_edit', 'payment_receipt_print',
+  'expenses', 'expense_new', 'expense_edit',
+  'finance_tresorerie_analytics',
+  'finance_previsionnel',
+  'user_activity'
+] %}
+<div class="hub-nav-wrapper no-print">
+  <div class="hub-tabs-container">
+    <a href="{{ url_for('payments') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['payments', 'payment_new', 'payment_view', 'payment_edit', 'payment_receipt_print'] else '' }}">
+      <span class="hub-tab-icon">💳</span>
+      <span class="hub-tab-label">{{ 'المدفوعات وسندات القبض' if lang=='ar' else 'Paiements & Reçus' }}</span>
+    </a>
+    <a href="{{ url_for('expenses') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['expenses', 'expense_new', 'expense_edit'] else '' }}">
+      <span class="hub-tab-icon">💸</span>
+      <span class="hub-tab-label">{{ 'المشتريات والمصاريف' if lang=='ar' else 'Achats & Charges' }}</span>
+    </a>
+    <a href="{{ url_for('finance_tresorerie_analytics') }}" class="hub-tab-item {{ 'active' if request.endpoint == 'finance_tresorerie_analytics' else '' }}" style="{{ 'background:#0B3D6E; color:#ffffff;' if request.endpoint == 'finance_tresorerie_analytics' else '' }}">
+      <span class="hub-tab-icon">📊</span>
+      <span class="hub-tab-label">{{ 'تحليل الخزينة والبنك (Réel)' if lang=='ar' else 'Trésorerie Analytics (Réel)' }}</span>
+    </a>
+    <a href="{{ url_for('finance_previsionnel') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['finance_previsionnel'] else '' }}">
+      <span class="hub-tab-icon">📅</span>
+      <span class="hub-tab-label">{{ 'خزينة الأشهر القادمة' if lang=='ar' else 'Trésorerie Prévisionnelle' }}</span>
+    </a>
+    <a href="{{ url_for('user_activity') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['user_activity'] else '' }}">
+      <span class="hub-tab-icon">📊</span>
+      <span class="hub-tab-label">{{ 'أرباحي والعمليات' if (cur_user and cur_user.role == 'secretary') else ('عمليات ومبيعات السكرتارية' if lang=='ar' else 'Ventes par Secrétaire') }}</span>
+    </a>
+  </div>
+</div>
+
+{# --- 9. HUB: TARIFS & LIVRES --- #}
+{% elif request.endpoint in ['tariffs', 'tariff_new', 'tariff_edit', 'books', 'book_new', 'book_edit', 'book_sale_new'] %}
+<div class="hub-nav-wrapper no-print">
+  <div class="hub-tabs-container">
+    <a href="{{ url_for('tariffs') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['tariffs', 'tariff_new', 'tariff_edit'] else '' }}">
+      <span class="hub-tab-icon">🏷️</span>
+      <span class="hub-tab-label">{{ 'كتالوج التسعيرات' if lang=='ar' else 'Catalogue des Tarifs' }}</span>
+    </a>
+    <a href="{{ url_for('books') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['books', 'book_new', 'book_edit', 'book_sale_new'] else '' }}">
+      <span class="hub-tab-icon">📖</span>
+      <span class="hub-tab-label">{{ 'الكتب والمقررات' if lang=='ar' else 'Livres & Manuels' }}</span>
+    </a>
+  </div>
+</div>
+
+{# --- 10. HUB: SYSTÈME & ADMINISTRATION --- #}
+{% elif request.endpoint in ['settings', 'users', 'user_new', 'user_edit', 'settings_backups', 'settings_security', 'import_page', 'user_guide'] %}
+<div class="hub-nav-wrapper no-print">
+  <div class="hub-tabs-container">
+    {% if cur_user.role == 'admin' %}
+    <a href="{{ url_for('settings') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['settings'] else '' }}">
+      <span class="hub-tab-icon">⚙️</span>
+      <span class="hub-tab-label">{{ 'إعدادات النظام' if lang=='ar' else 'Général & Fiscalité' }}</span>
+    </a>
+    <a href="{{ url_for('users') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['users', 'user_new', 'user_edit'] else '' }}">
+      <span class="hub-tab-icon">🔐</span>
+      <span class="hub-tab-label">{{ 'المستخدمون والصلاحيات' if lang=='ar' else 'Utilisateurs & Droits' }}</span>
+    </a>
+    <a href="{{ url_for('settings_backups') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['settings_backups'] else '' }}">
+      <span class="hub-tab-icon">💾</span>
+      <span class="hub-tab-label">{{ 'النسخ الاحتياطية' if lang=='ar' else 'Sauvegardes & Drive' }}</span>
+    </a>
+    <a href="{{ url_for('settings_security') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['settings_security'] else '' }}">
+      <span class="hub-tab-icon">🛡️</span>
+      <span class="hub-tab-label">{{ 'الأمان وعناوين IP' if lang=='ar' else 'Sécurité & Contrôle IP' }}</span>
+    </a>
+    <a href="{{ url_for('import_page') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['import_page'] else '' }}">
+      <span class="hub-tab-icon">📥</span>
+      <span class="hub-tab-label">{{ 'استيراد البيانات' if lang=='ar' else 'Importation Données' }}</span>
+    </a>
+    {% endif %}
+    <a href="{{ url_for('user_guide') }}" class="hub-tab-item {{ 'active' if request.endpoint in ['user_guide'] else '' }}">
+      <span class="hub-tab-icon">📘</span>
+      <span class="hub-tab-label">{{ 'دليل الاستخدام' if lang=='ar' else "Guide d'Utilisation" }}</span>
+    </a>
+  </div>
+</div>
+{% endif %}
+
+{% endif %}

@@ -1,0 +1,560 @@
+<!-- ============================================================== -->
+<!-- MODAL ACTION EMPLOI DU TEMPS (IMPRIMER OU WHATSAPP ANTI-BAN)    -->
+<!-- ============================================================== -->
+<div id="studentTimetableModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:100050; justify-content:center; align-items:center; padding:16px;">
+  <div style="background:#ffffff; border-radius:20px; box-shadow:0 25px 60px -15px rgba(0,0,0,0.3); width:100%; max-width:620px; max-height:92vh; display:flex; flex-direction:column; overflow:hidden; border:1px solid #e2e8f0; animation:modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg, #0B3D6E 0%, #1e40af 100%); color:#ffffff; padding:16px 22px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-size:17px; font-weight:800; display:flex; align-items:center; gap:8px;">
+          <span>📅</span>
+          <span>Emploi du Temps — <span id="stModalTitleName">Élève</span></span>
+        </div>
+        <div style="font-size:12px; opacity:0.9; margin-top:2px;">
+          Choisir l'action : Imprimer ou Envoyer par WhatsApp (Anti-Ban & Image)
+        </div>
+      </div>
+      <button type="button" onclick="closeStudentTimetableModal()" style="background:rgba(255,255,255,0.18); border:none; color:#ffffff; width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:700; transition:all 0.15s;">✕</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div style="padding:20px 22px; overflow-y:auto; flex:1;">
+
+      <!-- 🌟 ACTION SELECTOR: MINI-FORM WITH 2 OPTIONS 🌟 -->
+      <div style="margin-bottom:18px;">
+        <label style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">
+          {{ 'اختر طريقة المشاركة :' if session.get('lang')=='ar' else 'Que souhaitez-vous faire ? :' }}
+        </label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          
+          <!-- Option A: WhatsApp -->
+          <div id="btnTabActionWhatsapp" onclick="setTimetableActionTab('whatsapp')"
+               style="cursor:pointer; border:2px solid #10b981; background:#ecfdf5; border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:10px; transition:all 0.15s; box-shadow:0 3px 10px rgba(16,185,129,0.15);">
+            <div style="width:38px; height:38px; border-radius:10px; background:#10b981; color:#fff; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">
+              💬
+            </div>
+            <div>
+              <div style="font-size:13.5px; font-weight:900; color:#065f46;">
+                WhatsApp & Image
+              </div>
+              <div style="font-size:11px; color:#047857; margin-top:1px;">
+                Anti-Ban + Copie Image (Ctrl+V)
+              </div>
+            </div>
+          </div>
+
+          <!-- Option B: Print -->
+          <div id="btnTabActionPrint" onclick="setTimetableActionTab('print')"
+               style="cursor:pointer; border:2px solid #cbd5e1; background:#f8fafc; border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:10px; transition:all 0.15s;">
+            <div style="width:38px; height:38px; border-radius:10px; background:#e2e8f0; color:#334155; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;" id="printTabIconBox">
+              🖨️
+            </div>
+            <div>
+              <div style="font-size:13.5px; font-weight:800; color:#1e293b;">
+                Imprimer (Papier)
+              </div>
+              <div style="font-size:11px; color:#64748b; margin-top:1px;">
+                A4, A5 ou Ticket thermique
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 1 : PANNEAU IMPRESSION                           -->
+      <!-- ======================================================== -->
+      <div id="panelTimetablePrint" style="display:none; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:14px; padding:18px; margin-bottom:14px; text-align:center;">
+        <div style="font-size:28px; margin-bottom:6px;">🖨️</div>
+        <h4 style="margin:0 0 6px 0; color:#0B3D6E; font-size:15px; font-weight:800;">
+          {{ 'طباعة التوقيت الأسبوعي الورقي' if session.get('lang')=='ar' else 'Impression de l\'Emploi du Temps' }}
+        </h4>
+        <p style="margin:0 0 16px 0; font-size:12px; color:#64748b;">
+          {{ 'اختر الصيغة المناسبة واضغط للطباعة الرسمية للتلميذ' if session.get('lang')=='ar' else 'Sélectionnez le format puis ouvrez la page d\'impression officielle.' }}
+        </p>
+
+        <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+          <label style="cursor:pointer; background:#fff; border:1.5px solid #cbd5e1; border-radius:10px; padding:8px 14px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+            <input type="radio" name="stPrintFmt" value="a5" checked style="accent-color:#0B3D6E;">
+            <span>A5 Portrait (Recommandé)</span>
+          </label>
+          <label style="cursor:pointer; background:#fff; border:1.5px solid #cbd5e1; border-radius:10px; padding:8px 14px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+            <input type="radio" name="stPrintFmt" value="a4" style="accent-color:#0B3D6E;">
+            <span>A4 Pleine Page</span>
+          </label>
+          <label style="cursor:pointer; background:#fff; border:1.5px solid #cbd5e1; border-radius:10px; padding:8px 14px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+            <input type="radio" name="stPrintFmt" value="80mm" style="accent-color:#0B3D6E;">
+            <span>Ticket 80mm</span>
+          </label>
+        </div>
+
+        <button type="button" onclick="triggerStudentTimetablePrint()" class="btn btn-primary" style="background:#0B3D6E; border-color:#0B3D6E; font-weight:800; padding:10px 24px; border-radius:10px; font-size:14px; display:inline-flex; align-items:center; gap:8px;">
+          <span>🖨️</span>
+          <span>{{ 'فتح صفحة الطباعة الرسمية' if session.get('lang')=='ar' else 'Lancer l\'Impression Officielle' }}</span>
+        </button>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 2 : PANNEAU WHATSAPP (ANTI-BAN & COPIE IMAGE)     -->
+      <!-- ======================================================== -->
+      <div id="panelTimetableWhatsapp" style="display:block;">
+        
+        <!-- Anti-Ban Alert Badge -->
+        <div style="background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:12px; padding:10px 14px; margin-bottom:14px; display:flex; align-items:flex-start; gap:10px;">
+          <span style="font-size:20px; line-height:1;">🛡️</span>
+          <div style="font-size:12px; color:#1e40af; line-height:1.45;">
+            <strong>Protection Anti-Ban Active :</strong> Le texte est généré avec des formulations dynamiques (Spintax) et une référence unique <code>[Réf: #EDT-XXXX]</code> pour éviter tout blocage WhatsApp.
+          </div>
+        </div>
+
+        <!-- Destinataire (Parent vs Élève) -->
+        <div style="margin-bottom:12px;">
+          <label style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">
+            {{ 'المتلقي' if session.get('lang')=='ar' else 'Destinataire' }} :
+          </label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <label id="lblStWaParent" onclick="setTimetableRecipient('parent')"
+                   style="display:flex; align-items:center; gap:8px; border:2px solid #10b981; background:#ecfdf5; border-radius:10px; padding:8px 12px; cursor:pointer; font-weight:700; font-size:12.5px; transition:all 0.15s;">
+              <input type="radio" name="stWaRecip" value="parent" checked style="accent-color:#10b981;">
+              <span>👨‍👩‍👧 Parent (ولي الأمر)</span>
+            </label>
+            <label id="lblStWaStudent" onclick="setTimetableRecipient('student')"
+                   style="display:flex; align-items:center; gap:8px; border:2px solid #cbd5e1; background:#f8fafc; border-radius:10px; padding:8px 12px; cursor:pointer; font-weight:700; font-size:12.5px; transition:all 0.15s;">
+              <input type="radio" name="stWaRecip" value="student" style="accent-color:#10b981;">
+              <span>👤 Élève (التلميذ)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Langue du message -->
+        <div style="margin-bottom:12px;">
+          <label style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">
+            {{ 'لغة الرسالة' if session.get('lang')=='ar' else 'Langue du message' }} :
+          </label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <label id="lblStWaLangAr" onclick="setTimetableLanguage('ar')"
+                   style="display:flex; align-items:center; gap:8px; border:2px solid #10b981; background:#ecfdf5; border-radius:10px; padding:7px 12px; cursor:pointer; font-weight:700; font-size:12.5px; transition:all 0.15s;">
+              <input type="radio" name="stWaLang" value="ar" checked style="accent-color:#10b981;">
+              <span>🇲🇦 العربية (المفضلة)</span>
+            </label>
+            <label id="lblStWaLangFr" onclick="setTimetableLanguage('fr')"
+                   style="display:flex; align-items:center; gap:8px; border:2px solid #cbd5e1; background:#f8fafc; border-radius:10px; padding:7px 12px; cursor:pointer; font-weight:700; font-size:12.5px; transition:all 0.15s;">
+              <input type="radio" name="stWaLang" value="fr" style="accent-color:#10b981;">
+              <span>🇫🇷 Français (Officiel)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Numéro WhatsApp -->
+        <div style="margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <label style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px;">
+              {{ 'رقم الواتساب' if session.get('lang')=='ar' else 'Numéro WhatsApp' }} :
+            </label>
+            <span id="stWaPhoneTypeLabel" style="font-size:11px; font-weight:700; color:#059669;">Téléphone du Parent</span>
+          </div>
+          <input type="text" id="stWaPhoneInput" style="width:100%; height:40px; border:1.5px solid #cbd5e1; border-radius:10px; padding:0 12px; font-size:14px; font-weight:700; color:#0f172a; outline:none; box-sizing:border-box;" placeholder="Ex: 0612345678 ou 212612345678">
+          <div id="stWaPhoneMissingAlert" style="display:none; color:#dc2626; font-size:11.5px; font-weight:700; margin-top:4px;">
+            ⚠️ Aucun numéro enregistré pour ce destinataire. Veuillez saisir le numéro ci-dessus.
+          </div>
+        </div>
+
+        <!-- Aperçu du Texte WhatsApp -->
+        <div style="margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px;">
+              {{ 'معاينة نص الرسالة' if session.get('lang')=='ar' else 'Texte de la notification' }} :
+            </label>
+            <div style="display:flex; gap:6px;">
+              <button type="button" onclick="regenerateTimetableSpintax()" class="btn btn-xs btn-outline" style="font-size:11px; padding:3px 8px; border-radius:6px; background:#fff;" title="Générer une nouvelle variante Anti-Ban">
+                🔄 Varier (Spintax)
+              </button>
+              <button type="button" onclick="copyTimetableText()" id="btnCopyStWaText" class="btn btn-xs btn-outline" style="font-size:11px; padding:3px 8px; border-radius:6px; background:#fff;" title="Copier le texte">
+                📋 Copier texte
+              </button>
+            </div>
+          </div>
+          <textarea id="stWaPreviewText" rows="6" style="width:100%; border:1.5px solid #cbd5e1; border-radius:10px; padding:10px; font-size:12px; font-family:monospace; line-height:1.4; color:#0f172a; background:#f8fafc; resize:vertical; outline:none; box-sizing:border-box;"></textarea>
+        </div>
+
+        <!-- 📸 INSTRUCTIONS POUR L'IMAGE & CTRL+V -->
+        <div style="background:#fffbeb; border:1.5px dashed #f59e0b; border-radius:12px; padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; gap:10px;">
+          <span style="font-size:22px;">📋</span>
+          <div style="font-size:12px; color:#92400e; line-height:1.4;">
+            <strong>Copie Automatique de l'Image Officielle (Ctrl+V) :</strong>
+            En cliquant sur le bouton vert ci-dessous, <strong>l'image exacte de l'emploi du temps A5 Portrait (identique à la version imprimée) sera automatiquement copiée dans votre presse-papiers</strong>. Une fois WhatsApp ouvert, faites simplement <strong>Ctrl + V</strong> pour coller l'image !
+          </div>
+        </div>
+
+        <!-- 🖼️ APERÇU VISUEL DE L'EMPLOI DU TEMPS OFFICIEL (A5 PORTRAIT) -->
+        <div style="margin-bottom:14px; border:1.5px solid #cbd5e1; border-radius:12px; overflow:hidden; background:#ffffff;">
+          <div style="background:#f1f5f9; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #cbd5e1;">
+            <div style="font-size:11.5px; font-weight:800; color:#0B3D6E; display:flex; align-items:center; gap:6px;">
+              <span>🖼️</span>
+              <span>Aperçu de l'Emploi du Temps Officiel (A5 Portrait)</span>
+            </div>
+            <a id="lnkOpenPrintDirectModal" href="#" target="_blank" style="font-size:11px; font-weight:700; color:#1d4ed8; text-decoration:none;">
+              Ouvrir pleine page ↗
+            </a>
+          </div>
+          <div style="padding:10px; background:#f1f5f9; display:flex; justify-content:center; max-height:280px; overflow-y:auto;">
+            <iframe id="stModalLivePreview" src="about:blank" style="width:100%; max-width:440px; height:600px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; transform:scale(0.82); transform-origin:top center; pointer-events:none;"></iframe>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Modal Footer Actions -->
+    <div style="background:#f8fafc; border-top:1.5px solid #e2e8f0; padding:12px 22px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+      <button type="button" onclick="closeStudentTimetableModal()" class="btn btn-outline btn-sm" style="font-weight:700;">
+        Fermer
+      </button>
+
+      <div style="display:flex; align-items:center; gap:8px;">
+        <!-- Bouton Manuel Copier Image Only -->
+        <button type="button" id="btnCopyImageManual" onclick="copyTimetableImageOnly()" class="btn btn-sm btn-outline" style="font-weight:700; font-size:12px; display:inline-flex; align-items:center; gap:4px; background:#fff;">
+          <span>📸</span>
+          <span id="btnCopyImageManualText">Copier Image (Ctrl+V)</span>
+        </button>
+
+        <!-- Bouton Principal Envoi WhatsApp -->
+        <button type="button" id="btnSendWhatsappMain" onclick="sendTimetableWhatsApp()" class="btn btn-sm btn-green"
+                style="background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; color:#fff; font-weight:800; padding:9px 18px; border-radius:10px; font-size:13.5px; box-shadow:0 4px 12px rgba(16,185,129,0.35); display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+          <span>🚀</span>
+          <span id="btnSendWhatsappMainText">Copier Image & Ouvrir WhatsApp</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- IFRAME INVISIBLE CHARGÉ AVEC L'EMPLOI DU TEMPS A5 OFFICIEL     -->
+<!-- ============================================================== -->
+<iframe id="stPrintCaptureIframe" src="about:blank" style="position:fixed; left:-9999px; top:0; width:650px; height:1000px; border:none; visibility:hidden; background:#ffffff;"></iframe>
+
+<!-- ============================================================== -->
+<!-- SCRIPT DU MODAL EMPLOI DU TEMPS & CAPTURE PRESSE-PAPIERS       -->
+<!-- ============================================================== -->
+<script src="{{ url_for('static', filename='vendor/html2canvas.min.js') }}"></script>
+<script>
+  let ST_TIMETABLE_STATE = {
+    studentId: null,
+    data: null,
+    currentAction: 'whatsapp', // 'whatsapp' | 'print'
+    currentRecipient: 'parent', // 'parent' | 'student'
+    currentLanguage: 'ar',     // 'ar' | 'fr'
+    cachedBlob: null
+  };
+
+  async function openStudentTimetableModal(sid, studentName, parentPhone, studentPhone) {
+    if (window.closeAllFloatingDropdowns) {
+      window.closeAllFloatingDropdowns();
+    }
+    ST_TIMETABLE_STATE.studentId = sid;
+    ST_TIMETABLE_STATE.cachedBlob = null;
+    document.getElementById('stModalTitleName').textContent = studentName || ('Élève #' + sid);
+    document.getElementById('studentTimetableModal').style.display = 'flex';
+
+    // Load exact A5 portrait print page into capture iframe and live preview
+    const printA5Url = `/students/${sid}/timetable/print?fmt=a5`;
+    const capIframe = document.getElementById('stPrintCaptureIframe');
+    if (capIframe) {
+      capIframe.src = printA5Url;
+    }
+    const prevIframe = document.getElementById('stModalLivePreview');
+    if (prevIframe) {
+      prevIframe.src = printA5Url;
+    }
+    const lnkDirect = document.getElementById('lnkOpenPrintDirectModal');
+    if (lnkDirect) {
+      lnkDirect.href = printA5Url;
+    }
+
+    // Show initial action tab
+    setTimetableActionTab('whatsapp');
+
+    // Fetch full data from API
+    try {
+      const resp = await fetch(`/api/students/${sid}/whatsapp_timetable_data?t=${Date.now()}`);
+      const res = await resp.json();
+      if (res && res.success) {
+        ST_TIMETABLE_STATE.data = res;
+        
+        if (res.student && res.student.full_name) {
+          document.getElementById('stModalTitleName').textContent = res.student.full_name;
+        }
+
+        // Choose default recipient based on available phone
+        if (res.student && res.student.default_recipient) {
+          ST_TIMETABLE_STATE.currentRecipient = res.student.default_recipient;
+        }
+
+        setTimetableRecipient(ST_TIMETABLE_STATE.currentRecipient);
+        setTimetableLanguage('ar');
+      }
+    } catch (e) {
+      console.error("Error loading timetable data:", e);
+    }
+  }
+  window.openStudentTimetableModal = openStudentTimetableModal;
+
+  function closeStudentTimetableModal() {
+    document.getElementById('studentTimetableModal').style.display = 'none';
+  }
+  window.closeStudentTimetableModal = closeStudentTimetableModal;
+
+  function setTimetableActionTab(tab) {
+    ST_TIMETABLE_STATE.currentAction = tab;
+    const btnWa = document.getElementById('btnTabActionWhatsapp');
+    const btnPrint = document.getElementById('btnTabActionPrint');
+    const panelWa = document.getElementById('panelTimetableWhatsapp');
+    const panelPrint = document.getElementById('panelTimetablePrint');
+    const btnSendMain = document.getElementById('btnSendWhatsappMain');
+    const btnCopyManual = document.getElementById('btnCopyImageManual');
+
+    if (tab === 'whatsapp') {
+      btnWa.style.borderColor = '#10b981';
+      btnWa.style.background = '#ecfdf5';
+      btnWa.style.boxShadow = '0 3px 10px rgba(16,185,129,0.15)';
+      btnPrint.style.borderColor = '#cbd5e1';
+      btnPrint.style.background = '#f8fafc';
+      btnPrint.style.boxShadow = 'none';
+      panelWa.style.display = 'block';
+      panelPrint.style.display = 'none';
+      btnSendMain.style.display = 'inline-flex';
+      btnCopyManual.style.display = 'inline-flex';
+    } else {
+      btnPrint.style.borderColor = '#0B3D6E';
+      btnPrint.style.background = '#eff6ff';
+      btnPrint.style.boxShadow = '0 3px 10px rgba(11,61,110,0.15)';
+      btnWa.style.borderColor = '#cbd5e1';
+      btnWa.style.background = '#f8fafc';
+      btnWa.style.boxShadow = 'none';
+      panelWa.style.display = 'none';
+      panelPrint.style.display = 'block';
+      btnSendMain.style.display = 'none';
+      btnCopyManual.style.display = 'none';
+    }
+  }
+
+  function triggerStudentTimetablePrint() {
+    const fmt = document.querySelector('input[name="stPrintFmt"]:checked')?.value || 'a5';
+    const sid = ST_TIMETABLE_STATE.studentId;
+    if (sid) {
+      window.open(`/students/${sid}/timetable/print?fmt=${fmt}`, '_blank');
+    }
+  }
+
+  function setTimetableRecipient(type) {
+    ST_TIMETABLE_STATE.currentRecipient = type;
+    const rInput = document.querySelector(`input[name="stWaRecip"][value="${type}"]`);
+    if (rInput) rInput.checked = true;
+
+    const lblP = document.getElementById('lblStWaParent');
+    const lblS = document.getElementById('lblStWaStudent');
+    const pLabel = document.getElementById('stWaPhoneTypeLabel');
+    const pInput = document.getElementById('stWaPhoneInput');
+    const alertMissing = document.getElementById('stWaPhoneMissingAlert');
+
+    const stu = ST_TIMETABLE_STATE.data?.student;
+
+    if (type === 'parent') {
+      lblP.style.borderColor = '#10b981';
+      lblP.style.background = '#ecfdf5';
+      lblS.style.borderColor = '#cbd5e1';
+      lblS.style.background = '#f8fafc';
+      pLabel.textContent = "Téléphone du Parent (Tuteur)";
+      const raw = stu ? stu.raw_parent_phone : '';
+      pInput.value = raw || '';
+      alertMissing.style.display = raw ? 'none' : 'block';
+    } else {
+      lblS.style.borderColor = '#10b981';
+      lblS.style.background = '#ecfdf5';
+      lblP.style.borderColor = '#cbd5e1';
+      lblP.style.background = '#f8fafc';
+      pLabel.textContent = "Téléphone de l'Élève";
+      const raw = stu ? stu.raw_student_phone : '';
+      pInput.value = raw || '';
+      alertMissing.style.display = raw ? 'none' : 'block';
+    }
+
+    refreshTimetablePreviewText();
+  }
+
+  function setTimetableLanguage(lang) {
+    ST_TIMETABLE_STATE.currentLanguage = lang;
+    const lInput = document.querySelector(`input[name="stWaLang"][value="${lang}"]`);
+    if (lInput) lInput.checked = true;
+
+    const lblAr = document.getElementById('lblStWaLangAr');
+    const lblFr = document.getElementById('lblStWaLangFr');
+    if (lang === 'ar') {
+      lblAr.style.borderColor = '#10b981';
+      lblAr.style.background = '#ecfdf5';
+      lblFr.style.borderColor = '#cbd5e1';
+      lblFr.style.background = '#f8fafc';
+    } else {
+      lblFr.style.borderColor = '#10b981';
+      lblFr.style.background = '#ecfdf5';
+      lblAr.style.borderColor = '#cbd5e1';
+      lblAr.style.background = '#f8fafc';
+    }
+
+    refreshTimetablePreviewText();
+  }
+
+  function refreshTimetablePreviewText() {
+    if (!ST_TIMETABLE_STATE.data) return;
+    const key = `${ST_TIMETABLE_STATE.currentLanguage}_${ST_TIMETABLE_STATE.currentRecipient}`;
+    const txt = ST_TIMETABLE_STATE.data.messages[key] || '';
+    document.getElementById('stWaPreviewText').value = txt;
+  }
+
+  async function regenerateTimetableSpintax() {
+    const sid = ST_TIMETABLE_STATE.studentId;
+    if (!sid) return;
+    try {
+      const resp = await fetch(`/api/students/${sid}/whatsapp_timetable_data?t=${Date.now()}`);
+      const res = await resp.json();
+      if (res.success) {
+        ST_TIMETABLE_STATE.data = res;
+        refreshTimetablePreviewText();
+      }
+    } catch(e) {
+      console.warn("Could not regenerate variation", e);
+    }
+  }
+
+  function copyTimetableText() {
+    const ta = document.getElementById('stWaPreviewText');
+    navigator.clipboard.writeText(ta.value).then(() => {
+      const btn = document.getElementById('btnCopyStWaText');
+      btn.textContent = '✅ Copié !';
+      setTimeout(() => { btn.textContent = '📋 Copier texte'; }, 2000);
+    });
+  }
+
+  function cleanWaPhone(raw) {
+    if (!raw) return '';
+    let p = String(raw).replace(/[^0-9]/g, '');
+    if (p.startsWith('00')) p = p.substring(2);
+    else if (p.startsWith('0')) p = '212' + p.substring(1);
+    else if (p.length === 9 && (p.startsWith('6') || p.startsWith('7'))) p = '212' + p;
+    return p;
+  }
+
+  async function generateTimetableBlob() {
+    if (ST_TIMETABLE_STATE.cachedBlob) {
+      return ST_TIMETABLE_STATE.cachedBlob;
+    }
+
+    const iframe = document.getElementById('stPrintCaptureIframe');
+    if (!iframe) return null;
+
+    // Ensure iframe document has finished loading
+    if (!iframe.contentDocument || iframe.contentDocument.readyState !== 'complete' || iframe.contentDocument.location.href === 'about:blank') {
+      await new Promise((resolve) => {
+        iframe.onload = resolve;
+        setTimeout(resolve, 1500);
+      });
+    }
+
+    // 1. First priority: call captureStudentSheetBlob from inside the A5 print iframe
+    try {
+      if (iframe.contentWindow && typeof iframe.contentWindow.captureStudentSheetBlob === 'function') {
+        const blob = await iframe.contentWindow.captureStudentSheetBlob();
+        if (blob) {
+          ST_TIMETABLE_STATE.cachedBlob = blob;
+          return blob;
+        }
+      }
+    } catch(e) {
+      console.warn("captureStudentSheetBlob inside iframe failed, falling back to direct html2canvas", e);
+    }
+
+    // 2. Second priority: capture .student-sheet inside iframe directly
+    try {
+      const sheet = iframe.contentDocument ? iframe.contentDocument.querySelector('.student-sheet') : null;
+      if (sheet && typeof html2canvas !== 'undefined') {
+        const canvas = await html2canvas(sheet, {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          logging: false,
+          window: iframe.contentWindow
+        });
+        return new Promise((resolve) => {
+          canvas.toBlob((blob) => {
+            ST_TIMETABLE_STATE.cachedBlob = blob;
+            resolve(blob);
+          }, 'image/png');
+        });
+      }
+    } catch(e) {
+      console.error("Direct sheet capture failed", e);
+    }
+
+    return null;
+  }
+
+  async function copyTimetableImageOnly() {
+    const btn = document.getElementById('btnCopyImageManual');
+    const btnText = document.getElementById('btnCopyImageManualText');
+    btnText.textContent = "Génération...";
+    try {
+      const blob = await generateTimetableBlob();
+      if (blob && navigator.clipboard && navigator.clipboard.write) {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        btnText.textContent = "✅ Image Copiée (Ctrl+V) !";
+        setTimeout(() => { btnText.textContent = "Copier Image (Ctrl+V)"; }, 3000);
+      } else {
+        alert("Votre navigateur ne permet pas la copie directe de l'image. Veuillez la copier manuellement.");
+      }
+    } catch (e) {
+      console.error("Clipboard copy error:", e);
+      btnText.textContent = "Erreur copie";
+    }
+  }
+
+  async function sendTimetableWhatsApp() {
+    const phoneInput = document.getElementById('stWaPhoneInput').value.trim();
+    const cleanP = cleanWaPhone(phoneInput);
+    if (!cleanP) {
+      alert("Veuillez saisir un numéro de téléphone valide avant d'envoyer.");
+      document.getElementById('stWaPhoneInput').focus();
+      return;
+    }
+
+    const btnMain = document.getElementById('btnSendWhatsappMain');
+    const btnMainText = document.getElementById('btnSendWhatsappMainText');
+    const oldHtml = btnMainText.textContent;
+    btnMainText.textContent = "Capture Image...";
+
+    try {
+      // 1. Capture HD Card and write to clipboard
+      const blob = await generateTimetableBlob();
+      if (blob && navigator.clipboard && navigator.clipboard.write) {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      }
+    } catch(e) {
+      console.warn("Could not copy image to clipboard automatically", e);
+    }
+
+    btnMainText.textContent = "✅ Image Copiée ! Ouverture...";
+
+    // 2. Open WhatsApp Web with the anti-ban spintax message
+    const msg = document.getElementById('stWaPreviewText').value;
+    const waUrl = `https://wa.me/${cleanP}?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, '_blank');
+
+    setTimeout(() => {
+      btnMainText.textContent = "🚀 Ouvrir WhatsApp à nouveau";
+    }, 2500);
+  }
+</script>

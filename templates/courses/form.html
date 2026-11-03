@@ -1,0 +1,874 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex between wrap mb-3">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('courses') }}">← {{ t('courses') }}</a></div>
+    <h2 class="mt-0 mb-0" style="font-size:22px">{{ '✏️ Modifier le cours' if c else '➕ Nouveau cours' }}</h2>
+    {% if c %}<div class="muted">{{ c.code }}</div>{% endif %}
+  </div>
+</div>
+
+<form method="post" class="max-w" id="courseMainForm">
+  <input type="hidden" name="force_conflict" id="forceConflictInput" value="0">
+  <!-- ===== Informations générales ===== -->
+  <div class="form-section">
+    <div class="sec-head">
+      <span class="sec-ico">📚</span>
+      <div><h3>Informations générales</h3><p>Nom, catégorie et niveau du cours</p></div>
+    </div>
+    <div class="sec-body">
+      <div class="form-row">
+        <div class="field full" style="background:#f0f7ff; padding:14px; border-radius:12px; border:1.5px solid #93c5fd; margin-bottom:12px; position:relative; z-index:100; overflow:visible;">
+          <label style="font-weight:800; color:#0B3D6E; font-size:14px; display:flex; align-items:center; justify-content:space-between;">
+            <span>⚡ Choisir depuis le الكتالوج الرسمي للتسعيرات (Prremplir à partir d'un Tarif)</span>
+            <span style="font-size:11px; font-weight:600; color:#1d4ed8; background:#dbeafe; padding:2px 8px; border-radius:12px;">{{ tariffs|length }} Formules disponibles</span>
+          </label>
+          
+          <input type="hidden" name="tariff_id" id="tariffIdInput" value="{{ c.tariff_id if c else '' }}">
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:8px;">
+            <!-- Direct Select Dropdown -->
+            <div class="input-field has-ico">
+              <span class="f-ico">🏷️</span>
+              <select id="tariffSelectDropdown" onchange="if(this.value) selectTariffItem(parseInt(this.value)); else clearTariffSelection();" style="font-weight:700; color:#0B3D6E; background:#fff;">
+                <option value="">-- 📋 Choisir dans la liste des tarifs --</option>
+                {% for trf in tariffs %}
+                <option value="{{ trf.id }}" {{ 'selected' if c and c.tariff_id==trf.id }}>
+                  {{ trf.name }} ({{ trf.language }}) — {{ '%.0f'|format(trf.price) }} DH ({{ trf.sessions_per_week }}s/sem, {{ '3 mois' if trf.billing_cycle=='3months' else '1 mois' }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Instant Search Input Box -->
+            <div class="input-field has-ico" style="position:relative;">
+              <span class="f-ico">🔍</span>
+              <input type="text" id="tariffSearchInput" placeholder="Recherche rapide (1 BAC, 2 BAC, Collège, Français, Allemand...)" autocomplete="off" oninput="filterTariffSearch()" onfocus="filterTariffSearch()" style="font-size:13px; font-weight:600; padding-right:30px; background:#fff;">
+              <button type="button" id="btnClearTariffSearch" onclick="clearTariffSelection()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; display:none; font-size:14px; color:#94a3b8;" title="Effacer la recherche">❌</button>
+            </div>
+          </div>
+
+          <!-- Selected Tariff Confirmation Badge -->
+          <div id="selectedTariffBadge" style="display:{% if c and c.tariff_id %}flex{% else %}none{% endif %}; margin-top:8px; padding:10px 14px; background:#ecfdf5; border:1.5px solid #10b981; border-radius:8px; align-items:center; justify-content:space-between;">
+            <div>
+              <span style="font-size:11px; font-weight:800; text-transform:uppercase; color:#047857; letter-spacing:0.5px;">✓ TARIF SÉLECTIONNÉ :</span>
+              <div id="selectedTariffInfo" style="font-size:14px; font-weight:800; color:#064e3b; margin-top:2px;">
+                {% if c and c.tariff %}
+                {{ c.tariff.display_name }} ({{ c.tariff.language }}) — {{ '%.0f'|format(c.tariff.price) }} DH (Frais: {{ '%.0f'|format(c.tariff.registration_fee) }} DH)
+                {% endif %}
+              </div>
+            </div>
+            <button type="button" onclick="clearTariffSelection()" class="btn btn-xs btn-outline-danger" style="padding:3px 8px; font-size:11px;">Changer de tarif</button>
+          </div>
+
+          <!-- Floating Live Search Dropdown Panel -->
+          <div id="tariffSearchResults" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:99999; background:#ffffff; border:2px solid #1f6feb; border-radius:10px; box-shadow:0 12px 35px rgba(0,0,0,0.25); max-height:290px; overflow-y:auto; margin-top:4px;">
+          </div>
+          
+          <div class="muted" style="font-size:11px; margin-top:6px; color:#475569;">💡 عند اختيار تسعيرة من الكتالوج يتم تلقائياً استدعاء الثمن الأصلي، دورة الدفع، عدد الحصص/الأسبوع، وواجب التسجيل تلقائياً.</div>
+        </div>
+
+        <div class="field full">
+          <label>Nom du cours / classe <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📖</span>
+            <input name="name" id="courseNameInput" required value="{{ c.name if c }}" placeholder="Ex : Anglais 2S/sem (2h)GROUPE 4 /MERCREDI-SAMEDI/14:45-17:00">
+          </div>
+          <!-- Live Schedule Detection Banner -->
+          <div id="scheduleDetectionAlert" style="display:none; margin-top:8px; padding:12px 14px; background:#f0fdf4; border:1.5px solid #22c55e; border-radius:10px; animation: fadeIn 0.3s ease;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+              <div>
+                <div style="font-size:12px; font-weight:800; color:#15803d; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:6px;">
+                  <span>⚡ Emploi du temps détecté automatiquement</span>
+                  <span class="chip chip-green" style="font-size:9.5px; padding:1px 6px;">Auto-Sync Actif</span>
+                </div>
+                <div id="scheduleDetectionSummary" style="font-size:13.5px; font-weight:700; color:#166534; margin-top:3px;">
+                </div>
+                <div style="font-size:11.5px; color:#4b5563; margin-top:3px;">
+                  ✓ Les jours et horaires seront enregistrés automatiquement dans l'emploi du temps hebdomadaire.
+                </div>
+              </div>
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; font-weight:700; color:#166534; background:#dcfce7; padding:4px 8px; border-radius:6px; border:1px solid #86efac; flex-shrink:0;">
+                <input type="checkbox" name="auto_schedule" id="autoScheduleCheckbox" value="on" checked>
+                Créer les séances automatiquement
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Catégorie <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🏷️</span>
+            <select name="category" id="cat" onchange="toggleCategoryFields(this.value)">
+              <option value="language" {{ 'selected' if not c or c.category=='language' }}>🌍 Langue (تكوين اللغات الحية)</option>
+              <option value="tutoring" {{ 'selected' if c and c.category=='tutoring' }}>🎓 Soutien scolaire (الدعم المدرسي)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 1. Language Category Dropdown -->
+        <div class="field" id="f-language" style="display:{% if not c or c.category=='language' %}block{% else %}none{% endif %};">
+          <label>Langue disponible <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🗣️</span>
+            <select name="language" id="languageSelectInput">
+              <option value="">-- Choisir la langue --</option>
+              {% for l in ['Français', 'Anglais', 'Espagnol', 'Allemand', 'Italien', 'Arabe', 'Turc', 'Chinois'] %}
+              <option value="{{ l }}" {{ 'selected' if c and c.language==l }}>{{ l }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- 2. Tutoring Subject Dropdown -->
+        <div class="field" id="f-tutoring-subject" style="display:{% if c and c.category=='tutoring' %}block{% else %}none{% endif %};">
+          <label>Matière de Soutien <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📖</span>
+            <select name="tutoring_subject" id="tutoringSubjectInput">
+              <option value="">-- Choisir la matière --</option>
+              {% for s in ['Mathématiques', 'Physique-Chimie', 'SVT', 'Français & Communication', 'Anglais', 'Arabe', 'Philosophie', 'Comptabilité & Économie', 'Informatique'] %}
+              <option value="{{ s }}" {{ 'selected' if c and c.category=='tutoring' and (c.language==s or (c.name and s in c.name)) }}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- 3. Predefined Levels Dropdowns -->
+        <div class="field" id="f-level-language" style="display:{% if not c or c.category=='language' %}block{% else %}none{% endif %};">
+          <label>Niveau CECRL (لغات) <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📊</span>
+            <select name="level_lang" id="levelLangInput">
+              <option value="">-- Choisir le niveau (A1-C2) --</option>
+              {% for lvl in ['A1 (Débutant)', 'A2 (Élémentaire)', 'B1 (Intermédiaire)', 'B2 (Intermédiaire Supérieur)', 'C1 (Avancé)', 'C2 (Maîtrise)'] %}
+              <option value="{{ lvl }}" {{ 'selected' if c and c.level==lvl }}>{{ lvl }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="field" id="f-level-tutoring" style="display:{% if c and c.category=='tutoring' %}block{% else %}none{% endif %};">
+          <label>Niveau Scolaire (دعم مدرسي) <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🎓</span>
+            <select name="level_tutoring" id="levelTutoringInput">
+              <option value="">-- Choisir le مستوى --</option>
+              {% for lvl in ['Primaire (الابتدائي)', 'Collège (الإعدادي)', 'Tronc Commun (الجدع المشترك)', '1ère Année Bac (الأولى باك)', '2ème Année Bac (الثانية باك)', 'Université (الجامعي)', 'Autre (آخر)'] %}
+              <option value="{{ lvl }}" {{ 'selected' if c and c.level==lvl }}>{{ lvl }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Groupe / Section</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">👥</span>
+            <input name="group_name" value="{{ c.group_name if c }}" placeholder="Groupe A, B, C...">
+          </div>
+        </div>
+        <div class="field full">
+          <div class="hint">💡 Le <strong>cycle de facturation</strong> contrôle comment l'élève paie : les cours de langues sont facturés par <strong>1 mois</strong> ou <strong>3 mois</strong>, le soutien scolaire est facturé <strong>mensuellement</strong>.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Tarification ===== -->
+  <div class="form-section">
+    <div class="sec-head">
+      <span class="sec-ico">💰</span>
+      <div><h3>Tarification & facturation</h3><p>Prix et cycle de paiement</p></div>
+    </div>
+    <div class="sec-body">
+      <div class="form-row">
+        <div class="field">
+          <label>Cycle de facturation</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🔄</span>
+            <select name="billing_cycle">
+              <option value="1month" {{ 'selected' if c and c.billing_cycle=='1month' }}>1 mois</option>
+              <option value="3months" {{ 'selected' if c and c.billing_cycle=='3months' }}>3 mois</option>
+              <option value="monthly" {{ 'selected' if c and c.billing_cycle=='monthly' }}>Mensuel (soutien)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Prix du cycle ({{ settings.currency }})</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">💵</span>
+            <input type="number" step="0.01" name="price" value="{{ c.price if c }}" placeholder="Ex : 2400">
+          </div>
+        </div>
+        <div class="field">
+          <label>Prix / mois</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📅</span>
+        <div class="field">
+          <label>Frais d'inscription (واجبات التسجيل) <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🎟️</span>
+            <input type="number" step="0.01" name="registration_fee" id="regFeeInput" value="{{ c.registration_fee if c else 200 }}" placeholder="Ex : 200 DH">
+          </div>
+          <div class="muted" style="font-size:11px; margin-top:4px;">Par défaut: Langues 200 DH (Anglais, Français, Allemand, Espagnol), Soutien 40 DH.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Organisation ===== -->
+  <div class="form-section">
+    <div class="sec-head">
+      <span class="sec-ico">🏫</span>
+      <div><h3>Organisation</h3><p>Enseignant, salle et capacité</p></div>
+    </div>
+    <div class="sec-body">
+      <div class="form-row">
+        <div class="field">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <label style="margin:0;">Enseignant principal (الأستاذ)</label>
+            <button type="button" class="btn btn-xs btn-outline" style="color:#059669; border-color:#10b981; font-weight:700; border-radius:6px; padding:2px 8px;" onclick="openQuickTeacherModal()">➕ Ajouter Enseignant</button>
+          </div>
+          <div class="input-field has-ico">
+            <span class="f-ico">👨‍🏫</span>
+            <select name="teacher_id" id="teacherSelect">
+              <option value="">— Choisir l'أستاذ —</option>
+              {% for te in teachers %}
+              <option value="{{ te.id }}" {{ 'selected' if c and c.teacher_id==te.id }}>{{ te.full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Modèle d'أجر الأستاذ لهذا الفوج</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📊</span>
+            <select name="teacher_compensation_type">
+              <option value="percentage" {{ 'selected' if not ct or ct.compensation_type=='percentage' }}>٪ نسبة مئوية من المدخول (Percentage %)</option>
+              <option value="hourly" {{ 'selected' if ct and ct.compensation_type=='hourly' }}>⏱️ أجر بالساعة (DH / heure)</option>
+              <option value="fixed" {{ 'selected' if ct and ct.compensation_type=='fixed' }}>📌 مبلغ ثابت لهذا الفوج (Fixed DH)</option>
+              <option value="per_student" {{ 'selected' if ct and ct.compensation_type=='per_student' }}>👤 مبلغ لكل تلميذ (DH / élève)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>قيمة الأجر لهذا الفوج (مثلاً 40% أو 150 DH)</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">💰</span>
+            <input type="number" step="0.01" name="teacher_compensation_value" value="{{ ct.compensation_value if ct else 50 }}" placeholder="Ex : 40 pour 40% ou 150 DH">
+          </div>
+        </div>
+        <div class="field">
+          <label>Salle de cours</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🚪</span>
+            <select name="room_id"><option value="">— Choisir —</option>{% for r in rooms %}<option value="{{ r.id }}" {{ 'selected' if c and c.room_id==r.id }}>{{ r.name }}</option>{% endfor %}</select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Séances / Semaine (الحصص/أسبوع) <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">⏱️</span>
+            <select name="sessions_per_week">
+              <option value="1" {{ 'selected' if c and c.sessions_per_week==1 }}>1 حصة / أسبوع</option>
+              <option value="2" {{ 'selected' if c and c.sessions_per_week==2 }}>2 حصتان / أسبوع</option>
+              <option value="3" {{ 'selected' if not c or c.sessions_per_week==3 }}>3 حصص / أسبوع (Standard)</option>
+              <option value="4" {{ 'selected' if c and c.sessions_per_week==4 }}>4 حصص / أسبوع</option>
+              <option value="5" {{ 'selected' if c and c.sessions_per_week==5 }}>5 حصص / أسبوع</option>
+              <option value="6" {{ 'selected' if c and c.sessions_per_week==6 }}>6 حصص / أسبوع</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Durée par séance (مدة الحصة الواحدة) <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">⌛</span>
+            <select name="session_duration">
+              <option value="1h30" {{ 'selected' if not c or c.session_duration=='1h30' }}>1h 30 min (ساعة ونصف)</option>
+              <option value="2h00" {{ 'selected' if c and c.session_duration=='2h00' }}>2h 00 min (ساعتان)</option>
+              <option value="2h15" {{ 'selected' if c and c.session_duration=='2h15' }}>2h 15 min (ساعتان و15 دقيقة)</option>
+              <option value="1h00" {{ 'selected' if c and c.session_duration=='1h00' }}>1h 00 min (ساعة واحدة)</option>
+              <option value="2h30" {{ 'selected' if c and c.session_duration=='2h30' }}>2h 30 min (ساعتان ونصف)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Capacité maximale</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🪑</span>
+            <input type="number" name="max_students" value="{{ c.max_students if c else 20 }}" placeholder="20">
+          </div>
+        </div>
+        <div class="field full">
+          <label>Jours de cours (أيام الدراسة لهذا الفوج) <span class="req">*</span></label>
+          <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:6px;">
+            {% set active_days = (c.scheduled_days.split(',') if c and c.scheduled_days else ['0','2','4']) %}
+            <label class="check" style="cursor:pointer; background:#f8fafc; border:1px solid #cbd5e1; padding:8px 14px; border-radius:10px;">
+              <input type="checkbox" name="days" value="0" {{ 'checked' if '0' in active_days }}> 📅 Lundi (الإثنين)
+            </label>
+            <label class="check" style="cursor:pointer; background:#f8fafc; border:1px solid #cbd5e1; padding:8px 14px; border-radius:10px;">
+              <input type="checkbox" name="days" value="1" {{ 'checked' if '1' in active_days }}> 📅 Mardi (الثلاثاء)
+            </label>
+            <label class="check" style="cursor:pointer; background:#f8fafc; border:1px solid #cbd5e1; padding:8px 14px; border-radius:10px;">
+              <input type="checkbox" name="days" value="2" {{ 'checked' if '2' in active_days }}> 📅 Mercredi (الأربعاء)
+            </label>
+            <label class="check" style="cursor:pointer; background:#f8fafc; border:1px solid #cbd5e1; padding:8px 14px; border-radius:10px;">
+              <input type="checkbox" name="days" value="3" {{ 'checked' if '3' in active_days }}> 📅 Jeudi (الخميس)
+            </label>
+            <label class="check" style="cursor:pointer; background:#f8fafc; border:1px solid #cbd5e1; padding:8px 14px; border-radius:10px;">
+              <input type="checkbox" name="days" value="4" {{ 'checked' if '4' in active_days }}> 📅 Vendredi (الجمعة)
+            </label>
+            <label class="check" style="cursor:pointer; background:#f8fafc; border:1px solid #cbd5e1; padding:8px 14px; border-radius:10px;">
+              <input type="checkbox" name="days" value="5" {{ 'checked' if '5' in active_days }}> 📅 Samedi (السبت)
+            </label>
+            <label class="check" style="cursor:pointer; background:#f8fafc; border:1px solid #cbd5e1; padding:8px 14px; border-radius:10px;">
+              <input type="checkbox" name="days" value="6" {{ 'checked' if '6' in active_days }}> 📅 Dimanche (الأحد)
+            </label>
+          </div>
+          <div class="muted" style="font-size:11.5px; margin-top:6px;">💡 يتم احتساب إجمالي حصص الشهر والحصص المتبقية تلقائياً 100% حسب الأيام المحددة هنا لكل فوج.</div>
+        </div>
+
+        <div class="field" style="max-width:240px;">
+          <label>Heure Début (ساعة البداية)</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">⏱️</span>
+            <input type="time" name="default_start_time" id="defaultStartTimeInput" placeholder="--:--">
+          </div>
+          <div class="muted" style="font-size:10.5px; margin-top:3px;">Rempli automatiquement depuis le nom</div>
+        </div>
+        <div class="field" style="max-width:240px;">
+          <label>Heure Fin (ساعة النهاية)</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">⌛</span>
+            <input type="time" name="default_end_time" id="defaultEndTimeInput" placeholder="--:--">
+          </div>
+          <div class="muted" style="font-size:10.5px; margin-top:3px;">Rempli automatiquement depuis le nom</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Période & statut ===== -->
+  <div class="form-section">
+    <div class="sec-head">
+      <span class="sec-ico">🗓️</span>
+      <div><h3>Période & statut</h3><p>Dates et disponibilité du cours</p></div>
+    </div>
+    <div class="sec-body">
+      <div class="form-row">
+        <div class="field">
+          <label>Date de début</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📅</span>
+            <input type="date" name="start_date" value="{{ c.start_date if c }}">
+          </div>
+        </div>
+        <div class="field">
+          <label>Date de fin</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🏁</span>
+            <input type="date" name="end_date" value="{{ c.end_date if c }}">
+          </div>
+        </div>
+        <div class="field">
+          <label>Disponibilité</label>
+          <label class="check" style="margin-top:14px; font-weight:600; cursor:pointer;"><input type="checkbox" name="active" {{ 'checked' if not c or c.active }}> 🟢 Cours actif</label>
+        </div>
+      </div>
+      <div class="field full">
+        <label>Notes & Description</label>
+        <textarea name="notes" rows="3" placeholder="Remarques, prérequis, matériel...">{{ c.notes if c }}</textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn btn-primary">💾 {{ 'Enregistrer les modifications' if c else 'Créer le cours' }}</button>
+    <a class="btn btn-outline" href="{{ url_for('courses') }}">{{ t('cancel') }}</a>
+  </div>
+</form>
+
+<style>.max-w { max-width: 880px; }</style>
+<script>
+  var ALL_TARIFFS = [
+    {% for trf in tariffs %}
+    {
+      id: {{ trf.id }},
+      name: {{ trf.name|tojson }},
+      display_name: {{ trf.display_name|tojson }},
+      category: {{ trf.category|tojson }},
+      language: {{ trf.language|tojson }},
+      price: {{ trf.price }},
+      billing_cycle: {{ trf.billing_cycle|tojson }},
+      registration_fee: {{ trf.registration_fee }},
+      sessions_per_week: {{ trf.sessions_per_week }},
+      session_duration: {{ trf.session_duration|tojson }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  function normalizeSearchStr(str) {
+    if (!str) return '';
+    try {
+      return str.toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u06ff\u0300-\u036f]/g, "")
+                .replace(/ç/g, 'c')
+                .replace(/[\s\-\+\(\)\._]/g, '');
+    } catch(e) {
+      return str.toLowerCase().replace(/ç/g, 'c').replace(/é|è|ê/g, 'e').replace(/à/g, 'a').replace(/[\s\-\+\(\)\._]/g, '');
+    }
+  }
+
+  function filterTariffSearch() {
+    var query = document.getElementById('tariffSearchInput').value.trim();
+    var resultsDiv = document.getElementById('tariffSearchResults');
+    var btnClear = document.getElementById('btnClearTariffSearch');
+
+    if (btnClear) btnClear.style.display = query.length > 0 ? 'block' : 'none';
+
+    if (!query) {
+      resultsDiv.style.display = 'none';
+      resultsDiv.innerHTML = '';
+      return;
+    }
+
+    var normQuery = normalizeSearchStr(query);
+
+    var matches = ALL_TARIFFS.filter(function(t) {
+      var normName = normalizeSearchStr(t.name);
+      var normDisplay = normalizeSearchStr(t.display_name);
+      var normLang = normalizeSearchStr(t.language);
+      var normCat = normalizeSearchStr(t.category);
+
+      return normName.includes(normQuery) || normDisplay.includes(normQuery) || normLang.includes(normQuery) || normCat.includes(normQuery);
+    });
+
+    if (matches.length === 0) {
+      resultsDiv.innerHTML = '<div style="padding:12px; text-align:center; color:#64748b; font-size:13px;">Aucun tarif trouvé avec "' + query + '"</div>';
+      resultsDiv.style.display = 'block';
+      return;
+    }
+
+    var html = '';
+    matches.forEach(function(t) {
+      html += '<div onclick="selectTariffItem(' + t.id + ')" style="padding:10px 14px; border-bottom:1px solid #f1f5f9; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background=\'#f0f7ff\'" onmouseout="this.style.background=\'#fff\'">';
+      html += '  <div style="font-weight:800; color:#0B3D6E; font-size:14px; display:flex; justify-content:space-between; align-items:center;">';
+      html += '    <span>' + t.display_name + '</span>';
+      html += '    <span style="color:#16a34a; font-weight:800;">' + t.price.toFixed(0) + ' DH</span>';
+      html += '  </div>';
+      html += '  <div style="font-size:11px; color:#475569; margin-top:3px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">';
+      html += '    <span class="chip ' + (t.category === 'language' ? 'chip-blue' : 'chip-green') + '" style="font-size:10px; padding:1px 6px;">' + (t.category === 'language' ? '🌍 Langue' : '🎓 Soutien') + ' (' + t.language + ')</span>';
+      html += '    <span>• <strong>' + (t.billing_cycle === '3months' ? 'Trimestriel (3 mois)' : 'Mensuel (1 mois)') + '</strong></span>';
+      html += '    <span>• ' + t.sessions_per_week + ' séance(s)/sem (' + t.session_duration + ')</span>';
+      html += '    <span style="color:#6d28d9; font-weight:700;">+ ' + t.registration_fee.toFixed(0) + ' DH Frais</span>';
+      html += '  </div>';
+      html += '</div>';
+    });
+
+    resultsDiv.innerHTML = html;
+    resultsDiv.style.display = 'block';
+  }
+
+  function selectTariffItem(id) {
+    var t = ALL_TARIFFS.find(item => item.id === id);
+    if (!t) return;
+
+    document.getElementById('tariffIdInput').value = t.id;
+    if (document.getElementById('tariffSelectDropdown')) {
+      document.getElementById('tariffSelectDropdown').value = t.id;
+    }
+    document.getElementById('tariffSearchInput').value = t.display_name;
+    document.getElementById('tariffSearchResults').style.display = 'none';
+
+    var badgeInfo = t.display_name + ' — ' + t.price.toFixed(0) + ' DH (Frais d\'inscription: ' + t.registration_fee.toFixed(0) + ' DH)';
+    document.getElementById('selectedTariffInfo').textContent = badgeInfo;
+    document.getElementById('selectedTariffBadge').style.display = 'flex';
+
+    // Auto-populate form fields
+    var nameInp = document.querySelector('input[name="name"]');
+    var priceInp = document.querySelector('input[name="price"]');
+    var cycleSel = document.querySelector('select[name="billing_cycle"]');
+    var regFeeInp = document.getElementById('regFeeInput');
+    var sessSel = document.querySelector('select[name="sessions_per_week"]');
+    var durSel = document.querySelector('select[name="session_duration"]');
+    var catSel = document.getElementById('cat');
+
+    if (nameInp) nameInp.value = t.name;
+    if (catSel) {
+      catSel.value = t.category;
+      toggleCategoryFields(t.category);
+    }
+
+    if (t.category === 'language') {
+      var langSel = document.getElementById('languageSelectInput');
+      if (langSel && t.language) {
+        langSel.value = t.language;
+      }
+    } else {
+      var tutSel = document.getElementById('tutoringSubjectInput');
+      if (tutSel && t.language) {
+        tutSel.value = t.language;
+      }
+    }
+
+    if (priceInp) priceInp.value = t.price;
+    if (cycleSel) cycleSel.value = t.billing_cycle;
+    if (regFeeInp) regFeeInp.value = t.registration_fee;
+    if (sessSel) sessSel.value = t.sessions_per_week;
+    if (durSel) durSel.value = t.session_duration;
+  }
+
+  function clearTariffSelection() {
+    document.getElementById('tariffIdInput').value = '';
+    if (document.getElementById('tariffSelectDropdown')) {
+      document.getElementById('tariffSelectDropdown').value = '';
+    }
+    document.getElementById('tariffSearchInput').value = '';
+    document.getElementById('tariffSearchResults').style.display = 'none';
+    document.getElementById('selectedTariffBadge').style.display = 'none';
+    if (document.getElementById('btnClearTariffSearch')) {
+      document.getElementById('btnClearTariffSearch').style.display = 'none';
+    }
+  }
+
+  document.addEventListener('click', function(e) {
+    var searchInput = document.getElementById('tariffSearchInput');
+    var resultsDiv = document.getElementById('tariffSearchResults');
+    if (searchInput && resultsDiv && !searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+      resultsDiv.style.display = 'none';
+    }
+  });
+
+  function toggleCategoryFields(catVal) {
+    var isLang = (catVal === 'language');
+    document.getElementById('f-language').style.display = isLang ? 'block' : 'none';
+    document.getElementById('f-tutoring-subject').style.display = isLang ? 'none' : 'block';
+    document.getElementById('f-level-language').style.display = isLang ? 'block' : 'none';
+    document.getElementById('f-level-tutoring').style.display = isLang ? 'none' : 'block';
+  }
+
+  function updateDefaultRegFee() {
+    var cat = document.getElementById('cat').value;
+    var langSelect = document.getElementById('languageSelectInput');
+    var lang = langSelect ? langSelect.value.toLowerCase() : '';
+    var feeInp = document.getElementById('regFeeInput');
+
+    {% if not c %}
+    if (cat === 'tutoring') {
+      feeInp.value = 40;
+    } else {
+      feeInp.value = 200;
+    }
+    {% endif %}
+  }
+
+  document.getElementById('cat').addEventListener('change', function() {
+    toggleCategoryFields(this.value);
+    updateDefaultRegFee();
+  });
+  toggleCategoryFields(document.getElementById('cat').value);
+
+  var langSel = document.querySelector('select[name="language"]');
+  if (langSel) {
+    langSel.addEventListener('change', updateDefaultRegFee);
+  }
+</script>
+
+<!-- Quick Teacher Modal -->
+<div id="quickTeacherModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999; justify-content:center; align-items:center;">
+  <div style="background:#fff; width:90%; max-width:440px; padding:20px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.25);">
+    <h3 style="margin-top:0; color:#0B3D6E; font-size:16px;">👨‍🏫 إضافة أستاذ جديد (Nouveau Enseignant)</h3>
+    <form id="quickTeacherForm" onsubmit="submitQuickTeacher(event)">
+      <div style="margin-bottom:10px;">
+        <label style="font-size:12px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Prénom (الاسم الشخصي) *</label>
+        <input type="text" name="first_name" id="q_first_name" required style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; font-size:13px;" placeholder="Ex: Mohamed">
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:12px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Nom (الاسم العائلي) *</label>
+        <input type="text" name="last_name" id="q_last_name" required style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; font-size:13px;" placeholder="Ex: Alami">
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:12px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Discipline / Matière (المادة)</label>
+        <input type="text" name="subject" id="q_subject" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; font-size:13px;" placeholder="Ex: Français, Mathématiques">
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Téléphone (الهاتف)</label>
+        <input type="text" name="phone" id="q_phone" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; font-size:13px;" placeholder="Ex: 0611223344">
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button type="button" class="btn btn-sm btn-outline" onclick="closeQuickTeacherModal()">Annuler</button>
+        <button type="submit" class="btn btn-sm btn-primary" style="background:#059669; border-color:#059669; font-weight:700;">Enregistrer l'enseignant</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openQuickTeacherModal() {
+    document.getElementById('quickTeacherModal').style.display = 'flex';
+  }
+  function closeQuickTeacherModal() {
+    document.getElementById('quickTeacherModal').style.display = 'none';
+  }
+  function submitQuickTeacher(e) {
+    e.preventDefault();
+    const formData = new FormData(document.getElementById('quickTeacherForm'));
+    fetch('/api/teachers/quick_add', {
+      method: 'POST',
+      body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+      if(data.success) {
+        const sel = document.getElementById('teacherSelect');
+        const opt = document.createElement('option');
+        opt.value = data.id;
+        opt.textContent = data.full_name;
+        opt.selected = true;
+        sel.appendChild(opt);
+        closeQuickTeacherModal();
+        alert('✓ ' + data.message);
+      } else {
+        alert('Erreur: ' + (data.message || 'Impossible d\'ajouter l\'enseignant'));
+      }
+    })
+    .catch(err => {
+      alert('Erreur de connexion');
+    });
+  // --- AUTO-DETECTION DU PLANNING DEPUIS LE NOM DU COURS ---
+  const DAYS_DEF = [
+    { names: ['lundi', 'lund', 'lun', 'mon', 'monday', 'الاثنين', 'الإثنين', 'اثنين', 'إثنين'], id: 0, fr: 'Lundi' },
+    { names: ['mardi', 'mard', 'mar', 'tue', 'tuesday', 'الثلاثاء', 'تلاتاء', 'ثلاثاء'], id: 1, fr: 'Mardi' },
+    { names: ['mercredi', 'mercred', 'mercre', 'merc', 'mer', 'wed', 'wednesday', 'الاربعاء', 'الأربعاء', 'اربعاء', 'أربعاء'], id: 2, fr: 'Mercredi' },
+    { names: ['jeudi', 'jeud', 'jeu', 'thu', 'thursday', 'الخميس', 'خميس'], id: 3, fr: 'Jeudi' },
+    { names: ['vendredi', 'vendred', 'vendre', 'vend', 'ven', 'fri', 'friday', 'الجمعة', 'جمعة'], id: 4, fr: 'Vendredi' },
+    { names: ['samedi', 'samed', 'sam', 'sat', 'saturday', 'السبت', 'سبت'], id: 5, fr: 'Samedi' },
+    { names: ['dimanche', 'dimanc', 'diman', 'dim', 'sun', 'sunday', 'الاحد', 'الأحد', 'احد', 'أحد'], id: 6, fr: 'Dimanche' }
+  ];
+
+  const TIME_REGEX_CLIENT = /(?:(\d{1,2})[:hH;](\d{2,3})|(\d{1,2})\s*[hH])\s*(?:[-/–—à:_~]|\s+to\s+|\s+tal\s+|\s+au\s+|\s+et\s+)\s*(?:(\d{1,2})[:hH;](\d{2,3})|(\d{1,2})\s*[hH])/g;
+
+  function detectScheduleFromName() {
+    const nameInput = document.getElementById('courseNameInput');
+    const alertBox = document.getElementById('scheduleDetectionAlert');
+    const summaryBox = document.getElementById('scheduleDetectionSummary');
+    if (!nameInput || !alertBox || !summaryBox) return;
+
+    const text = nameInput.value.trim();
+    if (!text) {
+      alertBox.style.display = 'none';
+      return;
+    }
+
+    // 1. Détection des jours
+    const lower = text.toLowerCase();
+    const tokens = lower.split(/[^a-zA-Z\u0600-\u06FF]+/);
+    const detectedDays = [];
+    tokens.forEach(tok => {
+      if (!tok) return;
+      const candidates = [tok];
+      if (tok.startsWith('و') && tok.length > 2) candidates.push(tok.substring(1));
+      candidates.forEach(cand => {
+        DAYS_DEF.forEach(d => {
+          if (d.names.includes(cand) && !detectedDays.includes(d.id)) {
+            detectedDays.push(d.id);
+          }
+        });
+      });
+    });
+
+    // 2. Détection des horaires
+    let startTime = null;
+    let endTime = null;
+    const timeRegex = new RegExp(TIME_REGEX_CLIENT.source, 'g');
+    const match = timeRegex.exec(text);
+    if (match) {
+      const sh = match[1] || match[3];
+      const sm = (match[2] || '00').substring(0, 2);
+      const eh = match[4] || match[6];
+      const em = (match[5] || '00').substring(0, 2);
+      startTime = String(parseInt(sh, 10)).padStart(2, '0') + ':' + sm;
+      endTime = String(parseInt(eh, 10)).padStart(2, '0') + ':' + em;
+    }
+
+    if (detectedDays.length > 0 || (startTime && endTime)) {
+      alertBox.style.display = 'block';
+
+      const dayLabels = detectedDays.map(id => {
+        const d = DAYS_DEF.find(x => x.id === id);
+        return d ? d.fr : '';
+      });
+
+      let summaryHtml = '';
+      if (dayLabels.length > 0) {
+        summaryHtml += `📅 Jours : <strong>${dayLabels.join(', ')}</strong>`;
+      }
+      if (startTime && endTime) {
+        if (summaryHtml) summaryHtml += ' &nbsp;|&nbsp; ';
+        summaryHtml += `⏱️ Horaires : <strong>${startTime} à ${endTime}</strong>`;
+        
+        try {
+          const [sh, sm] = startTime.split(':').map(Number);
+          const [eh, em] = endTime.split(':').map(Number);
+          const diff = (eh * 60 + em) - (sh * 60 + sm);
+          if (diff > 0) {
+            const dh = Math.floor(diff / 60);
+            const dm = diff % 60;
+            const durStr = dh + 'h' + (dm > 0 ? String(dm).padStart(2, '0') : '00');
+            summaryHtml += ` <span style="font-size:11px; opacity:0.85;">(${durStr}/séance)</span>`;
+            
+            const durSelect = document.querySelector('select[name="session_duration"]');
+            if (durSelect) {
+              Array.from(durSelect.options).forEach(opt => {
+                if (opt.value === durStr || opt.value.startsWith(dh + 'h')) {
+                  opt.selected = true;
+                }
+              });
+            }
+          }
+        } catch(e){}
+      }
+
+      summaryBox.innerHTML = summaryHtml;
+
+      if (detectedDays.length > 0) {
+        document.querySelectorAll('input[name="days"]').forEach(cb => {
+          cb.checked = detectedDays.includes(parseInt(cb.value, 10));
+        });
+        const spwSelect = document.querySelector('select[name="sessions_per_week"]');
+        if (spwSelect) {
+          spwSelect.value = String(detectedDays.length);
+        }
+      }
+
+      if (startTime && endTime) {
+        const stInput = document.getElementById('defaultStartTimeInput');
+        const etInput = document.getElementById('defaultEndTimeInput');
+        if (stInput) stInput.value = startTime;
+        if (etInput) etInput.value = endTime;
+      }
+    } else {
+      alertBox.style.display = 'none';
+    }
+  }
+
+  const nameInp = document.getElementById('courseNameInput');
+  if (nameInp) {
+    nameInp.addEventListener('input', detectScheduleFromName);
+    nameInp.addEventListener('change', detectScheduleFromName);
+    nameInp.addEventListener('paste', () => setTimeout(detectScheduleFromName, 50));
+    if (nameInp.value) {
+      detectScheduleFromName();
+    }
+  }
+
+  // ===== PRE-SUBMIT SCHEDULE CONFLICT DETECTION & CONFIRMATION =====
+  var _courseConflictBypassed = false;
+
+  const courseFormEl = document.getElementById('courseMainForm');
+  if (courseFormEl) {
+    courseFormEl.addEventListener('submit', function(e) {
+      if (_courseConflictBypassed) return true;
+
+      var nameVal = (document.getElementById('courseNameInput').value || '').trim();
+      var roomSel = document.querySelector('select[name="room_id"]');
+      var teacherSel = document.querySelector('select[name="teacher_id"]');
+      var roomId = roomSel ? roomSel.value : '';
+      var teacherId = teacherSel ? teacherSel.value : '';
+      var cidVal = "{{ c.id if c else '' }}";
+
+      if (!roomId && !teacherId) return true;
+
+      var dayBoxes = document.querySelectorAll('input[name="days"]:checked');
+      var daysArr = [];
+      dayBoxes.forEach(function(b) { daysArr.push(b.value); });
+      var daysStr = daysArr.join(',');
+
+      var stInput = document.getElementById('defaultStartTimeInput');
+      var etInput = document.getElementById('defaultEndTimeInput');
+      var stVal = stInput ? stInput.value : '';
+      var etVal = etInput ? etInput.value : '';
+
+      e.preventDefault();
+
+      var params = new URLSearchParams();
+      if (cidVal) params.append('course_id', cidVal);
+      if (roomId) params.append('room_id', roomId);
+      if (teacherId) params.append('teacher_id', teacherId);
+      if (nameVal) params.append('course_name', nameVal);
+      if (daysStr) params.append('days', daysStr);
+      if (stVal) params.append('start_time', stVal);
+      if (etVal) params.append('end_time', etVal);
+
+      fetch('/courses/check_schedule_conflict?' + params.toString())
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data && data.has_conflict && data.conflicts && data.conflicts.length > 0) {
+            var listDiv = document.getElementById('courseConflictList');
+            var html = '';
+            data.conflicts.forEach(function(cf) {
+              html += '<div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:9px 12px; font-size:12.5px; color:#991b1b; display:flex; align-items:flex-start; gap:8px; line-height:1.4;">' +
+                        '<span style="font-size:16px;">⚠️</span>' +
+                        '<div>' + cf.message + '</div>' +
+                      '</div>';
+            });
+            listDiv.innerHTML = html;
+            document.getElementById('courseConflictConfirmModal').style.display = 'flex';
+          } else {
+            _courseConflictBypassed = true;
+            courseFormEl.submit();
+          }
+        })
+        .catch(function(err) {
+          _courseConflictBypassed = true;
+          courseFormEl.submit();
+        });
+    });
+  }
+
+  function closeCourseConflictModal() {
+    document.getElementById('courseConflictConfirmModal').style.display = 'none';
+  }
+
+  function proceedCourseSubmitAnyway() {
+    _courseConflictBypassed = true;
+    var fInp = document.getElementById('forceConflictInput');
+    if (fInp) fInp.value = '1';
+    document.getElementById('courseConflictConfirmModal').style.display = 'none';
+    courseFormEl.submit();
+  }
+</script>
+
+<!-- MODAL DE CONFIRMATION DE CONFLIT D'HORAIRES POUR COURS -->
+<div id="courseConflictConfirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:99999; justify-content:center; align-items:center; padding:15px; box-sizing:border-box;">
+  <div style="background:#ffffff; width:100%; max-width:560px; border-radius:18px; box-shadow:0 25px 50px rgba(0,0,0,0.25); border:1.5px solid #cbd5e1; overflow:hidden;">
+    <div style="background:linear-gradient(135deg, #b91c1c 0%, #ef4444 100%); color:#fff; padding:16px 20px; display:flex; align-items:center; gap:10px;">
+      <span style="font-size:24px;">⚠️</span>
+      <div>
+        <h3 style="margin:0; font-size:16px; font-weight:800; color:#fff;">Attention : Conflit d'Horaires Détecté !</h3>
+        <div style="font-size:11.5px; opacity:0.9; margin-top:2px;">Chevauchement de salle ou d'enseignant dans le planning</div>
+      </div>
+    </div>
+    <div style="padding:18px 20px;">
+      <p style="font-size:13px; color:#334155; margin:0 0 10px 0; font-weight:700;">
+        Le système a détecté le(s) conflit(s) suivant(s) pour ces horaires :
+      </p>
+      <div id="courseConflictList" style="display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto; margin-bottom:14px;">
+      </div>
+      <div style="background:#fffbeb; border:1px solid #fde68a; padding:10px 12px; border-radius:10px; font-size:11.5px; color:#92400e; line-height:1.4;">
+        💡 <strong>Choix de la direction :</strong> Vous pouvez soit annuler pour choisir une autre salle ou changer l'heure, soit confirmer et forcer l'enregistrement (ex: séances regroupées ou exception).
+      </div>
+    </div>
+    <div style="background:#f8fafc; border-top:1px solid #e2e8f0; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+      <button type="button" class="btn btn-outline" onclick="closeCourseConflictModal()" style="font-weight:700;">
+        ✋ Annuler & Modifier
+      </button>
+      <button type="button" class="btn btn-primary" onclick="proceedCourseSubmitAnyway()" style="background:#b91c1c; border-color:#b91c1c; font-weight:800;">
+        ⚡ Confirmer quand même (Forcer)
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}

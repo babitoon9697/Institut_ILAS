@@ -1,0 +1,367 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- TOP HEADER & ACTIONS -->
+<div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('dashboard') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ t('dashboard') }}</a></div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+      <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800;">
+        📥 Importation & Migration de Données Excel (استيراد البيانات)
+      </h2>
+      <span class="chip chip-green" style="font-size:11px; font-weight:800;">EXCEL & CSV ENGINE</span>
+    </div>
+    <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">Importation massive et sécurisée des élèves, enseignants et classes avec détection automatique et génération de codes</p>
+  </div>
+
+  <div class="flex wrap" style="gap:8px;">
+    <a class="btn btn-outline" href="{{ url_for('students') }}" style="background:#fff; font-weight:700; font-size:13px; padding:7px 12px;">
+      👤 Voir les Élèves
+    </a>
+    <a class="btn btn-primary" href="{{ url_for('import_download_template', target='all') }}" style="background:#10b981; border-color:#10b981; font-weight:800; font-size:13px; padding:7px 16px; box-shadow:0 4px 12px rgba(16,185,129,0.3);">
+      📥 Télécharger Modèle Tout-en-Un (.xlsx)
+    </a>
+  </div>
+</div>
+
+<!-- STEP 1: DOWNLOAD TEMPLATES HUB -->
+<div class="card card-pad mb-3" style="padding:20px; border-top:4px solid #10b981; background:linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:14px;">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+        <span style="font-size:18px;">📋</span>
+        <h3 style="margin:0; font-size:16px; color:#065f46; font-weight:800;">
+          Étape 1 : Télécharger les Modèles Excel Pré-remplis (قوالب إكسيل الجاهزة)
+        </h3>
+      </div>
+      <p style="margin:0; font-size:12.5px; color:#334155; line-height:1.4;">
+        Choisissez le modèle souhaité, remplissez vos données dans Excel en conservant les noms de colonnes, puis importez votre fichier ci-dessous.
+      </p>
+    </div>
+  </div>
+
+  <div class="grid grid-4 mt-3" style="gap:10px;">
+    <a href="{{ url_for('import_download_template', target='all') }}" style="text-decoration:none; background:#ffffff; border:1.5px solid #10b981; border-radius:10px; padding:12px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 8px rgba(16,185,129,0.15); transition:transform 0.2s ease;">
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:18px;">📦</span>
+          <span class="chip chip-green" style="font-size:9.5px; font-weight:800;">RECOMMANDÉ</span>
+        </div>
+        <strong style="color:#047857; font-size:13px; display:block;">Classeur Tout-en-Un</strong>
+        <div style="font-size:11px; color:#64748b; margin-top:2px;">3 Feuilles : Élèves + Profs + Classes</div>
+      </div>
+      <div style="margin-top:10px; font-size:11.5px; font-weight:800; color:#10b981;">📥 Télécharger .xlsx →</div>
+    </a>
+
+    <a href="{{ url_for('import_download_template', target='students') }}" style="text-decoration:none; background:#ffffff; border:1.5px solid #93c5fd; border-radius:10px; padding:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s ease;">
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:18px;">👤</span>
+          <span class="chip chip-blue" style="font-size:9.5px;">ÉLÈVES</span>
+        </div>
+        <strong style="color:#1d4ed8; font-size:13px; display:block;">Modèle Élèves</strong>
+        <div style="font-size:11px; color:#64748b; margin-top:2px;">Coordonnées, tuteur, WhatsApp</div>
+      </div>
+      <div style="margin-top:10px; font-size:11.5px; font-weight:800; color:#1d4ed8;">📥 Télécharger .xlsx →</div>
+    </a>
+
+    <a href="{{ url_for('import_download_template', target='teachers') }}" style="text-decoration:none; background:#ffffff; border:1.5px solid #c4b5fd; border-radius:10px; padding:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s ease;">
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:18px;">👨‍🏫</span>
+          <span class="chip chip-purple" style="font-size:9.5px;">ENSEIGNANTS</span>
+        </div>
+        <strong style="color:#6d28d9; font-size:13px; display:block;">Modèle Enseignants</strong>
+        <div style="font-size:11px; color:#64748b; margin-top:2px;">Spécialités, contact, modèles d'honoraires</div>
+      </div>
+      <div style="margin-top:10px; font-size:11.5px; font-weight:800; color:#6d28d9;">📥 Télécharger .xlsx →</div>
+    </a>
+
+    <a href="{{ url_for('import_download_template', target='courses') }}" style="text-decoration:none; background:#ffffff; border:1.5px solid #fcd34d; border-radius:10px; padding:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s ease;">
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:18px;">📚</span>
+          <span class="chip chip-amber" style="font-size:9.5px;">CLASSES</span>
+        </div>
+        <strong style="color:#b45309; font-size:13px; display:block;">Modèle Classes & Cours</strong>
+        <div style="font-size:11px; color:#64748b; margin-top:2px;">Tarifs, niveaux, affectations de profs</div>
+      </div>
+      <div style="margin-top:10px; font-size:11.5px; font-weight:800; color:#b45309;">📥 Télécharger .xlsx →</div>
+    </a>
+  </div>
+</div>
+
+<!-- STEP 2: UPLOAD & IMPORTATION CARD -->
+<div class="card card-pad mb-3" style="padding:22px; border-top:4px solid #1f6feb;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+    <span style="font-size:18px;">🚀</span>
+    <h3 style="margin:0; font-size:16px; color:#0B3D6E; font-weight:800;">
+      Étape 2 : Téléverser Votre Fichier et Lancer l'Importation
+    </h3>
+  </div>
+
+  <form method="post" action="{{ url_for('import_upload_data') }}" enctype="multipart/form-data">
+    <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:16px;">
+      
+      <div class="field mb-0">
+        <label style="font-size:12px; font-weight:700;">Type de données contenu dans le fichier :</label>
+        <div class="input-field has-ico">
+          <span class="f-ico">📂</span>
+          <select name="target_type" style="font-weight:700; color:#0B3D6E; font-size:13px;">
+            <option value="auto">✨ Détection Automatique / Fichier Tout-en-Un (Recommandé)</option>
+            <option value="students">👤 Élèves uniquement (Feuille / Fichier Élèves)</option>
+            <option value="teachers">👨‍🏫 Enseignants uniquement (Feuille / Fichier Enseignants)</option>
+            <option value="courses">📚 Classes & Cours uniquement (Feuille / Fichier Classes)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field mb-0">
+        <label style="font-size:12px; font-weight:700;">Fichier Excel (.xlsx, .xls) ou CSV <span class="req">*</span></label>
+        <div class="input-field has-ico">
+          <span class="f-ico">📄</span>
+          <input type="file" name="data_file" accept=".xlsx,.xls,.csv" required style="padding:7px 10px; font-size:12.5px; font-weight:600;">
+        </div>
+      </div>
+
+    </div>
+
+    <div style="margin-top:18px; padding-top:14px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div style="font-size:11.5px; color:#64748b; line-height:1.4;">
+        🛡️ <strong>Sécurité Comptable :</strong> Les élèves existants seront mis à jour sans écraser les paiements enregistrés. Des codes uniques <code>ILAS...</code> sont générés automatiquement si omis.
+      </div>
+      <button class="btn btn-primary" type="submit" style="background:#1f6feb; border-color:#1f6feb; font-weight:800; font-size:14px; padding:10px 24px; box-shadow:0 4px 14px rgba(31,111,235,0.35);">
+        ⚡ Lancer l'Importation des Données
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- STEP 3: SCHEMAS & COLUMN STRUCTURE DOCUMENTATION -->
+<div class="card card-pad" style="padding:20px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+    <h3 style="margin:0; color:#0B3D6E; font-size:15.5px; font-weight:800;">
+      📖 Schémas & Structure des Colonnes Excel (Détail des Champs)
+    </h3>
+  </div>
+
+  <div style="display:inline-flex; background:#f1f5f9; padding:3px; border-radius:8px; gap:3px; margin-bottom:14px;">
+    <button type="button" id="tabBtnStu" onclick="switchSchemaTab('stu')" style="padding:6px 14px; border-radius:6px; font-weight:800; font-size:12px; border:none; cursor:pointer; background:#1f6feb; color:#fff;">
+      👤 Schéma Élèves
+    </button>
+    <button type="button" id="tabBtnTea" onclick="switchSchemaTab('tea')" style="padding:6px 14px; border-radius:6px; font-weight:700; font-size:12px; border:none; cursor:pointer; background:transparent; color:#475569;">
+      👨‍🏫 Schéma Enseignants
+    </button>
+    <button type="button" id="tabBtnCou" onclick="switchSchemaTab('cou')" style="padding:6px 14px; border-radius:6px; font-weight:700; font-size:12px; border:none; cursor:pointer; background:transparent; color:#475569;">
+      📚 Schéma Classes & Cours
+    </button>
+  </div>
+
+  <!-- 1. STUDENTS SCHEMA -->
+  <div id="schemaTabStu">
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+        <thead>
+          <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:11px; text-transform:uppercase;">
+            <th style="padding:8px; width:20%;">Nom de la Colonne</th>
+            <th style="padding:8px; text-align:center; width:14%;">Obligatoire</th>
+            <th style="padding:8px; width:22%;">Exemple de Valeur</th>
+            <th style="padding:8px; width:44%;">Description & Utilité</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code style="font-weight:800; color:#0B3D6E;">prenom</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-red" style="font-size:10px; font-weight:800;">Obligatoire</span></td>
+            <td style="padding:8px;"><strong>Karim</strong></td>
+            <td style="padding:8px; color:#475569;">Prénom de l'élève</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code style="font-weight:800; color:#0B3D6E;">nom</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-red" style="font-size:10px; font-weight:800;">Obligatoire</span></td>
+            <td style="padding:8px;"><strong>Benali</strong></td>
+            <td style="padding:8px; color:#475569;">Nom de famille de l'élève</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code>genre</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-gray" style="font-size:10px;">Optionnel</span></td>
+            <td style="padding:8px;"><code>M</code> ou <code>F</code></td>
+            <td style="padding:8px; color:#475569;">Sexe (M: Masculin, F: Féminin)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code>telephone</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-gray" style="font-size:10px;">Optionnel</span></td>
+            <td style="padding:8px;"><code>0655443322</code></td>
+            <td style="padding:8px; color:#475569;">Numéro personnel de l'élève</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code style="font-weight:700; color:#1d4ed8;">telephone_parent</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-blue" style="font-size:10px; font-weight:700;">Recommandé</span></td>
+            <td style="padding:8px;"><code>0699887766</code></td>
+            <td style="padding:8px; color:#475569;">Téléphone du tuteur pour les notifications WhatsApp</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code>nom_parent</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-gray" style="font-size:10px;">Optionnel</span></td>
+            <td style="padding:8px;">Mohamed Benali</td>
+            <td style="padding:8px; color:#475569;">Nom complet du tuteur / responsable</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code>niveau_scolaire</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-gray" style="font-size:10px;">Optionnel</span></td>
+            <td style="padding:8px;"><code>2Bac PC</code>, <code>3AC</code>, <code>A1</code></td>
+            <td style="padding:8px; color:#475569;">Niveau scolaire ou classe fréquentée</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code>etablissement</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-gray" style="font-size:10px;">Optionnel</span></td>
+            <td style="padding:8px;">Lycée Al Khawarizmi</td>
+            <td style="padding:8px; color:#475569;">École d'origine de l'élève</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code>cin</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-gray" style="font-size:10px;">Optionnel</span></td>
+            <td style="padding:8px;"><code>BK123456</code></td>
+            <td style="padding:8px; color:#475569;">Numéro de carte d'identité nationale</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code>ville</code> / <code>adresse</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-gray" style="font-size:10px;">Optionnel</span></td>
+            <td style="padding:8px;">Deroua, Hay Annasr</td>
+            <td style="padding:8px; color:#475569;">Coordonnées géographiques</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 2. TEACHERS SCHEMA -->
+  <div id="schemaTabTea" style="display:none;">
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+        <thead>
+          <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:11px; text-transform:uppercase;">
+            <th style="padding:8px; width:20%;">Nom de la Colonne</th>
+            <th style="padding:8px; text-align:center; width:14%;">Obligatoire</th>
+            <th style="padding:8px; width:22%;">Exemple de Valeur</th>
+            <th style="padding:8px; width:44%;">Description & Utilité</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code style="font-weight:800; color:#0B3D6E;">prenom</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-red" style="font-size:10px; font-weight:800;">Obligatoire</span></td>
+            <td style="padding:8px;"><strong>Ahmed</strong></td>
+            <td style="padding:8px; color:#475569;">Prénom de l'enseignant</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code style="font-weight:800; color:#0B3D6E;">nom</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-red" style="font-size:10px; font-weight:800;">Obligatoire</span></td>
+            <td style="padding:8px;"><strong>Alami</strong></td>
+            <td style="padding:8px; color:#475569;">Nom de famille</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code style="color:#7c3aed;">specialite</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-blue" style="font-size:10px; font-weight:700;">Recommandé</span></td>
+            <td style="padding:8px;">Mathématiques, Anglais, Français</td>
+            <td style="padding:8px; color:#475569;">Matière enseignée</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code>telephone</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-gray" style="font-size:10px;">Optionnel</span></td>
+            <td style="padding:8px;"><code>0611223344</code></td>
+            <td style="padding:8px; color:#475569;">Numéro WhatsApp</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code>type_salaire</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-gray" style="font-size:10px;">Optionnel</span></td>
+            <td style="padding:8px;"><code>percentage</code>, <code>fixed</code>, <code>hourly</code></td>
+            <td style="padding:8px; color:#475569;">Modèle de rémunération</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code>montant_salaire</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-gray" style="font-size:10px;">Optionnel</span></td>
+            <td style="padding:8px;"><code>50.0</code> (pour 50%) ou <code>2000.0</code></td>
+            <td style="padding:8px; color:#475569;">Valeur numérique du contrat</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 3. COURSES SCHEMA -->
+  <div id="schemaTabCou" style="display:none;">
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+        <thead>
+          <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:11px; text-transform:uppercase;">
+            <th style="padding:8px; width:20%;">Nom de la Colonne</th>
+            <th style="padding:8px; text-align:center; width:14%;">Obligatoire</th>
+            <th style="padding:8px; width:22%;">Exemple de Valeur</th>
+            <th style="padding:8px; width:44%;">Description & Utilité</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code style="font-weight:800; color:#0B3D6E;">nom_classe</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-red" style="font-size:10px; font-weight:800;">Obligatoire</span></td>
+            <td style="padding:8px;"><strong>Mathématiques 2Bac Biof</strong></td>
+            <td style="padding:8px; color:#475569;">Intitulé du groupe ou de la classe</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code>categorie</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-gray" style="font-size:10px;">Optionnel</span></td>
+            <td style="padding:8px;"><code>language</code> ou <code>tutoring</code></td>
+            <td style="padding:8px; color:#475569;">Langues vivantes ou Soutien scolaire</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code style="color:#047857; font-weight:700;">prix_mensuel</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-blue" style="font-size:10px; font-weight:700;">Recommandé</span></td>
+            <td style="padding:8px;"><code>300.0</code></td>
+            <td style="padding:8px; color:#475569;">Tarif mensuel de base en DH</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code>frais_inscription</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-gray" style="font-size:10px;">Optionnel</span></td>
+            <td style="padding:8px;"><code>40.0</code></td>
+            <td style="padding:8px; color:#475569;">Frais d'adhésion annuels</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code>enseignant</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-gray" style="font-size:10px;">Optionnel</span></td>
+            <td style="padding:8px;">Ahmed Alami</td>
+            <td style="padding:8px; color:#475569;">Nom de l'enseignant titulaire (auto-créé si inexistant)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><code>salle</code></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-gray" style="font-size:10px;">Optionnel</span></td>
+            <td style="padding:8px;">Salle 1</td>
+            <td style="padding:8px; color:#475569;">Nom de la salle de cours</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function switchSchemaTab(tab) {
+    var tabs = ['stu', 'tea', 'cou'];
+    tabs.forEach(function(t) {
+      document.getElementById('schemaTab' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = (t === tab) ? 'block' : 'none';
+      var btn = document.getElementById('tabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
+      if (t === tab) {
+        btn.style.background = '#1f6feb';
+        btn.style.color = '#fff';
+        btn.style.fontWeight = '800';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = '#475569';
+        btn.style.fontWeight = '700';
+      }
+    });
+  }
+</script>
+
+{% endblock %}

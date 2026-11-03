@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Emploi du Temps — {{ stu.full_name }} — ILAS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* ========================================================
+       PAGE CONFIGURATION & PRINT SETUP
+       ======================================================== */
+    {% if fmt == 'a5' %}
+      @page {
+        size: A5 portrait;
+        margin: 4mm 5mm;
+      }
+    {% elif fmt == 'a4' %}
+      @page {
+        size: A4 portrait;
+        margin: 8mm 10mm;
+      }
+    {% else %}
+      @page {
+        size: 80mm auto;
+        margin: 0;
+      }
+    {% endif %}
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    /* BARRE D'ACTIONS NO-PRINT */
+    .print-toolbar {
+      background: #ffffff;
+      border-bottom: 2px solid #e2e8f0;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 800;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      border: 1.5px solid transparent;
+    }
+    .btn-primary-action {
+      background: #0B3D6E;
+      color: #ffffff;
+    }
+    .btn-primary-action:hover {
+      background: #082d52;
+    }
+    .btn-fmt {
+      background: #f8fafc;
+      color: #334155;
+      border-color: #cbd5e1;
+    }
+    .btn-fmt.active {
+      background: #0B3D6E;
+      color: #ffffff;
+      border-color: #0B3D6E;
+    }
+
+    /* CONTENEUR */
+    .viewport {
+      padding: 15px;
+      display: flex;
+      justify-content: center;
+    }
+
+    {% if fmt == 'a5' %}
+    /* A5 CARD (148 x 210 mm) */
+    .student-sheet {
+      width: 138mm;
+      max-width: 138mm;
+      height: 200mm;
+      max-height: 200mm;
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 4mm 5mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08);
+      margin: 0 auto;
+    }
+    @media print {
+      .viewport { padding: 0 !important; }
+      .student-sheet {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        box-shadow: none !important;
+        border: 1.5px solid #94a3b8 !important;
+        border-radius: 8px !important;
+      }
+    }
+    {% elif fmt == 'a4' %}
+    /* A4 CARD (210 x 297 mm) */
+    .student-sheet {
+      width: 100%;
+      max-width: 840px;
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 30px -5px rgba(0,0,0,0.08);
+      margin: 0 auto;
+    }
+    @media print {
+      .viewport { padding: 0 !important; }
+      .student-sheet {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+      }
+    }
+    {% else %}
+    /* 80MM THERMAL RECEIPT (MODERN PURE B&W) */
+    .student-sheet {
+      width: 72mm;
+      max-width: 72mm;
+      background: #ffffff;
+      padding: 4mm 2.5mm;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 10px;
+      line-height: 1.25;
+      color: #000000;
+      margin: 0 auto;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.1);
+    }
+    @media print {
+      .viewport { padding: 0 !important; }
+      .student-sheet {
+        width: 72mm !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 2mm 1mm !important;
+      }
+    }
+    {% endif %}
+
+    /* ========================================================
+       DESIGN MODERNE & FRIENDLY DU PASSEPORT ÉTUDIANT
+       ======================================================== */
+    
+    /* 1. Header École */
+    .school-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 3.5px;
+      border-bottom: 2px solid #0B3D6E;
+      margin-bottom: 3.5px;
+    }
+    .school-identity {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .school-badge-logo {
+      background: linear-gradient(135deg, #0B3D6E 0%, #1e40af 100%);
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      padding: 3px 7px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(11,61,110,0.25);
+    }
+    .school-name-text {
+      font-size: 11px;
+      font-weight: 900;
+      color: #0B3D6E;
+      text-transform: uppercase;
+      line-height: 1.15;
+    }
+    .school-tagline {
+      font-size: 7.5px;
+      font-weight: 700;
+      color: #059669;
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+    .school-contact-box {
+      text-align: right;
+      font-size: 7.5px;
+      color: #475569;
+      line-height: 1.3;
+    }
+    .school-contact-box strong {
+      color: #0B3D6E;
+      font-weight: 800;
+    }
+
+    /* 2. Hero Card Élève (Style Carte d'Étudiant Moderne) */
+    .student-hero-card {
+      background: linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 100%);
+      border: 1.5px solid #93c5fd;
+      border-radius: 8px;
+      padding: 4px 8px;
+      margin-bottom: 3.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+    .student-hero-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .student-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1f6feb 0%, #0B3D6E 100%);
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(31,111,235,0.25);
+      border: 1.5px solid #ffffff;
+      flex-shrink: 0;
+    }
+    .student-name-title {
+      font-size: 12.5px;
+      font-weight: 900;
+      color: #0B3D6E;
+      text-transform: uppercase;
+      line-height: 1.1;
+      letter-spacing: 0.2px;
+    }
+    .student-hero-badges {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+      flex-wrap: wrap;
+    }
+    .badge-pill {
+      font-size: 7.5px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .badge-code {
+      background: #0B3D6E;
+      color: #ffffff;
+    }
+    .badge-level {
+      background: #ffffff;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+    .badge-year {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+
+    .student-hero-right {
+      text-align: right;
+    }
+    .hero-schedule-label {
+      font-size: 8.5px;
+      font-weight: 900;
+      color: #0369a1;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .hero-class-count {
+      font-size: 7.5px;
+      color: #0284c7;
+      font-weight: 700;
+      margin-top: 1px;
+    }
+
+    /* 3. Bandeau de Bienvenue & Motivation */
+    .motivation-banner {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      border-radius: 5px;
+      padding: 2.5px 7px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      font-size: 8px;
+      color: #065f46;
+      font-weight: 700;
+    }
+    .motivation-banner strong {
+      color: #047857;
+    }
+
+    /* 4. Résumé Visuel des Classes Inscrites */
+    .enrolled-courses-strip {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+    .course-mini-card {
+      flex: 1;
+      min-width: 30%;
+      border-radius: 5px;
+      padding: 3px 5px;
+      font-size: 7.5px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid transparent;
+    }
+    .mini-icon {
+      font-size: 13px;
+      line-height: 1;
+    }
+    .mini-title {
+      font-weight: 800;
+      line-height: 1.15;
+    }
+    .mini-teacher {
+      font-size: 7px;
+      opacity: 0.85;
+      margin-top: 1px;
+    }
+
+    /* 5. Grille Visuelle des Jours de Cours (Attractif & Organisé) */
+    .schedule-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+      padding: 0 1px;
+    }
+    .schedule-heading {
+      font-size: 9px;
+      font-weight: 900;
+      color: #0B3D6E;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .schedule-heading-sub {
+      font-size: 7px;
+      color: #64748b;
+      font-weight: 700;
+    }
+
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(42mm, 1fr));
+      gap: 3.5px;
+      margin-bottom: 4px;
+    }
+
+    .day-card {
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      background: #ffffff;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+    .day-card-header {
+      padding: 3px 6px;
+      font-size: 8.5px;
+      font-weight: 900;
+      text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1.5px solid transparent;
+      letter-spacing: 0.3px;
+    }
+    .day-card-body {
+      padding: 3.5px 4.5px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
+      background: #ffffff;
+    }
+
+    /* Thématisation des Jours */
+    .day-theme-blue .day-card-header { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+    .day-theme-emerald .day-card-header { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+    .day-theme-amber .day-card-header { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+    .day-theme-purple .day-card-header { background: #f3e8ff; color: #7e22ce; border-color: #e9d5ff; }
+    .day-theme-rose .day-card-header { background: #ffe4e6; color: #be123c; border-color: #fecdd3; }
+    .day-theme-indigo .day-card-header { background: #e0e7ff; color: #4338ca; border-color: #c7d2fe; }
+    .day-theme-teal .day-card-header { background: #ccfbf1; color: #0f766e; border-color: #99f6e4; }
+
+    /* Carte de la Séance / Créneau */
+    .session-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 3px 4px;
+      background: #f8fafc;
+      transition: all 0.15s;
+    }
+    .session-time-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #0B3D6E;
+      color: #ffffff;
+      font-size: 8px;
+      font-weight: 900;
+      padding: 1px 4px;
+      border-radius: 3px;
+      letter-spacing: 0.2px;
+    }
+    .session-course-title {
+      font-size: 8.5px;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 2px 0 1px 0;
+      line-height: 1.2;
+    }
+    .session-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 7px;
+      color: #64748b;
+      margin-top: 1.5px;
+    }
+    .session-teacher {
+      font-weight: 700;
+      color: #047857;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .session-room-pill {
+      background: #e2e8f0;
+      color: #1e293b;
+      font-weight: 800;
+      padding: 0.5px 3.5px;
+      border-radius: 2px;
+      font-size: 6.5px;
+    }
+
+    /* 6. Conseils Amicaux & Rappels */
+    .tips-friendly-row {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 5px;
+      padding: 2.5px 6px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      font-size: 7.5px;
+      color: #334155;
+      font-weight: 700;
+      margin-bottom: 3.5px;
+    }
+    .tip-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .tip-item strong {
+      color: #0B3D6E;
+    }
+
+    /* 7. Footer & Cachet */
+    .sheet-footer {
+      border-top: 1.5px solid #0B3D6E;
+      padding-top: 3px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 6px;
+    }
+    .footer-left {
+      font-size: 6.5px;
+      color: #64748b;
+      line-height: 1.25;
+      max-width: 68%;
+    }
+    .footer-stamp {
+      border: 1.5px dashed #94a3b8;
+      border-radius: 4px;
+      width: 32mm;
+      height: 13mm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 6px;
+      font-weight: 800;
+      color: #94a3b8;
+      text-transform: uppercase;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== BARRE D'ACTIONS (NO-PRINT) ==================== -->
+  <div class="print-toolbar no-print">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button onclick="window.print()" class="btn-action btn-primary-action">
+        🖨️ Imprimer l'Emploi du Temps
+      </button>
+
+      <span style="border-left: 2px solid #e2e8f0; height: 24px; margin: 0 4px;"></span>
+
+      <a href="?fmt=a5" class="btn-action btn-fmt {{ 'active' if fmt=='a5' else '' }}" title="Format A5 moderne et compact (Recommandé)">
+        📄 Format A5 (Idéal pour l'élève)
+      </a>
+      <a href="?fmt=a4" class="btn-action btn-fmt {{ 'active' if fmt=='a4' else '' }}" title="Format A4 standard">
+        📋 Format A4 Grand
+      </a>
+      <a href="?fmt=80mm" class="btn-action btn-fmt {{ 'active' if fmt=='80mm' else '' }}" title="Ticket de caisse thermique 80mm">
+        🎟️ Ticket 80mm
+      </a>
+
+      <span style="border-left: 2px solid #e2e8f0; height: 24px; margin: 0 4px;"></span>
+
+      <button type="button" id="btnPrintDirectWa" onclick="sendTimetableDirectFromPrint()" class="btn-action" style="background:#10b981; color:#ffffff; border-color:#10b981; font-weight:800; box-shadow:0 2px 6px rgba(16,185,129,0.3);">
+        💬 WhatsApp & Copier Image (Ctrl+V)
+      </button>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="font-size:11px; font-weight:700; color:#475569;">
+        Élève : <strong style="color:#0B3D6E;">{{ stu.full_name }}</strong> ({{ courses|length }} matière(s))
+      </span>
+      <a href="/students/{{ stu.id }}" class="btn-action btn-fmt">← Fiche Élève</a>
+      <a href="/students" class="btn-action btn-fmt">Liste des Élèves</a>
+    </div>
+  </div>
+
+
+  <!-- ==================== CORPS DU DOCUMENT ==================== -->
+  <div class="viewport">
+
+    {% if fmt in ['a5', 'a4'] %}
+    <div class="student-sheet">
+
+      <!-- 1. EN-TÊTE DE L'INSTITUT -->
+      <div>
+        <div class="school-bar">
+          <div class="school-identity">
+            <span class="school-badge-logo">ILAS</span>
+            <div>
+              <div class="school-name-text">INSTITUT PRIVÉ DE LANGUES LES SAGES</div>
+              <div class="school-tagline">Excellence Pédagogique & Accompagnement · Autorisation N° 22-200/2020</div>
+            </div>
+          </div>
+          <div class="school-contact-box">
+            <div>📞 <strong>06 60 29 11 55</strong> / 06 70 38 48 73</div>
+            <div>📍 Lot Nora, N10, Makhlouf, Deroua · 💬 WhatsApp</div>
+          </div>
+        </div>
+
+        <!-- 2. CARTE ÉLÈVE (PASSPORT ÉTUDIANT) -->
+        <div class="student-hero-card">
+          <div class="student-hero-left">
+            <div class="student-avatar">
+              {{ stu.first_name[0]|upper }}
+            </div>
+            <div>
+              <div class="student-name-title">{{ stu.full_name }}</div>
+              <div class="student-hero-badges">
+                <span class="badge-pill badge-code">🪪 {{ stu.code }}</span>
+                {% if stu.school_level %}
+                  <span class="badge-pill badge-level">🎓 {{ stu.school_level }}</span>
+                {% endif %}
+                <span class="badge-pill badge-year">📅 Année 2025/2026</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="student-hero-right">
+            <div class="hero-schedule-label">🗓️ Emploi du Temps</div>
+            <div class="hero-class-count">
+              {{ courses|length }} classe(s) inscrite(s)
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. MOTIVATION & MESSAGE DE BIENVENUE -->
+        <div class="motivation-banner">
+          <span>✨ <strong>Bienvenue à l'Institut ILAS !</strong> Nous te souhaitons une excellente réussite scolaire.</span>
+          <span style="font-size:7px; color:#047857; font-weight:800;">Programme Officiel</span>
+        </div>
+
+        <!-- 4. RÉSUMÉ VISUEL DES CLASSES ACTIVES -->
+        {% if courses|length > 0 %}
+        <div class="enrolled-courses-strip">
+          {% for c in courses %}
+            {% set sub_text = (c.name or '')|lower + ' ' + (c.language or '')|lower %}
+            {% if 'anglais' in sub_text or 'english' in sub_text %}
+              {% set icon = '🇬🇧' %}
+              {% set c_bg = '#eff6ff' %}
+              {% set c_bd = '#bfdbfe' %}
+              {% set c_color = '#1d4ed8' %}
+            {% elif 'français' in sub_text or 'francais' in sub_text %}
+              {% set icon = '🇫🇷' %}
+              {% set c_bg = '#eef2ff' %}
+              {% set c_bd = '#c7d2fe' %}
+              {% set c_color = '#4338ca' %}
+            {% elif 'allemand' in sub_text %}
+              {% set icon = '🇩🇪' %}
+              {% set c_bg = '#fef3c7' %}
+              {% set c_bd = '#fde68a' %}
+              {% set c_color = '#b45309' %}
+            {% elif 'espagnol' in sub_text %}
+              {% set icon = '🇪🇸' %}
+              {% set c_bg = '#ffedd5' %}
+              {% set c_bd = '#fed7aa' %}
+              {% set c_color = '#c2410c' %}
+            {% elif 'math' in sub_text %}
+              {% set icon = '📐' %}
+              {% set c_bg = '#ecfdf5' %}
+              {% set c_bd = '#a7f3d0' %}
+              {% set c_color = '#047857' %}
+            {% elif 'physique' in sub_text or 'chimie' in sub_text or 'pc' in sub_text %}
+              {% set icon = '🧪' %}
+              {% set c_bg = '#ecfeff' %}
+              {% set c_bd = '#a5f3fc' %}
+              {% set c_color = '#0e7490' %}
+            {% elif 'svt' in sub_text or 'bio' in sub_text %}
+              {% set icon = '🌿' %}
+              {% set c_bg = '#f0fdf4' %}
+              {% set c_bd = '#bbf7d0' %}
+              {% set c_color = '#15803d' %}
+            {% elif 'particulier' in sub_text or 'vip' in sub_text %}
+              {% set icon = '⭐' %}
+              {% set c_bg = '#f3e8ff' %}
+              {% set c_bd = '#e9d5ff' %}
+              {% set c_color = '#7e22ce' %}
+            {% else %}
+              {% set icon = '📚' %}
+              {% set c_bg = '#f1f5f9' %}
+              {% set c_bd = '#cbd5e1' %}
+              {% set c_color = '#0B3D6E' %}
+            {% endif %}
+
+            <div class="course-mini-card" style="background:{{ c_bg }}; border-color:{{ c_bd }};">
+              <span class="mini-icon">{{ icon }}</span>
+              <div>
+                <div class="mini-title" style="color:{{ c_color }};">{{ c.name }}</div>
+                <div class="mini-teacher" style="color:{{ c_color }};">
+                  👨‍🏫 {{ c.teacher.full_name if c.teacher else 'Professeur ILAS' }} · 🚪 {{ c.room.name if c.room else 'Salle commune' }}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- 5. PLANNING HEBDOMADAIRE (SEULEMENT SES COURS) -->
+      <div>
+        <div class="schedule-title-row">
+          <div class="schedule-heading">
+            <span>🗓️ Ton Emploi du Temps par Semaine</span>
+          </div>
+          <div class="schedule-heading-sub">
+            Séances personnalisées · Présence indispensable
+          </div>
+        </div>
+
+        {% set active_days = [] %}
+        {% for d in range(7) %}
+          {% if grid[d]|length > 0 %}
+            {% set _ = active_days.append(d) %}
+          {% endif %}
+        {% endfor %}
+
+        {% set day_theme_classes = [
+          'day-theme-blue',
+          'day-theme-emerald',
+          'day-theme-purple',
+          'day-theme-amber',
+          'day-theme-rose',
+          'day-theme-indigo',
+          'day-theme-teal'
+        ] %}
+
+        {% set days_ar_bilingual = [
+          'الإثنين',
+          'الثلاثاء',
+          'الأربعاء',
+          'الخميس',
+          'الجمعة',
+          'السبت',
+          'الأحد'
+        ] %}
+
+        {% if active_days|length > 0 %}
+          <div class="days-grid">
+            {% for d in active_days %}
+            <div class="day-card {{ day_theme_classes[d] }}">
+              <div class="day-card-header">
+                <span>{{ days_fr[d] }}</span>
+                <span style="font-size:7.5px; opacity:0.85;">{{ days_ar_bilingual[d] }}</span>
+              </div>
+              <div class="day-card-body">
+                {% for slot in grid[d] %}
+                <div class="session-item">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="session-time-badge">⏰ {{ slot.start_time }} – {{ slot.end_time }}</span>
+                    <span class="session-room-pill">🚪 {{ slot.room.name if slot.room else (slot.course.room.name if slot.course.room else 'Salle') }}</span>
+                  </div>
+
+                  <div class="session-course-title">
+                    {{ slot.course.name }}
+                  </div>
+
+                  <div class="session-meta-row">
+                    {% if slot.course.teacher %}
+                      <span class="session-teacher">👨‍🏫 {{ slot.course.teacher.full_name }}</span>
+                    {% else %}
+                      <span>Enseignant ILAS</span>
+                    {% endif %}
+                    {% if slot.course.group_name %}
+                      <span style="font-size:6.5px; font-weight:700; color:#475569;">{{ slot.course.group_name }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="border:1.5px dashed #cbd5e1; border-radius:8px; padding:12px; text-align:center; color:#64748b; font-size:9px; margin-bottom:4px; background:#f8fafc;">
+            ⚠️ Aucun créneau n'est encore enregistré pour tes classes actuelles. Contacte l'accueil pour ton affectation.
+          </div>
+        {% endif %}
+
+        <!-- 6. CONSEILS PRATIQUES FRIENDLY -->
+        <div class="tips-friendly-row">
+          <div class="tip-item">
+            <span>⏰</span>
+            <span><strong>Ponctualité :</strong> Arrive 5 min à l'avance</span>
+          </div>
+          <div class="tip-item">
+            <span>🎒</span>
+            <span><strong>Préparation :</strong> Apporte ton cahier & stylo</span>
+          </div>
+          <div class="tip-item">
+            <span>💬</span>
+            <span><strong>Assistance :</strong> WhatsApp 06 60 29 11 55</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. FOOTER & CACHET -->
+      <div class="sheet-footer">
+        <div class="footer-left">
+          <div style="font-weight:800; color:#0B3D6E; margin-bottom:1px;">Institut Privé de Langues Les Sages (ILAS)</div>
+          <div>• En cas d'empêchement imprévu, prière d'aviser l'accueil à l'avance.</div>
+          <div>• Document officiel remis à l'élève le {{ today.strftime('%d/%m/%Y') }} · www.les-sages-ilas.ma</div>
+        </div>
+
+        <div class="footer-stamp">
+          <span>Direction Pédagogique</span>
+          <span style="font-size:5px; margin-top:2px;">ILAS DEROUA</span>
+        </div>
+      </div>
+
+    </div>
+
+    {% else %}
+    <!-- ==================== TICKET THERMIQUE 80MM (MODERN PURE B&W) ==================== -->
+    <div class="student-sheet">
+      <div style="text-align:center; padding-bottom:2px;">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAC+AQAAAAAzFWSTAAAFgElEQVR4nO1aPW7kNhT+SAkeFYuMShdBrCIHcJlu5ih7hL3Bqky5R/BJEhUuUvoISpAiTQAlcCEvpGHwHkmJ0pASuUZcmTBmRiN+8/5/+GShkLrk8vIpHYJ0SP8mVIY3oXJ5EyrqTaigToY030ClSYcgHdKO51QIHnch+er677NKpfK8B8A1Y2IXIpZ8CGRDGhW1zxZWkH+v9bEHKYEiDfISwxcWkJ81oSTGAFRpkHM6Y/dRMOGaYsxjTCPdiywqkmVyHGMJuU+HfEiH4K0gzf9PZUiHRC35ekjbJkJ6cZtOJU+GyCwZkqebskiNfXT7bGFNpUyHVOkQpEPOMRjlrkZFLPlaxkQ6RKZDkA55TIcU6ZCoJZNdDEvIQxQZ5a5fY6wvXn0YiVkyatc75HUaE86qMIoceKGXef01fVJCxlGZK84fUOcVxJ/45gJaAb+lyTIC+BoF+cXt1FWdRIXrwqr+fFYDMqV6epnXFFLcqh2TsiVD+gjGlG0EdTAOKbJcfOdb5ZNlwEl/MAd7lUDFQOp9yLCuvdK5Gco2y7amSWDMIuXuab9fdQOtC9mh2ACnLqoz6uaxiWjGVQdyGHx2aXEwvkYfahz3xW9nNRfUGNzLlAa2pMA8y92yZwNEcSCXIsL6ju7PQLEE3PU+8ckraF24fA2rEAsMoVw/kuXCfDHNGKr9ECMS9dzhiGYJ6aKUIPf6t8tVIpJ7jF3vlM6X3iPltUdI9yJ0qmgXypYATu1Gy3dtK0l6+95chPr9bsG5BG4Md/uaaOy+AoLheZACMyccWU9KMfyg4HFL2qbDkrI+LckWrMLh0uJ2UvSzZayO7PZqrnxWZiZQepNlgx8XMQbI2Rx7vn82s2NNJQ8ny3ry1ooHSASZGobQQUQaTym5Hi/t58tJaumtD/xKSmeWVO+xCyUJKtWmimXT+YVDdG9kTQKPC8b8LnaBQK2dywos40+V7IlPBLF+4vdKKvNn44+k0meXShEMSnewc3Ehfj/rmbpmmfjhTmnWUygorSfd0MuDQ8XvYt1a/s7GD3dW8JiyxVF1tvS1OhAniNqH9Gx/zRgVEf/8rUWJwnrfDdtf2ksZ8VhAkIJM4QvvblAhn+7fcw9Tm8s8ZqD0QfNDawieQnVQWjEz7mHsYLsM+77jug0ZpqH46SgBth4lcxm+mBhTvPEgK43cGkGIpTCSM21LTPscea3KDBhkqUlkIa8kEiYstTogCzyTQvKohyIwgTxSRgvoWPfeNixB/n7JcyAfScdxh+USkEwG+BjqRfNl2BSzYbVnX9lF+z1FgFkDycJSZ4E2qTNCujeltuF2I+tkEkl/HPO3gcTX4h++73q5pN2cK0JZ7Pe1BaTmqdkY8V6lHkUqI7XApzHSTaYGbi9H/obFaViUsCVHt4QraxCtcA8V3vt54B2tCSAJHOq77U78QYflg/Xb2c4eKtqJjheWhY9xgxPXG/WoF7RNGTOICeI1i6YycAB/5V8dHCob49oR9T25GTlaD0ibJrZiskZToWMNdbM/WuUvl1Fj0yjinPZQRbqb68C1xozPH+lA0QB3pMJMGk35U6X59pksXwF/8oMz2ft0PPKMZcqGI77wtlFQ5OTD1sjO/pDAYYqzQl52FHbUBhvmoJFqQ2Fk308/rL4rTboIPtkUtW6iZ3NUUps98A8HDVXUj/Tp4h5GnugtWCqKKb/YknHWDUlAFOdx5Nww1vrUaJVpra/XSXF3r81gunxQq0Dzqy9BKlOXV5uHZjldP+IlYBW1EEIbpljvWTKmz7h6lmSj+rQ9h6FelAsJ53lN7bxNRac8vqbkSPKLnTm/0yBR5v4JwHe7BzC+TS7D3RuAT9hmzIan7eE6fn8fQacumYzAOyR1fYPG/gOKo10pOlir8gAAAABJRU5ErkJggg==" style="max-width:44mm; height:auto; display:block; margin:0 auto 3px auto;" alt="ILAS">
+        <div style="font-family:'Space Grotesk', 'Plus Jakarta Sans', sans-serif; font-size:13px; font-weight:900; letter-spacing:0.6px; text-transform:uppercase; color:#000; line-height:1.1;">ILAS — LES SAGES</div>
+        <div style="font-size:8px; font-weight:800; text-transform:uppercase; color:#000; letter-spacing:0.3px; margin-top:2px;">INSTITUT PRIVÉ DE LANGUES</div>
+        <div style="font-size:8px; font-weight:700; color:#000; margin-top:1.5px;">Tél: 06 60 29 11 55 · Deroua</div>
+      </div>
+
+      <div style="background:#000; color:#fff; font-size:11px; font-weight:900; letter-spacing:0.8px; text-transform:uppercase; text-align:center; padding:4px 0; margin:7px 0 5px 0; border-radius:2px;">
+        [ EMPLOI DU TEMPS ÉLÈVE ]
+      </div>
+
+      <div style="border:1.5px solid #000; border-radius:3px; padding:4px 6px; margin-bottom:7px; font-size:9px;">
+        <div style="display:flex; justify-content:space-between; padding:1.5px 0; border-bottom:1px dashed #000;">
+          <span style="font-size:8px; font-weight:800; text-transform:uppercase;">ÉLÈVE</span>
+          <span style="font-weight:900; text-align:right;">{{ stu.full_name }}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:1.5px 0; border-bottom:1px dashed #000;">
+          <span style="font-size:8px; font-weight:800; text-transform:uppercase;">CODE ÉLÈVE</span>
+          <span style="font-weight:900; text-align:right;">{{ stu.code }}</span>
+        </div>
+        {% if stu.school_level %}
+        <div style="display:flex; justify-content:space-between; padding:1.5px 0; border-bottom:1px dashed #000;">
+          <span style="font-size:8px; font-weight:800; text-transform:uppercase;">NIVEAU</span>
+          <span style="font-weight:900; text-align:right;">{{ stu.school_level }}</span>
+        </div>
+        {% endif %}
+        <div style="display:flex; justify-content:space-between; padding:1.5px 0;">
+          <span style="font-size:8px; font-weight:800; text-transform:uppercase;">DATE D'ÉMISSION</span>
+          <span style="font-weight:900; text-align:right;">{{ today.strftime('%d/%m/%Y') }}</span>
+        </div>
+      </div>
+
+      {% set active_days = [] %}
+      {% for d in range(7) %}
+        {% if grid[d]|length > 0 %}
+          {% set _ = active_days.append(d) %}
+        {% endif %}
+      {% endfor %}
+
+      {% for d in active_days %}
+      <div style="margin-top:8px;">
+        <div style="background:#000; color:#fff; display:flex; justify-content:space-between; align-items:center; padding:3px 6px; margin-bottom:5px; border-radius:2px;">
+          <span style="font-size:10px; font-weight:900; letter-spacing:0.5px; text-transform:uppercase;">&gt;&gt; {{ days_fr[d] }}</span>
+          <span style="font-size:8px; font-weight:900; background:#fff; color:#000; padding:0 4px; border-radius:2px;">{{ grid[d]|length }} COURS</span>
+        </div>
+        {% for slot in grid[d] %}
+        <div style="border-left:3.5px solid #000; padding:3px 0 4px 6px; margin-bottom:5px; border-bottom:1px dashed #000;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+            <span style="font-size:10px; font-weight:900; letter-spacing:0.2px;">[{{ slot.start_time }} – {{ slot.end_time }}]</span>
+            <span style="font-size:8.5px; font-weight:900; border:1.2px solid #000; padding:0 4px; border-radius:2px; text-transform:uppercase;">
+              {{ slot.room.name if slot.room else (slot.course.room.name if slot.course.room else 'SALLE ?') }}
+            </span>
+          </div>
+          <div style="font-size:11px; font-weight:900; line-height:1.25; margin-bottom:2px; color:#000;">
+            {{ slot.course.name }}
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:8.5px; font-weight:800; color:#000;">
+            <span>{% if slot.course.teacher %}Prof: {{ slot.course.teacher.full_name }}{% else %}ILAS{% endif %}</span>
+            {% if slot.course.group_name %}<span>{{ slot.course.group_name }}</span>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+
+      <div style="text-align:center; margin-top:10px; padding-top:6px; border-top:1.5px dashed #000; font-size:8px; font-weight:800; line-height:1.35;">
+        <div style="font-weight:900; font-size:9px;">INSTITUT PRIVÉ LES SAGES</div>
+        <div>* Prière d'arriver 5 minutes avant le cours.</div>
+        <div style="margin-top:2px; font-size:7.5px;">Bonne réussite avec l'Institut ILAS !</div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <script src="{{ url_for('static', filename='vendor/html2canvas.min.js') }}"></script>
+  <script>
+    window.captureStudentSheetBlob = async function() {
+      const sheet = document.querySelector('.student-sheet');
+      if (!sheet || typeof html2canvas === 'undefined') return null;
+
+      const canvas = await html2canvas(sheet, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false
+      });
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => resolve(blob), 'image/png');
+      });
+    };
+
+    async function sendTimetableDirectFromPrint() {
+      const btn = document.getElementById('btnPrintDirectWa');
+      if (btn) btn.textContent = "⏳ Capture image...";
+      try {
+        const blob = await window.captureStudentSheetBlob();
+        if (blob && navigator.clipboard && navigator.clipboard.write) {
+          await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+        }
+        if (btn) btn.textContent = "✅ Image Copiée (Ctrl+V) !";
+
+        const parentPhone = {{ (stu.parent_phone or '')|tojson }};
+        const studentPhone = {{ (stu.phone or '')|tojson }};
+        let p = (parentPhone || studentPhone || '').replace(/[^0-9]/g, '');
+        if (p.startsWith('00')) p = p.substring(2);
+        else if (p.startsWith('0')) p = '212' + p.substring(1);
+        else if (p.length === 9) p = '212' + p;
+
+        const studentName = {{ stu.full_name|tojson }};
+        const textMsg = encodeURIComponent(
+          "السلام عليكم ورحمة الله وبركاته 🌸\n" +
+          "تحية طيبة من إدارة معهد *ILAS*.\n" +
+          "نرسل لكم جدول الحصص الأسبوعي الرسمي للتلميذ(ة) *" + studentName + "*.\n" +
+          "📍 المرجو الالتزام التام بمواعيد الحصص المقررة.\n" +
+          "[Réf: #EDT-" + Math.floor(1000 + Math.random() * 9000) + "]"
+        );
+
+        const waUrl = p ? `https://wa.me/${p}?text=${textMsg}` : `https://wa.me/?text=${textMsg}`;
+        window.open(waUrl, '_blank');
+
+        setTimeout(() => {
+          if (btn) btn.textContent = "💬 WhatsApp & Copier Image (Ctrl+V)";
+        }, 3000);
+      } catch (e) {
+        console.error("Direct print WhatsApp error:", e);
+        if (btn) btn.textContent = "❌ Erreur capture";
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Ticket Test de Niveau | {{ test.full_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background:#f8fafc;
+      font-family:'Plus Jakarta Sans', sans-serif;
+      margin:0; padding:40px 16px;
+      display:flex; justify-content:center; align-items:center; min-height:100vh;
+      box-sizing:border-box;
+    }
+    .ticket-card {
+      background:#fff;
+      border:2px dashed #0B3D6E;
+      border-radius:24px;
+      padding:36px 32px;
+      max-width:380px;
+      width:100%;
+      text-align:center;
+      box-shadow:0 12px 30px rgba(0,0,0,0.06);
+    }
+    .inst-title {
+      font-size:20px; font-weight:800; color:#0B3D6E; margin:0 0 4px 0;
+    }
+    .test-badge {
+      display:inline-block; font-size:12px; font-weight:700; color:#0284c7;
+      background:#e0f2fe; padding:4px 12px; border-radius:999px; margin-bottom:16px;
+    }
+    .cand-name {
+      font-size:19px; font-weight:800; color:#0f172a; margin:0 0 6px 0;
+    }
+    .cand-sub {
+      font-size:13.5px; color:#64748b; margin-bottom:20px;
+    }
+    .qr-box {
+      display:inline-block; padding:12px; background:#fff;
+      border-radius:18px; border:1px solid #e2e8f0;
+      box-shadow:0 4px 12px rgba(0,0,0,0.05); margin-bottom:20px;
+    }
+    .qr-box img {
+      width:220px; height:220px; display:block;
+    }
+    .instruction {
+      font-size:13px; color:#334155; line-height:1.5; margin-bottom:24px;
+    }
+    .print-btn {
+      background:#0B3D6E; color:#fff; border:none; padding:12px 24px;
+      border-radius:12px; font-weight:700; font-size:14px; cursor:pointer;
+    }
+    @media print {
+      body { background:#fff; padding:0; }
+      .ticket-card { box-shadow:none; border:2px dashed #333; margin:0 auto; }
+      .print-btn { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ticket-card">
+    <div class="inst-title">INSTITUT ILAS</div>
+    <div class="test-badge">Test de Niveau · {{ test.language }}</div>
+    <div class="cand-name">{{ test.full_name }}</div>
+    <div class="cand-sub">Session créée le {{ test.created_at.strftime('%d/%m/%Y') }}</div>
+
+    <div class="qr-box">
+      <img src="{{ url_for('placement_test_qr_image', test_id=test.id) }}" alt="QR Code">
+    </div>
+
+    <div class="instruction">
+      Scannez ce code avec votre smartphone pour accéder à votre test de niveau en ligne.
+    </div>
+
+    <button type="button" class="print-btn" onclick="window.print()">
+      🖨️ Imprimer le Ticket
+    </button>
+  </div>
+</body>
+</html>

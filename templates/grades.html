@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex between wrap mb-3">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('dashboard') }}">← {{ t('dashboard') }}</a></div>
+    <h2 class="mt-0 mb-0" style="font-size:22px">🏆 {{ t('grades') }}</h2>
+  </div>
+</div>
+
+<div class="card card-pad mb-3">
+  <form method="get" class="flex wrap">
+    <select name="course_id" onchange="this.form.submit()" style="width:300px">
+      <option value="">— {{ t('courses') }} —</option>
+      {% for c in courses %}<option value="{{ c.id }}" {{ 'selected' if course and c.id==course.id }}>{{ c.display_name }}</option>{% endfor %}
+    </select>
+  </form>
+</div>
+
+{% if course %}
+<div class="card card-pad mb-3">
+  <h3 class="mt-0" style="font-size:15px">Ajouter une note</h3>
+  <form method="post" action="{{ url_for('grade_add') }}" class="flex wrap">
+    <input type="hidden" name="course_id" value="{{ course.id }}">
+    <select name="student_id" required style="width:240px">
+      {% for e in enrolls if e.student %}<option value="{{ e.student.id }}">{{ e.student.full_name }}</option>{% endfor %}
+    </select>
+    <input name="exam_name" placeholder="Nom de l'examen" required style="width:200px">
+    <input type="number" step="0.01" name="score" placeholder="Note" required style="width:90px">
+    <input type="number" step="0.01" name="max_score" placeholder="Sur" value="20" style="width:80px">
+    <input type="date" name="date" value="{{ today }}" style="width:150px">
+    <button class="btn btn-primary">+ {{ t('add') }}</button>
+  </form>
+</div>
+
+{% if rows %}
+<div class="card">
+  <div class="table-wrap">
+  <table>
+    <tr><th>{{ t('name') }}</th><th>{{ 'النقط والامتحانات' if session.get('lang')=='ar' else 'Notes & Examens' }}</th><th>{{ 'المعدل' if session.get('lang')=='ar' else 'Moyenne' }}</th></tr>
+    {% for stu, gs, avg in rows %}
+    <tr>
+      <td>{{ stu.full_name }}</td>
+      <td>
+        {% for g in gs %}<span class="chip chip-blue">{{ g.exam_name }}: {{ g.score }}/{{ g.max_score }}</span> {% endfor %}
+      </td>
+      <td><strong>{{ '%.2f'|format(avg) if avg is not none else '-' }}</strong></td>
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+</div>
+{% else %}<div class="card empty">Aucune note pour ce cours.</div>{% endif %}
+{% else %}
+<div class="card empty">Sélectionnez un cours pour gérer les notes.</div>
+{% endif %}
+{% endblock %}

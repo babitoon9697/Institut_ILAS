@@ -1,0 +1,1352 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- ================= TOP HEADER & ACTIONS ================= -->
+<div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('dashboard') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ t('dashboard') }}</a></div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:2px; flex-wrap:wrap;">
+      <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800;">
+        📈 Rapports, Statistiques & Intelligence Financière (التقارير والإحصائيات)
+      </h2>
+      <span class="chip chip-blue" style="font-size:11px; font-weight:800;">AUDIT & P&L</span>
+      <span class="chip chip-purple" style="font-size:11px; font-weight:700;">📅 {{ period_label }}</span>
+    </div>
+    <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">Tableaux de bord consolidés, traçabilité chronologique des encaissements et décaissements, bilan P&L et rentabilité</p>
+  </div>
+
+  <div class="flex wrap" style="gap:8px;">
+    <a class="btn btn-outline" href="{{ url_for('reports_print', format='a4_landscape', preset=preset, date_from=date_from, date_to=date_to, teacher_id=selected_teacher_id, method=selected_method) }}" target="_blank" style="font-weight:700; font-size:13px; padding:7px 12px; background:#fff; border-color:#0B3D6E; color:#0B3D6E;">
+      🖨️ <span>{{ 'طباعة التقرير المالي (A4)' if lang=='ar' else 'Imprimer Bilan Officiel (A4)' }}</span>
+    </a>
+    <a class="btn btn-primary" href="{{ url_for('student_movements') }}" style="background:#0B3D6E; border-color:#0B3D6E; font-weight:800; font-size:13px; padding:7px 14px;">
+      🔄 {{ 'حركة التلاميذ (دخول/خروج)' if lang=='ar' else 'Mouvements Élèves (Flux)' }} →
+    </a>
+    <a class="btn btn-primary" href="{{ url_for('teachers_payroll') }}" style="background:#7c3aed; border-color:#7c3aed; font-weight:800; font-size:13px; padding:7px 14px;">
+      💰 Rapport de Paie Détaillé →
+    </a>
+  </div>
+</div>
+
+<!-- ================= FINANCIAL FILTER CONTROL BAR ================= -->
+<div class="card card-pad mb-3" style="padding:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;">
+  
+  <!-- Row 1: Date Range Presets -->
+  <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid #e2e8f0;">
+    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+      <span style="font-size:11.5px; font-weight:800; color:#475569; text-transform:uppercase; margin-right:4px;">⏱️ Période Rapide :</span>
+      
+      <a href="{{ url_for('reports', report=report, preset='this_month', teacher_id=selected_teacher_id, method=selected_method, category=selected_category) }}" 
+         class="chip" style="cursor:pointer; text-decoration:none; font-weight:700; font-size:11.5px; padding:4px 10px; border-radius:20px; transition:all 0.2s; {% if preset=='this_month' %}background:#0B3D6E; color:#fff; font-weight:800;{% else %}background:#fff; color:#334155; border:1px solid #cbd5e1;{% endif %}">
+        📅 Ce mois-ci
+      </a>
+      
+      <a href="{{ url_for('reports', report=report, preset='today', teacher_id=selected_teacher_id, method=selected_method, category=selected_category) }}" 
+         class="chip" style="cursor:pointer; text-decoration:none; font-weight:700; font-size:11.5px; padding:4px 10px; border-radius:20px; transition:all 0.2s; {% if preset=='today' %}background:#0B3D6E; color:#fff; font-weight:800;{% else %}background:#fff; color:#334155; border:1px solid #cbd5e1;{% endif %}">
+        ⚡ Aujourd'hui
+      </a>
+
+      <a href="{{ url_for('reports', report=report, preset='last_7_days', teacher_id=selected_teacher_id, method=selected_method, category=selected_category) }}" 
+         class="chip" style="cursor:pointer; text-decoration:none; font-weight:700; font-size:11.5px; padding:4px 10px; border-radius:20px; transition:all 0.2s; {% if preset=='last_7_days' %}background:#0B3D6E; color:#fff; font-weight:800;{% else %}background:#fff; color:#334155; border:1px solid #cbd5e1;{% endif %}">
+        7 derniers jours
+      </a>
+
+      <a href="{{ url_for('reports', report=report, preset='last_30_days', teacher_id=selected_teacher_id, method=selected_method, category=selected_category) }}" 
+         class="chip" style="cursor:pointer; text-decoration:none; font-weight:700; font-size:11.5px; padding:4px 10px; border-radius:20px; transition:all 0.2s; {% if preset=='last_30_days' %}background:#0B3D6E; color:#fff; font-weight:800;{% else %}background:#fff; color:#334155; border:1px solid #cbd5e1;{% endif %}">
+        30 derniers jours
+      </a>
+
+      <a href="{{ url_for('reports', report=report, preset='last_month', teacher_id=selected_teacher_id, method=selected_method, category=selected_category) }}" 
+         class="chip" style="cursor:pointer; text-decoration:none; font-weight:700; font-size:11.5px; padding:4px 10px; border-radius:20px; transition:all 0.2s; {% if preset=='last_month' %}background:#0B3D6E; color:#fff; font-weight:800;{% else %}background:#fff; color:#334155; border:1px solid #cbd5e1;{% endif %}">
+        Mois précédent
+      </a>
+
+      <a href="{{ url_for('reports', report=report, preset='this_year', teacher_id=selected_teacher_id, method=selected_method, category=selected_category) }}" 
+         class="chip" style="cursor:pointer; text-decoration:none; font-weight:700; font-size:11.5px; padding:4px 10px; border-radius:20px; transition:all 0.2s; {% if preset=='this_year' %}background:#0B3D6E; color:#fff; font-weight:800;{% else %}background:#fff; color:#334155; border:1px solid #cbd5e1;{% endif %}">
+        Année en cours
+      </a>
+
+      <a href="{{ url_for('reports', report=report, preset='all', teacher_id=selected_teacher_id, method=selected_method, category=selected_category) }}" 
+         class="chip" style="cursor:pointer; text-decoration:none; font-weight:700; font-size:11.5px; padding:4px 10px; border-radius:20px; transition:all 0.2s; {% if preset=='all' %}background:#0B3D6E; color:#fff; font-weight:800;{% else %}background:#fff; color:#334155; border:1px solid #cbd5e1;{% endif %}">
+        Tout l'historique
+      </a>
+    </div>
+
+    <div>
+      <span style="font-size:11.5px; color:#64748b;">Période active : <strong style="color:#0B3D6E;">{{ period_label }}</strong></span>
+    </div>
+  </div>
+
+  <!-- Row 2: Custom Date Filters & Dropdowns Form -->
+  <form method="GET" action="{{ url_for('reports') }}" style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;">
+    <input type="hidden" name="report" value="{{ report }}">
+    <input type="hidden" name="preset" value="custom">
+
+    <div style="flex:1; min-width:140px;">
+      <label style="display:block; font-size:11px; font-weight:700; color:#475569; margin-bottom:4px;">Date Début :</label>
+      <input type="date" name="date_from" value="{{ date_from }}" style="width:100%; padding:6px 10px; font-size:12.5px; border:1.5px solid #cbd5e1; border-radius:8px; background:#fff;">
+    </div>
+
+    <div style="flex:1; min-width:140px;">
+      <label style="display:block; font-size:11px; font-weight:700; color:#475569; margin-bottom:4px;">Date Fin :</label>
+      <input type="date" name="date_to" value="{{ date_to }}" style="width:100%; padding:6px 10px; font-size:12.5px; border:1.5px solid #cbd5e1; border-radius:8px; background:#fff;">
+    </div>
+
+    <div style="flex:1.2; min-width:170px;">
+      <label style="display:block; font-size:11px; font-weight:700; color:#475569; margin-bottom:4px;">Enseignant :</label>
+      <select name="teacher_id" style="width:100%; padding:6px 10px; font-size:12.5px; border:1.5px solid #cbd5e1; border-radius:8px; background:#fff;">
+        <option value="">Tous les professeurs ({{ all_teachers|length }})</option>
+        {% for t in all_teachers %}
+        <option value="{{ t.id }}" {% if selected_teacher_id == t.id %}selected{% endif %}>Prof. {{ t.full_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="flex:1; min-width:140px;">
+      <label style="display:block; font-size:11px; font-weight:700; color:#475569; margin-bottom:4px;">Mode de Règlement :</label>
+      <select name="method" style="width:100%; padding:6px 10px; font-size:12.5px; border:1.5px solid #cbd5e1; border-radius:8px; background:#fff;">
+        <option value="all" {% if selected_method=='all' %}selected{% endif %}>Tous les modes</option>
+        <option value="cash" {% if selected_method=='cash' %}selected{% endif %}>💵 Espèces (Cash)</option>
+        <option value="transfer" {% if selected_method=='transfer' %}selected{% endif %}>🏦 Virement bancaire</option>
+        <option value="card" {% if selected_method=='card' %}selected{% endif %}>💳 Carte bancaire</option>
+        <option value="online" {% if selected_method=='online' %}selected{% endif %}>🌐 Paiement en ligne</option>
+      </select>
+    </div>
+
+    <div style="flex:1.2; min-width:160px;">
+      <label style="display:block; font-size:11px; font-weight:700; color:#475569; margin-bottom:4px;">Agent / Caissier :</label>
+      <select name="agent_id" style="width:100%; padding:6px 10px; font-size:12.5px; border:1.5px solid #cbd5e1; border-radius:8px; background:#fff;">
+        <option value="">Tous les agents ({{ all_agents|length }})</option>
+        {% for ag in all_agents %}
+        <option value="{{ ag.id }}" {% if selected_agent_id == ag.id %}selected{% endif %}>
+          👤 {{ ag.full_name or ag.username }} ({{ ag.role }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="flex:1.2; min-width:160px;">
+      <label style="display:block; font-size:11px; font-weight:700; color:#475569; margin-bottom:4px;">Recherche rapide :</label>
+      <input type="text" name="q" value="{{ q or '' }}" placeholder="N° reçu, élève, libellé..." style="width:100%; padding:6px 10px; font-size:12.5px; border:1.5px solid #cbd5e1; border-radius:8px; background:#fff;">
+    </div>
+
+    <div style="display:flex; gap:6px;">
+      <button type="submit" class="btn btn-primary" style="padding:7px 16px; font-size:12.5px; font-weight:800; background:#0B3D6E; border-color:#0B3D6E; border-radius:8px;">
+        🔍 Filtrer
+      </button>
+      <a href="{{ url_for('reports', report=report, preset='this_month') }}" class="btn btn-outline" style="padding:7px 12px; font-size:12.5px; font-weight:700; background:#fff; border-color:#cbd5e1; border-radius:8px; text-decoration:none; color:#475569;" title="Réinitialiser les filtres">
+        🔄 Réinitialiser
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- ================= MACRO FINANCIAL KPIS (PERIOD METRICS) ================= -->
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; margin-bottom:16px;">
+  
+  <!-- Inflow KPI -->
+  <div class="card stat" style="border-left:4.5px solid #10b981; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+    <div class="label" style="font-size:10.5px; font-weight:800; color:#64748b; text-transform:uppercase;">1. CA ENCAISSÉ (PRODUITS)</div>
+    <div class="value" style="font-size:22px; font-weight:900; color:#047857; margin:2px 0;">
+      {{ '%.2f'|format(total_period_revenue) }} <span style="font-size:12px;">{{ settings.currency }}</span>
+    </div>
+    <div class="sub" style="font-size:11px; color:#64748b; font-weight:600;">
+      Écolages : <strong style="color:#047857;">{{ '%.0f'|format(period_tuition_revenue) }}</strong> · Livres : <strong>{{ '%.0f'|format(period_books_revenue) }}</strong> {{ settings.currency }}
+    </div>
+  </div>
+
+  <!-- Outflow / Expenses KPI -->
+  <div class="card stat" style="border-left:4.5px solid #ef4444; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+    <div class="label" style="font-size:10.5px; font-weight:800; color:#64748b; text-transform:uppercase;">2. CHARGES DÉJÀ PAYÉES</div>
+    <div class="value" style="font-size:22px; font-weight:900; color:#dc2626; margin:2px 0;">
+      {{ '%.2f'|format(period_expenses_total) }} <span style="font-size:12px;">{{ settings.currency }}</span>
+    </div>
+    <div class="sub" style="font-size:11px; color:#64748b; font-weight:600;">
+      Décaissements réels : <strong style="color:#dc2626;">{{ '%.0f'|format(period_cash_outflow) }} DH</strong>
+    </div>
+  </div>
+
+  <!-- Fixed Charges Budget KPI -->
+  <div class="card stat" style="border-left:4.5px solid #f59e0b; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+    <div class="label" style="font-size:10.5px; font-weight:800; color:#64748b; text-transform:uppercase;">3. BUDGET CHARGES FIXES</div>
+    <div class="value" style="font-size:22px; font-weight:900; color:#b45309; margin:2px 0;">
+      {{ '%.2f'|format(recurring_pnl_data.total_budget if recurring_pnl_data else 0) }} <span style="font-size:12px;">{{ settings.currency }}</span>
+    </div>
+    <div class="sub" style="font-size:11px; color:#64748b; font-weight:600;">
+      Validé : <strong style="color:#047857;">{{ '%.0f'|format(recurring_pnl_data.validated_amount if recurring_pnl_data else 0) }}</strong> · En attente : <strong style="color:#b45309;">{{ '%.0f'|format(recurring_pnl_data.pending_amount if recurring_pnl_data else 0) }} DH</strong>
+    </div>
+  </div>
+
+  <!-- Teacher Payroll KPI -->
+  <div class="card stat" style="border-left:4.5px solid #8b5cf6; padding:12px 14px; background:#fff; border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+    <div class="label" style="font-size:10.5px; font-weight:800; color:#64748b; text-transform:uppercase;">4. MASSE SALARIALE PROFS</div>
+    <div class="value" style="font-size:22px; font-weight:900; color:#6d28d9; margin:2px 0;">
+      {{ '%.2f'|format(grand_teacher_payroll) }} <span style="font-size:12px;">{{ settings.currency }}</span>
+    </div>
+    <div class="sub" style="font-size:11px; color:#6d28d9; font-weight:600;">
+      {{ teachers_rows|length }} prof(s) · Avances : <strong>{{ '%.0f'|format(teacher_advances_list|sum(attribute='amount')) }}</strong> {{ settings.currency }}
+    </div>
+  </div>
+
+  <!-- Net Profit & Fen Waslin KPI -->
+  <div class="card stat" style="border-left:4.5px solid {% if recurring_pnl_data and recurring_pnl_data.projected_net_profit >= 0 %}#1e40af{% else %}#dc2626{% endif %}; padding:12px 14px; background:{% if recurring_pnl_data and recurring_pnl_data.projected_net_profit >= 0 %}#eff6ff{% else %}#fef2f2{% endif %}; border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+    <div class="label" style="font-size:10.5px; font-weight:800; color:#1e40af; text-transform:uppercase;">5. BILAN NET ("فين واصلين")</div>
+    <div class="value" style="font-size:22px; font-weight:900; color:{% if recurring_pnl_data and recurring_pnl_data.projected_net_profit >= 0 %}#1e40af{% else %}#b91c1c{% endif %}; margin:2px 0;">
+      {{ '%.2f'|format(recurring_pnl_data.projected_net_profit if recurring_pnl_data else period_net_profit) }} <span style="font-size:12px;">{{ settings.currency }}</span>
+    </div>
+    <div class="sub" style="font-size:11px; color:#64748b; font-weight:700;">
+      Caisse Actuelle : <strong style="color:#047857;">+{{ '%.0f'|format(period_net_profit) }} DH</strong> · Marge : <strong style="color:#1e40af;">{{ recurring_pnl_data.projected_margin_pct if recurring_pnl_data else period_margin_pct }}%</strong>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= EXECUTIVE TAB NAVIGATION ================= -->
+{% set base_query = 'preset=' ~ preset ~ '&date_from=' ~ date_from ~ '&date_to=' ~ date_to ~ '&teacher_id=' ~ (selected_teacher_id or '') ~ '&agent_id=' ~ (selected_agent_id or '') ~ '&method=' ~ selected_method ~ '&category=' ~ selected_category ~ '&q=' ~ (q or '') %}
+
+<div class="card card-pad mb-3" style="padding:8px 12px; background:#fff; border:1px solid #e2e8f0; border-radius:10px;">
+  <div style="display:flex; flex-wrap:wrap; gap:6px;">
+    
+    <a href="{{ url_for('reports') }}?report=pnl&{{ base_query }}" 
+       style="padding:8px 14px; border-radius:8px; font-weight:700; font-size:12.5px; text-decoration:none; transition:all 0.2s; background:{% if report=='pnl' %}#0B3D6E{% else %}#f1f5f9{% endif %}; color:{% if report=='pnl' %}#fff{% else %}#475569{% endif %};">
+      📊 Bilan & Résultat d'Exploitation (P&L)
+    </a>
+
+    <a href="{{ url_for('reports') }}?report=agents&{{ base_query }}" 
+       style="padding:8px 14px; border-radius:8px; font-weight:700; font-size:12.5px; text-decoration:none; transition:all 0.2s; background:{% if report=='agents' %}#059669{% else %}#f1f5f9{% endif %}; color:{% if report=='agents' %}#fff{% else %}#475569{% endif %};">
+      👥 Performance des Agents de Caisse ({{ agents_performance|length }})
+    </a>
+
+    <a href="{{ url_for('reports') }}?report=revenue&{{ base_query }}" 
+       style="padding:8px 14px; border-radius:8px; font-weight:700; font-size:12.5px; text-decoration:none; transition:all 0.2s; background:{% if report=='revenue' %}#1f6feb{% else %}#f1f5f9{% endif %}; color:{% if report=='revenue' %}#fff{% else %}#475569{% endif %};">
+      💳 Journal des Encaissements & Ventes ({{ payments_list|length }})
+    </a>
+
+    <a href="{{ url_for('reports') }}?report=expenses&{{ base_query }}" 
+       style="padding:8px 14px; border-radius:8px; font-weight:700; font-size:12.5px; text-decoration:none; transition:all 0.2s; background:{% if report=='expenses' %}#dc2626{% else %}#f1f5f9{% endif %}; color:{% if report=='expenses' %}#fff{% else %}#475569{% endif %};">
+      💸 Journal des Dépenses & Charges ({{ expenses_list|length }})
+    </a>
+
+    <a href="{{ url_for('reports') }}?report=courses&{{ base_query }}" 
+       style="padding:8px 14px; border-radius:8px; font-weight:700; font-size:12.5px; text-decoration:none; transition:all 0.2s; background:{% if report=='courses' %}#0B3D6E{% else %}#f1f5f9{% endif %}; color:{% if report=='courses' %}#fff{% else %}#475569{% endif %};">
+      📚 Performance & Rentabilité des Classes ({{ courses_perf|length }})
+    </a>
+
+    <a href="{{ url_for('reports') }}?report=teachers_payroll&{{ base_query }}" 
+       style="padding:8px 14px; border-radius:8px; font-weight:700; font-size:12.5px; text-decoration:none; transition:all 0.2s; background:{% if report=='teachers_payroll' %}#7c3aed{% else %}#f1f5f9{% endif %}; color:{% if report=='teachers_payroll' %}#fff{% else %}#475569{% endif %};">
+      👨‍🏫 Synthèse Paie & Avances Enseignants ({{ teachers_rows|length }})
+    </a>
+
+    <a href="{{ url_for('reports') }}?report=enrollments&{{ base_query }}" 
+       style="padding:8px 14px; border-radius:8px; font-weight:700; font-size:12.5px; text-decoration:none; transition:all 0.2s; background:{% if report=='enrollments' %}#0B3D6E{% else %}#f1f5f9{% endif %}; color:{% if report=='enrollments' %}#fff{% else %}#475569{% endif %};">
+      📋 Inscriptions & Rétention
+    </a>
+
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- ================= TAB 1: BILAN & COMPTE DE RÉSULTAT (P&L) ================= -->
+<!-- ========================================================================= -->
+{% if report == 'pnl' %}
+
+<div class="grid grid-2 mb-3" style="gap:14px;">
+
+  <!-- Left: Official Simplified P&L Statement -->
+  <div class="card card-pad" style="padding:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="margin:0; font-size:15px; color:#0B3D6E; font-weight:800;">
+        📑 Compte de Résultat d'Exploitation (P&L Synthétique)
+      </h3>
+      <span class="chip chip-blue" style="font-size:10.5px;">{{ period_label }}</span>
+    </div>
+
+    <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:11px; text-transform:uppercase;">
+          <th style="padding:8px; text-align:left;">Rubrique Comptable</th>
+          <th style="padding:8px; text-align:center;">Détail</th>
+          <th style="padding:8px; text-align:right;">Montant (DH)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Section I: Produits -->
+        <tr style="background:#f0fdf4; font-weight:800;">
+          <td colspan="3" style="padding:8px; color:#15803d; font-size:12px; border-top:1px solid #bbf7d0;">
+            I. PRODUITS D'EXPLOITATION (RECETTES ENCAISSÉES)
+          </td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:8px 12px; color:#1e293b;">• Écolages & Frais de Scolarité</td>
+          <td style="padding:8px; text-align:center; color:#64748b;">{{ payments_list|length }} règlements</td>
+          <td style="padding:8px; text-align:right; font-weight:700; color:#047857;">+ {{ '%.2f'|format(period_tuition_revenue) }}</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:8px 12px; color:#1e293b;">
+            • Vente de Manuels & Livres (Part Institut)
+            {% if period_books_teacher_due and period_books_teacher_due > 0 %}
+            <div style="font-size:11px; color:#b45309; margin-top:2px; font-weight:600;">
+              ⚠️ Dont {{ '%.2f'|format(period_books_teacher_due) }} DH perçus en dépôt et reversés aux enseignants (hors CA institut)
+            </div>
+            {% endif %}
+          </td>
+          <td style="padding:8px; text-align:center; color:#64748b;">{{ book_sales_list|length }} ventes</td>
+          <td style="padding:8px; text-align:right; font-weight:700; color:#047857;">+ {{ '%.2f'|format(period_books_revenue) }}</td>
+        </tr>
+        <tr style="background:#dcfce7; font-weight:800; border-bottom:2px solid #86efac;">
+          <td colspan="2" style="padding:8px; text-align:right; color:#166534;">SOUS-TOTAL CHIFFRE D'AFFAIRES (CA) :</td>
+          <td style="padding:8px; text-align:right; color:#166534; font-size:14px;">{{ '%.2f'|format(total_period_revenue) }} {{ settings.currency }}</td>
+        </tr>
+
+        <!-- Section II: Charges Réelles -->
+        <tr style="background:#fef2f2; font-weight:800;">
+          <td colspan="3" style="padding:8px; color:#b91c1c; font-size:12px; border-top:1px solid #fecaca;">
+            II. CHARGES D'EXPLOITATION & DÉPENSES RÉELLES (DÉCAISSÉES)
+          </td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:8px 12px; color:#1e293b;">• Charges Décaissées (Directes)</td>
+          <td style="padding:8px; text-align:center; color:#64748b;">Charges réelles payées</td>
+          <td style="padding:8px; text-align:right; font-weight:700; color:#b91c1c;">- {{ '%.2f'|format(period_charges_total) }}</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:8px 12px; color:#1e293b;">• Achats Pédagogiques & Matériel</td>
+          <td style="padding:8px; text-align:center; color:#64748b;">Fournitures & Manuels</td>
+          <td style="padding:8px; text-align:right; font-weight:700; color:#b91c1c;">- {{ '%.2f'|format(period_achats_total) }}</td>
+        </tr>
+        <tr style="background:#fee2e2; font-weight:800; border-bottom:1px solid #fca5a5;">
+          <td colspan="2" style="padding:8px; text-align:right; color:#991b1b;">SOUS-TOTAL DÉPENSES DÉJÀ DÉCAISSÉES :</td>
+          <td style="padding:8px; text-align:right; color:#991b1b; font-size:13.5px;">- {{ '%.2f'|format(period_expenses_total) }} {{ settings.currency }}</td>
+        </tr>
+
+        <!-- Section III: Budget Charges Fixes Récurrentes -->
+        <tr style="background:#fffbeb; font-weight:800;">
+          <td colspan="3" style="padding:8px; color:#92400e; font-size:12px; border-top:1.5px solid #fde68a;">
+            III. BUDGET CHARGES FIXES RÉCURRENTES (ENGAGÉ / PRÉVISIONNEL)
+          </td>
+        </tr>
+        <tr style="border-bottom:1px solid #fef3c7;">
+          <td style="padding:7px 12px; color:#1e293b;">🏢 Loyer des locaux</td>
+          <td style="padding:7px; text-align:center; color:#92400e;">Charge fixe mensuelle</td>
+          <td style="padding:7px; text-align:right; font-weight:700; color:#b45309;">{{ '%.2f'|format(recurring_pnl_data.by_category.get('Loyer des locaux', 9000.0) if recurring_pnl_data else 9000.0) }}</td>
+        </tr>
+        <tr style="border-bottom:1px solid #fef3c7;">
+          <td style="padding:7px 12px; color:#1e293b;">👥 Salaires Fixes (Direction & Personnel)</td>
+          <td style="padding:7px; text-align:center; color:#92400e;">4 collaborateurs</td>
+          <td style="padding:7px; text-align:right; font-weight:700; color:#b45309;">{{ '%.2f'|format(recurring_pnl_data.by_category.get('Salaires & Primes', 11200.0) if recurring_pnl_data else 11200.0) }}</td>
+        </tr>
+        <tr style="border-bottom:1px solid #fef3c7;">
+          <td style="padding:7px 12px; color:#1e293b;">⚖️ Taxes & Impôts</td>
+          <td style="padding:7px; text-align:center; color:#92400e;">Fiscalité mensuelle</td>
+          <td style="padding:7px; text-align:right; font-weight:700; color:#b45309;">{{ '%.2f'|format(recurring_pnl_data.by_category.get('Taxes & Impôts', 1900.0) if recurring_pnl_data else 1900.0) }}</td>
+        </tr>
+        <tr style="border-bottom:1px solid #fef3c7;">
+          <td style="padding:7px 12px; color:#1e293b;">💡 Eau + Électricité</td>
+          <td style="padding:7px; text-align:center; color:#92400e;">Fluides mensuels</td>
+          <td style="padding:7px; text-align:right; font-weight:700; color:#b45309;">{{ '%.2f'|format(recurring_pnl_data.by_category.get('Électricité & Eau', 800.0) if recurring_pnl_data else 800.0) }}</td>
+        </tr>
+        <tr style="border-bottom:1px solid #fef3c7;">
+          <td style="padding:7px 12px; color:#1e293b;">📶 Télécom (WIFI Fibre + Mobile)</td>
+          <td style="padding:7px; text-align:center; color:#92400e;">Abonnements télécom</td>
+          <td style="padding:7px; text-align:right; font-weight:700; color:#b45309;">{{ '%.2f'|format(recurring_pnl_data.by_category.get('Télécom & Internet', 600.0) if recurring_pnl_data else 600.0) }}</td>
+        </tr>
+        <tr style="background:#fef3c7; font-weight:800; border-bottom:2px solid #fde68a;">
+          <td colspan="2" style="padding:8px; text-align:right; color:#78350f;">
+            SOUS-TOTAL BUDGET CHARGES FIXES ({{ recurring_pnl_data.validated_count if recurring_pnl_data else 0 }} validée(s) · {{ recurring_pnl_data.pending_count if recurring_pnl_data else 0 }} en attente) :
+          </td>
+          <td style="padding:8px; text-align:right; color:#78350f; font-size:13.5px;">- {{ '%.2f'|format(recurring_pnl_data.total_budget if recurring_pnl_data else 0) }} {{ settings.currency }}</td>
+        </tr>
+
+        {% if recurring_pnl_data and recurring_pnl_data.grand_teacher_payroll is defined %}
+        <!-- IV. Teacher Payroll -->
+        <tr style="background:#f5f3ff; font-weight:800;">
+          <td colspan="3" style="padding:8px; color:#5b21b6; font-size:12px; border-top:1.5px solid #ddd6fe;">
+            IV. MASSE SALARIALE ENSEIGNANTS (ESTIMÉE POUR LA PÉRIODE)
+          </td>
+        </tr>
+        <tr style="border-bottom:1px solid #ede9fe;">
+          <td style="padding:7px 12px; color:#1e293b;">👨‍🏫 Salaires Bruts Estimés (tous profs)</td>
+          <td style="padding:7px; text-align:center; color:#5b21b6; font-size:12px;">Calcul séances planifiées</td>
+          <td style="padding:7px; text-align:right; font-weight:700; color:#7c3aed;">- {{ '%.2f'|format(recurring_pnl_data.grand_teacher_payroll) }} {{ settings.currency }}</td>
+        </tr>
+        {% if recurring_pnl_data.paid_teacher_payroll > 0 %}
+        <tr style="border-bottom:1px solid #ede9fe;">
+          <td style="padding:7px 12px; color:#047857;">✅ Déjà réglé aux enseignants</td>
+          <td style="padding:7px; text-align:center; color:#047857; font-size:12px;">Virements / Paiements validés</td>
+          <td style="padding:7px; text-align:right; font-weight:700; color:#047857;">+ {{ '%.2f'|format(recurring_pnl_data.paid_teacher_payroll) }} {{ settings.currency }}</td>
+        </tr>
+        {% endif %}
+        <tr style="background:#ede9fe; font-weight:800; border-bottom:2px solid #c4b5fd;">
+          <td colspan="2" style="padding:8px; text-align:right; color:#5b21b6;">
+            RESTE DÛ AUX ENSEIGNANTS (en attente de paiement) :
+          </td>
+          <td style="padding:8px; text-align:right; color:#5b21b6; font-size:13.5px;">- {{ '%.2f'|format(recurring_pnl_data.pending_teacher_payroll) }} {{ settings.currency }}</td>
+        </tr>
+        {% endif %}
+
+        {% if recurring_pnl_data and recurring_pnl_data.pending_supplier_debts > 0 %}
+        <!-- V. Supplier Debts -->
+        <tr style="background:#fff1f2; font-weight:800;">
+          <td colspan="3" style="padding:8px; color:#be123c; font-size:12px; border-top:1.5px solid #fecdd3;">
+            V. DETTES FOURNISSEURS / CHARGES NON RÉGLÉES
+          </td>
+        </tr>
+        <tr style="background:#fff1f2; border-bottom:2px solid #fecdd3;">
+          <td colspan="2" style="padding:8px; text-align:right; color:#be123c;">
+            Soldes impayés / partiellement réglés :
+          </td>
+          <td style="padding:8px; text-align:right; color:#be123c; font-size:13.5px; font-weight:800;">- {{ '%.2f'|format(recurring_pnl_data.pending_supplier_debts) }} {{ settings.currency }}</td>
+        </tr>
+        {% endif %}
+
+      </tbody>
+      <tfoot>
+        <!-- Solde Caisse Actuel -->
+        <tr style="background:#f8fafc; font-weight:700; border-top:1.5px solid #cbd5e1;">
+          <td colspan="2" style="padding:9px 8px; text-align:right; color:#475569; font-size:12.5px;">
+            A. SOLDE DE TRÉSORERIE THÉORIQUE SYSTÈME (Encaissements - Dépenses saisies) :
+          </td>
+          <td style="padding:9px 8px; text-align:right; color:{% if period_net_profit >= 0 %}#047857{% else %}#b91c1c{% endif %}; font-size:14.5px; font-weight:900;">
+            + {{ '%.2f'|format(period_net_profit) }} {{ settings.currency }}
+          </td>
+        </tr>
+
+        {% if recurring_pnl_data and recurring_pnl_data.is_real_cash_used %}
+        <tr style="background:#fffbeb; font-weight:700; border-top:1px dashed #f59e0b;">
+          <td colspan="2" style="padding:7px 8px; text-align:right; color:#b45309; font-size:12px;">
+            ⚠️ Ajustement Dépenses Hors Système (Écart fixe pointé) :
+            {% if recurring_pnl_data.real_cash_note %}
+            <div style="font-size:10.5px; color:#92400e; font-weight:400;">{{ recurring_pnl_data.real_cash_note }}</div>
+            {% endif %}
+          </td>
+          <td style="padding:7px 8px; text-align:right; color:#dc2626; font-size:13.5px; font-weight:800;">
+            - {{ '%.2f'|format(recurring_pnl_data.ecart_caisse) }} {{ settings.currency }}
+          </td>
+        </tr>
+        <tr style="background:#f0fdf4; font-weight:800; border-top:1px solid #86efac;">
+          <td colspan="2" style="padding:8px 8px; text-align:right; color:#166534; font-size:12.5px;">
+            A-bis. SOLDE DE TRÉSORERIE RÉEL ESTIMÉ EN CAISSE PHYSIQUE :
+            <div style="font-size:10.5px; color:#166534; font-weight:400;">
+              (Pointage initial : {{ '%.2f'|format(recurring_pnl_data.real_cash_amount) }} DH au {{ recurring_pnl_data.real_cash_date }})
+            </div>
+          </td>
+          <td style="padding:8px 8px; text-align:right; color:#047857; font-size:15px; font-weight:900;">
+            + {{ '%.2f'|format(recurring_pnl_data.effective_cash) }} {{ settings.currency }}
+          </td>
+        </tr>
+        {% endif %}
+
+        <!-- Résultat Net Prévisionnel Consolidé -->
+        <tr style="background:{% if recurring_pnl_data and recurring_pnl_data.projected_net_profit >= 0 %}#eff6ff{% else %}#fef2f2{% endif %}; font-weight:900; border-top:2px solid {% if recurring_pnl_data and recurring_pnl_data.projected_net_profit >= 0 %}#3b82f6{% else %}#ef4444{% endif %};">
+          <td colspan="2" style="padding:12px 8px; text-align:right; color:#0B3D6E; font-size:13.5px;">
+            B. RÉSULTAT NET PRÉVISIONNEL CONSOLIDÉ ("فين واصلين" {% if recurring_pnl_data and recurring_pnl_data.is_real_cash_used %}RÉEL{% endif %} — après Charges Fixes + Salaires Profs{% if recurring_pnl_data and recurring_pnl_data.pending_supplier_debts > 0 %} + Dettes Fournisseurs{% endif %}) :
+          </td>
+          <td style="padding:12px 8px; text-align:right; color:{% if recurring_pnl_data and recurring_pnl_data.projected_net_profit >= 0 %}#1e40af{% else %}#b91c1c{% endif %}; font-size:18px;">
+            {{ '%.2f'|format(recurring_pnl_data.projected_net_profit if recurring_pnl_data else period_net_profit) }} {{ settings.currency }}
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div style="margin-top:14px; padding:10px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+      <span style="font-size:12px; font-weight:700; color:#475569;">Taux de Marge Nette Prévisionnelle Consolidée :</span>
+      <span class="chip {% if recurring_pnl_data and recurring_pnl_data.projected_margin_pct >= 30 %}chip-green{% elif recurring_pnl_data and recurring_pnl_data.projected_margin_pct > 0 %}chip-blue{% else %}chip-red{% endif %}" style="font-size:13px; font-weight:800;">
+        {{ recurring_pnl_data.projected_margin_pct if recurring_pnl_data else period_margin_pct }}%
+      </span>
+    </div>
+  </div>
+
+  <!-- Right: Payment Channels & Expense Category Breakdown -->
+  <div style="display:flex; flex-direction:column; gap:14px;">
+    
+    <!-- Payment Methods Card -->
+    <div class="card card-pad" style="padding:16px;">
+      <h3 style="margin:0 0 10px 0; font-size:14px; color:#0B3D6E; font-weight:800;">
+        💳 Répartition des Encaissements par Canal de Caisse
+      </h3>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        {% for m in methods_data %}
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-bottom:3px;">
+            <span>{{ m.icon }} {{ m.label }} ({{ m.count }} reçus)</span>
+            <span style="color:#0B3D6E;">{{ '%.2f'|format(m.total) }} {{ settings.currency }} ({{ m.pct }}%)</span>
+          </div>
+          <div style="width:100%; height:7px; background:#e2e8f0; border-radius:10px; overflow:hidden;">
+            <div style="width:{{ m.pct }}%; height:100%; background:{% if m.method=='cash' %}#f59e0b{% elif m.method=='transfer' %}#1f6feb{% elif m.method=='card' %}#8b5cf6{% else %}#10b981{% endif %}; border-radius:10px;"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Expenses Category Card -->
+    <div class="card card-pad" style="padding:16px;">
+      <h3 style="margin:0 0 10px 0; font-size:14px; color:#0B3D6E; font-weight:800;">
+        💸 Ventilation des Dépenses par Catégorie
+      </h3>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        {% for cat in expense_categories_breakdown[:5] %}
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-bottom:3px;">
+            <span style="color:#334155;">{{ cat.category }}</span>
+            <span style="color:#b91c1c;">{{ '%.2f'|format(cat.amount) }} {{ settings.currency }} ({{ cat.pct }}%)</span>
+          </div>
+          <div style="width:100%; height:6px; background:#e2e8f0; border-radius:10px; overflow:hidden;">
+            <div style="width:{{ cat.pct }}%; height:100%; background:#ef4444; border-radius:10px;"></div>
+          </div>
+        </div>
+        {% endfor %}
+        {% if not expense_categories_breakdown %}
+        <div class="muted" style="font-size:12px; text-align:center; padding:10px 0;">Aucune dépense enregistrée sur cette période</div>
+        {% endif %}
+      </div>
+    <!-- Pôle d'activité Revenue Breakdown Card -->
+    <div class="card card-pad" style="padding:16px;">
+      <h3 style="margin:0 0 10px 0; font-size:14px; color:#0B3D6E; font-weight:800;">
+        🌍 Ventilation des Recettes par Pôle d'Activité
+      </h3>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        {% for pole in pole_revenue_breakdown %}
+        {% if pole.amount > 0 %}
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-bottom:3px;">
+            <span>{{ pole.icon }} {{ pole.name }} ({{ pole.count }})</span>
+            <span style="color:#0B3D6E;">{{ '%.2f'|format(pole.amount) }} {{ settings.currency }} ({{ pole.pct }}%)</span>
+          </div>
+          <div style="width:100%; height:7px; background:#e2e8f0; border-radius:10px; overflow:hidden;">
+            <div style="width:{{ pole.pct }}%; height:100%; background:{% if pole.pole=='language' %}#1f6feb{% elif pole.pole=='tutoring' %}#8b5cf6{% elif pole.pole=='books' %}#f59e0b{% else %}#10b981{% endif %}; border-radius:10px;"></div>
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Agent / Caissier Summary Card -->
+    <div class="card card-pad" style="padding:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0; font-size:14px; color:#0B3D6E; font-weight:800;">
+          👥 Encaissements par Agent / Caissier
+        </h3>
+        <a href="{{ url_for('reports') }}?report=agents&{{ base_query }}" style="text-decoration:none; font-size:11.5px; font-weight:700; color:#059669;">Détail complet →</a>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:9px;">
+        {% for ag in agents_performance %}
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-bottom:3px;">
+            <span>👤 {{ ag.full_name }} <span class="chip" style="font-size:9.5px; padding:1px 5px; background:#f1f5f9;">{{ ag.payments_count + ag.books_count }} reçus</span></span>
+            <span style="color:#047857; font-weight:800;">{{ '%.2f'|format(ag.total_collected) }} {{ settings.currency }} ({{ ag.pct }}%)</span>
+          </div>
+          <div style="width:100%; height:6px; background:#e2e8f0; border-radius:10px; overflow:hidden;">
+            <div style="width:{{ ag.pct }}%; height:100%; background:#059669; border-radius:10px;"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Daily Cashflow Timeline (Jour par jour avec dates) -->
+<div class="card card-pad mb-3" style="padding:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <div>
+      <h3 style="margin:0; font-size:15px; color:#0B3D6E; font-weight:800;">
+        📅 Chronologie Quotidienne des Flux de Trésorerie (Jour par Jour avec Dates)
+      </h3>
+      <div class="muted" style="font-size:11.5px; margin-top:2px;">Historique des encaissements et décaissements avec calcul du solde journalier</div>
+    </div>
+    <span class="chip chip-blue" style="font-size:11px; font-weight:800;">{{ daily_timeline|length }} jour(s) d'activité</span>
+  </div>
+
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:11px; text-transform:uppercase;">
+          <th style="padding:10px 8px; text-align:left;">Date Exacte</th>
+          <th style="padding:10px 8px; text-align:left;">Jour</th>
+          <th style="padding:10px 8px; text-align:center;">Transactions</th>
+          <th style="padding:10px 8px; text-align:right;">Recettes Encaissées</th>
+          <th style="padding:10px 8px; text-align:right;">Dépenses Décaissées</th>
+          <th style="padding:10px 8px; text-align:right;">Solde Net Journalier</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for day in daily_timeline %}
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:9px 8px; font-weight:800; color:#0B3D6E; font-size:13px;">
+            📅 {{ day.formatted_date }}
+          </td>
+          <td style="padding:9px 8px; color:#475569; font-weight:600;">
+            {{ day.weekday }}
+          </td>
+          <td style="padding:9px 8px; text-align:center;">
+            <span class="chip chip-blue" style="font-size:10px; padding:2px 6px;">{{ day.payments_count }} entrées</span>
+            {% if day.expenses_count > 0 %}
+            <span class="chip chip-red" style="font-size:10px; padding:2px 6px;">{{ day.expenses_count }} sorties</span>
+            {% endif %}
+          </td>
+          <td style="padding:9px 8px; text-align:right; font-weight:800; color:#047857;">
+            {% if day.inflow > 0 %}+ {{ '%.2f'|format(day.inflow) }} {{ settings.currency }}{% else %}—{% endif %}
+          </td>
+          <td style="padding:9px 8px; text-align:right; font-weight:800; color:#b91c1c;">
+            {% if day.outflow > 0 %}- {{ '%.2f'|format(day.outflow) }} {{ settings.currency }}{% else %}—{% endif %}
+          </td>
+          <td style="padding:9px 8px; text-align:right; font-weight:900; color:{% if day.net >= 0 %}#047857{% else %}#b91c1c{% endif %}; font-size:13.5px;">
+            {{ '%.2f'|format(day.net) }} {{ settings.currency }}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not daily_timeline %}
+        <tr>
+          <td colspan="6" style="padding:24px; text-align:center; color:#64748b;">
+            Aucune opération financière enregistrée pour la période sélectionnée.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+      {% if daily_timeline %}
+      <tfoot>
+        <tr style="background:#f8fafc; font-weight:900; border-top:2px solid #cbd5e1;">
+          <td colspan="3" style="padding:10px 8px; text-align:right; color:#0B3D6E;">TOTAUX PÉRIODE :</td>
+          <td style="padding:10px 8px; text-align:right; color:#047857; font-size:14px;">+ {{ '%.2f'|format(total_period_revenue) }} {{ settings.currency }}</td>
+          <td style="padding:10px 8px; text-align:right; color:#b91c1c; font-size:14px;">- {{ '%.2f'|format(period_expenses_total) }} {{ settings.currency }}</td>
+          <td style="padding:10px 8px; text-align:right; color:{% if period_net_profit>=0 %}#047857{% else %}#b91c1c{% endif %}; font-size:15px;">{{ '%.2f'|format(period_net_profit) }} {{ settings.currency }}</td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+</div>
+
+{% elif report == 'agents' %}
+<!-- ========================================================================= -->
+<!-- ================= TAB: PERFORMANCE DES AGENTS DE CAISSE ================= -->
+<!-- ========================================================================= -->
+
+<!-- Agent Performance Cards Grid -->
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px; margin-bottom:20px;">
+  {% for ag in agents_performance %}
+  <div class="card card-pad" style="padding:16px; border-left:4.5px solid {% if loop.first %}#10b981{% elif loop.index==2 %}#0284c7{% elif loop.index==3 %}#f59e0b{% else %}#64748b{% endif %}; background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <div style="font-size:15px; font-weight:800; color:#0B3D6E; display:flex; align-items:center; gap:6px;">
+          <span>👤</span> {{ ag.full_name }}
+        </div>
+        <div style="font-size:11.5px; color:#64748b; margin-top:2px;">
+          @{{ ag.username }} · <span class="chip" style="font-size:10px; padding:1px 6px;">{{ '👑 Direction' if ag.role=='admin' else ('📝 Secrétariat' if ag.role=='secretary' else ag.role) }}</span>
+        </div>
+      </div>
+      <span class="chip {% if ag.pct >= 40 %}chip-green{% elif ag.pct >= 20 %}chip-blue{% else %}chip-amber{% endif %}" style="font-size:12px; font-weight:900;">
+        {{ ag.pct }}% du CA
+      </span>
+    </div>
+
+    <div style="margin:12px 0 8px 0;">
+      <div style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">TOTAL ENCAISSÉ</div>
+      <div style="font-size:24px; font-weight:900; color:#047857;">
+        {{ '%.2f'|format(ag.total_collected) }} <span style="font-size:13px; font-weight:600;">{{ settings.currency }}</span>
+      </div>
+    </div>
+
+    <!-- Breakdown Details -->
+    <div style="font-size:12px; color:#475569; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0; line-height:1.6; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between;">
+        <span>🧾 Reçus émis :</span>
+        <strong>{{ ag.payments_count }} écolage(s) + {{ ag.books_count }} livre(s)</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between;">
+        <span>💵 Espèces (Cash) :</span>
+        <strong style="color:#b45309;">{{ '%.2f'|format(ag.cash_amount) }} DH</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between;">
+        <span>🏦 Banque / Virement :</span>
+        <strong style="color:#0369a1;">{{ '%.2f'|format(ag.transfer_amount + ag.card_amount + ag.online_amount) }} DH</strong>
+      </div>
+    </div>
+
+    <!-- Action Link -->
+    <a href="{{ url_for('reports', report='revenue', preset=preset, date_from=date_from, date_to=date_to, agent_id=ag.user_id) }}" 
+       class="btn btn-sm btn-outline" style="width:100%; text-align:center; display:block; text-decoration:none; font-weight:700; font-size:12px; padding:6px; border-radius:6px; border-color:#cbd5e1; color:#0B3D6E;">
+      🔍 Voir tous ses encaissements ({{ ag.payments_count }}) →
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Detailed Comparative Table -->
+<div class="card card-pad mb-3" style="padding:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+    <div>
+      <h3 style="margin:0; font-size:16px; color:#0B3D6E; font-weight:800;">
+        📊 Synthèse Comparative des Agents & Répartition des Caisses
+      </h3>
+      <div class="muted" style="font-size:12px; margin-top:2px;">
+        Suivi de la performance de collecte et de saisie des règlements par collaborateur
+      </div>
+    </div>
+    <span class="chip chip-blue" style="font-size:11.5px; font-weight:800;">{{ agents_performance|length }} agent(s) actif(s)</span>
+  </div>
+
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:11px; text-transform:uppercase;">
+          <th style="padding:10px 8px; text-align:center; width:40px;">#</th>
+          <th style="padding:10px 8px; text-align:left;">Agent / Collaborateur</th>
+          <th style="padding:10px 8px; text-align:center;">Rôle</th>
+          <th style="padding:10px 8px; text-align:center;">Reçus Émis</th>
+          <th style="padding:10px 8px; text-align:right;">Espèces (Cash)</th>
+          <th style="padding:10px 8px; text-align:right;">Virement / Banque</th>
+          <th style="padding:10px 8px; text-align:right;">Total Encaissé</th>
+          <th style="padding:10px 8px; text-align:center; width:120px;">Part du CA</th>
+          <th style="padding:10px 8px; text-align:center;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ag in agents_performance %}
+        <tr style="border-bottom:1px solid #f1f5f9; {% if loop.first %}background:#f0fdf4;{% endif %}">
+          <td style="padding:10px 8px; text-align:center; font-weight:800; color:#64748b;">{{ loop.index }}</td>
+          <td style="padding:10px 8px; font-weight:800; color:#0B3D6E;">
+            👤 {{ ag.full_name }}
+            <span style="font-size:11px; color:#64748b; font-weight:500;">(@{{ ag.username }})</span>
+          </td>
+          <td style="padding:10px 8px; text-align:center;">
+            <span class="chip" style="font-size:10.5px; padding:2px 7px;">
+              {{ '👑 Admin' if ag.role=='admin' else ('📝 Secrétaire' if ag.role=='secretary' else ag.role) }}
+            </span>
+          </td>
+          <td style="padding:10px 8px; text-align:center; font-weight:700;">
+            <span class="chip chip-blue" style="font-size:11px;">{{ ag.payments_count + ag.books_count }} reçus</span>
+          </td>
+          <td style="padding:10px 8px; text-align:right; font-weight:700; color:#b45309;">
+            {{ '%.2f'|format(ag.cash_amount) }} {{ settings.currency }}
+          </td>
+          <td style="padding:10px 8px; text-align:right; font-weight:700; color:#0369a1;">
+            {{ '%.2f'|format(ag.transfer_amount + ag.card_amount + ag.online_amount) }} {{ settings.currency }}
+          </td>
+          <td style="padding:10px 8px; text-align:right; font-weight:900; color:#047857; font-size:14px;">
+            {{ '%.2f'|format(ag.total_collected) }} {{ settings.currency }}
+          </td>
+          <td style="padding:10px 8px; text-align:center;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <div style="flex:1; height:6px; background:#e2e8f0; border-radius:10px; overflow:hidden;">
+                <div style="width:{{ ag.pct }}%; height:100%; background:#10b981; border-radius:10px;"></div>
+              </div>
+              <span style="font-size:11px; font-weight:800; color:#0B3D6E; min-width:36px;">{{ ag.pct }}%</span>
+            </div>
+          </td>
+          <td style="padding:10px 8px; text-align:center;">
+            <a href="{{ url_for('reports', report='revenue', preset=preset, date_from=date_from, date_to=date_to, agent_id=ag.user_id) }}" 
+               class="btn btn-xs btn-outline" style="font-weight:700; border-radius:6px; text-decoration:none; font-size:11.5px; padding:4px 8px;">
+              🔍 Filtrer Journal
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="background:#f8fafc; font-weight:900; border-top:2px solid #cbd5e1;">
+          <td colspan="3" style="padding:10px 8px; text-align:right; color:#0B3D6E;">TOTAL CONSOLIDÉ :</td>
+          <td style="padding:10px 8px; text-align:center; color:#0B3D6E;">{{ payments_list|length + book_sales_list|length }} reçus</td>
+          <td style="padding:10px 8px; text-align:right; color:#b45309;">{{ '%.2f'|format(agents_performance|sum(attribute='cash_amount')) }} {{ settings.currency }}</td>
+          <td style="padding:10px 8px; text-align:right; color:#0369a1;">{{ '%.2f'|format(agents_performance|sum(attribute='transfer_amount') + agents_performance|sum(attribute='card_amount') + agents_performance|sum(attribute='online_amount')) }} {{ settings.currency }}</td>
+          <td style="padding:10px 8px; text-align:right; color:#047857; font-size:15px;">{{ '%.2f'|format(total_period_revenue) }} {{ settings.currency }}</td>
+          <td style="padding:10px 8px; text-align:center; color:#0B3D6E;">100.0%</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+{% elif report == 'revenue' %}
+
+<!-- Payments Journal -->
+<div class="card card-pad mb-3" style="padding:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+    <div>
+      <h3 style="margin:0; font-size:16px; color:#0B3D6E; font-weight:800;">
+        💳 Journal Détaillé des Encaissements (Traçabilité Chronologique)
+      </h3>
+      <div class="muted" style="font-size:12px; margin-top:2px;">
+        Chaque versement d'écolage avec date exacte, reçu, élève, matière et mode de paiement
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span class="chip chip-blue" style="font-size:11px; font-weight:800;">{{ payments_list|length }} encaissement(s)</span>
+      <span class="chip chip-green" style="font-size:12px; font-weight:900;">Total : {{ '%.2f'|format(period_tuition_revenue) }} {{ settings.currency }}</span>
+    </div>
+  </div>
+
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:10.5px; text-transform:uppercase;">
+          <th style="padding:10px 8px; text-align:left; width:13%;">Date Transaction</th>
+          <th style="padding:10px 8px; text-align:center; width:12%;">N° Reçu</th>
+          <th style="padding:10px 8px; text-align:left; width:22%;">Élève</th>
+          <th style="padding:10px 8px; text-align:left; width:25%;">Cours / Libellé</th>
+          <th style="padding:10px 8px; text-align:center; width:14%;">Mode de Règlement</th>
+          <th style="padding:10px 8px; text-align:right; width:14%;">Montant Encaissé</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in payments_list %}
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:9px 8px; font-weight:800; color:#0B3D6E;">
+            📅 {{ p.date.strftime('%d/%m/%Y') if p.date else '—' }}
+            {% if p.created_at %}
+            <div style="font-size:10px; color:#94a3b8; font-weight:500;">{{ p.created_at.strftime('%H:%M') }}</div>
+            {% endif %}
+          </td>
+          <td style="padding:9px 8px; text-align:center;">
+            <a href="{{ url_for('payment_receipt', pid=p.id) }}" target="_blank" style="text-decoration:none;">
+              <span class="chip chip-blue" style="font-size:10.5px; font-weight:800;">{{ p.receipt or ('REC-' ~ p.id) }}</span>
+            </a>
+          </td>
+          <td style="padding:9px 8px;">
+            {% if p.student %}
+            <a href="{{ url_for('student_view', sid=p.student.id) }}" style="font-weight:700; color:#1e293b; text-decoration:none;">
+              {{ p.student.full_name }}
+            </a>
+            <div style="font-size:10px; color:#64748b;">Code : {{ p.student.code or '—' }}</div>
+            {% else %}
+            <span class="muted">Élève non lié</span>
+            {% endif %}
+          </td>
+          <td style="padding:9px 8px; color:#334155; font-size:11.5px;">
+            {{ p.courses_description }}
+            {% if p.note %}
+            <div style="font-size:10px; color:#64748b; font-style:italic;">Note : {{ p.note }}</div>
+            {% endif %}
+          </td>
+          <td style="padding:9px 8px; text-align:center;">
+            <span class="chip {% if p.method=='cash' %}chip-green{% elif p.method=='transfer' %}chip-blue{% elif p.method=='card' %}chip-purple{% else %}chip-blue{% endif %}" style="font-size:10px; font-weight:700;">
+              {% if p.method=='cash' %}💵 Espèces
+              {% elif p.method=='transfer' %}🏦 Virement
+              {% elif p.method=='card' %}💳 Carte
+              {% else %}🌐 En ligne{% endif %}
+            </span>
+          </td>
+          <td style="padding:9px 8px; text-align:right; font-weight:900; color:#047857; font-size:13.5px;">
+            {{ '%.2f'|format(p.amount) }} {{ settings.currency }}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not payments_list %}
+        <tr>
+          <td colspan="6" style="padding:24px; text-align:center; color:#64748b;">
+            Aucun encaissement trouvé pour les critères sélectionnés.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+      {% if payments_list %}
+      <tfoot>
+        <tr style="background:#f8fafc; font-weight:900; border-top:2px solid #cbd5e1;">
+          <td colspan="5" style="padding:10px 8px; text-align:right; color:#0B3D6E; font-size:13px;">TOTAL ENCAISSÉ ÉCOLAGES :</td>
+          <td style="padding:10px 8px; text-align:right; color:#047857; font-size:15px;">{{ '%.2f'|format(period_tuition_revenue) }} {{ settings.currency }}</td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+</div>
+
+<!-- Book Sales Journal -->
+<div class="card card-pad mb-3" style="padding:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+    <div>
+      <h3 style="margin:0; font-size:15px; color:#047857; font-weight:800;">
+        📖 Ventes de Manuels Scolaires & Livres (Avec Dates)
+      </h3>
+      <div class="muted" style="font-size:12px; margin-top:2px;">Recettes issues des ventes de manuels pédagogiques au comptoir</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span class="chip chip-green" style="font-size:11px; font-weight:800;">{{ book_sales_list|length }} vente(s)</span>
+      <span class="chip chip-green" style="font-size:12px; font-weight:900;">Total : {{ '%.2f'|format(period_books_revenue) }} {{ settings.currency }}</span>
+    </div>
+  </div>
+
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:10.5px; text-transform:uppercase;">
+          <th style="padding:10px 8px; text-align:left; width:14%;">Date de Vente</th>
+          <th style="padding:10px 8px; text-align:center; width:12%;">N° Reçu</th>
+          <th style="padding:10px 8px; text-align:left; width:28%;">Manuel / Référence</th>
+          <th style="padding:10px 8px; text-align:left; width:22%;">Élève / Acheteur</th>
+          <th style="padding:10px 8px; text-align:center; width:10%;">Quantité</th>
+          <th style="padding:10px 8px; text-align:right; width:14%;">Total Encaissé</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in book_sales_list %}
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:9px 8px; font-weight:800; color:#0B3D6E;">
+            📅 {{ b.sale_date.strftime('%d/%m/%Y') if b.sale_date else '—' }}
+          </td>
+          <td style="padding:9px 8px; text-align:center;">
+            <span class="chip chip-green" style="font-size:10px; font-weight:800;">{{ b.receipt_no or ('BS-' ~ b.id) }}</span>
+          </td>
+          <td style="padding:9px 8px; font-weight:700; color:#1e293b;">
+            📚 {{ b.book.title if b.book else 'Manuel' }}
+          </td>
+          <td style="padding:9px 8px; color:#475569;">
+            {{ b.student.full_name if b.student else 'Comptoir / Client direct' }}
+          </td>
+          <td style="padding:9px 8px; text-align:center; font-weight:700;">
+            {{ b.quantity }} ex.
+          </td>
+          <td style="padding:9px 8px; text-align:right; font-weight:900; color:#047857; font-size:13px;">
+            {{ '%.2f'|format(b.total_amount) }} {{ settings.currency }}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not book_sales_list %}
+        <tr>
+          <td colspan="6" style="padding:18px; text-align:center; color:#64748b;">
+            Aucune vente de livre enregistrée sur la période sélectionnée.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+      {% if book_sales_list %}
+      <tfoot>
+        <tr style="background:#f8fafc; font-weight:900; border-top:2px solid #cbd5e1;">
+          <td colspan="5" style="padding:10px 8px; text-align:right; color:#0B3D6E;">TOTAL VENTES MANUELS :</td>
+          <td style="padding:10px 8px; text-align:right; color:#047857; font-size:14px;">{{ '%.2f'|format(period_books_revenue) }} {{ settings.currency }}</td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+</div>
+
+{% endif %}
+
+<!-- ========================================================================= -->
+<!-- ================= TAB 3: JOURNAL DES DÉPENSES & CHARGES =================== -->
+<!-- ========================================================================= -->
+{% if report == 'expenses' %}
+
+<div class="card card-pad mb-3" style="padding:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+    <div>
+      <h3 style="margin:0; font-size:16px; color:#b91c1c; font-weight:800;">
+        💸 Journal Détaillé des Charges, Dépenses & Décaissements (Avec Dates)
+      </h3>
+      <div class="muted" style="font-size:12px; margin-top:2px;">
+        Traçabilité complète des sorties de caisse, loyers, factures et fournitures pour la période
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span class="chip chip-red" style="font-size:11px; font-weight:800;">{{ expenses_list|length }} opération(s)</span>
+      <span class="chip chip-red" style="font-size:12px; font-weight:900;">Total : {{ '%.2f'|format(period_expenses_total) }} {{ settings.currency }}</span>
+      <a class="btn btn-outline btn-sm" href="{{ url_for('expenses') }}" style="font-size:11.5px; font-weight:700;">Gérer dans Dépenses →</a>
+    </div>
+  </div>
+
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:10.5px; text-transform:uppercase;">
+          <th style="padding:10px 8px; text-align:left; width:13%;">Date d'Opération</th>
+          <th style="padding:10px 8px; text-align:center; width:12%;">Réf / Reçu</th>
+          <th style="padding:10px 8px; text-align:left; width:18%;">Catégorie & Type</th>
+          <th style="padding:10px 8px; text-align:left; width:25%;">Description / Motif</th>
+          <th style="padding:10px 8px; text-align:left; width:16%;">Bénéficiaire / Tiers</th>
+          <th style="padding:10px 8px; text-align:center; width:10%;">Mode</th>
+          <th style="padding:10px 8px; text-align:right; width:14%;">Montant Décaissé</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in expenses_list %}
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:9px 8px; font-weight:800; color:#b91c1c;">
+            📅 {{ e.date.strftime('%d/%m/%Y') if e.date else '—' }}
+          </td>
+          <td style="padding:9px 8px; text-align:center;">
+            <span class="chip chip-red" style="font-size:10px; font-weight:700;">{{ e.reference_no or e.invoice_no or ('EXP-' ~ e.id) }}</span>
+          </td>
+          <td style="padding:9px 8px;">
+            <strong style="color:#1e293b;">{{ e.category }}</strong>
+            <div style="font-size:10px; color:#64748b;">
+              <span class="chip {% if e.expense_type=='achat' %}chip-blue{% else %}chip-red{% endif %}" style="padding:0 4px; font-size:8.5px;">
+                {{ 'Achat' if e.expense_type=='achat' else 'Charge' }}
+              </span>
+            </div>
+          </td>
+          <td style="padding:9px 8px; color:#334155;">
+            {{ e.description }}
+            {% if e.notes %}
+            <div style="font-size:10px; color:#64748b; font-style:italic;">{{ e.notes }}</div>
+            {% endif %}
+          </td>
+          <td style="padding:9px 8px; color:#475569; font-weight:600;">
+            {% if e.teacher %}
+            👨‍🏫 Prof. {{ e.teacher.full_name }}
+            {% else %}
+            🏢 {{ e.effective_supplier }}
+            {% endif %}
+          </td>
+          <td style="padding:9px 8px; text-align:center; font-size:11px;">
+            {{ e.payment_method }}
+          </td>
+          <td style="padding:9px 8px; text-align:right; font-weight:900; color:#b91c1c; font-size:13.5px;">
+            {{ '%.2f'|format(e.amount) }} {{ settings.currency }}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not expenses_list %}
+        <tr>
+          <td colspan="7" style="padding:24px; text-align:center; color:#64748b;">
+            Aucune dépense trouvée pour les critères sélectionnés.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+      {% if expenses_list %}
+      <tfoot>
+        <tr style="background:#f8fafc; font-weight:900; border-top:2px solid #cbd5e1;">
+          <td colspan="6" style="padding:10px 8px; text-align:right; color:#0B3D6E; font-size:13px;">TOTAL DES CHARGES & DÉPENSES :</td>
+          <td style="padding:10px 8px; text-align:right; color:#b91c1c; font-size:15px;">{{ '%.2f'|format(period_expenses_total) }} {{ settings.currency }}</td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+</div>
+
+{% endif %}
+
+<!-- ========================================================================= -->
+<!-- ================= TAB 4: PERFORMANCE & RENTABILITÉ DES CLASSES =========== -->
+<!-- ========================================================================= -->
+{% if report == 'courses' %}
+
+<div class="card card-pad mb-3" style="padding:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+    <div>
+      <h3 style="margin:0; font-size:15.5px; color:#0B3D6E; font-weight:800;">
+        📚 Performance, Effectifs & Recettes par Classe
+      </h3>
+      <div class="muted" style="font-size:12px; margin-top:2px;">Recettes générées sur la période sélectionnée comparativement au cumul historique</div>
+    </div>
+    <span class="chip chip-blue" style="font-size:11px; font-weight:800;">{{ courses_perf|length }} classe(s) actives</span>
+  </div>
+
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:11px; text-transform:uppercase;">
+          <th style="padding:10px 8px; width:26%;">Classe / Matière</th>
+          <th style="padding:10px 8px; width:18%;">Enseignant Titulaire</th>
+          <th style="padding:10px 8px; width:14%;">Salle</th>
+          <th style="padding:10px 8px; text-align:center; width:16%;">Taux Remplissage</th>
+          <th style="padding:10px 8px; text-align:right; width:16%;">Recettes Période</th>
+          <th style="padding:10px 8px; text-align:right; width:16%;">Recettes Cumulées</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cp in courses_perf %}
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 8px;">
+            <a href="{{ url_for('course_view', cid=cp.course.id) }}" style="font-weight:800; color:#0B3D6E; text-decoration:none; font-size:13px;">
+              {{ cp.name }}
+            </a>
+            <div style="font-size:10px; color:#64748b;">
+              <span class="chip {{ 'chip-blue' if cp.category=='language' else 'chip-green' }}" style="padding:0 4px; font-size:8.5px;">
+                {{ 'Langue' if cp.category=='language' else 'Soutien' }}
+              </span>
+            </div>
+          </td>
+          <td style="padding:10px 8px; font-weight:600; color:#334155;">
+            👨‍🏫 {{ cp.teacher }}
+          </td>
+          <td style="padding:10px 8px; color:#475569; font-weight:600;">
+            🚪 {{ cp.room }}
+          </td>
+          <td style="padding:10px 8px; text-align:center;">
+            <div style="font-weight:800; font-size:11.5px; color:#0B3D6E; margin-bottom:2px;">
+              {{ cp.enrolled }} / {{ cp.capacity }} élèves ({{ cp.fill_pct }}%)
+            </div>
+            <div style="width:100%; height:6px; background:#e2e8f0; border-radius:10px; overflow:hidden;">
+              <div style="width:{{ cp.fill_pct }}%; height:100%; background:{% if cp.fill_pct>=80 %}#10b981{% elif cp.fill_pct>=50 %}#1f6feb{% else %}#f59e0b{% endif %}; border-radius:10px;"></div>
+            </div>
+          </td>
+          <td style="padding:10px 8px; text-align:right; font-weight:900; color:#047857; font-size:13.5px; background:#f0fdf4;">
+            {{ '%.2f'|format(cp.period_revenue) }} {{ settings.currency }}
+          </td>
+          <td style="padding:10px 8px; text-align:right; font-weight:700; color:#475569; font-size:12.5px;">
+            {{ '%.2f'|format(cp.revenue) }} {{ settings.currency }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endif %}
+
+<!-- ========================================================================= -->
+<!-- ================= TAB 5: SYNTHÈSE PAIE & AVANCES ENSEIGNANTS ============= -->
+<!-- ========================================================================= -->
+{% if report == 'teachers_payroll' %}
+
+<!-- Teachers Summary Table -->
+<div class="card card-pad mb-3" style="padding:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+    <div>
+      <h3 style="margin:0; font-size:15.5px; color:#0B3D6E; font-weight:800;">
+        👨‍🏫 Synthèse de Rémunération des Enseignants & Solde Dû
+      </h3>
+      <div class="muted" style="font-size:12px; margin-top:2px;">Émoluments bruts, avances décaissées et retenues de tirages avec net à payer estimé</div>
+    </div>
+    <a class="btn btn-primary btn-sm" href="{{ url_for('teachers_payroll') }}" style="background:#7c3aed; border-color:#7c3aed; font-weight:700;">
+      Voir le Module de Paie Officiel →
+    </a>
+  </div>
+
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:11px; text-transform:uppercase;">
+          <th style="padding:10px 8px; width:22%;">Enseignant</th>
+          <th style="padding:10px 8px; width:38%;">Groupes & Formule d'Honoraires</th>
+          <th style="padding:10px 8px; text-align:right; width:12%;">Brut Estimé</th>
+          <th style="padding:10px 8px; text-align:right; width:12%;">Avances Période</th>
+          <th style="padding:10px 8px; text-align:right; width:12%;">Retenues</th>
+          <th style="padding:10px 8px; text-align:right; width:14%;">Net Estimé Dû</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tr in teachers_rows %}
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 8px; font-weight:800; color:#0B3D6E; vertical-align:top; font-size:13px;">
+            👨‍🏫 {{ tr.name }}
+          </td>
+          <td style="padding:10px 8px;">
+            {% if tr.details %}
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                {% for d in tr.details %}
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:3px 8px; border-radius:6px; font-size:11px;">
+                  <span style="font-weight:700; color:#334155;">{{ d.course }} ({{ d.students }} él.)</span>
+                  <span class="chip chip-purple" style="font-size:9px; font-weight:700;">
+                    {% if d.type == 'percentage' %}{{ d.value }}%
+                    {% elif d.type == 'per_student' %}{{ d.value }} DH/él.
+                    {% elif d.type == 'hourly' %}{{ d.value }} DH/h
+                    {% else %}{{ d.value }} DH Fixe{% endif %}
+                  </span>
+                  <strong style="color:#6d28d9;">{{ '%.2f'|format(d.earned) }} DH</strong>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <span class="muted" style="font-size:11px;">Rémunération selon contrat général</span>
+            {% endif %}
+          </td>
+          <td style="padding:10px 8px; text-align:right; font-weight:800; color:#6d28d9; vertical-align:top;">
+            {{ '%.2f'|format(tr.total_earned) }} DH
+          </td>
+          <td style="padding:10px 8px; text-align:right; font-weight:700; color:#b91c1c; vertical-align:top;">
+            {% if tr.advances > 0 %}- {{ '%.2f'|format(tr.advances) }} DH{% else %}—{% endif %}
+          </td>
+          <td style="padding:10px 8px; text-align:right; font-weight:700; color:#d97706; vertical-align:top;">
+            {% if tr.deductions > 0 %}- {{ '%.2f'|format(tr.deductions) }} DH{% else %}—{% endif %}
+          </td>
+          <td style="padding:10px 8px; text-align:right; font-weight:900; color:#047857; font-size:14px; vertical-align:top; background:#f0fdf4;">
+            {{ '%.2f'|format(tr.net_payable) }} DH
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="background:#f8fafc; font-weight:900; border-top:2px solid #cbd5e1;">
+          <td colspan="2" style="padding:10px 8px; text-align:right; color:#0B3D6E;">TOTAL MASSE SALARIALE ENSEIGNANTS :</td>
+          <td style="padding:10px 8px; text-align:right; color:#6d28d9; font-size:15px;">{{ '%.2f'|format(grand_teacher_payroll) }} DH</td>
+          <td style="padding:10px 8px; text-align:right; color:#b91c1c; font-size:13px;">- {{ '%.2f'|format(teacher_advances_list|sum(attribute='amount')) }} DH</td>
+          <td style="padding:10px 8px; text-align:right; color:#d97706; font-size:13px;">- {{ '%.2f'|format(teacher_deductions_list|sum(attribute='amount')) }} DH</td>
+          <td style="padding:10px 8px; text-align:right; color:#047857; font-size:16px;">{{ '%.2f'|format(grand_teacher_payroll - (teacher_advances_list|sum(attribute='amount')) - (teacher_deductions_list|sum(attribute='amount'))) }} DH</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<!-- Sub-tables: Advances & Teacher Deductions with DATES -->
+<div class="grid grid-2 mb-3" style="gap:14px;">
+  
+  <!-- Teacher Advances with exact dates -->
+  <div class="card card-pad" style="padding:16px;">
+    <h3 style="margin:0 0 10px 0; font-size:14px; color:#b91c1c; font-weight:800;">
+      💵 Avances sur Salaire Versées dans la Période (Avec Dates)
+    </h3>
+    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:10.5px; text-transform:uppercase;">
+          <th style="padding:8px; text-align:left;">Date Exacte</th>
+          <th style="padding:8px; text-align:center;">N° Reçu</th>
+          <th style="padding:8px; text-align:left;">Enseignant</th>
+          <th style="padding:8px; text-align:right;">Montant</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for adv in teacher_advances_list %}
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:8px; font-weight:800; color:#0B3D6E;">📅 {{ adv.date.strftime('%d/%m/%Y') }}</td>
+          <td style="padding:8px; text-align:center;"><span class="chip chip-red" style="font-size:9.5px;">{{ adv.receipt_no }}</span></td>
+          <td style="padding:8px; font-weight:700; color:#334155;">{{ adv.teacher.full_name if adv.teacher else '—' }}</td>
+          <td style="padding:8px; text-align:right; font-weight:900; color:#b91c1c;">{{ '%.2f'|format(adv.amount) }} DH</td>
+        </tr>
+        {% endfor %}
+        {% if not teacher_advances_list %}
+        <tr><td colspan="4" style="padding:16px; text-align:center; color:#64748b;">Aucune avance versée sur cette période.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Teacher Deductions / Photocopies with exact dates -->
+  <div class="card card-pad" style="padding:16px;">
+    <h3 style="margin:0 0 10px 0; font-size:14px; color:#d97706; font-weight:800;">
+      🖨️ Retenues de Tirages & Copies dans la Période (Avec Dates)
+    </h3>
+    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:10.5px; text-transform:uppercase;">
+          <th style="padding:8px; text-align:left;">Date Exacte</th>
+          <th style="padding:8px; text-align:left;">Enseignant</th>
+          <th style="padding:8px; text-align:left;">Libellé / Frais</th>
+          <th style="padding:8px; text-align:right;">Déduction</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ded in teacher_deductions_list %}
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:8px; font-weight:800; color:#0B3D6E;">📅 {{ ded.date.strftime('%d/%m/%Y') }}</td>
+          <td style="padding:8px; font-weight:700; color:#334155;">{{ ded.teacher.full_name if ded.teacher else '—' }}</td>
+          <td style="padding:8px; color:#475569;">{{ ded.title }} ({{ ded.quantity }} copies)</td>
+          <td style="padding:8px; text-align:right; font-weight:800; color:#d97706;">- {{ '%.2f'|format(ded.amount) }} DH</td>
+        </tr>
+        {% endfor %}
+        {% if not teacher_deductions_list %}
+        <tr><td colspan="4" style="padding:16px; text-align:center; color:#64748b;">Aucune retenue de tirage sur cette période.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+{% endif %}
+
+<!-- ========================================================================= -->
+<!-- ================= TAB 6: INSCRIPTIONS & RETENTION ======================== -->
+<!-- ========================================================================= -->
+{% if report == 'enrollments' %}
+
+<div class="grid grid-2 mb-3" style="gap:14px;">
+  
+  <div class="card card-pad" style="padding:16px;">
+    <h3 style="margin:0 0 12px 0; font-size:15px; color:#0B3D6E; font-weight:800;">
+      📋 État Consolidé des Dossiers d'Inscriptions
+    </h3>
+    <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:11px; text-transform:uppercase;">
+          <th style="padding:8px; text-align:left;">Statut du Dossier</th>
+          <th style="padding:8px; text-align:right;">Nombre de Dossiers</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for es in enrollment_stats %}
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 8px; font-weight:700; color:#1e293b;">
+            {{ es.label }}
+          </td>
+          <td style="padding:10px 8px; text-align:right;">
+            <span class="chip chip-blue" style="font-size:12px; font-weight:800;">{{ es.count }} dossiers</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card card-pad" style="padding:16px;">
+    <h3 style="margin:0 0 12px 0; font-size:15px; color:#0B3D6E; font-weight:800;">
+      ⚡ Actions Rapides & Imports de Données
+    </h3>
+    <p style="font-size:12.5px; color:#64748b; line-height:1.5;">
+      Exportez ou importez facilement les fichiers Excel d'élèves, d'enseignants ou de classes pour maintenir vos statistiques à jour.
+    </p>
+    <div style="display:flex; flex-direction:column; gap:8px; margin-top:14px;">
+      <a class="btn btn-outline" href="{{ url_for('import_page') }}" style="font-weight:700; font-size:12.5px; padding:8px 12px; text-align:center;">
+        📥 Importer des Fichiers Excel (Élèves / Profs / Classes)
+      </a>
+      <a class="btn btn-primary" href="{{ url_for('express_enrollment') }}" style="font-weight:700; font-size:12.5px; padding:8px 12px; text-align:center; background:#10b981; border-color:#10b981;">
+        ⚡ Nouvelle Inscription Express
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<!-- Period Enrollments List with exact dates -->
+<div class="card card-pad mb-3" style="padding:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <h3 style="margin:0; font-size:15px; color:#0B3D6E; font-weight:800;">
+      📅 Inscriptions Réalisées dans la Période (Avec Dates Exactes)
+    </h3>
+    <span class="chip chip-blue" style="font-size:11px; font-weight:800;">{{ period_enrollments_list|length }} nouvelle(s) inscription(s)</span>
+  </div>
+
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:10.5px; text-transform:uppercase;">
+          <th style="padding:8px; text-align:left; width:15%;">Date d'Inscription</th>
+          <th style="padding:8px; text-align:left; width:25%;">Élève</th>
+          <th style="padding:8px; text-align:left; width:30%;">Classe / Formation</th>
+          <th style="padding:8px; text-align:center; width:15%;">Statut</th>
+          <th style="padding:8px; text-align:right; width:15%;">Tarif Mensuel</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for en in period_enrollments_list %}
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:8px; font-weight:800; color:#0B3D6E;">
+            📅 {{ en.enroll_date.strftime('%d/%m/%Y') if en.enroll_date else '—' }}
+          </td>
+          <td style="padding:8px; font-weight:700; color:#1e293b;">
+            {{ en.student.full_name if en.student else '—' }}
+          </td>
+          <td style="padding:8px; color:#334155;">
+            {{ en.course.display_name if en.course else '—' }}
+          </td>
+          <td style="padding:8px; text-align:center;">
+            <span class="chip {% if en.status=='active' %}chip-green{% elif en.status=='paused' %}chip-yellow{% else %}chip-blue{% endif %}" style="font-size:10px;">
+              {{ en.status }}
+            </span>
+          </td>
+          <td style="padding:8px; text-align:right; font-weight:800; color:#047857;">
+            {{ '%.2f'|format(en.monthly_price or 0.0) }} {{ settings.currency }}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not period_enrollments_list %}
+        <tr><td colspan="5" style="padding:18px; text-align:center; color:#64748b;">Aucune inscription enregistrée sur cette période.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endif %}
+
+{% endblock %}

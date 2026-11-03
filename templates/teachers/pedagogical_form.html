@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="{{ lang_code }}" dir="{{ 'rtl' if lang_code == 'ar' else 'ltr' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>{{ t_dict['title'] }} — {{ teacher.full_name }} — Institut ILAS</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      margin: 0;
+      padding: 0;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    /* ============================================================== */
+    /* TOP NAVIGATION & BRANDING                                      */
+    /* ============================================================== */
+    .top-nav {
+      background: #0B3D6E;
+      color: #ffffff;
+      padding: 12px 18px;
+      box-shadow: 0 4px 14px rgba(11, 61, 110, 0.2);
+      position: sticky;
+      top: 0;
+      z-index: 500;
+    }
+
+    .top-nav-inner {
+      max-width: 1040px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      height: 36px;
+      width: auto;
+      background: #ffffff;
+      padding: 3px 6px;
+      border-radius: 6px;
+    }
+
+    .brand-title {
+      font-weight: 900;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      opacity: 0.85;
+      line-height: 1.2;
+    }
+
+    /* Language Switcher Bar */
+    .lang-switcher {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 2px;
+    }
+
+    .lang-pill {
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      text-decoration: none;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.16);
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .lang-pill:hover, .lang-pill.active {
+      background: #ffffff;
+      color: #0B3D6E;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    /* ============================================================== */
+    /* MAIN CONTAINER                                                 */
+    /* ============================================================== */
+    .page-container {
+      max-width: 1040px;
+      margin: 18px auto 0 auto;
+      padding: 0 14px 100px 14px;
+    }
+
+    /* ============================================================== -->
+    /* 1. HEADER CARD (METADATA)                                      -->
+    /* ============================================================== */
+    .form-header-card {
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      padding: 20px 22px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+      position: relative;
+    }
+
+    .form-header-card h1 {
+      margin: 0 0 4px 0;
+      font-size: 21px;
+      font-weight: 900;
+      color: #0B3D6E;
+      letter-spacing: 0.2px;
+      line-height: 1.25;
+    }
+
+    .doc-guidance {
+      font-size: 12.5px;
+      color: #64748b;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .meta-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .meta-box .label {
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 2px;
+      letter-spacing: 0.3px;
+    }
+
+    .meta-box .value {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.25;
+    }
+
+    /* ============================================================== */
+    /* SECTION CARDS                                                  */
+    /* ============================================================== */
+    .form-section {
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      padding: 20px 22px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    }
+
+    .section-title {
+      margin: 0 0 14px 0;
+      font-size: 16px;
+      font-weight: 900;
+      color: #0B3D6E;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 10px;
+      border-bottom: 1.5px solid #f1f5f9;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 800;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+
+    .field-hint {
+      display: block;
+      font-size: 11px;
+      color: #64748b;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 11px 13px;
+      border-radius: 10px;
+      border: 1.5px solid #cbd5e1;
+      font-size: 15px; /* 15px-16px prevents iOS auto-zoom */
+      color: #0f172a;
+      background: #ffffff;
+      outline: none;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      line-height: 1.4;
+    }
+
+    .form-control:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    textarea.form-control {
+      min-height: 75px;
+      resize: vertical;
+    }
+
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* ============================================================== */
+    /* SESSIONS CARDS                                                 */
+    /* ============================================================== */
+    .session-card {
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .session-card:hover {
+      border-color: #94a3b8;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    }
+
+    .session-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed #cbd5e1;
+    }
+
+    .session-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .session-badge-num {
+      background: #0B3D6E;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    .session-label-input {
+      font-weight: 800;
+      font-size: 14px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1.5px solid #cbd5e1;
+      background: #ffffff;
+      color: #0B3D6E;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .btn-remove-session {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fca5a5;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-remove-session:hover {
+      background: #fca5a5;
+      color: #991b1b;
+    }
+
+    .session-fields-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    /* Core Skills 2x2 Touch Grid */
+    .skills-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 6px 0 12px 0;
+    }
+
+    .skill-check-card {
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .skill-check-card:hover {
+      border-color: #94a3b8;
+      background: #f8fafc;
+    }
+
+    .skill-check-card.active {
+      background: #eff6ff;
+      border-color: #3b82f6;
+      color: #1e40af;
+      font-weight: 800;
+    }
+
+    .skill-check-card input[type="checkbox"] {
+      width: 17px;
+      height: 17px;
+      accent-color: #2563eb;
+      cursor: pointer;
+    }
+
+    /* Add Session Button */
+    .btn-add-session {
+      background: #eff6ff;
+      border: 2px dashed #93c5fd;
+      color: #1d4ed8;
+      padding: 13px 18px;
+      width: 100%;
+      border-radius: 12px;
+      font-size: 14.5px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-add-session:hover {
+      background: #dbeafe;
+      border-color: #3b82f6;
+    }
+
+    /* ============================================================== */
+    /* FIXED STICKY ACTION BAR                                        */
+    /* ============================================================== */
+    .action-dock {
+      position: sticky;
+      bottom: 20px;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      z-index: 1000;
+      margin-top: 24px;
+    }
+
+    .btn-submit {
+      background: #16a34a;
+      color: #ffffff;
+      border: none;
+      padding: 12px 26px;
+      border-radius: 10px;
+      font-size: 14.5px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-submit:hover {
+      background: #15803d;
+      transform: translateY(-1px);
+    }
+
+    .btn-print-action {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn-print-action:hover {
+      background: #ffffff;
+      color: #0f172a;
+    }
+
+    /* ============================================================== */
+    /* MOBILE SPECIFIC RESPONSIVENESS (SCREENS <= 640px)              */
+    /* ============================================================== */
+    @media (max-width: 640px) {
+      .top-nav {
+        padding: 10px 14px;
+      }
+      .top-nav-inner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      .brand-wrap {
+        justify-content: flex-start;
+      }
+      .lang-switcher {
+        width: 100%;
+        padding-bottom: 4px;
+        gap: 5px;
+      }
+      .lang-pill {
+        padding: 5px 9px;
+        font-size: 11.5px;
+      }
+
+      .page-container {
+        padding: 0 10px 105px 10px;
+        margin-top: 12px;
+      }
+
+      .form-header-card {
+        padding: 16px 14px;
+        border-radius: 14px;
+        margin-bottom: 12px;
+      }
+      .form-header-card h1 {
+        font-size: 18px;
+      }
+      .doc-guidance {
+        font-size: 11.5px;
+      }
+
+      .meta-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 12px;
+        padding-top: 12px;
+      }
+      .meta-box {
+        padding: 8px 10px;
+        border-radius: 8px;
+      }
+      .meta-box .label {
+        font-size: 9.5px;
+      }
+      .meta-box .value {
+        font-size: 12.5px;
+      }
+
+      .form-section {
+        padding: 16px 14px;
+        border-radius: 14px;
+        margin-bottom: 12px;
+      }
+      .section-title {
+        font-size: 15px;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+      }
+
+      .grid-2col {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .session-card {
+        padding: 12px 12px;
+        border-radius: 12px;
+      }
+      .session-fields-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .session-title-wrap {
+        width: 100%;
+      }
+      .session-label-input {
+        font-size: 13px;
+        padding: 6px 8px;
+      }
+
+      .skills-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+      .skill-check-card {
+        padding: 8px 8px;
+        font-size: 12px;
+      }
+
+      /* Native app-like Sticky Bottom Bar on Mobile */
+      .action-dock {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        border-radius: 18px 18px 0 0 !important;
+        padding: 12px 14px !important;
+        padding-bottom: max(14px, env(safe-area-inset-bottom)) !important;
+        background: #0f172a !important;
+        box-shadow: 0 -4px 25px rgba(0,0,0,0.3) !important;
+        margin-top: 0 !important;
+        display: flex !important;
+        gap: 8px !important;
+        z-index: 9999 !important;
+      }
+
+      .btn-submit {
+        flex: 2 !important;
+        padding: 12px 12px !important;
+        font-size: 13.5px !important;
+      }
+
+      .btn-print-action {
+        flex: 1 !important;
+        padding: 12px 8px !important;
+        font-size: 12.5px !important;
+      }
+    }
+
+    /* Toast */
+    #toastNotification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #15803d;
+      color: #ffffff;
+      padding: 14px 22px;
+      border-radius: 12px;
+      font-weight: 800;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+      display: none;
+      z-index: 99999;
+      animation: fadeIn 0.2s ease-out;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================== -->
+  <!-- TOP NAVIGATION & LANGUAGE SWITCHER                             -->
+  <!-- ============================================================== -->
+  <header class="top-nav">
+    <div class="top-nav-inner">
+      <div class="brand-wrap">
+        <img src="/static/uploads/logo-ilas.png" alt="Institut ILAS" class="brand-logo" onerror="this.style.display='none'">
+        <div>
+          <div class="brand-title">INSTITUT ILAS</div>
+          <div class="brand-sub">{{ t_dict['subtitle'] }}</div>
+        </div>
+      </div>
+
+      <!-- Language Selector Strip -->
+      <div class="lang-switcher">
+        {% for code, cfg in languages_config.items() %}
+          <a href="{{ url_for('pedagogical_plan_form', tid=teacher.id, week=monday_iso, lang=code) }}" 
+             class="lang-pill {{ 'active' if lang_code==code else '' }}">
+            <span>{{ cfg['flag'] }}</span>
+            <span>{{ cfg['name_native'] }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </header>
+
+  <div class="page-container">
+
+    <!-- Form Container -->
+    <form id="pedagoForm" method="POST" action="{{ url_for('pedagogical_plan_save', tid=teacher.id) }}">
+      <input type="hidden" name="week_start" value="{{ monday_iso }}">
+      <input type="hidden" name="week_end" value="{{ sunday_iso }}">
+      <input type="hidden" name="lang" value="{{ lang_code }}">
+      <input type="hidden" name="sessions_json" id="sessionsJsonInput">
+
+      <!-- ============================================================== -->
+      <!-- 1. HEADER INFO CARD                                            -->
+      <!-- ============================================================== -->
+      <div class="form-header-card">
+        <h1>{{ t_dict['title'] }}</h1>
+        <div class="doc-guidance">
+          {{ t_dict['doc_ref'] }} — {{ t_dict['blank_note'] }}
+        </div>
+
+        <div class="meta-grid">
+          <div class="meta-box">
+            <div class="label">{{ t_dict['teacher_label'] }}</div>
+            <div class="value">{{ teacher.full_name }}</div>
+          </div>
+          <div class="meta-box">
+            <div class="label">{{ t_dict['week_range_label'] }}</div>
+            <div class="value" style="color:#0B3D6E;">{{ week_range_formatted }}</div>
+          </div>
+          <div class="meta-box">
+            <div class="label">{{ t_dict['language_label'] }}</div>
+            <div class="value">
+              {{ current_lang_cfg['flag'] }} {{ current_lang_cfg['name_native'] }}
+            </div>
+          </div>
+          <div class="meta-box">
+            <div class="label">{{ t_dict['academic_year'] }}</div>
+            <div class="value">2026 - 2027</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- 2. SECTION 1: OBJECTIVES & FOCUS                               -->
+      <!-- ============================================================== -->
+      <div class="form-section">
+        <div class="section-title">
+          <span>🎯</span>
+          <span>{{ t_dict['section_objectives'] }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="comm_obj" class="field-label">{{ t_dict['communicative_goal'] }}</label>
+          <span class="field-hint">Compétences communicatives et mises en situation cibles</span>
+          <textarea id="comm_obj" name="communicative_objectives" class="form-control" 
+                    placeholder="{{ t_dict['communicative_placeholder'] }}">{{ existing_plan.communicative_objectives if existing_plan else '' }}</textarea>
+        </div>
+
+        <div class="grid-2col">
+          <div class="form-group">
+            <label for="gramm_obj" class="field-label">{{ t_dict['grammar_syntax'] }}</label>
+            <textarea id="gramm_obj" name="grammar_syntax" class="form-control" 
+                      placeholder="{{ t_dict['grammar_placeholder'] }}">{{ existing_plan.grammar_syntax if existing_plan else '' }}</textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="vocab_obj" class="field-label">{{ t_dict['vocab_lexicon'] }}</label>
+            <textarea id="vocab_obj" name="vocab_lexicon" class="form-control" 
+                      placeholder="{{ t_dict['vocab_placeholder'] }}">{{ existing_plan.vocab_lexicon if existing_plan else '' }}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- 3. SECTION 2: SESSIONS BREAKDOWN                               -->
+      <!-- ============================================================== -->
+      <div class="form-section">
+        <div class="section-title">
+          <span>📅</span>
+          <span>{{ t_dict['section_sessions'] }}</span>
+        </div>
+
+        <div id="sessionsContainer">
+          <!-- Dynamically populated session cards -->
+        </div>
+
+        <button type="button" class="btn-add-session" onclick="addSessionRow()">
+          <span>➕</span>
+          <span>{{ t_dict['add_session_btn'] }}</span>
+        </button>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- 4. SECTION 3: SPECIAL NEEDS & SUPPLIES                         -->
+      <!-- ============================================================== -->
+      <div class="form-section">
+        <div class="section-title">
+          <span>📌</span>
+          <span>{{ t_dict['section_support'] }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="eval_notes" class="field-label">{{ t_dict['upcoming_eval'] }}</label>
+          <input type="text" id="eval_notes" name="upcoming_evaluations" class="form-control" 
+                 placeholder="{{ t_dict['upcoming_eval_placeholder'] }}" 
+                 value="{{ existing_plan.upcoming_evaluations if existing_plan else '' }}">
+        </div>
+
+        <div class="form-group">
+          <label for="special_obs" class="field-label">{{ t_dict['special_needs'] }}</label>
+          <input type="text" id="special_obs" name="special_needs" class="form-control" 
+                 placeholder="{{ t_dict['special_needs_placeholder'] }}" 
+                 value="{{ existing_plan.special_needs if existing_plan else '' }}">
+        </div>
+
+        <div class="form-group">
+          <label for="supplies_req" class="field-label">{{ t_dict['supplies_needed'] }}</label>
+          <input type="text" id="supplies_req" name="supplies_needed" class="form-control" 
+                 placeholder="{{ t_dict['supplies_placeholder'] }}" 
+                 value="{{ existing_plan.supplies_needed if existing_plan else '' }}">
+        </div>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- 5. STICKY DOCKED ACTION BAR                                    -->
+      <!-- ============================================================== -->
+      <div class="action-dock">
+        <a href="{{ url_for('pedagogical_plan_print', tid=teacher.id, week=monday_iso, lang=lang_code, mode='filled' if existing_plan else 'blank') }}" 
+           target="_blank" class="btn-print-action">
+          <span>🖨️ PDF</span>
+        </a>
+
+        <button type="submit" class="btn-submit">
+          <span>💾</span>
+          <span>{{ t_dict['submit_btn'] }}</span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <div id="toastNotification">
+    <span>✅</span>
+    <span id="toastText">{{ t_dict['success_msg'] }}</span>
+  </div>
+
+  <!-- JavaScript to handle interactive sessions and JSON serialization -->
+  <script>
+    // Initial session data from server
+    let sessions = {{ initial_sessions | tojson }};
+
+    const tLabels = {
+      col_session: {{ t_dict['col_session'] | tojson }},
+      col_group: {{ t_dict['col_group'] | tojson }},
+      col_topic: {{ t_dict['col_topic'] | tojson }},
+      col_skills: {{ t_dict['col_skills'] | tojson }},
+      col_activities: {{ t_dict['col_activities'] | tojson }},
+      col_homework: {{ t_dict['col_homework'] | tojson }},
+      col_notes: {{ t_dict['col_notes'] | tojson }},
+      skill_speaking: {{ t_dict['skill_speaking'] | tojson }},
+      skill_listening: {{ t_dict['skill_listening'] | tojson }},
+      skill_reading: {{ t_dict['skill_reading'] | tojson }},
+      skill_writing: {{ t_dict['skill_writing'] | tojson }},
+      activities_placeholder: {{ t_dict['activities_placeholder'] | tojson }},
+      homework_placeholder: {{ t_dict['homework_placeholder'] | tojson }},
+      notes_placeholder: {{ t_dict['notes_placeholder'] | tojson }},
+      remove_session_btn: {{ t_dict['remove_session_btn'] | tojson }}
+    };
+
+    function renderSessions() {
+      const container = document.getElementById('sessionsContainer');
+      container.innerHTML = '';
+
+      sessions.forEach((s, idx) => {
+        const card = document.createElement('div');
+        card.className = 'session-card';
+        card.id = 'session_card_' + idx;
+
+        const isSpeaking = (s.skills || []).includes('speaking');
+        const isListening = (s.skills || []).includes('listening');
+        const isReading = (s.skills || []).includes('reading');
+        const isWriting = (s.skills || []).includes('writing');
+
+        card.innerHTML = `
+          <div class="session-card-header">
+            <div class="session-title-wrap">
+              <span class="session-badge-num">#${idx + 1}</span>
+              <input type="text" class="session-label-input" 
+                     value="${escapeHtml(s.session_label || ('Séance ' + (idx + 1)))}" 
+                     onchange="updateSessionField(${idx}, 'session_label', this.value)">
+            </div>
+            <button type="button" class="btn-remove-session" onclick="removeSession(${idx})" title="${tLabels.remove_session_btn}">
+              ✕
+            </button>
+          </div>
+
+          <div class="session-fields-grid">
+            <div>
+              <label class="field-label" style="font-size:12px;">${tLabels.col_group}</label>
+              <input type="text" class="form-control" placeholder="Classe / Niveau" 
+                     value="${escapeHtml(s.group_desc || '')}" 
+                     onchange="updateSessionField(${idx}, 'group_desc', this.value)">
+            </div>
+            <div>
+              <label class="field-label" style="font-size:12px;">${tLabels.col_topic}</label>
+              <input type="text" class="form-control" placeholder="Unité / Titre de la leçon" 
+                     value="${escapeHtml(s.topic || '')}" 
+                     onchange="updateSessionField(${idx}, 'topic', this.value)">
+            </div>
+          </div>
+
+          <div style="margin-top:8px;">
+            <label class="field-label" style="font-size:12px;">${tLabels.col_skills}</label>
+            <div class="skills-grid">
+              <label class="skill-check-card ${isSpeaking ? 'active' : ''}" id="sc_${idx}_speaking">
+                <input type="checkbox" ${isSpeaking ? 'checked' : ''} onchange="toggleSkill(${idx}, 'speaking', this)">
+                <span>${tLabels.skill_speaking}</span>
+              </label>
+              <label class="skill-check-card ${isListening ? 'active' : ''}" id="sc_${idx}_listening">
+                <input type="checkbox" ${isListening ? 'checked' : ''} onchange="toggleSkill(${idx}, 'listening', this)">
+                <span>${tLabels.skill_listening}</span>
+              </label>
+              <label class="skill-check-card ${isReading ? 'active' : ''}" id="sc_${idx}_reading">
+                <input type="checkbox" ${isReading ? 'checked' : ''} onchange="toggleSkill(${idx}, 'reading', this)">
+                <span>${tLabels.skill_reading}</span>
+              </label>
+              <label class="skill-check-card ${isWriting ? 'active' : ''}" id="sc_${idx}_writing">
+                <input type="checkbox" ${isWriting ? 'checked' : ''} onchange="toggleSkill(${idx}, 'writing', this)">
+                <span>${tLabels.skill_writing}</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="session-fields-grid" style="margin-top:6px;">
+            <div>
+              <label class="field-label" style="font-size:12px;">${tLabels.col_activities}</label>
+              <textarea class="form-control" placeholder="${tLabels.activities_placeholder}" style="min-height:65px;" 
+                        onchange="updateSessionField(${idx}, 'activities', this.value)">${escapeHtml(s.activities || '')}</textarea>
+            </div>
+            <div>
+              <label class="field-label" style="font-size:12px;">${tLabels.col_homework}</label>
+              <textarea class="form-control" placeholder="${tLabels.homework_placeholder}" style="min-height:65px;" 
+                        onchange="updateSessionField(${idx}, 'homework', this.value)">${escapeHtml(s.homework || '')}</textarea>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function addSessionRow() {
+      sessions.push({
+        session_num: sessions.length + 1,
+        session_label: 'Séance ' + (sessions.length + 1),
+        group_desc: '',
+        topic: '',
+        skills: ['speaking', 'listening'],
+        activities: '',
+        homework: '',
+        notes: ''
+      });
+      renderSessions();
+    }
+
+    function removeSession(idx) {
+      if (sessions.length <= 1) {
+        alert('Au moins une séance doit être conservée.');
+        return;
+      }
+      sessions.splice(idx, 1);
+      renderSessions();
+    }
+
+    function updateSessionField(idx, field, val) {
+      if (sessions[idx]) {
+        sessions[idx][field] = val;
+      }
+    }
+
+    function toggleSkill(idx, skillName, inputEl) {
+      if (!sessions[idx]) return;
+      if (!sessions[idx].skills) sessions[idx].skills = [];
+      const pos = sessions[idx].skills.indexOf(skillName);
+      if (pos === -1) {
+        sessions[idx].skills.push(skillName);
+      } else {
+        sessions[idx].skills.splice(pos, 1);
+      }
+      
+      const parentLabel = document.getElementById(`sc_${idx}_${skillName}`);
+      if (parentLabel) {
+        if (inputEl.checked) {
+          parentLabel.classList.add('active');
+        } else {
+          parentLabel.classList.remove('active');
+        }
+      }
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Intercept submit to serialize JSON
+    document.getElementById('pedagoForm').addEventListener('submit', function(e) {
+      document.getElementById('sessionsJsonInput').value = JSON.stringify(sessions);
+    });
+
+    // Initial render
+    renderSessions();
+  </script>
+
+</body>
+</html>

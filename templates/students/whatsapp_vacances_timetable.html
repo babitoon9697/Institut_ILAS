@@ -1,0 +1,1431 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- ============================================================== -->
+<!-- STUDENTS VACATION TIMETABLE & WHATSAPP ANTI-BAN DISPATCHER     -->
+<!-- Période : Semaine des Vacances (19 au 25 Octobre 2026)          -->
+<!-- ============================================================== -->
+<style>
+  .stu-vac-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  .banner-stu-vac {
+    background: linear-gradient(135deg, #1e3a8a 0%, #0369a1 45%, #0d9488 100%);
+    border-radius: 18px;
+    color: #ffffff;
+    padding: 24px 28px;
+    box-shadow: 0 12px 28px -5px rgba(30, 58, 138, 0.35);
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .banner-stu-vac::after {
+    content: '🎓';
+    position: absolute;
+    right: 25px;
+    bottom: -15px;
+    font-size: 110px;
+    opacity: 0.12;
+    pointer-events: none;
+  }
+  .stu-stat-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: transform 0.15s ease;
+  }
+  .stu-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  }
+  .stu-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .class-block-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    margin-bottom: 22px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    transition: box-shadow 0.2s ease;
+  }
+  .class-block-card:hover {
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.09);
+  }
+  .class-header-strip {
+    background: #f8fafc;
+    border-bottom: 1.5px solid #e2e8f0;
+    padding: 14px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .class-progress-bar-wrap {
+    height: 7px;
+    width: 100%;
+    background: #e2e8f0;
+    overflow: hidden;
+  }
+  .class-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    transition: width 0.4s ease;
+  }
+  .btn-wa-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 9px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+  }
+  .btn-wa-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  }
+  .btn-wa-send {
+    background: #25d366;
+    color: #ffffff;
+  }
+  .btn-wa-send:hover {
+    background: #1eb956;
+    color: #ffffff;
+  }
+  .btn-wa-copy {
+    background: #0284c7;
+    color: #ffffff;
+  }
+  .btn-wa-copy:hover {
+    background: #0369a1;
+    color: #ffffff;
+  }
+  .btn-wa-preview {
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+  }
+  .btn-wa-preview:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+  .status-badge-sent {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    font-weight: 800;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .status-badge-pending {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+    font-weight: 800;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .status-badge-modified {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+    font-weight: 900;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.2);
+  }
+</style>
+
+<div class="stu-vac-container">
+
+  <!-- ============================================================== -->
+  <!-- 1. HEADER BANNER                                               -->
+  <!-- ============================================================== -->
+  <div class="banner-stu-vac">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+      <div>
+        <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.18); padding:5px 14px; border-radius:999px; font-size:12px; font-weight:800; letter-spacing:0.5px; margin-bottom:10px;">
+          <span>🏖️</span>
+          <span>DISPATCHER VACANCES SCOLAIRES • 19 AU 25 OCTOBRE 2026</span>
+        </div>
+        <h1 style="font-size:24px; font-weight:900; margin:0 0 6px 0; letter-spacing:-0.5px;">
+          Envoi des Emplois du Temps aux Élèves & Parents
+        </h1>
+        <p style="font-size:13.5px; opacity:0.92; margin:0; max-width:800px; line-height:1.45;">
+          Système Anti-Ban WhatsApp avec génération d'<strong>images officielles HD (Ctrl+V)</strong>, messages Spintax personnalisés, <strong>classe par classe</strong>, avec suivi en temps réel pour ne jamais envoyer deux fois au même élève.
+        </p>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a href="{{ url_for('static', filename='Emploi_Lundi_19-10_A4_Paysage.xlsx') }}" download class="btn" style="background:#0284c7; color:#fff; font-weight:800; font-size:13px; border-radius:10px; padding:10px 16px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; box-shadow:0 3px 8px rgba(2,132,199,0.3);" title="Télécharger l'emploi du Lundi en A4 Paysage">
+          <span>🖨️</span>
+          <span>Lundi (A4 Paysage)</span>
+        </a>
+        <a href="{{ url_for('static', filename='Emploi_Par_Jour_A4_Paysage_Officiel.xlsx') }}" download class="btn" style="background:#047857; color:#fff; font-weight:800; font-size:13px; border-radius:10px; padding:10px 16px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; box-shadow:0 3px 8px rgba(4,120,87,0.3);" title="Télécharger tous les jours A4 Paysage">
+          <span>📥</span>
+          <span>Tous les Jours A4 Paysage</span>
+        </a>
+        <a href="{{ url_for('teachers_whatsapp_vacances_timetable') }}" class="btn" style="background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); color:#fff; font-weight:800; font-size:13px; border-radius:10px; padding:10px 16px;">
+          👨‍🏫 Vacances Profs ↗
+        </a>
+        <button type="button" onclick="window.location.reload()" class="btn" style="background:#fff; color:#0f172a; font-weight:800; font-size:13px; border-radius:10px; padding:10px 18px; box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+          🔄 Actualiser
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- ALERT BANNER FOR MODIFIED & INCOMPLETE SCHEDULES               -->
+  <!-- ============================================================== -->
+  {% if stats.total_unique_modified and stats.total_unique_modified > 0 %}
+    <div style="background:linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border:2px solid #f59e0b; border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; box-shadow:0 4px 14px rgba(245, 158, 11, 0.15);">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="width:44px; height:44px; border-radius:12px; background:#fde68a; color:#b45309; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0;">
+          ⚠️
+        </div>
+        <div>
+          <div style="font-weight:900; color:#92400e; font-size:15px; margin-bottom:2px;">
+            {{ stats.total_unique_modified }} élève(s) ont un planning incomplet ou modifié (Multi-cours & Ajustements) !
+          </div>
+          <div style="font-size:12.5px; color:#b45309; font-weight:600;">
+            Chaque élève reçoit <strong>1 seul message et 1 seule image</strong> regroupant <strong>toutes ses matières</strong>. Veuillez leur transmettre leur planning complet.
+          </div>
+        </div>
+      </div>
+      <div>
+        <a href="{{ url_for('students_whatsapp_vacances_timetable', status='modified') }}" class="btn" style="background:#d97706; color:#ffffff; font-weight:800; font-size:13px; border-radius:10px; padding:9px 18px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; box-shadow:0 3px 10px rgba(217,119,6,0.35);">
+          <span>⚡ Voir les plannings à compléter / re-notifier</span>
+          <span style="background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:999px; font-size:12px;">{{ stats.total_unique_modified }}</span>
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- ============================================================== -->
+  <!-- 2. STATS CARDS                                                 -->
+  <!-- ============================================================== -->
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px; margin-bottom:20px;">
+    
+    <div class="stu-stat-card">
+      <div class="stu-stat-icon" style="background:#eff6ff; color:#1d4ed8;">📚</div>
+      <div>
+        <div style="font-size:11.5px; font-weight:800; color:#64748b; text-transform:uppercase;">Classes & Groupes</div>
+        <div style="font-size:22px; font-weight:900; color:#0f172a;">{{ stats.total_classes or 0 }} classes</div>
+      </div>
+    </div>
+
+    <div class="stu-stat-card">
+      <div class="stu-stat-icon" style="background:#f0fdf4; color:#15803d;">👥</div>
+      <div>
+        <div style="font-size:11.5px; font-weight:800; color:#64748b; text-transform:uppercase;">Total Élèves</div>
+        <div style="font-size:22px; font-weight:900; color:#0f172a;">{{ stats.total_unique_students or 0 }} élèves</div>
+      </div>
+    </div>
+
+    <div class="stu-stat-card" style="border-left:4px solid #10b981;">
+      <div class="stu-stat-icon" style="background:#ecfdf5; color:#059669;">✅</div>
+      <div style="flex:1;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:11.5px; font-weight:800; color:#64748b; text-transform:uppercase;">Envoyés (Intacts)</span>
+          <span style="font-size:12px; font-weight:900; color:#059669;">{{ stats.global_progress_percent or 0 }}%</span>
+        </div>
+        <div style="font-size:22px; font-weight:900; color:#059669;">
+          {{ stats.total_unique_sent_intact or stats.total_unique_sent or 0 }} / {{ stats.total_unique_students or 0 }}
+        </div>
+      </div>
+    </div>
+
+    {% if stats.total_unique_modified and stats.total_unique_modified > 0 %}
+      <div class="stu-stat-card" style="border-left:4px solid #f59e0b; background:#fffbeb;">
+        <div class="stu-stat-icon" style="background:#fef3c7; color:#d97706;">⚠️</div>
+        <div>
+          <div style="font-size:11.5px; font-weight:800; color:#b45309; text-transform:uppercase;">Modifiés à Renvoyer</div>
+          <div style="font-size:22px; font-weight:900; color:#d97706;">{{ stats.total_unique_modified }} élèves</div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="stu-stat-card" style="border-left:4px solid #f97316;">
+      <div class="stu-stat-icon" style="background:#fff7ed; color:#ea580c;">⏳</div>
+      <div>
+        <div style="font-size:11.5px; font-weight:800; color:#64748b; text-transform:uppercase;">En Attente d'Envoi</div>
+        <div style="font-size:22px; font-weight:900; color:#c2410c;">{{ stats.total_unique_pending or 0 }} élèves</div>
+      </div>
+    </div>
+
+    <!-- Phone Stats KPI Card -->
+    <div class="stu-stat-card" style="border-left:4px solid {{ '#10b981' if stats.total_without_phone == 0 else '#f43f5e' }};">
+      <div class="stu-stat-icon" style="background:{{ '#f0fdf4' if stats.total_without_phone == 0 else '#fff1f2' }}; color:{{ '#16a34a' if stats.total_without_phone == 0 else '#e11d48' }};">📱</div>
+      <div>
+        <div style="font-size:11.5px; font-weight:800; color:#64748b; text-transform:uppercase;">Numéros WhatsApp</div>
+        <div style="font-size:22px; font-weight:900; color:{{ '#059669' if stats.total_without_phone == 0 else '#e11d48' }};">
+          {{ stats.total_with_phone or 0 }} / {{ stats.total_unique_students or 0 }}
+        </div>
+        <div style="font-size:11px; color:{{ '#059669' if stats.total_without_phone == 0 else '#e11d48' }}; font-weight:700;">
+          {% if stats.total_without_phone and stats.total_without_phone > 0 %}
+            ⚠️ {{ stats.total_without_phone }} sans numéro
+          {% else %}
+            ✅ 100% ont un numéro
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Global Progress Bar -->
+  <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:12px 18px; margin-bottom:20px; box-shadow:0 2px 6px rgba(0,0,0,0.03);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:12px; font-weight:800;">
+      <span style="color:#334155;">Progression Globale de l'Envoi des Vacances :</span>
+      <span style="color:#059669;">{{ stats.total_unique_sent or 0 }} élèves envoyés sur {{ stats.total_unique_students or 0 }} ({{ stats.global_progress_percent or 0 }}%)</span>
+    </div>
+    <div style="height:10px; background:#e2e8f0; border-radius:999px; overflow:hidden;">
+      <div style="height:100%; width:{{ stats.global_progress_percent or 0 }}%; background:linear-gradient(90deg, #10b981 0%, #059669 100%); border-radius:999px; transition:width 0.4s ease;"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 3. FILTERS & SEARCH CONTROLS                                   -->
+  <!-- ============================================================== -->
+  <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:18px 20px; margin-bottom:22px; box-shadow:0 2px 8px rgba(15,23,42,0.03);">
+    <form method="GET" action="{{ url_for('students_whatsapp_vacances_timetable') }}" id="filterForm">
+      
+      <!-- Primary Filters Row -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; margin-bottom:14px;">
+        
+        <!-- Teacher Filter -->
+        <div>
+          <label style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; display:block; margin-bottom:4px;">
+            👨‍🏫 Filtrer par Professeur :
+          </label>
+          <select name="teacher" onchange="document.getElementById('filterForm').submit()" style="width:100%; height:40px; border:1.5px solid #cbd5e1; border-radius:10px; padding:0 10px; font-size:13px; font-weight:700; color:#0f172a; background:#f8fafc; outline:none;">
+            <option value="all" {% if filter_teacher == 'all' %}selected{% endif %}>
+              🌟 Tous les professeurs ({{ all_teachers|length }})
+            </option>
+            {% for t_name in all_teachers %}
+              <option value="{{ t_name }}" {% if filter_teacher == t_name %}selected{% endif %}>
+                👨‍🏫 {{ t_name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Phone Number Filter -->
+        <div>
+          <label style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; display:block; margin-bottom:4px;">
+            📱 Présence du Téléphone :
+          </label>
+          <select name="phone" onchange="document.getElementById('filterForm').submit()" style="width:100%; height:40px; border:1.5px solid #cbd5e1; border-radius:10px; padding:0 10px; font-size:13px; font-weight:700; color:#0f172a; background:#f8fafc; outline:none;">
+            <option value="all" {% if filter_phone == 'all' %}selected{% endif %}>Tous (Avec ou Sans numéro)</option>
+            <option value="yes" {% if filter_phone == 'yes' %}selected{% endif %}>✅ Avec numéro WhatsApp valide</option>
+            <option value="no" {% if filter_phone == 'no' %}selected{% endif %}>⚠️ Sans numéro (Manquant - {{ stats.total_without_phone or 0 }})</option>
+          </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div>
+          <label style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; display:block; margin-bottom:4px;">
+            ⚡ Statut d'Envoi :
+          </label>
+          <select name="status" onchange="document.getElementById('filterForm').submit()" style="width:100%; height:40px; border:1.5px solid #cbd5e1; border-radius:10px; padding:0 10px; font-size:13px; font-weight:700; color:#0f172a; background:#f8fafc; outline:none;">
+            <option value="all" {% if filter_status == 'all' %}selected{% endif %}>Tous les statuts</option>
+            <option value="pending" {% if filter_status == 'pending' %}selected{% endif %}>⏳ En attente uniquement</option>
+            <option value="sent" {% if filter_status == 'sent' %}selected{% endif %}>✅ Déjà envoyés (intacts)</option>
+            <option value="modified" {% if filter_status == 'modified' %}selected{% endif %}>⚠️ Modifiés à renvoyer ({{ stats.total_unique_modified or 0 }})</option>
+          </select>
+        </div>
+
+        <!-- Level Filter -->
+        <div>
+          <label style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; display:block; margin-bottom:4px;">
+            🎓 Niveau Scolaire :
+          </label>
+          <select name="level" onchange="document.getElementById('filterForm').submit()" style="width:100%; height:40px; border:1.5px solid #cbd5e1; border-radius:10px; padding:0 10px; font-size:13px; font-weight:700; color:#0f172a; background:#f8fafc; outline:none;">
+            <option value="all" {% if filter_level == 'all' %}selected{% endif %}>Tous les niveaux</option>
+            {% for lvl in all_levels %}
+              <option value="{{ lvl }}" {% if filter_level == lvl %}selected{% endif %}>{{ lvl }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Multi-course Filter -->
+        <div>
+          <label style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; display:block; margin-bottom:4px;">
+            🔀 Multi-cours :
+          </label>
+          <select name="multi" onchange="document.getElementById('filterForm').submit()" style="width:100%; height:40px; border:1.5px solid #cbd5e1; border-radius:10px; padding:0 10px; font-size:13px; font-weight:700; color:#0f172a; background:#f8fafc; outline:none;">
+            <option value="all" {% if filter_multi == 'all' %}selected{% endif %}>Tous les types</option>
+            <option value="multi" {% if filter_multi == 'multi' %}selected{% endif %}>🔀 Multi-cours (2+ matières)</option>
+            <option value="single" {% if filter_multi == 'single' %}selected{% endif %}>🎯 Cours unique</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- Secondary Row: Class Dropdown + Search Input + Actions -->
+      <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;">
+        
+        <!-- Class Selector -->
+        <div style="min-width:280px; flex:1.5;">
+          <label style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; display:block; margin-bottom:4px;">
+            📚 Filtrer par Groupe / Matière Précise :
+          </label>
+          <select name="class" onchange="document.getElementById('filterForm').submit()" style="width:100%; height:40px; border:1.5px solid #cbd5e1; border-radius:10px; padding:0 12px; font-size:13px; font-weight:700; color:#0f172a; background:#f8fafc; outline:none;">
+            <option value="all" {% if filter_class == 'all' %}selected{% endif %}>
+              🌟 Toutes les classes ({{ all_classes|length }} classes)
+            </option>
+            {% for c in all_classes %}
+              <option value="{{ c.course_id }}" {% if filter_class|string == c.course_id|string %}selected{% endif %}>
+                {{ c.clean_title }} — ({{ c.progress_percent }}% envoyé • {{ c.total_students }} él. {% if c.modified_count %}• ⚠️ {{ c.modified_count }} modifiés{% endif %})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Search Input -->
+        <div style="min-width:240px; flex:1;">
+          <label style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; display:block; margin-bottom:4px;">
+            🔍 Recherche rapide :
+          </label>
+          <div style="display:flex; gap:6px;">
+            <input type="text" name="q" value="{{ search_q }}" placeholder="Nom d'élève, téléphone, code, parent..." style="flex:1; height:40px; border:1.5px solid #cbd5e1; border-radius:10px; padding:0 12px; font-size:13px; outline:none; background:#f8fafc;">
+            <button type="submit" class="btn btn-primary" style="background:#0284c7; border-color:#0284c7; height:40px; border-radius:10px; font-weight:700; padding:0 16px;">
+              Filtrer
+            </button>
+            {% if search_q or filter_class != 'all' or filter_status != 'all' or filter_teacher != 'all' or filter_phone != 'all' or filter_level != 'all' or filter_multi != 'all' %}
+              <a href="{{ url_for('students_whatsapp_vacances_timetable') }}" class="btn btn-outline" style="height:40px; border-radius:10px; display:inline-flex; align-items:center; font-weight:700;" title="Réinitialiser tous les filtres">
+                ✕ Réinitialiser
+              </a>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick Active Filter Pills -->
+      {% if filter_teacher != 'all' or filter_phone != 'all' or filter_status != 'all' or filter_level != 'all' or filter_multi != 'all' or filter_class != 'all' or search_q %}
+        <div style="margin-top:12px; padding-top:10px; border-top:1px dashed #e2e8f0; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">Filtres actifs :</span>
+          {% if filter_teacher != 'all' %}
+            <span style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:11.5px; font-weight:700; padding:3px 10px; border-radius:8px;">
+              👨‍🏫 Prof : {{ filter_teacher }}
+            </span>
+          {% endif %}
+          {% if filter_phone != 'all' %}
+            <span style="background:{{ '#f0fdf4' if filter_phone == 'yes' else '#fff1f2' }}; color:{{ '#15803d' if filter_phone == 'yes' else '#b91c1c' }}; border:1px solid {{ '#bbf7d0' if filter_phone == 'yes' else '#fecdd3' }}; font-size:11.5px; font-weight:700; padding:3px 10px; border-radius:8px;">
+              📱 {{ 'Avec téléphone WhatsApp' if filter_phone == 'yes' else 'Sans téléphone (Manquant)' }}
+            </span>
+          {% endif %}
+          {% if filter_status != 'all' %}
+            <span style="background:#f8fafc; color:#334155; border:1px solid #cbd5e1; font-size:11.5px; font-weight:700; padding:3px 10px; border-radius:8px;">
+              ⚡ Statut : {{ filter_status }}
+            </span>
+          {% endif %}
+          {% if filter_level != 'all' %}
+            <span style="background:#f5f3ff; color:#6d28d9; border:1px solid #ddd6fe; font-size:11.5px; font-weight:700; padding:3px 10px; border-radius:8px;">
+              🎓 {{ filter_level }}
+            </span>
+          {% endif %}
+          {% if filter_multi != 'all' %}
+            <span style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:11.5px; font-weight:700; padding:3px 10px; border-radius:8px;">
+              🔀 {{ 'Élèves Multi-cours' if filter_multi == 'multi' else 'Élèves Cours unique' }}
+            </span>
+          {% endif %}
+          {% if search_q %}
+            <span style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; font-size:11.5px; font-weight:700; padding:3px 10px; border-radius:8px;">
+              🔍 "{{ search_q }}"
+            </span>
+          {% endif %}
+          <a href="{{ url_for('students_whatsapp_vacances_timetable') }}" style="font-size:11.5px; color:#ef4444; font-weight:800; text-decoration:none; margin-left:6px;">
+            Effacer tout
+          </a>
+        </div>
+      {% endif %}
+
+    </form>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 4. CLASS BY CLASS LISTING                                      -->
+  <!-- ============================================================== -->
+  {% if not classes %}
+    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:48px 20px; text-align:center; color:#64748b;">
+      <div style="font-size:42px; margin-bottom:12px;">🔍</div>
+      <h3 style="font-size:18px; font-weight:800; color:#1e293b; margin:0 0 6px 0;">Aucun élève trouvé avec ces filtres</h3>
+      <p style="font-size:13px; margin:0 0 16px 0;">Essayez de réinitialiser la recherche ou de changer de classe.</p>
+      <a href="{{ url_for('students_whatsapp_vacances_timetable') }}" class="btn btn-primary" style="border-radius:10px; font-weight:700;">
+        Réinitialiser les filtres
+      </a>
+    </div>
+  {% endif %}
+
+  {% for cls in classes %}
+    <div class="class-block-card" id="classCard_{{ cls.course_id }}">
+      
+      <!-- Progress Bar for this Class -->
+      <div class="class-progress-bar-wrap">
+        <div class="class-progress-fill" style="width:{{ cls.progress_percent }}%;" id="classProgFill_{{ cls.course_id }}"></div>
+      </div>
+
+      <!-- Class Header Strip -->
+      <div class="class-header-strip">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+            <span style="font-size:16px; font-weight:900; color:#0f172a;">{{ cls.clean_title }}</span>
+            <span style="background:#e0f2fe; color:#0369a1; font-weight:800; font-size:11px; padding:2px 8px; border-radius:6px;">
+              📍 {{ cls.primary_room }}
+            </span>
+            <span style="background:#f1f5f9; color:#475569; font-weight:700; font-size:11px; padding:2px 8px; border-radius:6px;">
+              👨‍🏫 {{ cls.primary_teacher }}
+            </span>
+          </div>
+          <div style="font-size:12px; color:#64748b; font-weight:600;">
+            📅 Horaires des vacances : <strong style="color:#0f172a;">{{ cls.schedule_summary }}</strong>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+          
+          <!-- Badge Progress -->
+          <div style="text-align:right;">
+            <div style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">Progression</div>
+            <div style="font-size:13px; font-weight:900; color:#{{ '059669' if cls.progress_percent == 100 else ('0284c7' if cls.progress_percent > 0 else '64748b') }};" id="classProgText_{{ cls.course_id }}">
+              {{ cls.sent_count }} / {{ cls.total_students }} envoyés ({{ cls.progress_percent }}%)
+            </div>
+          </div>
+
+          <!-- Runner Button for this Class -->
+          <button type="button" onclick="startClassRunner({{ cls.course_id }}, '{{ cls.clean_title|replace("'", "\\'") }}')" class="btn" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:#fff; font-weight:800; font-size:12.5px; padding:8px 16px; border-radius:10px; border:none; display:inline-flex; align-items:center; gap:6px; box-shadow:0 3px 8px rgba(16,185,129,0.3); cursor:pointer;">
+            <span>🚀</span>
+            <span>Envoyer à cette classe</span>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Students Table -->
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; text-align:left; font-size:13px;">
+          <thead>
+            <tr style="background:#fafafa; border-bottom:1px solid #e2e8f0; color:#64748b; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">
+              <th style="padding:10px 16px; width:40px;">#</th>
+              <th style="padding:10px 16px;">Élève</th>
+              <th style="padding:10px 16px;">Destinataire WhatsApp</th>
+              <th style="padding:10px 16px;">Séances Vacances</th>
+              <th style="padding:10px 16px; text-align:center;">Statut</th>
+              <th style="padding:10px 16px; text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for stu in cls.students %}
+              <tr style="border-bottom:1px solid #f1f5f9; transition:background 0.15s ease;" id="stuRow_{{ stu.student_id }}_{{ cls.course_id }}" class="stu-item-row" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                
+                <!-- Index -->
+                <td style="padding:12px 16px; color:#94a3b8; font-weight:700;">{{ loop.index }}</td>
+
+                <!-- Student Info -->
+                <td style="padding:12px 16px;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:34px; height:34px; border-radius:10px; background:#eff6ff; color:#1d4ed8; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;">
+                      {{ stu.first_name[:1] }}{{ stu.last_name[:1] }}
+                    </div>
+                    <div>
+                      <div style="font-weight:800; color:#0f172a; font-size:13.5px;">{{ stu.full_name }}</div>
+                      <div style="font-size:11px; color:#64748b;">
+                        <code>{{ stu.code }}</code>
+                        {% if stu.parent_name %} • Parent : {{ stu.parent_name }}{% endif %}
+                        {% if stu.vacation_courses_count > 1 %}
+                          • <span style="color:#d97706; font-weight:700;">+{{ stu.vacation_courses_count - 1 }} autre cours</span>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Phone -->
+                <td style="padding:12px 16px;">
+                  {% if stu.has_phone %}
+                    <div>
+                      <span style="font-weight:700; color:#0f172a; font-family:monospace; font-size:12.5px;">
+                        +{{ stu.best_phone }}
+                      </span>
+                      <div style="font-size:10.5px; color:#059669; font-weight:700;">
+                        {% if stu.best_phone_type == 'parent' %}👨‍👩‍👧 Téléphone Parent{% else %}👤 Téléphone Élève{% endif %}
+                      </div>
+                    </div>
+                  {% else %}
+                    <span style="color:#dc2626; font-weight:700; font-size:11.5px;">
+                      ⚠️ Numéro manquant
+                    </span>
+                  {% endif %}
+                </td>
+
+                <!-- Sessions Count / Badges -->
+                <td style="padding:12px 16px;">
+                  <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                    {% for s in stu.course_vacation_sessions %}
+                      <span style="background:#f1f5f9; border:1px solid #e2e8f0; color:#334155; font-size:11px; font-weight:700; padding:2px 6px; border-radius:6px;">
+                        {{ s.day_fr[:3] }} {{ s.start_str }}-{{ s.end_str }}
+                      </span>
+                    {% endfor %}
+                  </div>
+                </td>
+
+                <!-- Status Badge -->
+                <td style="padding:12px 16px; text-align:center;" id="stuStatusCell_{{ stu.student_id }}_{{ cls.course_id }}">
+                  {% if stu.is_modified %}
+                    <span class="status-badge-modified" title="Le planning a été modifié depuis le dernier envoi !">
+                      <span>⚠️</span>
+                      <span>Modifié (À renvoyer)</span>
+                    </span>
+                  {% elif stu.is_sent %}
+                    <span class="status-badge-sent">
+                      <span>✅</span>
+                      <span>Envoyé {{ stu.sent_at[5:] if stu.sent_at else '' }}</span>
+                    </span>
+                  {% else %}
+                    <span class="status-badge-pending">
+                      <span>⏳</span>
+                      <span>En attente</span>
+                    </span>
+                  {% endif %}
+                </td>
+
+                <!-- Actions -->
+                <td style="padding:12px 16px; text-align:right;">
+                  <div style="display:inline-flex; gap:6px; align-items:center;">
+                    
+                    <!-- Preview & Card -->
+                    <button type="button" onclick="openStudentPreviewModal({{ stu.student_id }}, {{ cls.course_id }})" class="btn-wa-action btn-wa-preview" title="Aperçu & Carte Image">
+                      <span>🖼️</span>
+                      <span>Fiche</span>
+                    </button>
+
+                    <!-- Fast Ctrl+V Copy -->
+                    <button type="button" onclick="copyStudentCardImage({{ stu.student_id }}, {{ cls.course_id }})" class="btn-wa-action btn-wa-copy" title="Copier directement l'image (Ctrl+V)">
+                      <span>📸</span>
+                      <span>Ctrl+V</span>
+                    </button>
+
+                    <!-- Send WhatsApp Direct -->
+                    {% if stu.has_phone %}
+                      {% if stu.is_modified %}
+                        <button type="button" onclick="sendStudentWhatsappDirect({{ stu.student_id }}, {{ cls.course_id }}, '{{ stu.best_phone }}')" class="btn-wa-action" style="background:#d97706; color:#ffffff; box-shadow:0 2px 8px rgba(217,119,6,0.3);" title="Planning modifié ! Cliquez pour copier l'image mise à jour et ouvrir WhatsApp">
+                          <span>🔄</span>
+                          <span>Renvoyer</span>
+                        </button>
+                      {% elif stu.is_sent %}
+                        <button type="button" onclick="sendStudentWhatsappDirect({{ stu.student_id }}, {{ cls.course_id }}, '{{ stu.best_phone }}')" class="btn-wa-action btn-wa-send" style="background:#059669;" title="Copier image & ouvrir WhatsApp à nouveau">
+                          <span>📲</span>
+                          <span>WhatsApp</span>
+                        </button>
+                      {% else %}
+                        <button type="button" onclick="sendStudentWhatsappDirect({{ stu.student_id }}, {{ cls.course_id }}, '{{ stu.best_phone }}')" class="btn-wa-action btn-wa-send" title="Copier image & ouvrir WhatsApp">
+                          <span>📲</span>
+                          <span>WhatsApp</span>
+                        </button>
+                      {% endif %}
+                    {% else %}
+                      <button type="button" onclick="openStudentPreviewModal({{ stu.student_id }}, {{ cls.course_id }})" class="btn-wa-action" style="background:#fee2e2; color:#b91c1c;" title="Numéro manquant, saisir dans l'aperçu">
+                        <span>⚠️</span>
+                        <span>Numéro</span>
+                      </button>
+                    {% endif %}
+
+                    <!-- Reset option if sent -->
+                    {% if stu.is_sent %}
+                      <button type="button" onclick="resetStudentSent({{ stu.student_id }}, {{ cls.course_id }})" class="btn-wa-action" style="background:#f8fafc; color:#94a3b8; padding:5px 7px; font-size:11px;" title="Réinitialiser le statut">
+                        🔄
+                      </button>
+                    {% endif %}
+
+                  </div>
+                </td>
+
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  {% endfor %}
+
+</div>
+
+<!-- ============================================================== -->
+<!-- 5. HIDDEN RETINA HD CARD CONTAINER (FOR HTML2CANVAS CTRL+V)    -->
+<!-- ============================================================== -->
+<div id="offscreenCardContainer" style="position:fixed; left:-9999px; top:0; width:650px; z-index:-1000; background:#ffffff;">
+  <!-- Dynamically injected by JavaScript -->
+</div>
+
+<!-- ============================================================== -->
+<!-- 6. MODAL PREVIEW & COPY IMAGE (INDIVIDUAL)                     -->
+<!-- ============================================================== -->
+<div id="studentPreviewModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(5px); z-index:100050; justify-content:center; align-items:center; padding:16px;">
+  <div style="background:#ffffff; border-radius:20px; box-shadow:0 25px 60px rgba(0,0,0,0.3); width:100%; max-width:680px; max-height:92vh; display:flex; flex-direction:column; overflow:hidden; border:1px solid #cbd5e1;">
+
+    <!-- Modal Header -->
+    <div style="background:linear-gradient(135deg, #1e3a8a 0%, #0369a1 100%); color:#ffffff; padding:16px 22px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-size:17px; font-weight:800; display:flex; align-items:center; gap:8px;">
+          <span>🏖️</span>
+          <span>Emploi du Temps Vacances — <span id="modalStuName">Élève</span></span>
+        </div>
+        <div style="font-size:12px; opacity:0.9; margin-top:2px;">
+          Image Haute Résolution (Ctrl+V) & Message Spintax Anti-Ban
+        </div>
+      </div>
+      <button type="button" onclick="closeStudentPreviewModal()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:700;">✕</button>
+    </div>
+
+    <!-- Tabs Header -->
+    <div style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; padding:10px 20px; display:flex; gap:10px;">
+      <button type="button" onclick="switchStuModalTab('card')" id="tabBtnCard" style="background:#1e3a8a; color:#fff; border:none; padding:8px 16px; border-radius:10px; font-weight:800; font-size:12.5px; cursor:pointer;">
+        🖼️ Carte Image (Ctrl+V)
+      </button>
+      <button type="button" onclick="switchStuModalTab('text')" id="tabBtnText" style="background:#e2e8f0; color:#334155; border:none; padding:8px 16px; border-radius:10px; font-weight:800; font-size:12.5px; cursor:pointer;">
+        💬 Texte Anti-Ban (Spintax)
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div style="padding:20px; overflow-y:auto; flex:1;">
+      
+      <!-- TAB 1: CARD IMAGE -->
+      <div id="modalTabCard" style="display:block;">
+        
+        <div style="background:#ecfdf5; border:1.5px solid #a7f3d0; border-radius:12px; padding:10px 14px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between;">
+          <div style="font-size:12.5px; color:#065f46; font-weight:700;">
+            📸 Cliquez sur « Copier l'image », puis dans WhatsApp faites simplement <strong>Ctrl + V</strong> !
+          </div>
+          <button type="button" onclick="copyCardFromModal()" id="btnCopyFromModal" class="btn" style="background:#10b981; color:#fff; font-weight:800; font-size:12px; padding:6px 14px; border-radius:8px; border:none; cursor:pointer;">
+            📋 Copier l'Image
+          </button>
+        </div>
+
+        <!-- Card Preview Container -->
+        <div id="modalCardVisualPreview" style="background:#f1f5f9; padding:14px; border-radius:14px; display:flex; justify-content:center;">
+          <!-- Injected live -->
+        </div>
+
+      </div>
+
+      <!-- TAB 2: TEXT MESSAGE -->
+      <div id="modalTabText" style="display:none;">
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+          
+          <!-- Template Mode Toggle -->
+          <div style="display:flex; gap:6px; background:#f1f5f9; padding:3px; border-radius:10px; border:1px solid #cbd5e1;">
+            <button type="button" onclick="setModalTemplateMode('standard')" id="btnTplStandard" style="padding:6px 12px; border-radius:8px; font-weight:800; font-size:11.5px; border:none; background:#1e3a8a; color:#fff; cursor:pointer;">
+              🗓️ Emploi Vacances
+            </button>
+            <button type="button" onclick="setModalTemplateMode('makeup')" id="btnTplMakeup" style="padding:6px 12px; border-radius:8px; font-weight:800; font-size:11.5px; border:none; background:transparent; color:#475569; cursor:pointer;">
+              🔄 Rattrapage Après Vacances
+            </button>
+          </div>
+
+          <!-- Language Selector -->
+          <div style="display:flex; gap:6px;">
+            <button type="button" onclick="setModalLang('ar')" id="btnLangAr" style="padding:6px 12px; border-radius:8px; font-weight:800; font-size:12px; border:1.5px solid #10b981; background:#ecfdf5; color:#065f46; cursor:pointer;">
+              🇲🇦 العربية
+            </button>
+            <button type="button" onclick="setModalLang('fr')" id="btnLangFr" style="padding:6px 12px; border-radius:8px; font-weight:800; font-size:12px; border:1.5px solid #cbd5e1; background:#f8fafc; color:#475569; cursor:pointer;">
+              🇫🇷 Français
+            </button>
+          </div>
+
+          <!-- Actions -->
+          <div style="display:flex; gap:6px;">
+            <button type="button" onclick="regenerateStuSpintax()" class="btn btn-outline" style="font-size:11.5px; padding:6px 10px; border-radius:8px; background:#fff; font-weight:700;">
+              🎲 Nouveau Spintax
+            </button>
+            <button type="button" onclick="copyModalTextMessage()" class="btn btn-outline" style="font-size:11.5px; padding:6px 10px; border-radius:8px; background:#fff; font-weight:700;">
+              📋 Copier Texte
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Phone Input -->
+        <div style="margin-bottom:12px;">
+          <label style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; display:block; margin-bottom:4px;">
+            Numéro WhatsApp :
+          </label>
+          <input type="text" id="modalStuPhoneInput" style="width:100%; height:38px; border:1.5px solid #cbd5e1; border-radius:8px; padding:0 12px; font-size:13.5px; font-weight:700; color:#0f172a; outline:none; box-sizing:border-box;">
+        </div>
+
+        <textarea id="modalStuTextarea" rows="12" style="width:100%; border:1.5px solid #cbd5e1; border-radius:10px; padding:12px; font-family:monospace; font-size:12px; line-height:1.45; background:#f8fafc; outline:none; box-sizing:border-box; color:#0f172a;"></textarea>
+
+      </div>
+
+    </div>
+
+    <!-- Modal Footer -->
+    <div style="background:#f8fafc; border-top:1.5px solid #e2e8f0; padding:14px 20px; display:flex; justify-content:space-between; align-items:center;">
+      <button type="button" onclick="closeStudentPreviewModal()" class="btn btn-outline" style="border-radius:10px; font-weight:700;">
+        Fermer
+      </button>
+
+      <button type="button" onclick="launchSendFromModal()" class="btn" style="background:#25d366; color:#fff; font-weight:800; font-size:14px; padding:10px 24px; border-radius:10px; border:none; display:inline-flex; align-items:center; gap:8px; cursor:pointer; box-shadow:0 4px 12px rgba(37,211,102,0.35);">
+        <span>📲</span>
+        <span>Copier Image & Ouvrir WhatsApp</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- 7. GUIDED CLASS RUNNER MODAL (BULK CLASS DISPATCHER)           -->
+<!-- ============================================================== -->
+<div id="classRunnerModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.75); backdrop-filter:blur(6px); z-index:100060; justify-content:center; align-items:center; padding:16px;">
+  <div style="background:#ffffff; border-radius:20px; box-shadow:0 25px 60px rgba(0,0,0,0.35); width:100%; max-width:620px; overflow:hidden; border:1px solid #cbd5e1;">
+
+    <!-- Runner Header -->
+    <div style="background:linear-gradient(135deg, #059669 0%, #0d9488 100%); color:#ffffff; padding:18px 24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="font-size:18px; font-weight:900; display:flex; align-items:center; gap:8px;">
+          <span>🚀</span>
+          <span>Envoi Groupé Anti-Ban : <span id="runnerClassTitle">Classe</span></span>
+        </div>
+        <button type="button" onclick="closeClassRunner()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; width:30px; height:30px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:700;">✕</button>
+      </div>
+
+      <!-- Runner Progress Bar -->
+      <div style="display:flex; justify-content:space-between; font-size:11.5px; font-weight:700; margin-bottom:6px; opacity:0.95;">
+        <span>Progression de la classe</span>
+        <span id="runnerProgressText">0 / 0</span>
+      </div>
+      <div style="height:8px; background:rgba(255,255,255,0.25); border-radius:999px; overflow:hidden;">
+        <div id="runnerProgressBar" style="height:100%; width:0%; background:#ffffff; border-radius:999px; transition:width 0.3s ease;"></div>
+      </div>
+    </div>
+
+    <!-- Runner Body -->
+    <div style="padding:22px; max-height:70vh; overflow-y:auto;" id="runnerBodyContent">
+      
+      <!-- Current Student Card -->
+      <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:14px; padding:18px; margin-bottom:16px; text-align:center;">
+        <div style="font-size:11.5px; font-weight:800; color:#64748b; text-transform:uppercase; margin-bottom:4px;">
+          Élève actuel à notifier :
+        </div>
+        <div style="font-size:20px; font-weight:900; color:#0f172a; margin-bottom:4px;" id="runnerCurrentStuName">
+          -
+        </div>
+        <div style="font-size:13px; font-weight:700; color:#059669; font-family:monospace;" id="runnerCurrentPhone">
+          -
+        </div>
+        <div style="font-size:11.5px; color:#64748b; margin-top:4px;" id="runnerCurrentSessionsCount">
+          -
+        </div>
+      </div>
+
+      <!-- Anti-Ban Cadence Timer -->
+      <div id="runnerTimerBox" style="display:none; background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:12px; padding:12px; text-align:center; margin-bottom:16px;">
+        <div style="font-size:13px; font-weight:800; color:#1e40af;">
+          ⏳ Pause Anti-Ban de sécurité : <span id="runnerCountdown" style="font-size:16px; color:#dc2626;">6</span>s
+        </div>
+        <div style="font-size:11px; color:#3b82f6; margin-top:2px;">
+          Espacement automatique pour protéger votre compte WhatsApp
+        </div>
+      </div>
+
+      <!-- Card Image Mini-Preview -->
+      <div style="background:#ecfdf5; border:1px dashed #10b981; border-radius:12px; padding:12px; text-align:center; font-size:12px; color:#065f46; margin-bottom:16px;">
+        ✔ <strong>L'image HD sera copiée automatiquement</strong> dans votre presse-papiers lors du clic.<br>
+        Une fois WhatsApp ouvert, faites simplement <strong>Ctrl + V</strong> pour coller l'image !
+      </div>
+
+      <!-- Controls -->
+      <div style="display:flex; gap:10px;">
+        <button type="button" onclick="runnerSendCurrent()" id="btnRunnerSend" class="btn" style="flex:1; background:#25d366; color:#fff; font-weight:800; font-size:14px; padding:12px; border-radius:12px; border:none; display:inline-flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; box-shadow:0 4px 12px rgba(37,211,102,0.3);">
+          <span>📲</span>
+          <span>Copier Image & Ouvrir WhatsApp</span>
+        </button>
+
+        <button type="button" onclick="runnerSkipCurrent()" class="btn btn-outline" style="border-radius:12px; font-weight:700; padding:0 16px;">
+          Passer ⏭️
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- 8. JAVASCRIPT LOGIC (HTML2CANVAS, SPINTAX, DISPATCH RUNNER)   -->
+<!-- ============================================================== -->
+<script src="{{ url_for('static', filename='vendor/html2canvas.min.js') }}"></script>
+<script>
+  let currentModalStu = null;
+  let currentModalLang = 'ar';
+  let runnerQueue = [];
+  let runnerIndex = 0;
+  let runnerCid = null;
+  let runnerTimer = null;
+
+  // -------------------------------------------------------------
+  // BUILD HD STUDENT CARD HTML
+  // -------------------------------------------------------------
+  function buildStudentCardHTML(stu, sessions, classTitle) {
+    const sname = stu.full_name || 'Élève';
+    const code = stu.code || '';
+    const sessList = sessions || [];
+    const distinctCourses = [...new Set(sessList.map(s => s.course_name))];
+    let level = classTitle || 'Programme Vacances';
+    if (distinctCourses.length > 1) {
+      level = `🎒 Multi-Matières (${distinctCourses.length} cours)`;
+    } else if (distinctCourses.length === 1) {
+      level = distinctCourses[0];
+    }
+    
+    let rowsHtml = '';
+    sessList.forEach((s, idx) => {
+      rowsHtml += `
+        <div style="display:flex; align-items:center; justify-content:space-between; background:${idx % 2 === 0 ? '#ffffff' : '#f8fafc'}; border:1px solid #e2e8f0; border-radius:12px; padding:10px 14px; margin-bottom:8px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="background:#1e3a8a; color:#ffffff; font-weight:900; font-size:11px; padding:6px 10px; border-radius:8px; text-align:center; min-width:70px;">
+              ${s.day_fr ? s.day_fr.split(' ')[0] : 'Jour'} ${s.day_fr ? s.day_fr.split(' ')[1] : ''}
+            </div>
+            <div>
+              <div style="font-weight:900; font-size:14px; color:#0f172a;">${s.course_name}</div>
+              <div style="font-size:11.5px; color:#64748b;">
+                👨‍🏫 ${s.teacher_name} &bull; 📍 ${s.room_name}
+              </div>
+            </div>
+          </div>
+          <div style="background:#ecfdf5; border:1px solid #a7f3d0; color:#047857; font-weight:900; font-size:13px; padding:6px 12px; border-radius:8px; font-family:monospace;">
+            ${s.start_str} ➔ ${s.end_str}
+          </div>
+        </div>
+      `;
+    });
+
+    return `
+      <div id="renderableStudentCard" style="width:620px; background:#ffffff; border-radius:20px; overflow:hidden; box-shadow:0 15px 35px rgba(0,0,0,0.12); border:1.5px solid #cbd5e1; font-family:'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg, #0B3D6E 0%, #1e40af 100%); color:#ffffff; padding:20px 24px; text-align:center; position:relative;">
+          <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.18); padding:4px 14px; border-radius:999px; font-size:11px; font-weight:800; letter-spacing:0.8px; margin-bottom:8px;">
+            <span>🏖️</span>
+            <span>PROGRAMME SPÉCIAL VACANCES • 19 AU 25 OCTOBRE 2026</span>
+          </div>
+          <div style="font-size:22px; font-weight:900; letter-spacing:-0.5px;">INSTITUT LES SAGES — ILAS</div>
+          <div style="font-size:12px; opacity:0.88; margin-top:2px;">Excellence & Soutien Pédagogique de Qualité</div>
+        </div>
+
+        <!-- Student Identification Strip -->
+        <div style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; padding:16px 24px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Emploi du Temps Personnel</div>
+            <div style="font-size:18px; font-weight:900; color:#0f172a; margin-top:2px;">${sname}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="background:#e0f2fe; color:#0369a1; font-weight:800; font-size:12px; padding:5px 12px; border-radius:8px; display:inline-block;">
+              ${level}
+            </div>
+            ${code ? `<div style="font-size:10.5px; color:#94a3b8; font-family:monospace; margin-top:3px;">${code}</div>` : ''}
+          </div>
+        </div>
+
+        <!-- Sessions Body -->
+        <div style="padding:20px 24px;">
+          <div style="font-size:12px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">
+            🗓️ Planning des Séances Programmées :
+          </div>
+          ${rowsHtml}
+
+          <!-- Notice Box -->
+          <div style="background:#fffbeb; border:1px dashed #f59e0b; border-radius:10px; padding:10px 14px; margin-top:14px; display:flex; align-items:center; gap:10px;">
+            <span style="font-size:18px;">💡</span>
+            <div style="font-size:11.5px; color:#92400e; font-weight:600; line-height:1.4;">
+              <strong>Rappel important :</strong> La ponctualité aux séances est requise. Excellentes vacances et bon apprentissage !
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Footer -->
+        <div style="background:#f1f5f9; border-top:1px solid #e2e8f0; padding:12px 24px; display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:#64748b;">
+          <div style="font-weight:700;">
+            ✔ Document Officiel d'Emploi du Temps
+          </div>
+          <div style="font-weight:800; color:#0B3D6E;">
+            🏛️ Institut ILAS &bull; Bd Hassan II
+          </div>
+        </div>
+
+      </div>
+    `;
+  }
+
+  let currentModalTemplateMode = 'standard';
+
+  // -------------------------------------------------------------
+  // OPEN PREVIEW MODAL
+  // -------------------------------------------------------------
+  function openStudentPreviewModal(sid, cid) {
+    fetch(`/api/students/${sid}/whatsapp_vacances_timetable_data?course_id=${cid || ''}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          alert('Erreur: ' + data.error);
+          return;
+        }
+        currentModalStu = data;
+        document.getElementById('modalStuName').innerText = data.full_name;
+        document.getElementById('modalStuPhoneInput').value = data.best_phone || '';
+
+        // If this course is a makeup course, auto-select makeup template
+        if (data.is_makeup_course) {
+          currentModalTemplateMode = 'makeup';
+        } else {
+          currentModalTemplateMode = 'standard';
+        }
+        updateModalTemplateButtons();
+        updateModalTextareaContent();
+
+        // Render Card in Visual Preview
+        const cardHtml = buildStudentCardHTML(data, data.sessions, '');
+        document.getElementById('modalCardVisualPreview').innerHTML = cardHtml;
+
+        document.getElementById('studentPreviewModal').style.display = 'flex';
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Impossible de charger les données de l\'élève.');
+      });
+  }
+
+  function updateModalTemplateButtons() {
+    const btnStd = document.getElementById('btnTplStandard');
+    const btnMak = document.getElementById('btnTplMakeup');
+    if (!btnStd || !btnMak) return;
+    if (currentModalTemplateMode === 'makeup') {
+      btnMak.style.background = '#d97706';
+      btnMak.style.color = '#fff';
+      btnStd.style.background = 'transparent';
+      btnStd.style.color = '#475569';
+    } else {
+      btnStd.style.background = '#1e3a8a';
+      btnStd.style.color = '#fff';
+      btnMak.style.background = 'transparent';
+      btnMak.style.color = '#475569';
+    }
+  }
+
+  function setModalTemplateMode(mode) {
+    currentModalTemplateMode = mode;
+    updateModalTemplateButtons();
+    updateModalTextareaContent();
+  }
+
+  function updateModalTextareaContent() {
+    if (!currentModalStu) return;
+    let msg = '';
+    if (currentModalTemplateMode === 'makeup') {
+      msg = currentModalLang === 'ar' ? currentModalStu.makeup_ar : currentModalStu.makeup_fr;
+    } else {
+      msg = currentModalLang === 'ar' ? currentModalStu.message_ar : currentModalStu.message_fr;
+    }
+    document.getElementById('modalStuTextarea').value = msg;
+  }
+
+  function closeStudentPreviewModal() {
+    document.getElementById('studentPreviewModal').style.display = 'none';
+  }
+
+  function switchStuModalTab(tab) {
+    if (tab === 'card') {
+      document.getElementById('modalTabCard').style.display = 'block';
+      document.getElementById('modalTabText').style.display = 'none';
+      document.getElementById('tabBtnCard').style.background = '#1e3a8a';
+      document.getElementById('tabBtnCard').style.color = '#fff';
+      document.getElementById('tabBtnText').style.background = '#e2e8f0';
+      document.getElementById('tabBtnText').style.color = '#334155';
+    } else {
+      document.getElementById('modalTabCard').style.display = 'none';
+      document.getElementById('modalTabText').style.display = 'block';
+      document.getElementById('tabBtnCard').style.background = '#e2e8f0';
+      document.getElementById('tabBtnCard').style.color = '#334155';
+      document.getElementById('tabBtnText').style.background = '#1e3a8a';
+      document.getElementById('tabBtnText').style.color = '#fff';
+    }
+  }
+
+  function setModalLang(lang) {
+    currentModalLang = lang;
+    if (lang === 'ar') {
+      document.getElementById('btnLangAr').style.border = '1.5px solid #10b981';
+      document.getElementById('btnLangAr').style.background = '#ecfdf5';
+      document.getElementById('btnLangAr').style.color = '#065f46';
+      document.getElementById('btnLangFr').style.border = '1.5px solid #cbd5e1';
+      document.getElementById('btnLangFr').style.background = '#f8fafc';
+      document.getElementById('btnLangFr').style.color = '#475569';
+    } else {
+      document.getElementById('btnLangFr').style.border = '1.5px solid #10b981';
+      document.getElementById('btnLangFr').style.background = '#ecfdf5';
+      document.getElementById('btnLangFr').style.color = '#065f46';
+      document.getElementById('btnLangAr').style.border = '1.5px solid #cbd5e1';
+      document.getElementById('btnLangAr').style.background = '#f8fafc';
+      document.getElementById('btnLangAr').style.color = '#475569';
+    }
+    updateModalTextareaContent();
+  }
+
+  function regenerateStuSpintax() {
+    if (!currentModalStu) return;
+    openStudentPreviewModal(currentModalStu.student_id, currentModalStu.course_id);
+  }
+
+  function copyModalTextMessage() {
+    const text = document.getElementById('modalStuTextarea').value;
+    navigator.clipboard.writeText(text).then(() => {
+      alert('Texte WhatsApp copié dans le presse-papiers !');
+    });
+  }
+
+  // -------------------------------------------------------------
+  // COPY CARD IMAGE TO CLIPBOARD (CTRL+V)
+  // -------------------------------------------------------------
+  async function generateAndCopyCardBlob(stu, sessions, classTitle) {
+    const container = document.getElementById('offscreenCardContainer');
+    container.innerHTML = buildStudentCardHTML(stu, sessions, classTitle);
+    const cardEl = container.querySelector('#renderableStudentCard');
+
+    try {
+      const canvas = await html2canvas(cardEl, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
+
+      return new Promise((resolve, reject) => {
+        canvas.toBlob(async (blob) => {
+          if (!blob) {
+            reject(new Error('Canvas blob failed'));
+            return;
+          }
+          try {
+            await navigator.clipboard.write([
+              new ClipboardItem({ 'image/png': blob })
+            ]);
+            resolve(true);
+          } catch (clipErr) {
+            console.warn('Clipboard write failed, fallbacking...', clipErr);
+            resolve(false);
+          }
+        }, 'image/png');
+      });
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  }
+
+  async function copyStudentCardImage(sid, cid) {
+    try {
+      const res = await fetch(`/api/students/${sid}/whatsapp_vacances_timetable_data?course_id=${cid || ''}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      await generateAndCopyCardBlob(data, data.sessions, '');
+      alert(`✔ Image de l'emploi du temps de ${data.full_name} copiée dans le presse-papiers !\n\nOuvrez WhatsApp et faites Ctrl + V pour coller l'image.`);
+    } catch (e) {
+      console.error(e);
+      alert('Erreur lors de la copie de l\'image.');
+    }
+  }
+
+  async function copyCardFromModal() {
+    if (!currentModalStu) return;
+    const btn = document.getElementById('btnCopyFromModal');
+    btn.innerText = 'Génération...';
+    await generateAndCopyCardBlob(currentModalStu, currentModalStu.sessions, '');
+    btn.innerText = '✔ Image Copiée (Ctrl+V)';
+    setTimeout(() => { btn.innerText = '📋 Copier l\'Image'; }, 2500);
+  }
+
+  // -------------------------------------------------------------
+  // SEND WHATSAPP DIRECT (COPY IMAGE + OPEN WA + MARK SENT)
+  // -------------------------------------------------------------
+  async function sendStudentWhatsappDirect(sid, cid, phone) {
+    try {
+      const res = await fetch(`/api/students/${sid}/whatsapp_vacances_timetable_data?course_id=${cid || ''}&lang=ar`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      const targetPhone = phone || data.best_phone;
+      if (!targetPhone) {
+        alert('Veuillez renseigner un numéro WhatsApp valide.');
+        openStudentPreviewModal(sid, cid);
+        return;
+      }
+
+      // 1. Copy image to clipboard
+      await generateAndCopyCardBlob(data, data.sessions, '');
+
+      // 2. Mark sent in database
+      const msgToSend = data.selected_message || data.message_ar;
+      await fetch(`/api/students/${sid}/mark_vacation_sent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          course_id: cid,
+          phone: targetPhone,
+          recipient_type: data.best_phone_type || 'parent',
+          message_text: msgToSend,
+          sessions_sig: data.sessions_sig || ''
+        })
+      });
+
+      // Update UI row badge live
+      const statusCell = document.getElementById(`stuStatusCell_${sid}_${cid}`);
+      if (statusCell) {
+        statusCell.innerHTML = `<span class="status-badge-sent"><span>✅</span><span>Envoyé à l'instant</span></span>`;
+      }
+
+      // 3. Open WhatsApp Web / App
+      const encodedMsg = encodeURIComponent(msgToSend);
+      const waUrl = `https://wa.me/${targetPhone}?text=${encodedMsg}`;
+      window.open(waUrl, '_blank');
+
+    } catch (err) {
+      console.error(err);
+      alert('Erreur lors de l\'envoi.');
+    }
+  }
+
+  async function launchSendFromModal() {
+    if (!currentModalStu) return;
+    const sid = currentModalStu.student_id;
+    const cid = currentModalStu.course_id;
+    const phone = document.getElementById('modalStuPhoneInput').value.trim();
+    const message = document.getElementById('modalStuTextarea').value;
+
+    if (!phone) {
+      alert('Veuillez renseigner un numéro de téléphone valide.');
+      return;
+    }
+
+    // Copy card
+    await generateAndCopyCardBlob(currentModalStu, currentModalStu.sessions, '');
+
+    // Mark sent
+    await fetch(`/api/students/${sid}/mark_vacation_sent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        course_id: cid,
+        phone: phone,
+        recipient_type: currentModalStu.best_phone_type || 'parent',
+        message_text: message,
+        sessions_sig: currentModalStu.sessions_sig || ''
+      })
+    });
+
+    // Update row
+    const statusCell = document.getElementById(`stuStatusCell_${sid}_${cid}`);
+    if (statusCell) {
+      statusCell.innerHTML = `<span class="status-badge-sent"><span>✅</span><span>Envoyé à l'instant</span></span>`;
+    }
+
+    closeStudentPreviewModal();
+
+    // Open WhatsApp
+    const encoded = encodeURIComponent(message);
+    window.open(`https://wa.me/${phone}?text=${encoded}`, '_blank');
+  }
+
+  // -------------------------------------------------------------
+  // RESET SENT STATUS
+  // -------------------------------------------------------------
+  async function resetStudentSent(sid, cid) {
+    if (!confirm('Voulez-vous réinitialiser le statut d\'envoi pour cet élève ?')) return;
+    await fetch(`/api/students/${sid}/reset_vacation_sent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ course_id: cid })
+    });
+    const statusCell = document.getElementById(`stuStatusCell_${sid}_${cid}`);
+    if (statusCell) {
+      statusCell.innerHTML = `<span class="status-badge-pending"><span>⏳</span><span>En attente</span></span>`;
+    }
+  }
+
+  // -------------------------------------------------------------
+  // GUIDED BULK RUNNER (CLASS BY CLASS)
+  // -------------------------------------------------------------
+  function startClassRunner(cid, classTitle) {
+    runnerCid = cid;
+    document.getElementById('runnerClassTitle').innerText = classTitle;
+    
+    // Find all rows in this class
+    const card = document.getElementById(`classCard_${cid}`);
+    const rows = card.querySelectorAll('.stu-item-row');
+    
+    runnerQueue = [];
+    rows.forEach(r => {
+      const parts = r.id.split('_');
+      const sid = parseInt(parts[1]);
+      // Only enqueue pending students or ask
+      runnerQueue.push({ sid: sid, cid: cid });
+    });
+
+    if (runnerQueue.length === 0) {
+      alert('Aucun élève trouvé dans cette classe.');
+      return;
+    }
+
+    runnerIndex = 0;
+    document.getElementById('classRunnerModal').style.display = 'flex';
+    loadCurrentRunnerItem();
+  }
+
+  function closeClassRunner() {
+    if (runnerTimer) clearInterval(runnerTimer);
+    document.getElementById('classRunnerModal').style.display = 'none';
+  }
+
+  async function loadCurrentRunnerItem() {
+    if (runnerIndex >= runnerQueue.length) {
+      alert('🎉 Tous les élèves de cette classe ont été traités !');
+      closeClassRunner();
+      window.location.reload();
+      return;
+    }
+
+    const item = runnerQueue[runnerIndex];
+    document.getElementById('runnerProgressText').innerText = `${runnerIndex + 1} / ${runnerQueue.length}`;
+    const pct = Math.round(((runnerIndex) / runnerQueue.length) * 100);
+    document.getElementById('runnerProgressBar').style.width = `${pct}%`;
+
+    try {
+      const res = await fetch(`/api/students/${item.sid}/whatsapp_vacances_timetable_data?course_id=${item.cid}&lang=ar`);
+      const data = await res.json();
+      
+      document.getElementById('runnerCurrentStuName').innerText = data.full_name;
+      document.getElementById('runnerCurrentPhone').innerText = data.best_phone ? `+${data.best_phone} (${data.best_phone_type === 'parent' ? 'Parent' : 'Élève'})` : '⚠️ Numéro manquant';
+      document.getElementById('runnerCurrentSessionsCount').innerText = `${data.sessions.length} séances programmées`;
+
+      currentRunnerStudentData = data;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  let currentRunnerStudentData = null;
+
+  async function runnerSendCurrent() {
+    if (!currentRunnerStudentData) return;
+    const data = currentRunnerStudentData;
+    const phone = data.best_phone;
+
+    if (!phone) {
+      if (confirm(`⚠️ Pas de numéro enregistré pour ${data.full_name}. Voulez-vous passer au suivant ?`)) {
+        runnerSkipCurrent();
+      }
+      return;
+    }
+
+    // 1. Copy image
+    await generateAndCopyCardBlob(data, data.sessions, '');
+
+    // 2. Mark sent
+    const msgToSend = data.selected_message || data.message_ar;
+    await fetch(`/api/students/${data.student_id}/mark_vacation_sent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        course_id: data.course_id,
+        phone: phone,
+        recipient_type: data.best_phone_type || 'parent',
+        message_text: msgToSend,
+        sessions_sig: data.sessions_sig || ''
+      })
+    });
+
+    // Update row in table
+    const statusCell = document.getElementById(`stuStatusCell_${data.student_id}_${data.course_id}`);
+    if (statusCell) {
+      statusCell.innerHTML = `<span class="status-badge-sent"><span>✅</span><span>Envoyé à l'instant</span></span>`;
+    }
+
+    // 3. Open WhatsApp
+    const encoded = encodeURIComponent(msgToSend);
+    window.open(`https://wa.me/${phone}?text=${encoded}`, '_blank');
+
+    // 4. Anti-ban delay timer before next
+    startAntiBanTimer();
+  }
+
+  function runnerSkipCurrent() {
+    runnerIndex++;
+    loadCurrentRunnerItem();
+  }
+
+  function startAntiBanTimer() {
+    const box = document.getElementById('runnerTimerBox');
+    const cd = document.getElementById('runnerCountdown');
+    const btnSend = document.getElementById('btnRunnerSend');
+    
+    let delay = Math.floor(Math.random() * 4) + 5; // 5 to 8 seconds randomized
+    box.style.display = 'block';
+    btnSend.disabled = true;
+    btnSend.style.opacity = '0.5';
+
+    if (runnerTimer) clearInterval(runnerTimer);
+    cd.innerText = delay;
+
+    runnerTimer = setInterval(() => {
+      delay--;
+      cd.innerText = delay;
+      if (delay <= 0) {
+        clearInterval(runnerTimer);
+        box.style.display = 'none';
+        btnSend.disabled = false;
+        btnSend.style.opacity = '1';
+        runnerIndex++;
+        loadCurrentRunnerItem();
+      }
+    }, 1000);
+  }
+</script>
+
+{% endblock %}

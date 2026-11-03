@@ -1,0 +1,412 @@
+<!-- ========================================================================= -->
+<!-- MODAL: ALERTES DE RAPPEL DES PRÉ-INSCRIPTIONS (10 DAYS CADENCE)           -->
+<!-- ========================================================================= -->
+<div id="pendingRemindersAlertModal" style="display:none; position:fixed; z-index:99999; inset:0; background:rgba(15,23,42,0.7); align-items:center; justify-content:center; backdrop-filter:blur(3px); padding:16px;">
+  <div style="background:#ffffff; border-radius:16px; width:100%; max-width:820px; max-height:92vh; display:flex; flex-direction:column; box-shadow:0 25px 50px -12px rgba(0,0,0,0.35); border:1.5px solid #cbd5e1; overflow:hidden; animation: alertModalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg, #0B3D6E 0%, #1e40af 100%); color:#ffffff; padding:16px 22px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="width:42px; height:42px; border-radius:10px; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+          🔔
+        </div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 style="margin:0; font-size:17px; font-weight:800; letter-spacing:-0.2px;">
+              {{ 'تنبيه: تذكيرات التسجيل في لائحة الانتظار' if lang=='ar' else 'Rappels Pré-inscriptions en Attente (Cycle 10j)' }}
+            </h3>
+            <span id="pendingAlertBadgeCount" style="background:#ef4444; color:#ffffff; font-weight:900; font-size:11.5px; padding:2px 8px; border-radius:12px; box-shadow:0 2px 4px rgba(239,68,68,0.4);">
+              0
+            </span>
+          </div>
+          <p style="margin:2px 0 0 0; font-size:12px; opacity:0.9; color:#e0e7ff;">
+            {{ 'طلاب في لائحة الانتظار مرت عليهم 10 أيام دون تذكير. يرجى تذكيرهم، تسكينهم أو إلغاؤهم.' if lang=='ar' else 'Inscriptions en attente de groupe ayant atteint l\'échéance des 10 jours sans rappel.' }}
+          </p>
+        </div>
+      </div>
+      <button type="button" onclick="closePendingRemindersModal()" style="background:rgba(255,255,255,0.15); border:none; color:#ffffff; font-size:18px; width:34px; height:34px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.15s;" title="Fermer pour le moment">
+        ✕
+      </button>
+    </div>
+
+    <!-- Rule Sub-banner -->
+    <div style="background:#fffbeb; border-bottom:1px solid #fef3c7; padding:9px 20px; font-size:12px; color:#92400e; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:14px;">⏱️</span>
+        <span>
+          <strong>{{ 'نظام التذكير:' if lang=='ar' else 'Règle opérationnelle :' }}</strong>
+          {{ 'تذكير كل 10 أيام (تذكير 1 ➔ تذكير 2 ➔ تذكير 3). بعد 24 ساعة من التذكير 3 تُحذف تلقائياً.' if lang=='ar' else 'Rappels WhatsApp tous les 10 jours. Auto-suppression 24h après le 3ème rappel si non affecté.' }}
+        </span>
+      </div>
+      <span id="pendingAutoPurgedNotice" style="display:none; font-size:11px; background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:6px; font-weight:700;">
+        🗑️ Auto-supprimés : <strong id="pendingPurgedCount">0</strong>
+      </span>
+    </div>
+
+    <!-- Body Scrollable -->
+    <div id="pendingAlertScrollBody" style="padding:18px 22px; overflow-y:auto; flex-grow:1; max-height:60vh; background:#f8fafc;">
+      <div id="pendingAlertCardsContainer" style="display:flex; flex-direction:column; gap:12px;">
+        <!-- Dynamic Cards Inserted Here via JS -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="pendingAlertEmptyState" style="display:none; text-align:center; padding:40px 20px;">
+        <div style="font-size:48px; margin-bottom:10px;">🎉</div>
+        <h4 style="margin:0 0 6px 0; color:#0B3D6E; font-size:17px; font-weight:800;">
+          {{ 'رائع! لا توجد تذكيرات متأخرة' if lang=='ar' else 'Tout est à jour !' }}
+        </h4>
+        <p style="margin:0; font-size:13px; color:#64748b;">
+          {{ 'جميع الطلاب في لائحة الانتظار تم تذكيرهم في مواعيدهم المحددة.' if lang=='ar' else 'Toutes les pré-inscriptions en attente ont été rappelées à temps.' }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="background:#ffffff; border-top:1.5px solid #e2e8f0; padding:12px 22px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+      <div style="font-size:11.5px; color:#64748b; font-weight:600;">
+        ℹ️ {{ 'تنبيه: تظهر هذه النافذة مرة واحدة في اليوم تلقائياً، ويمكنك فتحها متى شئت من لائحة التسجيلات.' if lang=='ar' else 'Cette alerte s\'affiche automatiquement une fois par jour (accessible à tout moment depuis les inscriptions).' }}
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <a href="/enrollments?status=pending_assignment" class="btn btn-outline btn-sm" style="font-weight:700; font-size:12px; color:#0B3D6E; border-color:#cbd5e1; background:#f8fafc;">
+          📋 {{ 'عرض قائمة الانتظار الكاملة' if lang=='ar' else 'Voir toute la liste d\'attente' }}
+        </a>
+        <button type="button" onclick="closePendingRemindersModal()" class="btn btn-primary btn-sm" style="background:#0B3D6E; border-color:#0B3D6E; font-weight:800; font-size:12.5px; padding:6px 18px;">
+          {{ 'حسناً، فهمت' if lang=='ar' else 'Compris / Fermer' }}
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+@keyframes alertModalPop {
+  0% { transform: scale(0.95); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pending-card-row {
+  transition: all 0.25s ease;
+}
+.pending-card-row.fade-out-done {
+  opacity: 0;
+  transform: translateX(30px);
+  pointer-events: none;
+}
+</style>
+
+<script>
+(function() {
+  let pendingOverdueData = [];
+
+  window.checkPendingEnrollmentReminders = async function(isManual = false) {
+    try {
+      const resp = await fetch('/api/pending-enrollments/overdue-reminders', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (!data.success) return;
+
+      if (data.purged_count > 0) {
+        const purgedNotice = document.getElementById('pendingAutoPurgedNotice');
+        const purgedNum = document.getElementById('pendingPurgedCount');
+        if (purgedNotice && purgedNum) {
+          purgedNum.innerText = data.purged_count;
+          purgedNotice.style.display = 'inline-flex';
+        }
+      }
+
+      pendingOverdueData = data.overdue || [];
+      const badge = document.getElementById('pendingAlertBadgeCount');
+      if (badge) badge.innerText = pendingOverdueData.length;
+      const headerBadge = document.getElementById('headerPendingBadgeCount');
+      if (headerBadge) {
+        if (pendingOverdueData.length > 0) {
+          headerBadge.innerText = pendingOverdueData.length;
+          headerBadge.style.display = 'inline-block';
+        } else {
+          headerBadge.style.display = 'none';
+        }
+      }
+
+      if (pendingOverdueData.length > 0) {
+        renderPendingOverdueCards();
+        function getTodayDateStr() {
+          const d = new Date();
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${y}-${m}-${day}`;
+        }
+        const todayStr = getTodayDateStr();
+        const lastShown = localStorage.getItem('ilas_pending_reminders_last_shown');
+        if (isManual === true || lastShown !== todayStr) {
+          const modal = document.getElementById('pendingRemindersAlertModal');
+          if (modal) modal.style.display = 'flex';
+          try {
+            localStorage.setItem('ilas_pending_reminders_last_shown', todayStr);
+          } catch (e) {}
+        }
+      }
+    } catch (err) {
+      console.warn('Check pending reminders failed:', err);
+    }
+  };
+
+  function renderPendingOverdueCards() {
+    const container = document.getElementById('pendingAlertCardsContainer');
+    const emptyState = document.getElementById('pendingAlertEmptyState');
+    if (!container) return;
+
+    if (pendingOverdueData.length === 0) {
+      container.innerHTML = '';
+      if (emptyState) emptyState.style.display = 'block';
+      setTimeout(() => {
+        closePendingRemindersModal();
+      }, 1500);
+      return;
+    }
+
+    if (emptyState) emptyState.style.display = 'none';
+
+    let html = '';
+    const isAr = '{{ lang }}' === 'ar' || document.documentElement.lang === 'ar';
+
+    pendingOverdueData.forEach(item => {
+      const stage = item.stage;
+      let stageBadgeBg = '#fef3c7';
+      let stageBadgeColor = '#b45309';
+      let stageBorder = '#f59e0b';
+      let stageLabel = `⚠️ ${isAr ? `تذكير ${stage} مستحق (مرت ${item.days_since_stage} يوماً)` : `Rappel ${stage} dû (J+${stage * 10})`}`;
+
+      if (stage === 2) {
+        stageBadgeBg = '#ffedd5';
+        stageBadgeColor = '#c2410c';
+        stageBorder = '#ea580c';
+      } else if (stage >= 3) {
+        stageBadgeBg = '#fee2e2';
+        stageBadgeColor = '#b91c1c';
+        stageBorder = '#ef4444';
+        stageLabel = `🔴 ${isAr ? `إنذار أخير 3 مستحق (حذف تلقائي بعد 24 ساعة)` : `⚠️ Dernier Rappel 3 dû (Auto-suppression dans 24h)`}`;
+      }
+
+      const initial = (item.student_name ? item.student_name[0].toUpperCase() : '?');
+
+      html += `
+        <div id="pending-card-${item.id}" class="pending-card-row" style="background:#ffffff; border-radius:12px; border:1.5px solid ${stageBorder}; padding:14px 16px; box-shadow:0 2px 6px rgba(0,0,0,0.04); display:flex; flex-direction:column; gap:10px;">
+          <!-- Top Row: Student Info & Stage Badge -->
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:38px; height:38px; border-radius:10px; background:#e0e7ff; color:#3730a3; font-weight:800; font-size:15px; display:flex; align-items:center; justify-content:center;">
+                ${initial}
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <strong style="font-size:14px; color:#0f172a;">${item.student_name}</strong>
+                  ${item.student_code ? `<span style="font-size:10.5px; background:#f1f5f9; color:#475569; padding:1px 5px; border-radius:4px; font-weight:700;">#${item.student_code}</span>` : ''}
+                  ${item.is_adult ? `<span style="font-size:10px; background:#eff6ff; color:#1d4ed8; padding:1px 5px; border-radius:4px; font-weight:700;">🎓 ${isAr ? 'بالغ' : 'Adulte'}</span>` : `<span style="font-size:10px; background:#fef3c7; color:#b45309; padding:1px 5px; border-radius:4px; font-weight:700;">👶 ${isAr ? 'قاصر' : 'Mineur'}</span>`}
+                </div>
+                <div style="font-size:12px; color:#64748b; margin-top:2px;">
+                  📚 <strong>${item.subject_name}</strong> • 🗓️ ${isAr ? `مسجل منذ ${item.total_days} يوماً (${item.created_at})` : `Inscrit il y a ${item.total_days}j (${item.created_at})`}
+                </div>
+              </div>
+            </div>
+
+            <!-- Stage Badge -->
+            <div style="background:${stageBadgeBg}; color:${stageBadgeColor}; font-weight:800; font-size:11.5px; padding:3px 10px; border-radius:8px; border:1px solid ${stageBorder};">
+              ${stageLabel}
+            </div>
+          </div>
+
+          <!-- Message Preview Accordion -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="togglePendingMsgPreview(${item.id})">
+              <span style="font-size:11px; font-weight:700; color:#475569;">
+                💬 ${isAr ? 'نص رسالة التذكير المقترحة بالواتساب (انقر للمعاينة / الإخفاء)' : 'Aperçu du message WhatsApp généré (Cliquez pour afficher)'}
+              </span>
+              <span id="pendingMsgToggleIcon-${item.id}" style="font-size:11px; color:#64748b;">▼</span>
+            </div>
+            <div id="pendingMsgPreview-${item.id}" style="display:none; margin-top:8px; padding-top:8px; border-top:1px dashed #cbd5e1;">
+              <textarea id="pendingMsgText-${item.id}" rows="4" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:6px 8px; font-size:12px; font-family:inherit; color:#1e293b; resize:vertical; dir:rtl;">${item.whatsapp_msg_ar}</textarea>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons Row -->
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding-top:4px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:11.5px; font-weight:700; color:#475569;">📞 ${item.target_phone ? '+' + item.target_phone : '⚠️ Sans téléphone'}</span>
+            </div>
+
+            <div style="display:flex; gap:8px; align-items:center;">
+              <!-- Action 1: Send WhatsApp & Mark Reminded -->
+              <button type="button" onclick="sendPendingWhatsAppReminder(${item.id})" class="btn btn-sm" style="background:#22c55e; border-color:#22c55e; color:#ffffff; font-weight:800; padding:6px 14px; font-size:12px; border-radius:8px; box-shadow:0 2px 6px rgba(34,197,94,0.3); display:inline-flex; align-items:center; gap:5px; cursor:pointer;">
+                <span>📲</span>
+                <span>${isAr ? `إرسال تذكير ${stage} عبر واتساب` : `Envoyer Rappel ${stage} WhatsApp`}</span>
+              </button>
+
+              <!-- Action 2: Affecter / Tskinn -->
+              <a href="/enrollments?status=pending_assignment" class="btn btn-sm btn-outline" style="border-color:#0B3D6E; color:#0B3D6E; font-weight:800; padding:6px 12px; font-size:12px; border-radius:8px; background:#fff; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+                <span>👥</span>
+                <span>${isAr ? 'تسكين في فوج' : 'Affecter'}</span>
+              </a>
+
+              <!-- Action 3: Cancel / Delete -->
+              <button type="button" onclick="deletePendingPreInscription(${item.id}, '${item.student_name.replace(/'/g, "\\'")}')" class="btn btn-sm btn-outline" style="border-color:#ef4444; color:#ef4444; font-weight:700; padding:6px 10px; font-size:12px; border-radius:8px; background:#fff; cursor:pointer;" title="Supprimer définitivement la pré-inscription">
+                <span>🗑️</span>
+                <span>${isAr ? 'إلغاء' : 'Supprimer'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  window.togglePendingMsgPreview = function(id) {
+    const box = document.getElementById('pendingMsgPreview-' + id);
+    const icon = document.getElementById('pendingMsgToggleIcon-' + id);
+    if (!box) return;
+    if (box.style.display === 'none') {
+      box.style.display = 'block';
+      if (icon) icon.innerText = '▲';
+    } else {
+      box.style.display = 'none';
+      if (icon) icon.innerText = '▼';
+    }
+  };
+
+  window.sendPendingWhatsAppReminder = async function(id) {
+    const item = pendingOverdueData.find(x => x.id === id);
+    if (!item) return;
+
+    if (!item.target_phone) {
+      alert('Aucun numéro de téléphone valide enregistré pour cet élève.');
+      return;
+    }
+
+    const textArea = document.getElementById('pendingMsgText-' + id);
+    const finalMsg = textArea ? textArea.value : item.whatsapp_msg_ar;
+
+    // 1. Open WhatsApp
+    const waUrl = `https://web.whatsapp.com/send?phone=${encodeURIComponent(item.target_phone)}&text=${encodeURIComponent(finalMsg)}`;
+    window.open(waUrl, 'pending_wa_' + id);
+
+    // 2. Mark in DB via AJAX
+    try {
+      const resp = await fetch(`/api/pending-enrollments/${id}/mark-reminded`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ phone: item.target_phone })
+      });
+      const res = await resp.json();
+      if (res.success) {
+        // Smoothly fade out and remove card
+        const card = document.getElementById('pending-card-' + id);
+        if (card) {
+          card.style.background = '#f0fdf4';
+          card.style.borderColor = '#22c55e';
+          card.innerHTML = `
+            <div style="text-align:center; padding:12px; color:#15803d; font-weight:800; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px;">
+              <span>✅</span>
+              <span>${'{{ lang }}' === 'ar' ? 'تم تسجيل إرسال التذكير بنجاح وتحديث تاريخ التذكير الموالي بعد 10 أيام.' : 'Rappel enregistré avec succès ! Prochain rappel dans 10 jours.'}</span>
+            </div>
+          `;
+          setTimeout(() => {
+            card.classList.add('fade-out-done');
+            setTimeout(() => {
+              pendingOverdueData = pendingOverdueData.filter(x => x.id !== id);
+              const badge = document.getElementById('pendingAlertBadgeCount');
+              if (badge) badge.innerText = pendingOverdueData.length;
+              renderPendingOverdueCards();
+            }, 300);
+          }, 1200);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to mark pending reminder in DB:', e);
+    }
+  };
+
+  window.deletePendingPreInscription = async function(id, studentName) {
+    const isAr = '{{ lang }}' === 'ar' || document.documentElement.lang === 'ar';
+    const confirmMsg = isAr
+      ? `هل أنت متأكد من رغبتك في حذف وإلغاء التسجيل الأولي للتلميذ(ة) "${studentName}"؟`
+      : `Êtes-vous sûr de vouloir supprimer définitivement la pré-inscription de "${studentName}" ?`;
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const resp = await fetch(`/api/pending-enrollments/${id}/delete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+      const res = await resp.json();
+      if (res.success) {
+        const card = document.getElementById('pending-card-' + id);
+        if (card) {
+          card.classList.add('fade-out-done');
+          setTimeout(() => {
+            pendingOverdueData = pendingOverdueData.filter(x => x.id !== id);
+            const badge = document.getElementById('pendingAlertBadgeCount');
+            if (badge) badge.innerText = pendingOverdueData.length;
+            renderPendingOverdueCards();
+          }, 300);
+        } else {
+          window.location.reload();
+        }
+      } else {
+        alert(res.error || 'Erreur lors de la suppression.');
+      }
+    } catch (e) {
+      console.error('Delete pending failed:', e);
+    }
+  };
+
+  window.openSinglePendingReminderModal = async function(id) {
+    try {
+      const resp = await fetch(`/api/pending-enrollments/overdue-reminders?id=${id}`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (!data.success || !data.overdue || data.overdue.length === 0) {
+        alert("Aucun rappel trouvé pour cette inscription.");
+        return;
+      }
+      pendingOverdueData = data.overdue;
+      const badge = document.getElementById('pendingAlertBadgeCount');
+      if (badge) badge.innerText = pendingOverdueData.length;
+      renderPendingOverdueCards();
+      const modal = document.getElementById('pendingRemindersAlertModal');
+      if (modal) modal.style.display = 'flex';
+    } catch (e) {
+      console.error('Failed to open single pending reminder modal:', e);
+    }
+  };
+
+  window.closePendingRemindersModal = function() {
+    const modal = document.getElementById('pendingRemindersAlertModal');
+    if (modal) modal.style.display = 'none';
+    try {
+      const d = new Date();
+      const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      localStorage.setItem('ilas_pending_reminders_last_shown', todayStr);
+    } catch (e) {}
+  };
+
+  // Check on DOMContentLoaded after 1.5s (daily check)
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+      window.checkPendingEnrollmentReminders(false);
+    }, 1500);
+  });
+})();
+</script>

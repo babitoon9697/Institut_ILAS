@@ -1,0 +1,1893 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- TOP HEADER & TITLE -->
+<div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+  <div>
+    <div class="muted" style="font-size:12px">
+      <a href="{{ url_for('dashboard') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ t('dashboard') }}</a>
+      <span style="margin:0 6px; color:#cbd5e1;">/</span>
+      <a href="{{ url_for('students') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">{{ t('students') }}</a>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:2px; flex-wrap:wrap;">
+      <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800;">
+        📅 {% if lang == 'ar' %}تتبع نهاية الاشتراكات وتذكيرات الأداء (Anti-Ban){% else %}Échéances d'Abonnement & Rappels de Paiement{% endif %}
+      </h2>
+      <span class="chip chip-blue" style="font-size:11px; font-weight:800;">{{ total_count }} dossier(s)</span>
+      <span class="chip chip-green" style="font-size:11px; font-weight:800;">
+        {% if lang == 'ar' %}{{ target_date_ar }}{% else %}{{ target_date_fr }}{% endif %}
+      </span>
+      {% if current_teacher %}
+        <span class="chip chip-purple" style="font-size:11px; font-weight:800;">👨‍🏫 {{ current_teacher.full_name }}</span>
+      {% endif %}
+    </div>
+    <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">
+      {% if lang == 'ar' %}
+        تصفية دقيقة حسب أيام التجديد (اليوم، غداً، بعد 2، 3، 4، 5 أيام...) مع إرسال رسائل تذكير واتساب محمية من الحظر (Spintax) وتتبع دائم لحالة وتاريخ الإرسال
+      {% else %}
+        Suivi quotidien par horizon d'échéance (Aujourd'hui, Demain, +2j, +3j, +4j, +5j...) avec rappels WhatsApp Anti-Ban sécurisés et historique des envois
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="flex wrap" style="gap:8px; align-items:center;">
+    <button type="button" onclick="openPaymentWhatsAppModal('all_pending')" class="btn btn-primary" style="background:#22c55e; border-color:#22c55e; font-weight:800; font-size:13px; padding:7px 15px; box-shadow:0 4px 14px rgba(34,197,94,0.3); display:flex; align-items:center; gap:6px;">
+      <span>📲</span>
+      <span>{{ 'تذكير WhatsApp (Anti-Ban)' if lang == 'ar' else 'Rappels WhatsApp (Anti-Ban)' }}</span>
+    </button>
+    <a class="btn btn-outline" href="{{ url_for('students_by_date_print', date=target_date_str, mode=filter_mode, reminder=reminder_filter, q=q, course_id=course_id or '', teacher_id=teacher_id or '') }}" target="_blank" style="background:#fff; font-weight:700; font-size:13px; padding:7px 14px; border-color:#0284c7; color:#0284c7;" title="Imprimer la feuille d'appel">
+      🖨️ {{ 'طباعة اللائحة' if lang == 'ar' else 'Imprimer' }}
+    </a>
+    <a class="btn btn-outline" href="{{ url_for('students') }}" style="background:#fff; font-weight:700; font-size:13px; padding:7px 12px;">
+      👥 {{ 'دليل التلاميذ' if lang == 'ar' else 'Tous les élèves' }}
+    </a>
+    {% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+    <a class="btn btn-primary" href="{{ url_for('express_enrollment') }}" style="background:#10b981; border-color:#10b981; font-weight:800; font-size:13px; padding:7px 14px; box-shadow:0 4px 12px rgba(16,185,129,0.25);">
+      ⚡ Inscription Express
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- DATE & HORIZON CONTROLLER CARD (ORGANIZED 3-TIER COMMAND BAR) -->
+<div class="card mb-3" style="padding:0; background:#ffffff; border:1.5px solid #cbd5e1; border-radius:14px; box-shadow:0 4px 16px rgba(15,23,42,0.06); overflow:hidden;">
+  <form method="get" action="{{ url_for('students_by_date') }}" id="dateFilterForm" style="margin:0; padding:0;">
+    <input type="hidden" name="mode" id="filterModeInput" value="{{ filter_mode }}">
+    <input type="hidden" name="reminder" id="filterReminderInput" value="{{ reminder_filter }}">
+    <input type="hidden" name="pay_status" id="filterPayStatusInput" value="{{ pay_status_filter }}">
+
+    <!-- ========================================================================= -->
+    <!-- ROW 1: 📅 PÉRIODE & HORIZON D'ÉCHÉANCE (QUAND ?)                          -->
+    <!-- ========================================================================= -->
+    <div style="padding:14px 18px; background:#ffffff; border-bottom:1px solid #e2e8f0;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        
+        <!-- Left: Horizon Buttons -->
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <div style="font-size:11.5px; font-weight:800; color:#0B3D6E; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-right:4px;">
+            <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; background:#eff6ff; border-radius:6px; font-size:12px;">📅</span>
+            <span>{{ 'فترة الاستحقاق :' if lang == 'ar' else 'Période & Échéance :' }}</span>
+          </div>
+
+          <div style="display:inline-flex; background:#f1f5f9; padding:3px; border-radius:10px; gap:4px; flex-wrap:wrap;">
+            <!-- CE MOIS-CI (PROMINENT NEW) -->
+            <button type="button" onclick="setFilterMode('this_month')" 
+                    class="btn btn-xs" 
+                    style="font-size:12px; font-weight:800; padding:5px 12px; border-radius:8px; cursor:pointer; transition:all 0.15s; border:none;
+                           background:{{ '#0B3D6E' if filter_mode == 'this_month' else 'transparent' }};
+                           color:{{ '#ffffff' if filter_mode == 'this_month' else '#334155' }};
+                           box-shadow:{{ '0 2px 6px rgba(11,61,110,0.25)' if filter_mode == 'this_month' else 'none' }};"
+                    title="Tous les abonnements arrivant à échéance ce mois-ci">
+              📅 {{ 'هذا الشهر' if lang == 'ar' else 'Ce mois-ci' }}
+              <span style="margin-left:5px; font-size:11px; font-weight:900; padding:1px 6px; border-radius:10px;
+                           background:{{ '#ffffff' if filter_mode == 'this_month' else '#e2e8f0' }}; 
+                           color:{{ '#0B3D6E' if filter_mode == 'this_month' else '#1e293b' }};">{{ mode_counts.this_month }}</span>
+            </button>
+
+            <!-- AUJOURD'HUI -->
+            <button type="button" onclick="setFilterMode('today')" 
+                    class="btn btn-xs" 
+                    style="font-size:12px; font-weight:800; padding:5px 12px; border-radius:8px; cursor:pointer; transition:all 0.15s; border:none;
+                           background:{{ '#0B3D6E' if filter_mode == 'today' else 'transparent' }};
+                           color:{{ '#ffffff' if filter_mode == 'today' else '#334155' }};
+                           box-shadow:{{ '0 2px 6px rgba(11,61,110,0.25)' if filter_mode == 'today' else 'none' }};"
+                    title="Échéance aujourd'hui exactement">
+              📍 {{ 'اليوم' if lang == 'ar' else "Aujourd'hui" }}
+              <span style="margin-left:5px; font-size:11px; font-weight:900; padding:1px 6px; border-radius:10px;
+                           background:{{ '#ffffff' if filter_mode == 'today' else '#e2e8f0' }}; 
+                           color:{{ '#0B3D6E' if filter_mode == 'today' else '#1e293b' }};">{{ mode_counts.today }}</span>
+            </button>
+
+            <!-- SOUS 5 JOURS -->
+            <button type="button" onclick="setFilterMode('under_5')" 
+                    class="btn btn-xs" 
+                    style="font-size:12px; font-weight:800; padding:5px 12px; border-radius:8px; cursor:pointer; transition:all 0.15s; border:none;
+                           background:{{ '#d97706' if filter_mode in ('under_5', 'expiring_soon') else 'transparent' }};
+                           color:{{ '#ffffff' if filter_mode in ('under_5', 'expiring_soon') else '#92400e' }};
+                           box-shadow:{{ '0 2px 6px rgba(217,119,6,0.25)' if filter_mode in ('under_5', 'expiring_soon') else 'none' }};"
+                    title="Échéance sous 5 jours">
+              ⚠️ {{ 'تحت 5 أيام' if lang == 'ar' else 'Sous 5 jours' }}
+              <span style="margin-left:5px; font-size:11px; font-weight:900; padding:1px 6px; border-radius:10px;
+                           background:{{ '#ffffff' if filter_mode in ('under_5', 'expiring_soon') else '#fef3c7' }}; 
+                           color:{{ '#b45309' if filter_mode in ('under_5', 'expiring_soon') else '#b45309' }};">{{ mode_counts.under_5 }}</span>
+            </button>
+
+            <!-- EXPIRÉS -->
+            <button type="button" onclick="setFilterMode('expired')" 
+                    class="btn btn-xs" 
+                    style="font-size:12px; font-weight:800; padding:5px 12px; border-radius:8px; cursor:pointer; transition:all 0.15s; border:none;
+                           background:{{ '#dc2626' if filter_mode == 'expired' else 'transparent' }};
+                           color:{{ '#ffffff' if filter_mode == 'expired' else '#991b1b' }};
+                           box-shadow:{{ '0 2px 6px rgba(220,38,38,0.25)' if filter_mode == 'expired' else 'none' }};"
+                    title="Abonnements déjà échus / en retard">
+              🔴 {{ 'منتهية' if lang == 'ar' else 'Déjà expirés' }}
+              <span style="margin-left:5px; font-size:11px; font-weight:900; padding:1px 6px; border-radius:10px;
+                           background:{{ '#ffffff' if filter_mode == 'expired' else '#fee2e2' }}; 
+                           color:{{ '#dc2626' if filter_mode == 'expired' else '#b91c1c' }};">{{ mode_counts.expired }}</span>
+            </button>
+
+            <!-- TOUS LES ABONNEMENTS (PROMINENT NEW) -->
+            <button type="button" onclick="setFilterMode('all')" 
+                    class="btn btn-xs" 
+                    style="font-size:12px; font-weight:800; padding:5px 12px; border-radius:8px; cursor:pointer; transition:all 0.15s; border:none;
+                           background:{{ '#475569' if filter_mode == 'all' else 'transparent' }};
+                           color:{{ '#ffffff' if filter_mode == 'all' else '#334155' }};
+                           box-shadow:{{ '0 2px 6px rgba(71,85,105,0.25)' if filter_mode == 'all' else 'none' }};"
+                    title="Voir l'ensemble des abonnements actifs sans restriction de date">
+              🌐 {{ 'جميع الاشتراكات' if lang == 'ar' else 'Tous les abonnements' }}
+              <span style="margin-left:5px; font-size:11px; font-weight:900; padding:1px 6px; border-radius:10px;
+                           background:{{ '#ffffff' if filter_mode == 'all' else '#e2e8f0' }}; 
+                           color:{{ '#334155' if filter_mode == 'all' else '#1e293b' }};">{{ mode_counts.all }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Exact Date Calendar Picker -->
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:11px; font-weight:700; color:#64748b;">
+            {{ 'تاريخ محدد:' if lang == 'ar' else 'Date exacte :' }}
+          </span>
+          <a href="{{ url_for('students_by_date', date=prev_date_str, mode='exact', reminder=reminder_filter, pay_status=pay_status_filter, course_id=course_id or '', teacher_id=teacher_id or '', q=q) }}" 
+             class="btn btn-outline btn-xs" 
+             style="padding:4px 8px; font-size:11px; font-weight:800; background:#fff; border-color:#cbd5e1; border-radius:6px;" 
+             title="Jour précédent">◀</a>
+          <input type="date" name="date" id="targetDatePicker" value="{{ target_date_str }}" onchange="setFilterMode('exact')" 
+                 style="padding:4px 8px; border-radius:6px; border:1.5px solid #0B3D6E; font-weight:800; font-size:12px; color:#0B3D6E; background:#eff6ff; cursor:pointer;">
+          <a href="{{ url_for('students_by_date', date=next_date_str, mode='exact', reminder=reminder_filter, pay_status=pay_status_filter, course_id=course_id or '', teacher_id=teacher_id or '', q=q) }}" 
+             class="btn btn-outline btn-xs" 
+             style="padding:4px 8px; font-size:11px; font-weight:800; background:#fff; border-color:#cbd5e1; border-radius:6px;" 
+             title="Jour suivant">▶</a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- ROW 2: 💰 SITUATION DU PAIEMENT & RELANCES (DANS CETTE PÉRIODE)            -->
+    <!-- ========================================================================= -->
+    <div style="padding:12px 18px; background:#f8fafc; border-bottom:1px solid #e2e8f0;">
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        
+        <!-- Left: Payment Situation Pills -->
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <div style="font-size:11.5px; font-weight:800; color:#0B3D6E; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; margin-right:4px;">
+            <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; background:#fef3c7; border-radius:6px; font-size:12px;">💰</span>
+            <span>{{ 'حالة الأداء والتسبيقات :' if lang == 'ar' else 'Statut Paiement & Avances :' }}</span>
+          </div>
+
+          <div style="display:inline-flex; background:#e2e8f0; padding:3px; border-radius:10px; gap:4px; flex-wrap:wrap;">
+            <!-- Tous -->
+            <button type="button" onclick="setPayStatusFilter('all')" 
+                    style="border:none; cursor:pointer; font-weight:800; font-size:11.5px; border-radius:8px; padding:5px 12px; transition:all 0.15s;
+                           background:{{ '#0B3D6E' if pay_status_filter == 'all' else 'transparent' }};
+                           color:{{ '#ffffff' if pay_status_filter == 'all' else '#475569' }};
+                           box-shadow:{{ '0 1px 3px rgba(0,0,0,0.15)' if pay_status_filter == 'all' else 'none' }};">
+              {{ 'الكل' if lang == 'ar' else 'Tous' }} ({{ pay_counts.all }})
+            </button>
+
+            <!-- Avance / Partiel (Highlighted orange) -->
+            <button type="button" onclick="setPayStatusFilter('partial')" 
+                    style="border:none; cursor:pointer; font-weight:800; font-size:11.5px; border-radius:8px; padding:5px 12px; transition:all 0.15s;
+                           background:{{ '#d97706' if pay_status_filter == 'partial' else 'transparent' }};
+                           color:{{ '#ffffff' if pay_status_filter == 'partial' else '#b45309' }};
+                           box-shadow:{{ '0 2px 6px rgba(217,119,6,0.3)' if pay_status_filter == 'partial' else 'none' }};"
+                    title="Élèves ayant versé une avance avec un solde restant à compléter">
+              🟠 {{ 'تسبيق متبقي' if lang == 'ar' else 'Avance versée (Reste dû)' }}
+              <span style="margin-left:4px; font-size:11px; font-weight:900; padding:1px 6px; border-radius:10px;
+                           background:{{ '#ffffff' if pay_status_filter == 'partial' else '#fef3c7' }}; 
+                           color:{{ '#b45309' if pay_status_filter == 'partial' else '#b45309' }};">{{ pay_counts.partial }}</span>
+            </button>
+
+            <!-- Non payé (0 DH) -->
+            <button type="button" onclick="setPayStatusFilter('unpaid')" 
+                    style="border:none; cursor:pointer; font-weight:800; font-size:11.5px; border-radius:8px; padding:5px 12px; transition:all 0.15s;
+                           background:{{ '#dc2626' if pay_status_filter == 'unpaid' else 'transparent' }};
+                           color:{{ '#ffffff' if pay_status_filter == 'unpaid' else '#dc2626' }};
+                           box-shadow:{{ '0 2px 6px rgba(220,38,38,0.3)' if pay_status_filter == 'unpaid' else 'none' }};"
+                    title="Élèves n'ayant encore rien versé pour cette période (0 DH)">
+              🔴 {{ 'غير مؤدى (0 درهم)' if lang == 'ar' else 'Non payé (0 DH)' }}
+              <span style="margin-left:4px; font-size:11px; font-weight:900; padding:1px 6px; border-radius:10px;
+                           background:{{ '#ffffff' if pay_status_filter == 'unpaid' else '#fee2e2' }}; 
+                           color:{{ '#dc2626' if pay_status_filter == 'unpaid' else '#dc2626' }};">{{ pay_counts.unpaid }}</span>
+            </button>
+
+            <!-- Promesse active (Date X) -->
+            <button type="button" onclick="setPayStatusFilter('promised')" 
+                    style="border:none; cursor:pointer; font-weight:800; font-size:11.5px; border-radius:8px; padding:5px 12px; transition:all 0.15s;
+                           background:{{ '#4f46e5' if pay_status_filter == 'promised' else 'transparent' }};
+                           color:{{ '#ffffff' if pay_status_filter == 'promised' else '#4338ca' }};
+                           box-shadow:{{ '0 2px 6px rgba(79,70,229,0.3)' if pay_status_filter == 'promised' else 'none' }};"
+                    title="Élèves ayant un accord de promesse actif avant la date X convenue">
+              🛡️ {{ 'وعد بالأداء (محمي)' if lang == 'ar' else 'Promesse active (Date X)' }}
+              <span style="margin-left:4px; font-size:11px; font-weight:900; padding:1px 6px; border-radius:10px;
+                           background:{{ '#ffffff' if pay_status_filter == 'promised' else '#e0e7ff' }}; 
+                           color:{{ '#4338ca' if pay_status_filter == 'promised' else '#4338ca' }};">{{ pay_counts.promised }}</span>
+            </button>
+
+            <!-- Soldé -->
+            <button type="button" onclick="setPayStatusFilter('paid')" 
+                    style="border:none; cursor:pointer; font-weight:800; font-size:11.5px; border-radius:8px; padding:5px 12px; transition:all 0.15s;
+                           background:{{ '#10b981' if pay_status_filter == 'paid' else 'transparent' }};
+                           color:{{ '#ffffff' if pay_status_filter == 'paid' else '#047857' }};">
+              🟢 {{ 'خالص تماماً' if lang == 'ar' else 'Soldé / Réglé' }} ({{ pay_counts.paid }})
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Current View Label -->
+        <div style="font-size:12px; color:#475569; font-weight:700;">
+          {{ target_date_fr if lang != 'ar' else target_date_ar }}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- ROW 3: 🔔 STATUT RAPPEL WHATSAPP & RECHERCHE & GROUPES                     -->
+    <!-- ========================================================================= -->
+    <div style="padding:12px 18px; background:#ffffff;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        
+        <!-- Left: WhatsApp Reminder Filter -->
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <div style="font-size:11px; font-weight:800; color:#0B3D6E; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:4px;">
+            <span>🔔</span>
+            <span>{{ 'تذكير واتساب :' if lang == 'ar' else 'Rappel WhatsApp :' }}</span>
+          </div>
+
+          <div style="display:inline-flex; background:#f1f5f9; padding:2px; border-radius:8px; gap:2px;">
+            <button type="button" onclick="setReminderFilter('all')" 
+                    style="border:none; cursor:pointer; font-weight:700; font-size:11px; border-radius:6px; padding:3px 9px;
+                           background:{{ '#0B3D6E' if reminder_filter == 'all' else 'transparent' }};
+                           color:{{ '#ffffff' if reminder_filter == 'all' else '#64748b' }};">
+              {{ 'الكل' if lang == 'ar' else 'Tous' }}
+            </button>
+            <button type="button" onclick="setReminderFilter('pending')" 
+                    style="border:none; cursor:pointer; font-weight:700; font-size:11px; border-radius:6px; padding:3px 9px;
+                           background:{{ '#d97706' if reminder_filter == 'pending' else 'transparent' }};
+                           color:{{ '#ffffff' if reminder_filter == 'pending' else '#b45309' }};">
+              ⏳ {{ 'غير مذكر' if lang == 'ar' else 'Non rappelé' }}
+            </button>
+            <button type="button" onclick="setReminderFilter('sent')" 
+                    style="border:none; cursor:pointer; font-weight:700; font-size:11px; border-radius:6px; padding:3px 9px;
+                           background:{{ '#10b981' if reminder_filter == 'sent' else 'transparent' }};
+                           color:{{ '#ffffff' if reminder_filter == 'sent' else '#047857' }};">
+              ✅ {{ 'تم تذكيره' if lang == 'ar' else 'Déjà rappelé' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Search, Course, Teacher & Buttons -->
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-left:auto;">
+          <!-- Search input -->
+          <div class="input-field has-ico" style="min-width:170px; max-width:220px; margin:0;">
+            <span class="f-ico">🔍</span>
+            <input type="text" name="q" value="{{ q }}" placeholder="{{ 'بحث بالاسم، الكود...' if lang == 'ar' else 'Rechercher élève, code...' }}" 
+                   style="font-size:12px; padding:5px 8px 5px 30px; border-radius:7px; border:1px solid #cbd5e1; background:#ffffff;">
+          </div>
+
+          <!-- Course dropdown -->
+          <select name="course_id" onchange="document.getElementById('dateFilterForm').submit()" 
+                  style="padding:5px 8px; border-radius:7px; border:1px solid #cbd5e1; font-weight:600; font-size:11.5px; max-width:180px; background:#ffffff; color:#1e293b; cursor:pointer;">
+            <option value="">{{ '🏷️ جميع الأفواج' if lang == 'ar' else '🏷️ Tous les groupes' }}</option>
+            {% for c in all_courses %}
+            <option value="{{ c.id }}" {{ 'selected' if course_id == c.id else '' }}>{{ c.full_display_name }}</option>
+            {% endfor %}
+          </select>
+
+          <!-- Teacher dropdown -->
+          {% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+          <select name="teacher_id" onchange="document.getElementById('dateFilterForm').submit()" 
+                  style="padding:5px 8px; border-radius:7px; border:1px solid #cbd5e1; font-weight:600; font-size:11.5px; max-width:150px; background:#ffffff; color:#1e293b; cursor:pointer;">
+            <option value="">{{ '👨‍🏫 جميع الأساتذة' if lang == 'ar' else '👨‍🏫 Tous les profs' }}</option>
+            {% for t in all_teachers %}
+            <option value="{{ t.id }}" {{ 'selected' if teacher_id == t.id else '' }}>👨‍🏫 {{ t.full_name }}</option>
+            {% endfor %}
+          </select>
+          {% endif %}
+
+          <button class="btn btn-primary btn-sm" type="submit" 
+                  style="font-weight:800; padding:5px 12px; border-radius:7px; font-size:11.5px; background:#0B3D6E; border-color:#0B3D6E; cursor:pointer;">
+            {{ 'تصفية' if lang == 'ar' else 'Filtrer' }}
+          </button>
+          
+          {% if q or course_id or teacher_id or filter_mode != 'this_month' or reminder_filter != 'all' or pay_status_filter != 'all' %}
+          <a class="btn btn-outline btn-sm" href="{{ url_for('students_by_date', mode='this_month') }}" 
+             style="padding:5px 9px; background:#ffffff; border-color:#cbd5e1; border-radius:7px; font-weight:700; color:#dc2626; text-decoration:none;" 
+             title="Réinitialiser tous les filtres">✕ Reset</a>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- KPI SUMMARY STRIP -->
+<div class="grid grid-4 mb-3" style="gap:12px;">
+  <!-- Card 1: Total Dossiers & Students -->
+  <div class="card stat" style="border-left:4px solid #1f6feb; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">
+      {{ 'التلاميذ المعنيون' if lang == 'ar' else 'ÉLÈVES À ÉCHÉANCE' }}
+    </div>
+    <div class="value" style="font-size:22px; font-weight:800; color:#0B3D6E; margin:2px 0;">
+      {{ unique_students }} <span style="font-size:12px; font-weight:600; color:#64748b;">élève(s)</span>
+    </div>
+    <div class="sub" style="font-size:11px; color:#1f6feb; font-weight:700;">
+      {{ total_count }} inscription(s) au total
+    </div>
+  </div>
+
+  <!-- Card 2: Distinct Groups Involved -->
+  <div class="card stat" style="border-left:4px solid #8b5cf6; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">
+      {{ 'الأفواج المعنية' if lang == 'ar' else 'GROUPES CONCERNÉS' }}
+    </div>
+    <div class="value" style="font-size:22px; font-weight:800; color:#6d28d9; margin:2px 0;">
+      {{ unique_courses }} <span style="font-size:12px; font-weight:600; color:#64748b;">classe(s)</span>
+    </div>
+    <div class="sub" style="font-size:11px; color:#6d28d9; font-weight:700;">
+      Matières & langues
+    </div>
+  </div>
+
+  <!-- Card 3: Contactability (Phones & WhatsApp) -->
+  <div class="card stat" style="border-left:4px solid #10b981; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">
+      {{ 'جهات الاتصال المتوفرة' if lang == 'ar' else 'CONTACTS DISPONIBLES' }}
+    </div>
+    <div class="value" style="font-size:22px; font-weight:800; color:#047857; margin:2px 0;">
+      {{ with_phone_count }} <span style="font-size:12px; font-weight:600; color:#64748b;">avec téléphone</span>
+    </div>
+    <div class="sub" style="font-size:11px; color:#047857; font-weight:700;">
+      Relance WhatsApp Anti-Ban prête
+    </div>
+  </div>
+
+  <!-- Card 4: Financial Summary (Balance Due) -->
+  <div class="card stat" style="border-left:4px solid {% if sum_balance > 0 %}#ef4444{% else %}#0ea5e9{% endif %}; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">
+      {{ 'الباقي للاستخلاص' if lang == 'ar' else 'RESTE À PERCEVOIR' }}
+    </div>
+    <div class="value" style="font-size:22px; font-weight:800; color:{% if sum_balance > 0 %}#b91c1c{% else %}#0369a1{% endif %}; margin:2px 0;">
+      {{ '%.0f'|format(sum_balance) }} <span style="font-size:12px;">{{ settings.currency }}</span>
+    </div>
+    <div class="sub" style="font-size:11px; color:#475569; font-weight:600;">
+      Payé : <strong>{{ '%.0f'|format(sum_paid) }} {{ settings.currency }}</strong>
+    </div>
+  </div>
+</div>
+
+<!-- STUDENTS & GROUPS TABLE CARD -->
+<div class="card card-pad" style="padding:18px 20px;">
+  {% if enrollments %}
+  <div class="table-wrap">
+    <table style="font-size:13px; width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f8fafc; font-size:11.5px; color:#64748b; border-bottom:1.5px solid #e2e8f0; text-transform:uppercase;">
+          <th style="width:36px; text-align:center; padding:10px 4px;">
+            <input type="checkbox" id="masterCheckbox" onchange="toggleAllCheckboxes(this)" style="cursor:pointer; width:16px; height:16px;" title="Tout cocher / décocher">
+          </th>
+          <th style="padding:10px 8px;">Élève & Code</th>
+          <th style="padding:10px 8px;">Groupe & Enseignant (بالفوج)</th>
+          <th style="padding:10px 8px; text-align:center;">Date Fin & Abonnement</th>
+          <th style="padding:10px 8px; text-align:center;">Finances</th>
+          <th style="padding:10px 8px;">{{ 'حالة تذكير WhatsApp' if lang == 'ar' else 'Statut Rappel WhatsApp' }}</th>
+          <th style="padding:10px 8px; text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in enrollments %}
+        {% set s = e.student %}
+        {% set c = e.course %}
+        {% set is_part = (e.total_paid or 0) > 0 and (e.balance or 0) > 0 %}
+        {% set is_unp = (e.total_paid or 0) <= 0 and (e.balance or 0) > 0 %}
+        {% set has_prom = e.has_active_promise %}
+        <tr id="enrollment-row-{{ e.id }}" 
+            style="border-bottom:1px solid #e2e8f0;
+            {% if has_prom %}
+              border-left: 5px solid #6366f1; background: #f8faff;
+            {% elif is_part %}
+              border-left: 5px solid #f59e0b; background: #fffdf5;
+            {% elif is_unp %}
+              border-left: 5px solid #ef4444; background: #fffcfc;
+            {% else %}
+              border-left: 5px solid #10b981; background: #ffffff;
+            {% endif %}">
+          
+          <!-- 0. Master row checkbox (Excluded from Select All if promise active) -->
+          <td style="text-align:center; vertical-align:top; padding:14px 4px;">
+            <input type="checkbox" class="row-checkbox" value="{{ e.id }}"
+                   data-has-active-promise="{{ 'true' if has_prom else 'false' }}"
+                   data-promise-date="{{ e.rest_promise_date.strftime('%d/%m/%Y') if e.rest_promise_date else '' }}"
+                   onchange="onRowCheckboxChange()"
+                   style="cursor:pointer; width:16px; height:16px;"
+                   {% if has_prom %}title="🛡️ Accord actif au {{ e.rest_promise_date.strftime('%d/%m/%Y') }} - Exclu de Sélectionner Tout"{% endif %}>
+            {% if has_prom %}
+              <div style="font-size:9.5px; color:#4338ca; font-weight:800; margin-top:2px;" title="Promesse convenue au {{ e.rest_promise_date.strftime('%d/%m/%Y') }}">🛡️Accord</div>
+            {% elif is_part %}
+              <div style="font-size:9.5px; color:#d97706; font-weight:800; margin-top:2px;" title="Paiement partiel / avance">🟠Avance</div>
+            {% elif is_unp %}
+              <div style="font-size:9.5px; color:#dc2626; font-weight:800; margin-top:2px;" title="Totalement impayé">🔴0 DH</div>
+            {% endif %}
+          </td>
+
+          <!-- 1. Student Identity -->
+          <td style="padding:10px 8px; vertical-align:top;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              {% if s and s.photo %}
+                <span class="avatar avatar-sm" style="width:36px; height:36px; border-radius:50%; overflow:hidden; border:1.5px solid #1f6feb; flex-shrink:0;">
+                  <img src="{{ url_for('static', filename='uploads/'+s.photo) }}" style="width:100%; height:100%; object-fit:cover;">
+                </span>
+              {% elif s %}
+                <span class="avatar avatar-sm" style="width:36px; height:36px; border-radius:50%; background:#dbeafe; color:#1d4ed8; font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  {{ s.first_name[0]|upper if s.first_name else '?' }}
+                </span>
+              {% else %}
+                <span class="avatar avatar-sm" style="width:36px; height:36px; border-radius:50%; background:#f1f5f9; color:#64748b; font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  ?
+                </span>
+              {% endif %}
+              
+              <div>
+                {% if s %}
+                <a href="{{ url_for('student_view', sid=s.id) }}" style="font-weight:800; color:#0B3D6E; text-decoration:none; font-size:14px;">
+                  {{ s.full_name }}
+                </a>
+                <div style="display:flex; align-items:center; gap:4px; margin-top:2px; flex-wrap:wrap;">
+                  <span class="chip chip-blue" style="font-size:9.5px; padding:1px 5px; font-weight:700;">{{ s.code }}</span>
+                  {% if s.age is not none %}
+                    <span class="chip chip-blue" style="font-size:9.5px; padding:1px 5px; font-weight:700;">🎂 {{ s.age }} ans</span>
+                  {% endif %}
+                  {% if s.school_level %}
+                    <span class="chip chip-gray" style="font-size:9.5px; padding:1px 5px;">{{ s.school_level }}</span>
+                  {% endif %}
+                  {% if s.city %}
+                    <span style="font-size:10px; color:#64748b;">📍 {{ s.city }}</span>
+                  {% endif %}
+                  {% if s.dynamic_credit_balance > 0 %}
+                    <span class="chip chip-green" style="font-size:9px; padding:1px 4px; font-weight:800;" title="Avoir disponible">+{{ '%.0f'|format(s.dynamic_credit_balance) }} DH</span>
+                  {% endif %}
+                </div>
+                {% else %}
+                <span class="muted">Dossier orphelin (ID: {{ e.id }})</span>
+                {% endif %}
+              </div>
+            </div>
+          </td>
+
+          <!-- 2. Group, Course & Teacher -->
+          <td style="padding:10px 8px; vertical-align:top;">
+            {% if c %}
+              <div style="font-weight:800; color:#0f172a; font-size:13px;">
+                {{ c.name }}
+              </div>
+              <div style="margin-top:2px; display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+                {% if c.group_name %}
+                  <span class="chip chip-purple" style="font-size:10px; font-weight:800; padding:1px 6px;">
+                    🏷️ {{ c.group_name }}
+                  </span>
+                {% endif %}
+                {% if c.language %}
+                  <span class="chip chip-blue" style="font-size:9.5px; padding:1px 5px;">
+                    {{ c.language }}
+                  </span>
+                {% endif %}
+                {% if c.level %}
+                  <span class="chip chip-gray" style="font-size:9.5px; padding:1px 5px;">
+                    {{ c.level }}
+                  </span>
+                {% endif %}
+              </div>
+              <div style="font-size:11px; color:#475569; margin-top:3px; display:flex; align-items:center; gap:8px;">
+                {% if c.teacher %}
+                  <span>👨‍🏫 <strong>{{ c.teacher.full_name }}</strong></span>
+                {% endif %}
+                {% if c.room %}
+                  <span>🚪 Salle {{ c.room.name }}</span>
+                {% endif %}
+              </div>
+            {% else %}
+              <span class="chip chip-gray" style="font-size:11px;">Sans affectation de groupe</span>
+            {% endif %}
+          </td>
+
+          <!-- 3. End Date & Subscription Period -->
+          <td style="padding:10px 8px; vertical-align:top; text-align:center;">
+            {% set ed = e.end_date %}
+            {% set rem = e.days_remaining %}
+            <div>
+              <strong id="end-date-display-{{ e.id }}" style="font-size:13.5px; color:#0B3D6E;">
+                {{ ed.strftime('%d/%m/%Y') if ed else '—' }}
+              </strong>
+            </div>
+            
+            <div style="margin-top:3px;">
+              {% if e.is_renewed %}
+                <span class="chip chip-green" style="font-size:10px; font-weight:800; padding:1px 6px;">
+                  ✅ Renouvelé (au {{ e.active_renewal.end_date.strftime('%d/%m/%Y') if e.active_renewal and e.active_renewal.end_date else '—' }})
+                </span>
+              {% elif ed == today_dt %}
+                <span class="chip chip-amber" style="font-size:10.5px; font-weight:800; padding:1px 6px;">
+                  ⚠️ Aujourd'hui !
+                </span>
+              {% elif rem is not none and rem > 0 %}
+                <span class="chip chip-green" style="font-size:10px; font-weight:700; padding:1px 5px;">
+                  🟢 Dans {{ rem }} jour(s)
+                </span>
+              {% elif rem is not none and rem < 0 %}
+                <span class="chip chip-red" style="font-size:10px; font-weight:800; padding:1px 5px;">
+                  🔴 Expiré ({{ rem|abs }}j)
+                </span>
+              {% else %}
+                <span class="chip chip-gray" style="font-size:10px;">—</span>
+              {% endif %}
+            </div>
+
+            <div style="font-size:10.5px; color:#64748b; margin-top:3px;">
+              Du {{ e.enroll_date.strftime('%d/%m/%y') if e.enroll_date else '—' }}
+              {% if e.custom_end_date %}
+                <span title="Date de fin personnalisée" style="color:#0284c7; font-weight:700;">★</span>
+              {% endif %}
+            </div>
+          </td>
+
+          <!-- 4. Financials (Distinct Colors for Partial vs Unpaid vs Paid) -->
+          <td style="padding:10px 8px; vertical-align:top; text-align:center;">
+            {% if e.is_renewed %}
+              <div style="font-size:13px; font-weight:800; color:#047857;">
+                {{ '%.0f'|format(e.active_renewal.total_paid if e.active_renewal else e.total_paid) }} <span style="font-size:10.5px; font-weight:600; color:#64748b;">DH</span>
+              </div>
+              <div style="display:flex; justify-content:center; gap:4px; margin-top:2px; align-items:center; flex-wrap:wrap;">
+                <span class="chip chip-green" style="font-size:9.5px; padding:0 5px; font-weight:700;">
+                  ✓ Réglé & Renouvelé
+                </span>
+              </div>
+            {% elif e.balance <= 0 %}
+              <div style="font-size:13px; font-weight:800; color:#047857;">
+                {{ '%.0f'|format(e.total_paid) }} <span style="font-size:10.5px; font-weight:600; color:#64748b;">DH</span>
+              </div>
+              <div style="display:flex; justify-content:center; gap:4px; margin-top:2px; align-items:center; flex-wrap:wrap;">
+                <span class="chip chip-green" style="font-size:9.5px; padding:1px 6px; font-weight:800;">
+                  🟢 Totalement Réglé
+                </span>
+              </div>
+            {% elif is_part %}
+              <!-- PARTIAL PAYMENT / AVANCE (DISTINCT AMBER/ORANGE COLOR) -->
+              <div style="font-size:13.5px; font-weight:900; color:#b45309;">
+                {{ '%.0f'|format(e.due_amount) }} <span style="font-size:10.5px; font-weight:600; color:#64748b;">DH</span>
+              </div>
+              <div style="display:flex; flex-direction:column; align-items:center; gap:2px; margin-top:3px;">
+                <span class="chip" style="background:#fef3c7; color:#92400e; border:1px solid #fcd34d; font-size:10px; padding:1px 6px; font-weight:800;" title="Avance déjà versée">
+                  🟠 Avance : {{ '%.0f'|format(e.total_paid) }} DH
+                </span>
+                <span class="chip" style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; font-size:10px; padding:1px 6px; font-weight:900;" title="Reste à payer">
+                  ⚠️ Reste : {{ '%.0f'|format(e.balance) }} DH
+                </span>
+              </div>
+            {% else %}
+              <!-- TOTALLY UNPAID (0 DH PAID, DISTINCT RED COLOR) -->
+              <div style="font-size:13.5px; font-weight:900; color:#dc2626;">
+                {{ '%.0f'|format(e.due_amount) }} <span style="font-size:10.5px; font-weight:600; color:#64748b;">DH</span>
+              </div>
+              <div style="display:flex; flex-direction:column; align-items:center; gap:2px; margin-top:3px;">
+                <span class="chip" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-size:10px; padding:1px 6px; font-weight:800;">
+                  🔴 0 DH (Non payé)
+                </span>
+                <span class="chip chip-red" style="font-size:10px; padding:1px 6px; font-weight:900;">
+                  Reste : {{ '%.0f'|format(e.balance) }} DH
+                </span>
+              </div>
+            {% endif %}
+          </td>
+
+          <!-- 5. Reminder Status & Anti-ban WhatsApp trigger (With Promise Protection) -->
+          <td style="padding:10px 8px; vertical-align:top;" id="reminder-cell-{{ e.id }}">
+            <div id="reminder-badge-{{ e.id }}" style="display:flex; flex-direction:column; align-items:flex-start; gap:3px;">
+              {% if e.is_renewed %}
+                <span class="chip chip-green" style="font-weight:800; font-size:11px;">
+                  ✅ Déjà renouvelé
+                </span>
+                <span style="font-size:10px; color:#15803d; font-weight:600;">Abonnement actif en cours</span>
+              {% elif has_prom %}
+                <!-- PROMISE ACTIVE BEFORE DATE X: DO NOT REMIND! -->
+                <span class="chip" style="background:#e0e7ff; color:#3730a3; border:1.5px solid #a5b4fc; font-weight:800; font-size:11px;" title="{{ e.rest_promise_note or 'Accord de promesse en cours' }}">
+                  🛡️ Promesse : {{ e.rest_promise_date.strftime('%d/%m/%Y') }} (dans {{ (e.rest_promise_date - today_dt).days }}j)
+                </span>
+                <span style="font-size:10px; color:#4338ca; font-weight:700;">🚫 Ne pas relancer (Accord actif)</span>
+                {% if e.rest_promise_note %}
+                  <span style="font-size:9.5px; color:#64748b; font-style:italic; max-width:145px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ e.rest_promise_note }}">💬 {{ e.rest_promise_note }}</span>
+                {% endif %}
+                <div style="display:flex; gap:4px; margin-top:2px;">
+                  <button type="button" onclick="openPromiseModal({{ e.id }}, '{{ e.rest_promise_date.strftime('%Y-%m-%d') }}', '{{ (e.rest_promise_note or '')|replace('\'', '\\\'') }}', '{{ (s.full_name or '')|replace('\'', '\\\'') }}', {{ e.balance }})" class="btn btn-xs btn-outline" style="border-color:#6366f1; color:#4338ca; font-size:9.5px; padding:1px 6px; font-weight:700;">
+                    🤝 Modifier
+                  </button>
+                  <button type="button" onclick="openPaymentWhatsAppModal('single', {{ e.id }})" class="btn btn-xs btn-outline" style="border-color:#cbd5e1; color:#64748b; font-size:9.5px; padding:1px 5px;" title="Forcer l'envoi WhatsApp si nécessaire">
+                    📲 Forcer
+                  </button>
+                </div>
+              {% elif e.promise_status == 'due_today' %}
+                <span class="chip chip-amber" style="font-weight:800; font-size:11px;">
+                  ⚠️ Promesse : Aujourd'hui ({{ e.rest_promise_date.strftime('%d/%m/%Y') }})
+                </span>
+                <span style="font-size:10px; color:#b45309; font-weight:700;">📢 Échéance convenue arrivée !</span>
+                <button type="button" onclick="openPaymentWhatsAppModal('single', {{ e.id }})" class="btn btn-xs" style="background:#f59e0b; color:#fff; font-weight:800; padding:2px 8px; font-size:10.5px; margin-top:3px; border-radius:6px; border:none; cursor:pointer;">
+                  📲 Relancer WhatsApp
+                </button>
+              {% elif e.promise_status == 'expired' %}
+                <span class="chip chip-red" style="font-weight:800; font-size:11px;">
+                  🚨 Promesse échue (depuis {{ (today_dt - e.rest_promise_date).days }}j)
+                </span>
+                <span style="font-size:10px; color:#dc2626; font-weight:700;">📢 Relance autorisée</span>
+                <button type="button" onclick="openPaymentWhatsAppModal('single', {{ e.id }})" class="btn btn-xs" style="background:#ef4444; color:#fff; font-weight:800; padding:2px 8px; font-size:10.5px; margin-top:3px; border-radius:6px; border:none; cursor:pointer;">
+                  📲 Relancer WhatsApp
+                </button>
+              {% elif e.last_reminder_at %}
+                <span class="chip chip-green" style="font-weight:800; font-size:11px;" title="{{ e.last_reminder_at.strftime('%d/%m/%Y %H:%M') }}">
+                  ✅ {{ e.reminder_status_label(lang) }}
+                </span>
+                {% if e.last_reminder_phone %}
+                  <span style="font-size:10px; color:#475569; font-weight:600;">📱 {{ e.last_reminder_phone }}</span>
+                {% endif %}
+                {% if e.reminder_count and e.reminder_count > 1 %}
+                  <span class="chip chip-purple" style="font-size:9px; padding:0 5px; font-weight:700;">{{ e.reminder_count }} {{ 'تذكيرات' if lang == 'ar' else 'rappels' }}</span>
+                {% endif %}
+                <button type="button" onclick="openPaymentWhatsAppModal('single', {{ e.id }})" class="btn btn-xs btn-outline" style="border-color:#22c55e; color:#15803d; font-weight:700; padding:1px 6px; font-size:10px; margin-top:2px; border-radius:4px;">
+                  🔄 {{ 'إعادة التذكير' if lang == 'ar' else 'Relancer' }}
+                </button>
+              {% else %}
+                <span class="chip chip-amber" style="font-weight:700; font-size:11px;">
+                  ⏳ {{ e.reminder_status_label(lang) }}
+                </span>
+                <button type="button" onclick="openPaymentWhatsAppModal('single', {{ e.id }})" class="btn btn-xs" style="background:#22c55e; color:#fff; font-weight:800; padding:2px 8px; font-size:10.5px; margin-top:3px; border-radius:6px; box-shadow:0 1px 3px rgba(34,197,94,0.3); border:none; cursor:pointer;">
+                  📲 {{ 'تذكير WhatsApp' if lang == 'ar' else 'Rappel WhatsApp' }}
+                </button>
+              {% endif %}
+            </div>
+          </td>
+
+          <!-- 6. Actions (Renew, Change Date Fin, Promise Date, Profile) -->
+          <td style="padding:10px 8px; vertical-align:top; text-align:right;">
+            <div class="flex" style="justify-content:flex-end; gap:5px; flex-wrap:wrap;">
+              <!-- Option to Change Date Fin Directly -->
+              {% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+              {% if e.balance > 0 and s %}
+              <button type="button" class="btn btn-xs btn-primary" style="background:#059669; border-color:#059669; font-weight:800; padding:3px 8px; font-size:11px;" onclick="openMultiPayModal({{ s.id }}, '{{ (s.full_name|replace('\'', '\\\'')) }}', {{ e.id }})" title="Encaisser le solde restant ({{ '%.2f'|format(e.balance) }} DH)">
+                💵 {{ 'أداء' if lang == 'ar' else 'Payer' }}
+              </button>
+              <!-- Accord / Promesse Button -->
+              <button type="button" class="btn btn-xs btn-outline" style="color:#4f46e5; border-color:#a5b4fc; font-weight:700; padding:3px 7px; font-size:11px;" onclick="openPromiseModal({{ e.id }}, '{{ e.rest_promise_date.strftime('%Y-%m-%d') if e.rest_promise_date else '' }}', '{{ (e.rest_promise_note or '')|replace('\'', '\\\'') }}', '{{ (s.full_name or '')|replace('\'', '\\\'') }}', {{ e.balance }})" title="Fixer ou modifier la date de promesse pour le solde restant (تحديد موعد الوعد بالأداء)">
+                🤝 Promesse
+              </button>
+              {% endif %}
+              <button type="button" class="btn btn-xs btn-outline" style="color:#0284c7; border-color:#0284c7; font-weight:700; padding:3px 8px; font-size:11px;" onclick="openChangeDateModal({{ e.id }}, '{{ (s.full_name|replace('\'', '\\\'')) if s else '' }}', '{{ (c.name|replace('\'', '\\\'')) if c else '' }}', '{{ ed.strftime('%Y-%m-%d') if ed else '' }}', '{{ ed.strftime('%d/%m/%Y') if ed else '' }}')" title="Modifier la date de fin d'abonnement (تغيير تاريخ الانتهاء)">
+                📅 Date
+              </button>
+
+              <!-- Renew Button -->
+              <a class="btn btn-xs btn-primary" href="{{ url_for('enrollment_renew', eid=e.id) }}" style="background:#10b981; border-color:#10b981; font-weight:700; padding:3px 8px; font-size:11px;" title="Renouveler l'abonnement pour ce cours">
+                🔄 {{ 'تجديد' if lang == 'ar' else 'Renouveler' }}
+              </a>
+              {% endif %}
+
+              <!-- Student Profile -->
+              {% if s %}
+              <a class="btn btn-xs btn-outline" href="{{ url_for('student_view', sid=s.id) }}" style="font-weight:700; padding:3px 7px; font-size:11px;" title="Consulter la fiche complète">
+                👁️ Dossier
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty" style="padding:40px 20px; text-align:center;">
+    <div style="font-size:36px; margin-bottom:10px;">🎉</div>
+    <h3 style="margin:0 0 6px 0; color:#0B3D6E;">
+      {% if lang == 'ar' %}لا يوجد أي تلميذ ينتهي اشتراكه في هذا الأجل المحدد.{% else %}Aucun élève à échéance pour ce filtre.{% endif %}
+    </h3>
+    <p class="muted" style="margin:0 0 16px 0; font-size:13px;">
+      Aucun abonnement ne correspond aux critères de recherche et au filtre sélectionné.
+    </p>
+    <div class="flex" style="justify-content:center; gap:8px;">
+      <a class="btn btn-primary btn-sm" href="{{ url_for('students_by_date', mode='today') }}" style="font-weight:700;">
+        📍 Voir aujourd'hui
+      </a>
+      <a class="btn btn-outline btn-sm" href="{{ url_for('students_by_date', mode='under_5') }}">
+        ⚠️ Voir sous 5 jours
+      </a>
+      <a class="btn btn-outline btn-sm" href="{{ url_for('students_by_date', mode='all') }}">
+        📋 Voir tous les abonnements
+      </a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ========================================================================= -->
+<!-- FLOATING BATCH ACTION BAR (Triggered when >= 1 checkbox checked)          -->
+<!-- ========================================================================= -->
+<div id="paymentBatchBar" style="display:none; position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:999; background:#0B3D6E; color:#fff; padding:10px 22px; border-radius:50px; box-shadow:0 15px 35px -5px rgba(11,61,110,0.5); align-items:center; gap:16px; border:2px solid #38bdf8;">
+  <div style="display:flex; align-items:center; gap:8px;">
+    <span style="font-size:20px;">🎯</span>
+    <span style="font-weight:800; font-size:13.5px;">
+      <span id="selectedCountBadge" style="background:#38bdf8; color:#0B3D6E; padding:2px 8px; border-radius:20px; font-weight:900;">0</span>
+      {{ 'تلميذ محدد' if lang == 'ar' else 'élève(s) sélectionné(s)' }}
+    </span>
+  </div>
+  
+  <button type="button" onclick="openPaymentWhatsAppModal('selected')" class="btn btn-sm" style="background:#22c55e; border-color:#22c55e; color:#fff; font-weight:800; font-size:13px; padding:6px 16px; border-radius:30px; box-shadow:0 4px 12px rgba(34,197,94,0.35); display:flex; align-items:center; gap:6px; cursor:pointer;">
+    <span>🚀</span>
+    <span>{{ 'إرسال تذكير WhatsApp للمحددين (Anti-Ban)' if lang == 'ar' else 'Envoyer Rappels WhatsApp (Anti-Ban)' }}</span>
+  </button>
+
+  <button type="button" onclick="uncheckAllRows()" style="background:transparent; border:none; color:#cbd5e1; font-size:12px; font-weight:700; cursor:pointer; text-decoration:underline;">
+    {{ 'إلغاء التحديد' if lang == 'ar' else 'Désélectionner tout' }}
+  </button>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: ANTI-BAN WHATSAPP PAYMENT REMINDER ENGINE                          -->
+<!-- ========================================================================= -->
+<div id="paymentWhatsAppModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.7); backdrop-filter:blur(3px); z-index:10000; align-items:center; justify-content:center; padding:16px; box-sizing:border-box;">
+  <div style="background:#ffffff; width:100%; max-width:860px; max-height:92vh; border-radius:18px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); border:1.5px solid #cbd5e1; display:flex; flex-direction:column; overflow:hidden;">
+    
+    <!-- Modal Header -->
+    <div style="background:linear-gradient(135deg, #0B3D6E 0%, #15803d 100%); color:#ffffff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:24px;">📲</span>
+        <div>
+          <h3 style="margin:0; font-size:16px; font-weight:800;">
+            {{ 'تذكير تجديد الاشتراك والأداء عبر WhatsApp (نظام الحماية من الحظر)' if lang=='ar' else 'Diffusion des Rappels de Paiement & Renouvellement (Système Anti-Ban)' }}
+          </h3>
+          <p style="margin:2px 0 0; font-size:11.5px; opacity:0.9;">
+            {{ 'صيغ Spintax متغيرة دورياً + كود مرجعي فريد لكل رسالة + وتيرة بشرية لتفادي الحظر' if lang=='ar' else 'Formulations Spintax dynamiques + référence unique #REN-XXXX + tempo humain anti-détection' }}
+          </p>
+        </div>
+      </div>
+      <button type="button" onclick="closePaymentWhatsAppModal()" style="background:rgba(255,255,255,0.2); border:none; width:32px; height:32px; border-radius:50%; color:#fff; font-size:16px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Fermer">✕</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div style="padding:20px; overflow-y:auto; flex:1;">
+      
+      <!-- STEP 1: CONFIGURATION -->
+      <div id="waPayStepConfig">
+        <!-- Anti-ban Shield Notification Strip -->
+        <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:12px;">
+          <span style="font-size:26px;">🛡️</span>
+          <div>
+            <strong style="color:#166534; font-size:13.5px; display:block;">
+              {{ 'استراتيجية مكافحة الحظر مفعلة (WhatsApp Anti-Ban Active)' if lang=='ar' else 'Protection Anti-Ban Active pour le Numéro de l\'Établissement' }}
+            </strong>
+            <div style="color:#15803d; font-size:11.5px; margin-top:2px;">
+              {{ 'كل رسالة تُنشأ بصيغة لغوية مختلفة عشوائياً (التحية، صيغة التذكير، والخاتمة) مرفقة برمز مرجعي فريد [Réf: #REN-XXXX] مع أسلوب تربوي محترم.' if lang=='ar' else 'Chaque message adopte une formulation différente aléatoire (salutations, tournures et signatures) avec jeton de référence unique [Réf: #REN-XXXX] et ton pédagogique bienveillant.' }}
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+          <!-- Left: Scope & Recipient Priority -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px;">
+            <label style="font-size:12px; font-weight:800; color:#0B3D6E; display:block; margin-bottom:8px;">
+              👥 1. {{ 'نطاق المستهدفين بالتذكير' if lang=='ar' else 'Élèves à Notifier' }} :
+            </label>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; cursor:pointer;">
+                <input type="radio" name="waPayScope" value="selected" id="radioPayScopeSelected" style="width:16px; height:16px;">
+                <span>🎯 {{ 'التلاميذ المحددين فقط' if lang=='ar' else 'Élèves sélectionnés uniquement' }} (<strong id="payScopeSelectedCount">0</strong>)</span>
+              </label>
+
+              <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; cursor:pointer;">
+                <input type="radio" name="waPayScope" value="pending" id="radioPayScopePending" checked style="width:16px; height:16px;">
+                <span>⏳ {{ 'الذين لم يتم تذكيرهم بعد' if lang=='ar' else 'Tous en attente (non encore rappelés)' }} (<strong>{{ mode_counts.pending }}</strong>)</span>
+              </label>
+
+              <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; cursor:pointer;">
+                <input type="radio" name="waPayScope" value="all_view" style="width:16px; height:16px;">
+                <span>📋 {{ 'جميع التلاميذ في هذا العرض' if lang=='ar' else 'Tous les élèves de la liste actuelle' }} (<strong>{{ enrollments|length }}</strong>)</span>
+              </label>
+            </div>
+
+            <!-- Recipient Phone Preference -->
+            <div style="margin-top:14px; padding-top:10px; border-top:1px dashed #cbd5e1;">
+              <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:6px;">
+                📱 {{ 'رقم هاتف المستلم المستهدف' if lang=='ar' else 'Priorité du Numéro Destinataire' }} :
+              </label>
+              <select id="waPayRecipientTarget" style="width:100%; padding:6px 10px; border-radius:8px; border:1.5px solid #cbd5e1; font-size:12px; font-weight:700; color:#0B3D6E;">
+                <option value="parent_pref">👨‍👩‍👧 {{ 'هاتف ولي الأمر أولاً (ثم التلميذ)' if lang=='ar' else 'Tél Parent en priorité (Fallback Élève)' }}</option>
+                <option value="parent_only">👨‍👩‍👧 {{ 'هاتف ولي الأمر فقط' if lang=='ar' else 'Tél Parent uniquement' }}</option>
+                <option value="student_only">🎓 {{ 'هاتف التلميذ فقط' if lang=='ar' else 'Tél Élève uniquement' }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Right: Cadence & Language -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px;">
+            <label style="font-size:12px; font-weight:800; color:#0B3D6E; display:block; margin-bottom:8px;">
+              ⏱️ 2. {{ 'طريقة الإرسال والفاصل الزمني' if lang=='ar' else 'Mode & Cadence d\'Envoi' }} :
+            </label>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <label style="display:flex; align-items:flex-start; gap:8px; font-size:12px; font-weight:700; cursor:pointer;">
+                <input type="radio" name="waPayCadence" value="guided" checked style="width:16px; height:16px; margin-top:2px;">
+                <div>
+                  <div style="color:#0f172a; font-weight:800;">⚡ {{ 'الوضع الموجه البشري (موصى به جداً)' if lang=='ar' else 'Mode Guidé Assisté (Hautement Recommandé)' }}</div>
+                  <div style="font-size:11px; color:#64748b; font-weight:normal;">
+                    {{ 'الضغط على زر الإرسال أو زر المسافة (Espace) للانتقال للتلميذ الموالي.' if lang=='ar' else 'Contrôle total : Validez chaque envoi avec la touche Espace ou le clic.' }}
+                  </div>
+                </div>
+              </label>
+
+              <label style="display:flex; align-items:flex-start; gap:8px; font-size:12px; font-weight:700; cursor:pointer;">
+                <input type="radio" name="waPayCadence" value="auto" style="width:16px; height:16px; margin-top:2px;">
+                <div>
+                  <div style="color:#0f172a; font-weight:800;">⏳ {{ 'الوضع التتابعي الآلي بتأخير عشوائي' if lang=='ar' else 'Mode Auto-Séquentiel avec Temporisation' }}</div>
+                  <div style="font-size:11px; color:#64748b; font-weight:normal;">
+                    {{ 'فاصل زمني بشري عشوائي بين 5 و 9 ثوان بين كل إرسال لتفادي الروبوتات.' if lang=='ar' else 'Pause humaine aléatoire (5 à 9 secondes) entre chaque ouverture.' }}
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <!-- Language Switcher -->
+            <div style="margin-top:14px; padding-top:10px; border-top:1px dashed #cbd5e1;">
+              <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:6px;">
+                🌐 {{ 'لغة وشكل الرسالة' if lang=='ar' else 'Format & Langue de la formulation' }} :
+              </label>
+              <select id="waPayLang" style="width:100%; padding:6px 10px; border-radius:8px; border:1.5px solid #cbd5e1; font-size:12px; font-weight:700; color:#0B3D6E;">
+                <option value="bilingual" selected>🇲🇦🇫🇷 {{ 'رسالة ثنائية اللغة ومختصرة (عربي + فرنسي) ⭐' if lang=='ar' else 'Bilingue Résumé (Arabe + Français) ⭐' }}</option>
+                <option value="ar">🇲🇦 {{ 'العربية فقط (مختصرة ومهذبة)' if lang=='ar' else 'Arabe seul (Courtois & Concis)' }}</option>
+                <option value="fr">🇫🇷 {{ 'الفرنسية فقط (مختصرة وتربوية)' if lang=='ar' else 'Français seul (Pédagogique & Concis)' }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#fffbeb; border:1px solid #fef3c7; border-radius:10px; padding:10px 14px; font-size:12px; color:#92400e; display:flex; align-items:center; gap:8px;">
+          <span>💡</span>
+          <span>{{ 'عند إرسال كل رسالة، يتم تلقائياً حفظ تاريخ ووقت الإرسال في قاعدة البيانات لحفظ السجل وتفادي التكرار.' if lang=='ar' else 'À chaque envoi validé, la date et le numéro sont enregistrés en base pour marquer l\'inscription comme rappelée.' }}</span>
+        </div>
+      </div>
+
+      <!-- STEP 2: ACTIVE DISPATCH RUNNER -->
+      <div id="waPayStepRunner" style="display:none;">
+        <!-- Runner Progress Bar -->
+        <div style="margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span id="payRunnerIndex" style="font-size:13px; font-weight:800; color:#0B3D6E;">Élève 1 sur 4</span>
+            <span id="payRunnerPercent" style="font-size:12px; font-weight:700; color:#10b981;">25%</span>
+          </div>
+          <div style="width:100%; height:8px; background:#e2e8f0; border-radius:10px; overflow:hidden;">
+            <div id="payRunnerProgressBar" style="width:25%; height:100%; background:linear-gradient(90deg, #10b981, #059669); transition:width 0.3s ease;"></div>
+          </div>
+        </div>
+
+        <!-- Student Details Card -->
+        <!-- Student Details Card -->
+        <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div id="payRunnerAvatar" style="width:44px; height:44px; border-radius:50%; background:#dbeafe; color:#1d4ed8; font-weight:800; font-size:18px; display:flex; align-items:center; justify-content:center;">
+              A
+            </div>
+            <div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div id="payRunnerStudentName" style="font-size:15px; font-weight:800; color:#0B3D6E;">-</div>
+                <span id="payRunnerAgeBadge" class="chip chip-purple" style="font-size:10px; font-weight:800;">-</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px; margin-top:3px; flex-wrap:wrap;">
+                <span id="payRunnerCourse" class="chip chip-purple" style="font-size:10.5px; font-weight:700;">-</span>
+                <span id="payRunnerEndDate" class="chip chip-blue" style="font-size:10.5px; font-weight:700;">-</span>
+                <span id="payRunnerDaysBadge" class="chip chip-amber" style="font-size:10.5px; font-weight:800;">-</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:16px; align-items:center;">
+            <div style="text-align:right;">
+              <div style="font-size:11px; color:#64748b; font-weight:700;">{{ 'واجب الاشتراك' if lang=='ar' else 'Frais Mensuels' }}</div>
+              <div id="payRunnerAmountDisplay" style="font-size:14px; font-weight:800; color:#0B3D6E;">-</div>
+            </div>
+
+            <div style="text-align:right;">
+              <div style="font-size:11px; color:#64748b; font-weight:700;">{{ 'رقم الواتساب المستهدف' if lang=='ar' else 'Destinataire WhatsApp' }}</div>
+              <div style="display:flex; align-items:center; justify-content:flex-end; gap:6px;">
+                <div id="payRunnerPhoneDisplay" style="font-size:14px; font-weight:800; color:#15803d; direction:ltr;">-</div>
+                <span id="payRunnerPhoneTypeBadge" class="chip chip-gray" style="font-size:10px; padding:1px 6px;">-</span>
+              </div>
+              <div id="payRunnerLastReminder" style="font-size:10px; color:#64748b; margin-top:1px;">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Runner Promise Warning Banner (If forced) -->
+        <div id="payRunnerPromiseWarning" style="display:none; background:#eff6ff; border:1.5px solid #818cf8; border-radius:10px; padding:10px 14px; margin-bottom:12px; color:#1e1b4b;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:20px;">🛡️</span>
+            <div>
+              <strong style="color:#3730a3; font-size:13px;">Accord de promesse de paiement actif</strong>
+              <div id="payRunnerPromiseDetail" style="font-size:11.5px; color:#4338ca; margin-top:2px;">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Template Selector & Language Switcher Header -->
+        <div style="margin-bottom:14px;">
+          <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:10px; padding:8px 12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <!-- Choice of Template (Adult vs Parent) -->
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:11.5px; font-weight:800; color:#0B3D6E;">📝 {{ 'النموذج:' if lang=='ar' else 'Modèle :' }}</span>
+              <div style="display:inline-flex; background:#e2e8f0; padding:2px; border-radius:8px; gap:2px;">
+                <button type="button" id="tabPayTplParent" onclick="switchPayTemplate('parent')" class="btn btn-xs" style="font-weight:800; padding:4px 10px; border-radius:6px; font-size:11.5px; cursor:pointer; transition:all 0.2s;">
+                  👨‍👩‍👧 {{ 'أولياء الأمور' if lang=='ar' else 'Parents' }}
+                </button>
+                <button type="button" id="tabPayTplAdult" onclick="switchPayTemplate('adult')" class="btn btn-xs" style="font-weight:800; padding:4px 10px; border-radius:6px; font-size:11.5px; cursor:pointer; transition:all 0.2s;">
+                  🎓 {{ 'المتعلم الراشد' if lang=='ar' else 'Adulte' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Choice of Reminder Type: Full Renewal vs Partial Balance (Sans montant) -->
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:11.5px; font-weight:800; color:#0B3D6E;">🎯 Type :</span>
+              <div style="display:inline-flex; background:#e2e8f0; padding:2px; border-radius:8px; gap:2px;">
+                <button type="button" id="tabPayModeRenewal" onclick="switchPayReminderMode('renewal')" class="btn btn-xs" style="font-weight:800; padding:4px 10px; border-radius:6px; font-size:11.5px; cursor:pointer; transition:all 0.2s;">
+                  🔄 Renouvellement
+                </button>
+                <button type="button" id="tabPayModePartial" onclick="switchPayReminderMode('partial_balance')" class="btn btn-xs" style="font-weight:800; padding:4px 10px; border-radius:6px; font-size:11.5px; cursor:pointer; transition:all 0.2s;">
+                  ⏳ Relance Solde / Avance
+                </button>
+              </div>
+            </div>
+
+            <!-- Choice of Preview Language (Bilingual by default, with Arabe & Français tabs) -->
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:11.5px; font-weight:700; color:#64748b;">👁️ {{ 'المعاينة واللغة :' if lang=='ar' else 'Aperçu & Langue :' }}</span>
+              <div style="display:inline-flex; background:#e2e8f0; padding:2px; border-radius:8px; gap:2px;">
+                <button type="button" id="tabPayMsgBilingual" onclick="switchPayMessageTab('bilingual')" class="btn btn-xs" style="font-weight:800; padding:4px 11px; border-radius:6px; font-size:11.5px; cursor:pointer; transition:all 0.2s;">
+                  🇲🇦🇫🇷 {{ 'رسالة ثنائية اللغة (مختصرة)' if lang=='ar' else 'Bilingue (Résumé)' }}
+                </button>
+                <button type="button" id="tabPayMsgAr" onclick="switchPayMessageTab('ar')" class="btn btn-xs" style="font-weight:800; padding:4px 9px; border-radius:6px; font-size:11.5px; cursor:pointer; transition:all 0.2s;">
+                  🇲🇦 {{ 'العربية' if lang=='ar' else 'Arabe' }}
+                </button>
+                <button type="button" id="tabPayMsgFr" onclick="switchPayMessageTab('fr')" class="btn btn-xs" style="font-weight:800; padding:4px 9px; border-radius:6px; font-size:11.5px; cursor:pointer; transition:all 0.2s;">
+                  🇫🇷 {{ 'الفرنسية' if lang=='ar' else 'Français' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; padding:0 2px;">
+            <span style="font-size:11px; color:#64748b; font-weight:600;">
+              ✏️ {{ 'يمكنك تعديل الرسالة بالأسفل بحرية قبل الإرسال' if lang=='ar' else 'Texte modifiable librement avant chaque envoi' }}
+            </span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span id="payRunnerPartialNotice" style="display:none; font-size:11px; color:#d97706; font-weight:800; background:#fef3c7; padding:1px 6px; border-radius:6px;">
+                🛡️ Discret : Montant non mentionné
+              </span>
+              <span style="font-size:11px; color:#10b981; font-weight:700;">🛡️ Unique Anti-Ban Hash Actif</span>
+            </div>
+          </div>
+          <textarea id="payRunnerMsgText" rows="7" oninput="onPayMsgInput()" style="width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid #cbd5e1; font-size:13px; line-height:1.5; font-family:inherit; resize:vertical; box-sizing:border-box; color:#0f172a;"></textarea>
+        </div>
+      </div>
+
+      <!-- STEP 3: SUMMARY -->
+      <div id="waPayStepSummary" style="display:none; text-align:center; padding:30px 20px;">
+        <div style="font-size:48px; margin-bottom:12px;">🎉</div>
+        <h3 style="margin:0 0 8px 0; color:#0B3D6E; font-size:20px; font-weight:800;">
+          {{ 'اكتملت عملية الإرسال بنجاح!' if lang=='ar' else 'Diffusion des Rappels Terminée !' }}
+        </h3>
+        <p class="muted" style="margin:0 0 20px 0; font-size:13.5px;">
+          {{ 'تم إرسال تذكيرات الأداء وتحديث سجلات قاعدة البيانات بنجاح.' if lang=='ar' else 'Tous les messages prévus ont été traités et enregistrés avec succès.' }}
+        </p>
+
+        <div style="display:inline-flex; gap:16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px 24px; margin-bottom:20px;">
+          <div>
+            <div style="font-size:20px; font-weight:800; color:#10b981;" id="summarySentCount">0</div>
+            <div style="font-size:11.5px; color:#64748b; font-weight:700;">{{ 'تم إرسالها' if lang=='ar' else 'Envoyés' }}</div>
+          </div>
+          <div style="border-right:1px solid #cbd5e1;"></div>
+          <div>
+            <div style="font-size:20px; font-weight:800; color:#f59e0b;" id="summarySkippedCount">0</div>
+            <div style="font-size:11.5px; color:#64748b; font-weight:700;">{{ 'تم تخطيها' if lang=='ar' else 'Ignorés' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div style="background:#f8fafc; border-top:1.5px solid #e2e8f0; padding:12px 20px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+      <!-- Footer Left (Cancel / Back) -->
+      <div>
+        <button type="button" id="btnPayModalBack" onclick="closePaymentWhatsAppModal()" class="btn btn-outline btn-sm" style="font-weight:700; background:#fff;">
+          {{ 'إغلاق' if lang=='ar' else 'Fermer' }}
+        </button>
+      </div>
+
+      <!-- Footer Right (Actions with Dual Buttons for Arabe & Francais) -->
+      <div style="display:flex; gap:8px; align-items:center;">
+        <!-- Step 1 Start Button -->
+        <button type="button" id="btnPayStartQueue" onclick="startPaymentQueue()" class="btn btn-primary btn-sm" style="background:#22c55e; border-color:#22c55e; font-weight:800; padding:7px 18px; font-size:13px; box-shadow:0 4px 12px rgba(34,197,94,0.3);">
+          <span>🚀</span>
+          <span>{{ 'بدء الإرسال الآمن (Démarrer)' if lang=='ar' else 'Démarrer la file d\'envoi' }}</span>
+        </button>
+
+        <!-- Step 2 Runner Buttons -->
+        <button type="button" id="btnPaySkip" onclick="skipCurrentPayment()" class="btn btn-outline btn-sm" style="display:none; font-weight:700; background:#fff; color:#64748b; padding:7px 12px; border-radius:8px;">
+          ⏭️ {{ 'تخطي' if lang=='ar' else 'Passer' }}
+        </button>
+
+        <!-- MAIN PRIMARY SEND BUTTON (SENDS ACTIVE TEXT, DEFAULT BILINGUAL) -->
+        <button type="button" id="btnPaySendMain" onclick="sendCurrentPaymentWhatsApp()" class="btn btn-sm" style="display:none; background:#22c55e; border-color:#22c55e; color:#fff; font-weight:800; padding:7px 20px; font-size:13.5px; box-shadow:0 4px 14px rgba(34,197,94,0.35); border-radius:8px; cursor:pointer;" title="Envoyer le message WhatsApp (Entrée ou Espace)">
+          <span>📲</span>
+          <span id="btnPaySendMainLabel">{{ 'إرسال عبر واتساب (ثنائي اللغة)' if lang=='ar' else 'Envoyer WhatsApp (Bilingue)' }}</span>
+        </button>
+
+        <!-- QUICK ALTERNATIVE BUTTON: ARABE SEUL -->
+        <button type="button" id="btnPaySendAr" onclick="sendPaymentWhatsAppInLang('ar')" class="btn btn-sm btn-outline" style="display:none; border-color:#16a34a; color:#16a34a; font-weight:800; padding:6px 11px; font-size:12px; border-radius:8px; cursor:pointer; background:#fff;" title="Envoyer en Arabe uniquement (Touche 1 ou A)">
+          <span>🇲🇦</span>
+          <span>{{ 'عربي' if lang=='ar' else 'Arabe' }}</span>
+        </button>
+
+        <!-- QUICK ALTERNATIVE BUTTON: FRANCAIS SEUL -->
+        <button type="button" id="btnPaySendFr" onclick="sendPaymentWhatsAppInLang('fr')" class="btn btn-sm btn-outline" style="display:none; border-color:#1e40af; color:#1e40af; font-weight:800; padding:6px 11px; font-size:12px; border-radius:8px; cursor:pointer; background:#fff;" title="Envoyer en Français uniquement (Touche 2 ou F)">
+          <span>🇫🇷</span>
+          <span>{{ 'فرنسي' if lang=='ar' else 'Français' }}</span>
+        </button>
+
+        <!-- Step 3 Close Button -->
+        <button type="button" id="btnPayDone" onclick="closePaymentWhatsAppModal(true)" class="btn btn-primary btn-sm" style="display:none; background:#0B3D6E; border-color:#0B3D6E; font-weight:800; padding:7px 18px;">
+          ✓ {{ 'إنهاء وتحديث الصفحة' if lang=='ar' else 'Terminer & Actualiser' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ========================================================================= -->
+<!-- MODAL: CHANGER LA DATE DE FIN D'ABONNEMENT (OPTION TO CHANGE DATE)        -->
+<!-- ========================================================================= -->
+<div id="changeDateModal" style="display:none; position:fixed; z-index:9999; inset:0; background:rgba(15,23,42,0.6); align-items:center; justify-content:center; backdrop-filter:blur(2px);">
+  <div style="background:#fff; width:95%; max-width:480px; border-radius:14px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.25); overflow:hidden; border:1px solid #e2e8f0;">
+    
+    <!-- Modal Header -->
+    <div style="background:#0B3D6E; color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:18px;">📅</span>
+        <strong style="font-size:15px;">Modifier la Date de Fin (تغيير تاريخ النهاية)</strong>
+      </div>
+      <button type="button" onclick="closeChangeDateModal()" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer; line-height:1;">&times;</button>
+    </div>
+
+    <!-- Modal Form -->
+    <form id="changeDateForm" method="post" action="" onsubmit="submitChangeDate(event)">
+      <div style="padding:18px 20px;">
+        <!-- Student & Course Info Box -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; margin-bottom:14px;">
+          <div style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Élève & Groupe</div>
+          <div id="modalStudentName" style="font-size:14px; font-weight:800; color:#0B3D6E; margin-top:2px;">-</div>
+          <div id="modalCourseName" style="font-size:12px; color:#475569; margin-top:1px;">-</div>
+          <div style="font-size:11.5px; color:#64748b; margin-top:4px;">
+            Date de fin actuelle : <strong id="modalCurrentEndDate" style="color:#b45309;">-</strong>
+          </div>
+        </div>
+
+        <!-- New Date Field -->
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:4px;">
+            Nouvelle date de fin souhaitée * :
+          </label>
+          <input type="date" name="new_end_date" id="modalNewEndDateInput" required style="width:100%; padding:8px 12px; border-radius:8px; border:1.5px solid #1f6feb; font-size:14px; font-weight:700; color:#0B3D6E; box-sizing:border-box;">
+        </div>
+
+        <!-- Quick Addition Shortcuts -->
+        <div style="margin-bottom:14px;">
+          <div style="font-size:11px; font-weight:700; color:#64748b; margin-bottom:6px;">Raccourcis rapides :</div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-outline btn-xs" onclick="addDaysToModal(3)" style="padding:3px 8px; font-weight:700;">+3 jours</button>
+            <button type="button" class="btn btn-outline btn-xs" onclick="addDaysToModal(7)" style="padding:3px 8px; font-weight:700;">+7 jours (1 sem.)</button>
+            <button type="button" class="btn btn-outline btn-xs" onclick="addDaysToModal(15)" style="padding:3px 8px; font-weight:700;">+15 jours</button>
+            <button type="button" class="btn btn-outline btn-xs" onclick="addDaysToModal(30)" style="padding:3px 8px; font-weight:700;">+30 jours (1 mois)</button>
+          </div>
+        </div>
+
+        <!-- Note Field -->
+        <div style="margin-bottom:8px;">
+          <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:4px;">
+            Motif / Note administrative (optionnel) :
+          </label>
+          <input type="text" name="note" id="modalNoteInput" placeholder="Ex: Report accordé par direction, rattrapage, etc." style="width:100%; padding:7px 10px; border-radius:8px; border:1px solid #cbd5e1; font-size:12.5px; box-sizing:border-box;">
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="background:#f8fafc; border-top:1px solid #e2e8f0; padding:12px 18px; display:flex; justify-content:flex-end; gap:8px;">
+        <button type="button" onclick="closeChangeDateModal()" class="btn btn-outline btn-sm" style="font-weight:700;">
+          Annuler
+        </button>
+        <button type="submit" id="btnSaveNewDate" class="btn btn-primary btn-sm" style="background:#10b981; border-color:#10b981; font-weight:800; padding:6px 16px;">
+          💾 Enregistrer la date
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: DATE DE PROMESSE / ACCORD DE REGLEMENT DU SOLDE (DATE X)           -->
+<!-- ========================================================================= -->
+{% include 'enrollments/_promise_modal.html' %}
+
+<script>
+// FILTER MANAGEMENT
+function setFilterMode(mode) {
+  document.getElementById('filterModeInput').value = mode;
+  document.getElementById('dateFilterForm').submit();
+}
+
+function setReminderFilter(reminder) {
+  document.getElementById('filterReminderInput').value = reminder;
+  document.getElementById('dateFilterForm').submit();
+}
+
+function setPayStatusFilter(payStatus) {
+  const input = document.getElementById('filterPayStatusInput');
+  if (input) input.value = payStatus;
+  document.getElementById('dateFilterForm').submit();
+}
+
+// CHECKBOX & BATCH ACTION BAR
+function getSelectedEnrollmentIds() {
+  const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+  return Array.from(checkboxes).map(cb => parseInt(cb.value)).filter(v => !isNaN(v));
+}
+
+function updateSelectedCount() {
+  const selected = getSelectedEnrollmentIds();
+  const count = selected.length;
+  const bar = document.getElementById('paymentBatchBar');
+  const countBadge = document.getElementById('selectedCountBadge');
+  const scopeCountEl = document.getElementById('payScopeSelectedCount');
+  
+  if (countBadge) countBadge.innerText = count;
+  if (scopeCountEl) scopeCountEl.innerText = count;
+
+  if (bar) {
+    if (count > 0) {
+      bar.style.display = 'flex';
+    } else {
+      bar.style.display = 'none';
+    }
+  }
+
+  // Update master checkbox indeterminate state (taking into account excluded promise rows)
+  const allSelectable = Array.from(document.querySelectorAll('.row-checkbox')).filter(cb => cb.dataset.hasActivePromise !== 'true');
+  const master = document.getElementById('masterCheckbox');
+  if (master) {
+    master.checked = (count === allSelectable.length && allSelectable.length > 0);
+    master.indeterminate = (count > 0 && count < allSelectable.length);
+  }
+}
+
+function onRowCheckboxChange() {
+  updateSelectedCount();
+}
+
+function showPromiseToast(count) {
+  let toast = document.getElementById('promiseToastNotification');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'promiseToastNotification';
+    toast.style.cssText = 'position:fixed; top:20px; right:20px; z-index:999999; background:#312e81; color:#fff; padding:12px 18px; border-radius:12px; box-shadow:0 15px 30px rgba(0,0,0,0.3); border:1.5px solid #818cf8; font-size:13px; font-weight:700; display:flex; align-items:center; gap:10px; max-width:420px; transition:all 0.3s ease;';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `<span style="font-size:22px;">🛡️</span><div><strong>Protection Anti-Relance active :</strong><div style="font-size:12px; font-weight:normal; opacity:0.95; margin-top:2px;">${count} élève(s) avec accord de promesse actif ont été <u>automatiquement exclus</u> de la sélection groupée pour ne pas les relancer avant leur date convenue.</div></div>`;
+  toast.style.display = 'flex';
+  toast.style.opacity = '1';
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => { toast.style.display = 'none'; }, 300);
+  }, 4500);
+}
+
+function toggleAllCheckboxes(masterCb) {
+  const checkboxes = document.querySelectorAll('.row-checkbox');
+  let excludedCount = 0;
+  checkboxes.forEach(cb => {
+    // EXCLUSION RULE: DO NOT CHECK ROWS WITH ACTIVE PROMISE!
+    if (masterCb.checked && cb.dataset.hasActivePromise === 'true') {
+      cb.checked = false;
+      excludedCount++;
+    } else {
+      cb.checked = masterCb.checked;
+    }
+  });
+  updateSelectedCount();
+  if (masterCb.checked && excludedCount > 0) {
+    showPromiseToast(excludedCount);
+  }
+}
+
+function uncheckAllRows() {
+  const checkboxes = document.querySelectorAll('.row-checkbox');
+  checkboxes.forEach(cb => { cb.checked = false; });
+  const master = document.getElementById('masterCheckbox');
+  if (master) {
+    master.checked = false;
+    master.indeterminate = false;
+  }
+  updateSelectedCount();
+}
+
+// CHANGE DATE MODAL
+let activeEnrollmentId = null;
+let baseIsoDate = '';
+
+function openChangeDateModal(eid, studentName, courseName, currentIso, currentFormatted) {
+  activeEnrollmentId = eid;
+  baseIsoDate = currentIso || '{{ target_date_str }}';
+  
+  document.getElementById('modalStudentName').innerText = studentName;
+  document.getElementById('modalCourseName').innerText = courseName;
+  document.getElementById('modalCurrentEndDate').innerText = currentFormatted || currentIso;
+  document.getElementById('modalNewEndDateInput').value = baseIsoDate;
+  document.getElementById('modalNoteInput').value = '';
+  
+  const form = document.getElementById('changeDateForm');
+  form.action = '/api/enrollments/' + eid + '/update-end-date';
+
+  const modal = document.getElementById('changeDateModal');
+  modal.style.display = 'flex';
+}
+
+function closeChangeDateModal() {
+  document.getElementById('changeDateModal').style.display = 'none';
+  activeEnrollmentId = null;
+}
+
+function addDaysToModal(days) {
+  const currentVal = document.getElementById('modalNewEndDateInput').value || baseIsoDate;
+  let d = new Date(currentVal);
+  if (isNaN(d.getTime())) {
+    d = new Date();
+  }
+  d.setDate(d.getDate() + days);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  document.getElementById('modalNewEndDateInput').value = `${yyyy}-${mm}-${dd}`;
+}
+
+async function submitChangeDate(e) {
+  e.preventDefault();
+  const form = document.getElementById('changeDateForm');
+  const btn = document.getElementById('btnSaveNewDate');
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Enregistrement...';
+
+  const formData = new FormData(form);
+
+  try {
+    const resp = await fetch(form.action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+    const res = await resp.json();
+    if (res.success) {
+      const displayCell = document.getElementById('end-date-display-' + activeEnrollmentId);
+      if (displayCell) {
+        displayCell.innerText = res.new_end_date;
+        displayCell.style.color = '#10b981';
+      }
+      closeChangeDateModal();
+      alert('✓ ' + res.message);
+      window.location.reload();
+    } else {
+      alert('Erreur: ' + (res.error || 'Impossible de mettre à jour'));
+    }
+  } catch (err) {
+    form.submit();
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+  }
+}
+
+// =========================================================================
+// ANTI-BAN WHATSAPP PAYMENT REMINDER DISPATCH ENGINE
+// =========================================================================
+let payQueue = [];
+let payCurrentIndex = 0;
+let paySentCount = 0;
+let paySkippedCount = 0;
+let payActiveTab = 'bilingual';
+let paySingleTargetId = null;
+
+function isPageArabic() {
+  return '{{ lang }}' === 'ar' || document.documentElement.lang === 'ar';
+}
+
+function openPaymentWhatsAppModal(scope = 'pending', singleId = null) {
+  paySingleTargetId = singleId;
+  const modal = document.getElementById('paymentWhatsAppModal');
+  const selected = getSelectedEnrollmentIds();
+
+  // Reset steps
+  document.getElementById('waPayStepConfig').style.display = 'block';
+  document.getElementById('waPayStepRunner').style.display = 'none';
+  document.getElementById('waPayStepSummary').style.display = 'none';
+
+  document.getElementById('btnPayStartQueue').style.display = 'inline-flex';
+  document.getElementById('btnPaySkip').style.display = 'none';
+  const mainBtn = document.getElementById('btnPaySendMain');
+  if (mainBtn) mainBtn.style.display = 'none';
+  document.getElementById('btnPaySendAr').style.display = 'none';
+  document.getElementById('btnPaySendFr').style.display = 'none';
+  document.getElementById('btnPayDone').style.display = 'none';
+
+  // Set default scope radio
+  const radioSelected = document.getElementById('radioPayScopeSelected');
+  const radioPending = document.getElementById('radioPayScopePending');
+
+  if (singleId) {
+    if (radioSelected) radioSelected.checked = true;
+    updateSelectedCount();
+    modal.style.display = 'flex';
+    startPaymentQueue();
+    return;
+  } else if (scope === 'selected' || (selected.length > 0 && scope !== 'all_pending')) {
+    if (radioSelected) radioSelected.checked = true;
+  } else {
+    if (radioPending) radioPending.checked = true;
+  }
+
+  updateSelectedCount();
+  modal.style.display = 'flex';
+}
+
+function closePaymentWhatsAppModal(shouldReload = false) {
+  const modal = document.getElementById('paymentWhatsAppModal');
+  modal.style.display = 'none';
+  paySingleTargetId = null;
+  if (shouldReload) {
+    window.location.reload();
+  }
+}
+
+async function startPaymentQueue() {
+  const btn = document.getElementById('btnPayStartQueue');
+  btn.disabled = true;
+  btn.innerHTML = 'Chargement de la file...';
+
+  let scope = 'pending';
+  const scopeEl = document.querySelector('input[name="waPayScope"]:checked');
+  if (scopeEl) scope = scopeEl.value;
+
+  const pref = document.getElementById('waPayRecipientTarget').value;
+  const initialLang = document.getElementById('waPayLang') ? document.getElementById('waPayLang').value : 'bilingual';
+  payActiveTab = initialLang || 'bilingual';
+
+  let queryUrl = '/students/by-date/whatsapp_queue?';
+  const selected = getSelectedEnrollmentIds();
+
+  if (paySingleTargetId) {
+    queryUrl += 'ids=' + paySingleTargetId;
+  } else if (scope === 'selected') {
+    if (selected.length === 0) {
+      alert('Veuillez cocher au moins un élève avant de continuer.');
+      btn.disabled = false;
+      btn.innerHTML = '🚀 Démarrer la file d\'envoi';
+      return;
+    }
+    queryUrl += 'ids=' + selected.join(',');
+  } else if (scope === 'pending') {
+    queryUrl += 'mode={{ filter_mode }}&reminder=pending&date={{ target_date_str }}&course_id={{ course_id or "" }}&teacher_id={{ teacher_id or "" }}';
+  } else {
+    queryUrl += 'mode={{ filter_mode }}&reminder={{ reminder_filter }}&date={{ target_date_str }}&course_id={{ course_id or "" }}&teacher_id={{ teacher_id or "" }}';
+  }
+
+  try {
+    const resp = await fetch(queryUrl);
+    const data = await resp.json();
+    if (!data.success || !data.queue || data.queue.length === 0) {
+      alert('Aucun élève trouvé pour les critères sélectionnés.');
+      btn.disabled = false;
+      btn.innerHTML = '🚀 Démarrer la file d\'envoi';
+      return;
+    }
+
+    payQueue = data.queue.map(item => {
+      let phone = '';
+      if (pref === 'parent_only') {
+        phone = item.clean_parent_phone;
+      } else if (pref === 'student_only') {
+        phone = item.clean_student_phone;
+      } else {
+        // Preference default: if adult, student phone takes priority; else parent phone takes priority
+        if (item.is_adult) {
+          phone = item.clean_student_phone || item.clean_parent_phone;
+        } else {
+          phone = item.clean_parent_phone || item.clean_student_phone;
+        }
+      }
+      return {
+        ...item,
+        current_template: item.default_template || (item.is_adult ? 'adult' : 'parent'),
+        current_reminder_mode: item.default_reminder_mode || (item.is_partial ? 'partial_balance' : 'renewal'),
+        target_phone: phone,
+        custom_texts: {}
+      };
+    });
+
+    payCurrentIndex = 0;
+    paySentCount = 0;
+    paySkippedCount = 0;
+
+    // Transition to Runner UI
+    document.getElementById('waPayStepConfig').style.display = 'none';
+    document.getElementById('waPayStepRunner').style.display = 'block';
+    document.getElementById('btnPayStartQueue').style.display = 'none';
+    document.getElementById('btnPaySkip').style.display = 'inline-flex';
+    const mainBtn = document.getElementById('btnPaySendMain');
+    if (mainBtn) mainBtn.style.display = 'inline-flex';
+    document.getElementById('btnPaySendAr').style.display = 'inline-flex';
+    document.getElementById('btnPaySendFr').style.display = 'inline-flex';
+
+    renderPayRunner();
+  } catch (err) {
+    alert('Erreur lors de la préparation de la file : ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🚀 Démarrer la file d\'envoi';
+  }
+}
+
+function getPayRunnerCurrentMsg(cur, tpl, lang, mode) {
+  mode = mode || cur.current_reminder_mode || (cur.is_partial ? 'partial_balance' : 'renewal');
+  lang = lang || payActiveTab || 'bilingual';
+  const cacheKey = mode + '_' + tpl + '_' + lang;
+  if (cur.custom_texts && cur.custom_texts[cacheKey] !== undefined && cur.custom_texts[cacheKey] !== null) {
+    return cur.custom_texts[cacheKey];
+  }
+  if (lang === 'bilingual') {
+    if (mode === 'partial_balance') {
+      return cur['msg_partial_' + tpl + '_bilingual'] || cur['msg_bilingual'] || cur['msg_partial_' + tpl + '_ar'] || '';
+    } else {
+      return cur['msg_renewal_' + tpl + '_bilingual'] || cur['msg_bilingual'] || cur['msg_renewal_' + tpl + '_ar'] || '';
+    }
+  }
+  if (mode === 'partial_balance') {
+    return cur['msg_partial_' + tpl + '_' + lang] || cur['msg_' + tpl + '_' + lang] || cur['msg_' + lang] || '';
+  } else {
+    return cur['msg_renewal_' + tpl + '_' + lang] || cur['msg_' + tpl + '_' + lang] || cur['msg_' + lang] || '';
+  }
+}
+
+function setPayRunnerCurrentMsg(cur, tpl, lang, val, mode) {
+  mode = mode || cur.current_reminder_mode || (cur.is_partial ? 'partial_balance' : 'renewal');
+  if (!cur.custom_texts) {
+    cur.custom_texts = {};
+  }
+  const cacheKey = mode + '_' + tpl + '_' + lang;
+  cur.custom_texts[cacheKey] = val;
+}
+
+function switchPayReminderMode(modeType) {
+  if (payCurrentIndex >= payQueue.length) return;
+  const cur = payQueue[payCurrentIndex];
+  const msgBox = document.getElementById('payRunnerMsgText');
+
+  // Save current edit under the previous mode
+  setPayRunnerCurrentMsg(cur, cur.current_template, payActiveTab, msgBox.value, cur.current_reminder_mode);
+
+  cur.current_reminder_mode = modeType;
+  renderPayRunner();
+}
+
+function renderPayRunner() {
+  if (payCurrentIndex >= payQueue.length) {
+    finishPaymentQueue();
+    return;
+  }
+
+  const cur = payQueue[payCurrentIndex];
+  const total = payQueue.length;
+  const percent = Math.round((payCurrentIndex / total) * 100);
+
+  document.getElementById('payRunnerIndex').innerText = `Élève ${payCurrentIndex + 1} sur ${total}`;
+  document.getElementById('payRunnerPercent').innerText = `${percent}%`;
+  document.getElementById('payRunnerProgressBar').style.width = `${percent}%`;
+
+  // Student info card
+  document.getElementById('payRunnerStudentName').innerText = cur.student_name + (cur.student_code ? ` (${cur.student_code})` : '');
+  document.getElementById('payRunnerAvatar').innerText = (cur.student_name ? cur.student_name[0].toUpperCase() : '?');
+  document.getElementById('payRunnerCourse').innerText = cur.course_name + (cur.group_name ? ` - ${cur.group_name}` : '');
+  document.getElementById('payRunnerEndDate').innerText = 'Fin : ' + (cur.end_date || '—');
+
+  // Age / Adult badge
+  const ageBadge = document.getElementById('payRunnerAgeBadge');
+  if (ageBadge) {
+    if (cur.is_adult) {
+      ageBadge.innerText = cur.student_age ? `🎓 Adulte (${cur.student_age} ans)` : '🎓 Adulte';
+      ageBadge.className = 'chip chip-blue';
+      ageBadge.title = 'Profil apprenant adulte (Plus de 18 ans ou autonome)';
+    } else {
+      ageBadge.innerText = cur.student_age ? `👶 Mineur (${cur.student_age} ans)` : '👶 Enfant/Mineur';
+      ageBadge.className = 'chip chip-amber';
+      ageBadge.title = 'Profil apprenant mineur (Notification aux parents)';
+    }
+  }
+
+  // Amount display
+  const amtDisplay = document.getElementById('payRunnerAmountDisplay');
+  if (amtDisplay) {
+    const amt = (cur.balance > 0 ? cur.balance : cur.due_amount);
+    amtDisplay.innerText = amt ? `💵 ${Math.round(amt)} DH` : '—';
+  }
+
+  // Warning banner for active promise (if forced)
+  const promiseWarning = document.getElementById('payRunnerPromiseWarning');
+  const promiseDetail = document.getElementById('payRunnerPromiseDetail');
+  if (promiseWarning) {
+    if (cur.has_active_promise) {
+      promiseWarning.style.display = 'block';
+      if (promiseDetail) {
+        promiseDetail.innerText = `Accord convenue au ${cur.promise_date || 'date convenue'} (${cur.promise_days_left} jour(s) restant(s)). Attention : ne relancez que si nécessaire ! Note: ${cur.promise_note || 'Aucune'}`;
+      }
+    } else {
+      promiseWarning.style.display = 'none';
+    }
+  }
+
+  // Days badge
+  const daysBadge = document.getElementById('payRunnerDaysBadge');
+  if (cur.days_remaining === 0) {
+    daysBadge.innerText = "⚠️ Aujourd'hui";
+    daysBadge.className = 'chip chip-amber';
+  } else if (cur.days_remaining > 0) {
+    daysBadge.innerText = `🟢 Dans ${cur.days_remaining}j`;
+    daysBadge.className = 'chip chip-green';
+  } else if (cur.days_remaining < 0) {
+    daysBadge.innerText = `🔴 Expiré (${Math.abs(cur.days_remaining)}j)`;
+    daysBadge.className = 'chip chip-red';
+  } else {
+    daysBadge.innerText = '—';
+    daysBadge.className = 'chip chip-gray';
+  }
+
+  // Phone display and phone type badge
+  const phoneDisplay = document.getElementById('payRunnerPhoneDisplay');
+  const phoneTypeBadge = document.getElementById('payRunnerPhoneTypeBadge');
+  if (cur.target_phone) {
+    phoneDisplay.innerText = '+' + cur.target_phone;
+    phoneDisplay.style.color = '#15803d';
+
+    if (phoneTypeBadge) {
+      if (cur.clean_student_phone && cur.target_phone === cur.clean_student_phone) {
+        phoneTypeBadge.innerText = '📱 Tél Élève';
+        phoneTypeBadge.className = 'chip chip-purple';
+      } else if (cur.clean_parent_phone && cur.target_phone === cur.clean_parent_phone) {
+        phoneTypeBadge.innerText = '👨‍👩‍👧 Tél Parent';
+        phoneTypeBadge.className = 'chip chip-teal';
+      } else {
+        phoneTypeBadge.innerText = '📱 WhatsApp';
+        phoneTypeBadge.className = 'chip chip-gray';
+      }
+    }
+  } else {
+    phoneDisplay.innerText = '⚠️ Aucun numéro disponible';
+    phoneDisplay.style.color = '#b91c1c';
+    if (phoneTypeBadge) phoneTypeBadge.innerText = '—';
+  }
+
+  const lastReminderEl = document.getElementById('payRunnerLastReminder');
+  if (cur.last_reminder_at) {
+    lastReminderEl.innerText = 'Dernier envoi : ' + cur.reminder_status_label;
+  } else {
+    lastReminderEl.innerText = 'Jamais envoyé';
+  }
+
+  // Update template selection buttons (Adult vs Parent)
+  const tplParent = document.getElementById('tabPayTplParent');
+  const tplAdult = document.getElementById('tabPayTplAdult');
+  if (tplParent && tplAdult) {
+    if (cur.current_template === 'adult') {
+      tplAdult.style.background = '#0B3D6E';
+      tplAdult.style.color = '#fff';
+      tplAdult.style.borderColor = '#0B3D6E';
+      tplAdult.style.boxShadow = '0 2px 6px rgba(11,61,110,0.3)';
+
+      tplParent.style.background = 'transparent';
+      tplParent.style.color = '#475569';
+      tplParent.style.borderColor = 'transparent';
+      tplParent.style.boxShadow = 'none';
+    } else {
+      tplParent.style.background = '#0B3D6E';
+      tplParent.style.color = '#fff';
+      tplParent.style.borderColor = '#0B3D6E';
+      tplParent.style.boxShadow = '0 2px 6px rgba(11,61,110,0.3)';
+
+      tplAdult.style.background = 'transparent';
+      tplAdult.style.color = '#475569';
+      tplAdult.style.borderColor = 'transparent';
+      tplAdult.style.boxShadow = 'none';
+    }
+  }
+
+  // Update Reminder Mode buttons (Renewal vs Partial Balance)
+  const tabModeRenewal = document.getElementById('tabPayModeRenewal');
+  const tabModePartial = document.getElementById('tabPayModePartial');
+  const partialNotice = document.getElementById('payRunnerPartialNotice');
+  if (tabModeRenewal && tabModePartial) {
+    if (cur.current_reminder_mode === 'partial_balance') {
+      tabModePartial.style.background = '#d97706';
+      tabModePartial.style.color = '#fff';
+      tabModePartial.style.borderColor = '#d97706';
+      tabModePartial.style.boxShadow = '0 2px 6px rgba(217,119,6,0.3)';
+
+      tabModeRenewal.style.background = 'transparent';
+      tabModeRenewal.style.color = '#475569';
+      tabModeRenewal.style.borderColor = 'transparent';
+      tabModeRenewal.style.boxShadow = 'none';
+
+      if (partialNotice) partialNotice.style.display = 'inline-block';
+    } else {
+      tabModeRenewal.style.background = '#0B3D6E';
+      tabModeRenewal.style.color = '#fff';
+      tabModeRenewal.style.borderColor = '#0B3D6E';
+      tabModeRenewal.style.boxShadow = '0 2px 6px rgba(11,61,110,0.3)';
+
+      tabModePartial.style.background = 'transparent';
+      tabModePartial.style.color = '#475569';
+      tabModePartial.style.borderColor = 'transparent';
+      tabModePartial.style.boxShadow = 'none';
+
+      if (partialNotice) partialNotice.style.display = 'none';
+    }
+  }
+
+  // Update tabs & textarea
+  updatePayMessageTabUI();
+}
+
+function updatePayMessageTabUI() {
+  if (payCurrentIndex >= payQueue.length) return;
+  const cur = payQueue[payCurrentIndex];
+  const msgBox = document.getElementById('payRunnerMsgText');
+  const tabBi = document.getElementById('tabPayMsgBilingual');
+  const tabAr = document.getElementById('tabPayMsgAr');
+  const tabFr = document.getElementById('tabPayMsgFr');
+  const mainBtnLabel = document.getElementById('btnPaySendMainLabel');
+
+  const curText = getPayRunnerCurrentMsg(cur, cur.current_template, payActiveTab, cur.current_reminder_mode);
+  msgBox.value = curText;
+
+  if (payActiveTab === 'bilingual') {
+    msgBox.dir = 'auto';
+    if (tabBi) {
+      tabBi.style.background = '#0B3D6E';
+      tabBi.style.borderColor = '#0B3D6E';
+      tabBi.style.color = '#fff';
+      tabBi.style.boxShadow = '0 2px 6px rgba(11,61,110,0.3)';
+    }
+    if (tabAr) { tabAr.style.background = 'transparent'; tabAr.style.color = '#475569'; tabAr.style.borderColor = 'transparent'; tabAr.style.boxShadow = 'none'; }
+    if (tabFr) { tabFr.style.background = 'transparent'; tabFr.style.color = '#475569'; tabFr.style.borderColor = 'transparent'; tabFr.style.boxShadow = 'none'; }
+    if (mainBtnLabel) mainBtnLabel.innerText = isPageArabic() ? 'إرسال عبر واتساب (ثنائي اللغة)' : 'Envoyer WhatsApp (Bilingue)';
+  } else if (payActiveTab === 'ar') {
+    msgBox.dir = 'rtl';
+    if (tabAr) {
+      tabAr.style.background = '#16a34a';
+      tabAr.style.borderColor = '#16a34a';
+      tabAr.style.color = '#fff';
+      tabAr.style.boxShadow = '0 2px 6px rgba(22,163,74,0.3)';
+    }
+    if (tabBi) { tabBi.style.background = 'transparent'; tabBi.style.color = '#475569'; tabBi.style.borderColor = 'transparent'; tabBi.style.boxShadow = 'none'; }
+    if (tabFr) { tabFr.style.background = 'transparent'; tabFr.style.color = '#475569'; tabFr.style.borderColor = 'transparent'; tabFr.style.boxShadow = 'none'; }
+    if (mainBtnLabel) mainBtnLabel.innerText = isPageArabic() ? 'إرسال عبر واتساب (بالعربية)' : 'Envoyer WhatsApp (en Arabe)';
+  } else {
+    msgBox.dir = 'ltr';
+    if (tabFr) {
+      tabFr.style.background = '#1e40af';
+      tabFr.style.borderColor = '#1e40af';
+      tabFr.style.color = '#fff';
+      tabFr.style.boxShadow = '0 2px 6px rgba(30,64,175,0.3)';
+    }
+    if (tabBi) { tabBi.style.background = 'transparent'; tabBi.style.color = '#475569'; tabBi.style.borderColor = 'transparent'; tabBi.style.boxShadow = 'none'; }
+    if (tabAr) { tabAr.style.background = 'transparent'; tabAr.style.color = '#475569'; tabAr.style.borderColor = 'transparent'; tabAr.style.boxShadow = 'none'; }
+    if (mainBtnLabel) mainBtnLabel.innerText = isPageArabic() ? 'إرسال عبر واتساب (بالفرنسية)' : 'Envoyer WhatsApp (en Français)';
+  }
+}
+
+async function sendCurrentPaymentWhatsApp() {
+  await sendPaymentWhatsAppInLang(payActiveTab);
+}
+
+function switchPayTemplate(tplType) {
+  if (payCurrentIndex >= payQueue.length) return;
+  const cur = payQueue[payCurrentIndex];
+  const msgBox = document.getElementById('payRunnerMsgText');
+
+  // Save current text for the previous template
+  setPayRunnerCurrentMsg(cur, cur.current_template, payActiveTab, msgBox.value, cur.current_reminder_mode);
+
+  cur.current_template = tplType;
+
+  // Auto-switch phone if preference is parent_pref (not hard-locked)
+  const pref = document.getElementById('waPayRecipientTarget').value;
+  if (pref === 'parent_pref') {
+    if (tplType === 'adult' && cur.clean_student_phone) {
+      cur.target_phone = cur.clean_student_phone;
+    } else if (tplType === 'parent' && cur.clean_parent_phone) {
+      cur.target_phone = cur.clean_parent_phone;
+    }
+  }
+
+  renderPayRunner();
+}
+
+function switchPayMessageTab(tabLang) {
+  if (payCurrentIndex >= payQueue.length) return;
+  const cur = payQueue[payCurrentIndex];
+  const msgBox = document.getElementById('payRunnerMsgText');
+  
+  // Save current edit
+  setPayRunnerCurrentMsg(cur, cur.current_template, payActiveTab, msgBox.value, cur.current_reminder_mode);
+
+  payActiveTab = tabLang;
+  updatePayMessageTabUI();
+}
+
+function onPayMsgInput() {
+  if (payCurrentIndex >= payQueue.length) return;
+  const cur = payQueue[payCurrentIndex];
+  const msgBox = document.getElementById('payRunnerMsgText');
+  setPayRunnerCurrentMsg(cur, cur.current_template, payActiveTab, msgBox.value, cur.current_reminder_mode);
+}
+
+async function sendPaymentWhatsAppInLang(chosenLang) {
+  if (payCurrentIndex >= payQueue.length) return;
+  const cur = payQueue[payCurrentIndex];
+  const msgBox = document.getElementById('payRunnerMsgText');
+
+  // If user is currently looking at this language, save latest edit
+  if (payActiveTab === chosenLang) {
+    setPayRunnerCurrentMsg(cur, cur.current_template, chosenLang, msgBox.value, cur.current_reminder_mode);
+  }
+
+  const finalMsg = getPayRunnerCurrentMsg(cur, cur.current_template, chosenLang, cur.current_reminder_mode) || msgBox.value;
+
+  if (!cur.target_phone) {
+    alert(`Aucun numéro de téléphone valide pour ${cur.student_name}. Cet élève sera ignoré.`);
+    skipCurrentPayment();
+    return;
+  }
+
+  // Open WhatsApp Web/Desktop in a popup window
+  const waUrl = `https://web.whatsapp.com/send?phone=${encodeURIComponent(cur.target_phone)}&text=${encodeURIComponent(finalMsg)}`;
+  window.open(waUrl, 'whatsapp_dispatch_' + cur.enrollment_id);
+
+  // Mark in Database via AJAX
+  try {
+    const resp = await fetch('/enrollments/mark_reminded', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        enrollment_id: cur.enrollment_id,
+        phone: cur.target_phone
+      })
+    });
+    const res = await resp.json();
+    if (res.success) {
+      paySentCount++;
+      // Dynamically update the table badge on the row!
+      const badgeCell = document.getElementById('reminder-badge-' + cur.enrollment_id);
+      if (badgeCell) {
+        badgeCell.innerHTML = `
+          <span class="chip chip-green" style="font-weight:800; font-size:11px;">
+            ✅ ${res.reminder_status_label || "Aujourd'hui"}
+          </span>
+          <span style="font-size:10px; color:#475569; font-weight:600;">📱 ${cur.target_phone}</span>
+          <button type="button" onclick="openPaymentWhatsAppModal('single', ${cur.enrollment_id})" class="btn btn-xs btn-outline" style="border-color:#22c55e; color:#15803d; font-weight:700; padding:1px 6px; font-size:10px; margin-top:2px; border-radius:4px;">
+            🔄 Relancer
+          </button>
+        `;
+      }
+    }
+  } catch (e) {
+    console.error('Failed to mark reminder in DB:', e);
+  }
+
+  payCurrentIndex++;
+  renderPayRunner();
+}
+
+function skipCurrentPayment() {
+  paySkippedCount++;
+  payCurrentIndex++;
+  renderPayRunner();
+}
+
+function finishPaymentQueue() {
+  document.getElementById('waPayStepRunner').style.display = 'none';
+  document.getElementById('waPayStepSummary').style.display = 'block';
+
+  document.getElementById('btnPaySkip').style.display = 'none';
+  const mainBtn = document.getElementById('btnPaySendMain');
+  if (mainBtn) mainBtn.style.display = 'none';
+  document.getElementById('btnPaySendAr').style.display = 'none';
+  document.getElementById('btnPaySendFr').style.display = 'none';
+  document.getElementById('btnPayDone').style.display = 'inline-flex';
+
+  document.getElementById('summarySentCount').innerText = paySentCount;
+  document.getElementById('summarySkippedCount').innerText = paySkippedCount;
+}
+
+// KEYBOARD SHORTCUTS FOR DISPATCHING & ADVANCING
+document.addEventListener('keydown', function(evt) {
+  // ESC to close modal
+  if (evt.key === 'Escape') {
+    closeChangeDateModal();
+    closePromiseModal();
+    const payModal = document.getElementById('paymentWhatsAppModal');
+    if (payModal && payModal.style.display !== 'none') {
+      closePaymentWhatsAppModal();
+    }
+  }
+
+  const runner = document.getElementById('waPayStepRunner');
+  const payModal = document.getElementById('paymentWhatsAppModal');
+  if (payModal && payModal.style.display !== 'none' && runner && runner.style.display !== 'none') {
+    if (evt.target.tagName !== 'TEXTAREA' && evt.target.tagName !== 'INPUT') {
+      if (evt.key === '0' || evt.key.toLowerCase() === 'b') {
+        evt.preventDefault();
+        sendPaymentWhatsAppInLang('bilingual');
+      } else if (evt.key === '1' || evt.key.toLowerCase() === 'a') {
+        evt.preventDefault();
+        sendPaymentWhatsAppInLang('ar');
+      } else if (evt.key === '2' || evt.key.toLowerCase() === 'f') {
+        evt.preventDefault();
+        sendPaymentWhatsAppInLang('fr');
+      } else if (evt.code === 'Space' || evt.key === 'Enter') {
+        evt.preventDefault();
+        sendPaymentWhatsAppInLang(payActiveTab);
+      }
+    }
+  }
+});
+
+</script>
+
+{% include 'payments/_multi_pay_modal.html' %}
+
+{% endblock %}

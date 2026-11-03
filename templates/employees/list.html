@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="margin-bottom:20px; border-radius:14px; border:1.5px solid #cbd5e1;">
+  <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding:16px 20px;">
+    <div>
+      <div class="muted" style="font-size:12px; margin-bottom:2px;">
+        <a href="{{ url_for('dashboard') }}" style="text-decoration:none; color:#2563eb; font-weight:700;">← {{ t('dashboard') }}</a>
+      </div>
+      <h2 style="margin:0; font-size:21px; color:#0B3D6E; font-weight:800; display:flex; align-items:center; gap:8px;">
+        👥 <span>{{ 'سجل مستخدمي وموظفي المعهد' if lang=='ar' else 'Personnel & Employés de l\'Institut' }}</span>
+      </h2>
+      <p style="margin:4px 0 0 0; font-size:12.5px; color:#64748b;">
+        {{ 'إدارة بيانات موظفي الإدارة، السكرتارية، الاستقبال، النظافة والأمن وتحديد رواتبهم الشهرية' if lang=='ar' else 'Gestion administrative du personnel : secrétariat, accueil, entretien, sécurité et gestionnaires.' }}
+      </p>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <a href="{{ url_for('employees_payroll') }}" class="btn btn-sm btn-primary" style="background:#10b981; border-color:#10b981; color:#fff; font-weight:800; display:inline-flex; align-items:center; gap:6px; padding:8px 16px; box-shadow:0 3px 10px rgba(16,185,129,0.3);">
+        💼 <span>{{ 'جدول الرواتب الشهرية' if lang=='ar' else 'Paie & Règlements' }}</span>
+      </a>
+      {% if cur_user and cur_user.role == 'admin' %}
+      <a href="{{ url_for('employee_new') }}" class="btn btn-sm btn-primary" style="background:#0B3D6E; border-color:#0B3D6E; color:#fff; font-weight:800; display:inline-flex; align-items:center; gap:6px; padding:8px 16px;">
+        ➕ <span>{{ 'إضافة مستخدم جديد' if lang=='ar' else '+ Nouvel Employé' }}</span>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- KPI SUMMARY ROW -->
+  <div style="padding:14px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="font-size:12px; font-weight:800; color:#475569; text-transform:uppercase;">Effectif :</span>
+      <span class="chip chip-blue" style="font-size:12px; font-weight:800;">👥 {{ employees|length }} employé(s)</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="font-size:12px; font-weight:800; color:#475569; text-transform:uppercase;">Actifs :</span>
+      <span class="chip chip-green" style="font-size:12px; font-weight:800;">✓ {{ active_count }} actifs</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="font-size:12px; font-weight:800; color:#475569; text-transform:uppercase;">Masse salariale :</span>
+      <span class="chip chip-gray" style="font-size:12px; font-weight:800; color:#0B3D6E;">💼 {{ "%.2f"|format(total_base_payroll) }} DH/mois</span>
+    </div>
+  </div>
+
+  <!-- FILTER & SEARCH BAR -->
+  <div style="padding:12px 20px; background:#ffffff; border-top:1px solid #e2e8f0;">
+    <form method="GET" action="{{ url_for('employees') }}" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      
+      <!-- Search -->
+      <div style="flex:1; min-width:220px;">
+        <input type="text" name="q" value="{{ q }}" placeholder="{{ 'بحث بالاسم، الكود، الوظيفة، الهاتف، CIN...' if lang=='ar' else 'Rechercher par nom, code, poste, tél, CIN...' }}" class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:7px 12px; font-size:12.5px; width:100%;">
+      </div>
+
+      <!-- Department Filter -->
+      <div style="min-width:180px;">
+        <select name="department" onchange="this.form.submit()" class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:7px 12px; font-size:12.5px; width:100%;">
+          <option value="">-- {{ 'جميع الأقسام' if lang=='ar' else 'Tous les départements' }} --</option>
+          {% for d in departments %}
+          <option value="{{ d }}" {{ 'selected' if dept_filter == d else '' }}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Status Filter -->
+      <div style="min-width:140px;">
+        <select name="status" onchange="this.form.submit()" class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:7px 12px; font-size:12.5px; width:100%;">
+          <option value="active" {{ 'selected' if status_filter == 'active' else '' }}>🟢 Actifs</option>
+          <option value="inactive" {{ 'selected' if status_filter == 'inactive' else '' }}>🔴 Inactifs</option>
+          <option value="all" {{ 'selected' if status_filter == 'all' else '' }}>📋 Tous</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-sm btn-primary" style="font-weight:700; padding:7px 14px; border-radius:8px;">
+        🔍 {{ 'تصفية' if lang=='ar' else 'Filtrer' }}
+      </button>
+
+      {% if q or dept_filter or status_filter != 'active' %}
+      <a href="{{ url_for('employees') }}" class="btn btn-sm btn-outline" style="padding:7px 10px; border-radius:8px;" title="Réinitialiser">✕</a>
+      {% endif %}
+
+    </form>
+  </div>
+</div>
+
+<!-- EMPLOYEES DIRECTORY TABLE -->
+<div class="card" style="border-radius:14px; border:1.5px solid #cbd5e1; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,0.04);">
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+      <thead>
+        <tr style="background:#f8fafc; color:#475569; font-size:11px; text-transform:uppercase; border-bottom:1.5px solid #cbd5e1;">
+          <th style="padding:10px 14px; width:45px; text-align:center;">#</th>
+          <th style="padding:10px 14px; text-align:left;">{{ 'المستخدم' if lang=='ar' else 'Employé & Code' }}</th>
+          <th style="padding:10px 14px; text-align:left;">{{ 'الوظيفة والقسم' if lang=='ar' else 'Poste & Département' }}</th>
+          <th style="padding:10px 14px; text-align:right;">{{ 'الراتب الأساسي' if lang=='ar' else 'Salaire de Base' }}</th>
+          <th style="padding:10px 14px; text-align:left;">{{ 'الاتصال و CIN' if lang=='ar' else 'Contact & CIN' }}</th>
+          <th style="padding:10px 14px; text-align:center;">{{ 'تاريخ التعيين' if lang=='ar' else 'Date d\'embauche' }}</th>
+          <th style="padding:10px 14px; text-align:center;">{{ 'الحالة' if lang=='ar' else 'Statut' }}</th>
+          <th style="padding:10px 14px; text-align:center; width:150px;">{{ 'إجراءات' if lang=='ar' else 'Actions' }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for emp in employees %}
+        <tr style="border-bottom:1px solid #e2e8f0; transition:background 0.15s; {{ 'opacity:0.6; background:#f8fafc;' if not emp.active else '' }}">
+          
+          <td style="padding:12px 14px; text-align:center; font-weight:700; color:#64748b;">
+            {{ loop.index }}
+          </td>
+
+          <!-- Name & Code -->
+          <td style="padding:12px 14px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:36px; height:36px; border-radius:50%; background:#eff6ff; color:#1e40af; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;">
+                {{ emp.first_name[0]|upper }}
+              </div>
+              <div>
+                <strong style="font-size:13.5px; color:#0f172a;">{{ emp.full_name }}</strong>
+                <div style="font-size:11px; color:#64748b; font-family:monospace; margin-top:1px;">
+                  <span class="chip chip-blue" style="font-size:9.5px; padding:1px 5px;">{{ emp.code }}</span>
+                </div>
+              </div>
+            </div>
+          </td>
+
+          <!-- Job Title & Department -->
+          <td style="padding:12px 14px;">
+            <div style="font-weight:700; color:#1e293b; font-size:13px;">
+              {{ emp.job_title }}
+            </div>
+            <div style="font-size:11px; color:#64748b; margin-top:2px;">
+              <span class="chip chip-gray" style="font-size:10px; padding:1px 6px;">{{ emp.department }}</span>
+            </div>
+          </td>
+
+          <!-- Salary -->
+          <td style="padding:12px 14px; text-align:right;">
+            <div style="font-weight:800; font-size:13.5px; color:#047857;">
+              {{ "%.2f"|format(emp.base_salary) }} DH
+            </div>
+            <div style="font-size:10.5px; color:#64748b;">
+              {{ 'شهري' if emp.salary_type == 'monthly' else ('يومي' if emp.salary_type == 'daily' else 'بالساعة') }}
+            </div>
+          </td>
+
+          <!-- Contact & CIN -->
+          <td style="padding:12px 14px;">
+            {% if emp.phone %}
+              <div style="font-size:12px; font-weight:700; color:#334155;">📞 {{ emp.phone }}</div>
+            {% endif %}
+            {% if emp.cin %}
+              <div style="font-size:11px; color:#64748b; margin-top:1px;">🪪 CIN: {{ emp.cin }}</div>
+            {% endif %}
+            {% if not emp.phone and not emp.cin %}
+              <span class="muted">—</span>
+            {% endif %}
+          </td>
+
+          <!-- Hire Date -->
+          <td style="padding:12px 14px; text-align:center; font-size:11.5px; color:#475569;">
+            {{ emp.hire_date.strftime('%d/%m/%Y') if emp.hire_date else '—' }}
+          </td>
+
+          <!-- Status -->
+          <td style="padding:12px 14px; text-align:center;">
+            {% if emp.active %}
+              <span style="display:inline-block; font-size:10.5px; font-weight:800; background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; padding:2px 7px; border-radius:6px;">
+                ✓ Actif
+              </span>
+            {% else %}
+              <span style="display:inline-block; font-size:10.5px; font-weight:800; background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1; padding:2px 7px; border-radius:6px;">
+                Inactif
+              </span>
+            {% endif %}
+          </td>
+
+          <!-- Actions -->
+          <td style="padding:12px 14px; text-align:center;">
+            <div style="display:flex; justify-content:center; align-items:center; gap:6px;">
+              {% if cur_user and cur_user.role == 'admin' %}
+              <a href="{{ url_for('employee_edit', eid=emp.id) }}" class="btn btn-xs btn-outline" style="font-weight:700; padding:4px 8px; border-radius:6px;" title="Modifier la fiche">
+                ✏️
+              </a>
+
+              <form method="POST" action="{{ url_for('employee_toggle_status', eid=emp.id) }}" style="display:inline; margin:0;">
+                <button type="submit" class="btn btn-xs" style="background:#fff; color:#475569; border:1px solid #cbd5e1; font-weight:700; padding:4px 8px; border-radius:6px; cursor:pointer;" title="{{ 'Désactiver' if emp.active else 'Activer' }}">
+                  {{ '⏸️' if emp.active else '▶️' }}
+                </button>
+              </form>
+
+              <form method="POST" action="{{ url_for('employee_delete', eid=emp.id) }}" style="display:inline; margin:0;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet employé ?');">
+                <button type="submit" class="btn btn-xs" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-weight:700; padding:4px 8px; border-radius:6px; cursor:pointer;" title="Supprimer">
+                  🗑️
+                </button>
+              </form>
+              {% else %}
+              <span class="muted" style="font-size:11px;">Lecture seule</span>
+              {% endif %}
+            </div>
+          </td>
+
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" style="padding:30px; text-align:center; color:#64748b;">
+            <div style="font-size:36px; margin-bottom:8px;">👥</div>
+            <div style="font-weight:700; font-size:14px; color:#1e293b;">
+              {{ 'لم يتم العثور على أي مستخدم' if lang=='ar' else 'Aucun employé ne correspond à votre recherche.' }}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

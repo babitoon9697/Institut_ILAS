@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- TOP HEADER & ACTIONS -->
+<div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('settings') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ t('settings') }}</a></div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+      <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800;">
+        🛡️ Sécurité, Pare-feu & Contrôle des Accès (مراقبة الأمان وعناوين IP)
+      </h2>
+      <span class="chip chip-green" style="font-size:11px; font-weight:800;">SYSTÈME PROTÉGÉ 100%</span>
+    </div>
+    <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">Journal d'audit des tentatives d'authentification, protection anti-brute force et gestion des IP bloquées</p>
+  </div>
+
+  <div class="flex wrap" style="gap:8px;">
+    <a class="btn btn-outline" href="{{ url_for('settings') }}" style="background:#fff; font-weight:700; font-size:13px;">
+      ⚙️ Réglages Généraux
+    </a>
+    <a class="btn btn-primary" href="{{ url_for('settings_security') }}" style="background:#1f6feb; border-color:#1f6feb; font-weight:800; font-size:13px;">
+      ↻ Rafraîchir le Journal
+    </a>
+  </div>
+</div>
+
+<!-- SECURITY KPIS -->
+<div class="grid grid-4 mb-3" style="gap:12px;">
+  <div class="card stat" style="border-left:4px solid #10b981; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">STATUT PARE-FEU (FIREWALL)</div>
+    <div class="value" style="font-size:20px; font-weight:800; color:#047857; margin:2px 0;">Actif & Protégé</div>
+    <div class="sub" style="font-size:11px; color:#047857; font-weight:700;">Anti-Brute Force Activé</div>
+  </div>
+
+  <div class="card stat" style="border-left:4px solid #ef4444; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">ADRESSES IP BLOQUÉES</div>
+    <div class="value" style="font-size:22px; font-weight:800; color:#b91c1c; margin:2px 0;">{{ blocked_ips|length }} <span style="font-size:12px; font-weight:600; color:#64748b;">IP</span></div>
+    <div class="sub" style="font-size:11px; color:#b91c1c; font-weight:600;">Accès restreint</div>
+  </div>
+
+  <div class="card stat" style="border-left:4px solid #1f6feb; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">TENTATIVES AUDITÉES</div>
+    <div class="value" style="font-size:22px; font-weight:800; color:#1d4ed8; margin:2px 0;">{{ attempts|length }} <span style="font-size:12px; font-weight:600; color:#64748b;">connexions</span></div>
+    <div class="sub" style="font-size:11px; color:#1d4ed8; font-weight:600;">Historique récent</div>
+  </div>
+
+  <div class="card stat" style="border-left:4px solid #8b5cf6; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">EXPIRATION SESSIONS SHIFT</div>
+    <div class="value" style="font-size:20px; font-weight:800; color:#6d28d9; margin:2px 0;">{{ settings.session_timeout_minutes or 30 }} min</div>
+    <div class="sub" style="font-size:11px; color:#6d28d9; font-weight:600;">Auto-Logout à la fermeture & inactivité</div>
+  </div>
+</div>
+
+<div class="grid grid-2 mb-3" style="gap:14px;">
+
+  <!-- 1. BLOCKED IPS SECTION -->
+  <div class="card card-pad" style="padding:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="margin:0; color:#b91c1c; font-size:15px; font-weight:800; display:flex; align-items:center; gap:6px;">
+        <span>🚫</span><span>Adresses IP Bloquées (قائمة الحظر)</span>
+      </h3>
+      <span class="chip chip-red" style="font-size:10.5px; font-weight:800;">{{ blocked_ips|length }} bloquée(s)</span>
+    </div>
+
+    {% if blocked_ips %}
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+        <thead>
+          <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:11px; text-transform:uppercase;">
+            <th style="padding:8px; text-align:left;">Adresse IP</th>
+            <th style="padding:8px; text-align:center;">Échecs</th>
+            <th style="padding:8px; text-align:center;">Statut</th>
+            <th style="padding:8px; text-align:right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in blocked_ips %}
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;"><strong style="color:#0f172a; font-family:monospace; font-size:12px;">{{ b.ip_address }}</strong></td>
+            <td style="padding:8px; text-align:center;"><span class="chip chip-orange" style="font-size:10px;">{{ b.failed_attempts }} échecs</span></td>
+            <td style="padding:8px; text-align:center;">
+              {% if b.is_blocked %}
+              <span class="chip chip-red" style="font-size:10px;">🔒 Bloquée</span>
+              {% else %}
+              <span class="chip chip-green" style="font-size:10px;">🟢 Débloquée</span>
+              {% endif %}
+            </td>
+            <td style="padding:8px; text-align:right;">
+              {% if b.is_blocked %}
+              <form action="{{ url_for('settings_security_unblock', bid=b.id) }}" method="POST" style="display:inline; margin:0;">
+                <button type="submit" class="btn btn-xs btn-outline-success" style="font-size:11px; font-weight:700; color:#047857; border-color:#86efac; background:#f0fdf4;">
+                  🔓 Débloquer
+                </button>
+              </form>
+              {% else %}
+              <span class="muted" style="font-size:11px;">Active</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:32px 10px; color:#64748b;">
+      <div style="font-size:32px; margin-bottom:6px;">🛡️</div>
+      <div style="font-weight:700; color:#0B3D6E; font-size:13.5px;">Aucune adresse IP bloquée</div>
+      <div style="font-size:12px; margin-top:2px;">Toutes les connexions proviennent de sources autorisées.</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- 2. RECENT LOGIN ATTEMPTS LOG -->
+  <div class="card card-pad" style="padding:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="margin:0; color:#0B3D6E; font-size:15px; font-weight:800; display:flex; align-items:center; gap:6px;">
+        <span>📜</span><span>Journal des Tentatives de Connexion (Audit Log)</span>
+      </h3>
+      <span class="chip chip-blue" style="font-size:10.5px; font-weight:800;">Dernières 50</span>
+    </div>
+
+    {% if attempts %}
+    <div style="max-height:360px; overflow-y:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12px;">
+        <thead>
+          <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0; color:#64748b; font-size:11px; text-transform:uppercase; position:sticky; top:0; z-index:1;">
+            <th style="padding:8px; text-align:left; background:#f8fafc;">Date & Heure</th>
+            <th style="padding:8px; text-align:left; background:#f8fafc;">Adresse IP</th>
+            <th style="padding:8px; text-align:left; background:#f8fafc;">Utilisateur</th>
+            <th style="padding:8px; text-align:right; background:#f8fafc;">Résultat</th>
+          </tr>
+        </thead>
+        <tbody id="securityAuditTbody">
+          {% for a in attempts %}
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:7px 8px; font-size:11.5px; color:#475569;">
+              {{ a.attempted_at.strftime('%d/%m/%Y %H:%M:%S') if a.attempted_at else (a.created_at.strftime('%d/%m/%Y %H:%M:%S') if a.created_at else '—') }}
+            </td>
+            <td style="padding:7px 8px;">
+              <code style="font-size:11px; color:#0f172a; font-weight:600;">{{ a.ip_address }}</code>
+              {% if a.ip_address in ['127.0.0.1', 'localhost', '::1'] or a.ip_address.startswith('192.168.') %}
+              <span class="chip chip-gray" style="font-size:9px; padding:1px 4px;">Local</span>
+              {% else %}
+              <span class="chip chip-blue" style="font-size:9px; padding:1px 4px;">Cloudflare</span>
+              {% endif %}
+            </td>
+            <td style="padding:7px 8px;"><strong style="color:#0B3D6E;">@{{ a.username or 'inconnu' }}</strong></td>
+            <td style="padding:7px 8px; text-align:right;">
+              {% if a.success %}
+              <span class="chip chip-green" style="font-size:9.5px; padding:1px 5px; font-weight:700;">✓ Succès</span>
+              {% else %}
+              <span class="chip chip-red" style="font-size:9.5px; padding:1px 5px; font-weight:700;">❌ Échec Mot de passe</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:32px 10px; color:#64748b;">
+      <div style="font-size:32px; margin-bottom:6px;">📋</div>
+      <div style="font-weight:700; color:#0B3D6E; font-size:13.5px;">Aucune tentative enregistrée</div>
+      <div style="font-size:12px; margin-top:2px;">Le journal sera alimenté à chaque authentification.</div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+  window.onLiveLoginsNewEvents = function(newEvents) {
+    var tbody = document.getElementById('securityAuditTbody');
+    if (!tbody || !newEvents) return;
+
+    newEvents.forEach(function(item) {
+      var tr = document.createElement('tr');
+      tr.style.cssText = 'border-bottom:1px solid #f1f5f9; background:' + (item.success ? '#ecfdf5' : '#fef2f2') + '; transition:background 2s ease;';
+
+      var statusBadge = item.success 
+        ? '<span class="chip chip-green" style="font-size:9.5px; padding:1px 5px; font-weight:700;">✓ Succès</span>'
+        : '<span class="chip chip-red" style="font-size:9.5px; padding:1px 5px; font-weight:700;">❌ Échec Mot de passe</span>';
+
+      var ipBadge = item.is_local 
+        ? '<span class="chip chip-gray" style="font-size:9px; padding:1px 4px;">Local</span>'
+        : '<span class="chip chip-blue" style="font-size:9px; padding:1px 4px;">Cloudflare</span>';
+
+      tr.innerHTML = '<td style="padding:7px 8px; font-size:11.5px; color:#475569;">' + item.date + ' ' + item.time + '</td>' +
+        '<td style="padding:7px 8px;"><code style="font-size:11px; color:#0f172a; font-weight:600;">' + item.ip_address + '</code> ' + ipBadge + '</td>' +
+        '<td style="padding:7px 8px;"><strong style="color:#0B3D6E;">@' + item.username + '</strong> <span style="font-size:10px; color:#64748b;">(' + item.role_display + ')</span></td>' +
+        '<td style="padding:7px 8px; text-align:right;">' + statusBadge + '</td>';
+
+      tbody.insertBefore(tr, tbody.firstChild);
+
+      setTimeout(function() {
+        tr.style.background = '#ffffff';
+      }, 2500);
+    });
+  };
+</script>
+
+{% endblock %}

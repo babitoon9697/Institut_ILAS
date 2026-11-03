@@ -1,0 +1,53 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Sensitive files and tokens
+client_secret.json
+token.json
+credentials.json
+tunnel_token.txt
+
+# Database temporary/WAL files (keep only main institut.db)
+*.db-shm
+*.db-wal
+app.db
+database.db
+ilas.db
+
+# Large backups and archives
+backups/
+*.rar
+*.zip
+*.7z
+*.bak*
+*backup*.db
+cloudflared*
+website_hostinger/
+scratch/
+preview_output/
+chrome_*
+*.log
+watchdog_log.txt
+server_runtime.log
+pyw_err.txt
+pyw_out.txt
+
+# Generated previews and temp files
+0
+=
+~$*
+preview_*.png
+cloture_80mm_*.png
+dom_dump.html
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,531 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- BREADCRUMB & HEADER -->
+<div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+  <div>
+    <div class="muted" style="font-size:12px">
+      <a href="{{ url_for('student_view', sid=stu.id) }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← Fiche Élève : {{ stu.full_name }}</a>
+      <span style="color:#94a3b8; margin:0 4px;">/</span>
+      <a href="{{ url_for('enrollments') }}" style="text-decoration:none; color:#64748b; font-weight:600;">Inscriptions</a>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:3px;">
+      <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800;">
+        ⚡ Renouvellement Groupé Multi-Classes (تجديد الاشتراكات على وصل موحد)
+      </h2>
+      <span class="chip chip-green" style="font-size:11px; font-weight:800; padding:2px 8px;">REÇU UNIQUE</span>
+    </div>
+    <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">
+      Renouvelez plusieurs cours simultanément pour cet élève sur <strong>un seul reçu de paiement</strong> et une facture groupée
+    </p>
+  </div>
+  <div class="flex" style="gap:8px;">
+    <a class="btn btn-outline" href="{{ url_for('student_view', sid=stu.id) }}" style="font-weight:700;">Annuler</a>
+  </div>
+</div>
+
+<!-- STUDENT PROFILE SUMMARY -->
+<div class="card card-pad mb-3" style="padding:16px 20px; border-top:4px solid #10b981; background:#ffffff;">
+  <div class="flex between wrap" style="align-items:center; gap:14px;">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <div style="width:48px; height:48px; border-radius:50%; background:#dcfce7; color:#15803d; font-size:20px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        👤
+      </div>
+      <div>
+        <div style="font-weight:800; font-size:17px; color:#0B3D6E; display:flex; align-items:center; gap:8px;">
+          {{ stu.full_name }}
+          <span class="chip chip-blue" style="font-size:11px; font-weight:800;">{{ stu.code }}</span>
+          {% if stu.school_level %}
+          <span class="chip chip-purple" style="font-size:11px; font-weight:700;">{{ stu.school_level }}</span>
+          {% endif %}
+        </div>
+        <div style="font-size:12px; color:#64748b; margin-top:3px; display:flex; gap:12px; flex-wrap:wrap;">
+          {% if stu.parent_phone %}<span>👨‍👩‍👧 Parent : <strong>{{ stu.parent_phone }}</strong></span>{% endif %}
+          {% if stu.phone %}<span>📞 Élève : <strong>{{ stu.phone }}</strong></span>{% endif %}
+          <span>📚 Classes renouvelables disponibles : <strong style="color:#0B3D6E;">{{ items|length }}</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side Badges -->
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      {% if stu.dynamic_credit_balance > 0 %}
+      <div style="background:#ecfdf5; border:1.5px solid #10b981; padding:8px 14px; border-radius:10px; display:flex; align-items:center; gap:8px;">
+        <span style="font-size:18px;">💳</span>
+        <div>
+          <div style="font-size:10px; font-weight:800; color:#065f46; text-transform:uppercase;">Avoir disponible</div>
+          <div style="font-size:14px; font-weight:800; color:#047857;">+{{ '%.2f'|format(stu.dynamic_credit_balance) }} {{ settings.currency }}</div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:8px 12px; border-radius:10px; text-align:right;">
+        <div style="font-size:10px; font-weight:700; color:#1e40af; text-transform:uppercase;">Classes à renouveler</div>
+        <div style="font-size:15px; font-weight:800; color:#1d4ed8;" id="badgeSelectedCount">{{ items|length }} / {{ items|length }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<form method="post" id="batchRenewForm">
+
+  <!-- ==================== BULK MASTER CONTROLS BAR ==================== -->
+  <div class="card mb-3" style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:14px 18px;">
+    <div class="flex between wrap" style="align-items:center; gap:12px;">
+      
+      <!-- Selection Buttons -->
+      <div style="display:flex; align-items:center; gap:10px;">
+        <label style="display:flex; align-items:center; gap:8px; font-weight:800; font-size:13px; color:#0B3D6E; cursor:pointer; margin:0;">
+          <input type="checkbox" id="chkSelectAll" checked onchange="toggleSelectAll(this.checked)" style="transform:scale(1.2); accent-color:#1f6feb;">
+          <span>Tout cocher / Décocher</span>
+        </label>
+        <span style="color:#cbd5e1;">|</span>
+        <span style="font-size:12px; color:#64748b;">
+          Cochez les matières que l'élève renouvelle aujourd'hui
+        </span>
+      </div>
+
+      <!-- Quick Mass Applicator -->
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:11.5px; font-weight:700; color:#475569;">🗓️ Durée commune :</span>
+          <select id="bulkDurationSelect" style="padding:4px 8px; font-size:12px; font-weight:700; border-radius:6px; border:1px solid #cbd5e1;">
+            <option value="1">1 Mois</option>
+            <option value="2">2 Mois</option>
+            <option value="3">3 Mois (Trimestre)</option>
+            <option value="4">4 Mois</option>
+            <option value="5">5 Mois</option>
+            <option value="6">6 Mois (Semestre)</option>
+            <option value="9">9 Mois</option>
+            <option value="10">10 Mois (Année)</option>
+          </select>
+          <button type="button" class="btn btn-outline btn-xs" onclick="applyBulkDuration()" style="font-weight:700; background:#fff; font-size:11.5px;">
+            Appliquer à tous
+          </button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:11.5px; font-weight:700; color:#475569;">📅 Date commune :</span>
+          <input type="date" id="bulkDateInput" value="{{ today.strftime('%Y-%m-%d') }}" style="padding:3px 6px; font-size:12px; border-radius:6px; border:1px solid #cbd5e1;">
+          <button type="button" class="btn btn-outline btn-xs" onclick="applyBulkDate()" style="font-weight:700; background:#fff; font-size:11.5px;">
+            Appliquer
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== COURSE RENEWAL CARDS ==================== -->
+  <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:20px;">
+    {% for item in items %}
+    {% set eid = item.enrollment.id %}
+    <div class="card course-renew-card" id="card_{{ eid }}" style="padding:16px 20px; border-radius:12px; border:1.5px solid #3b82f6; background:#ffffff; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+      
+      <!-- Card Top: Checkbox, Course Info & Expiry Badge -->
+      <div class="flex between wrap" style="align-items:flex-start; gap:12px; padding-bottom:12px; border-bottom:1px solid #f1f5f9;">
+        
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+          <input type="checkbox" name="selected_eids" value="{{ eid }}" id="chk_{{ eid }}" class="course-checkbox" checked onchange="onCourseCheckToggle('{{ eid }}')" style="transform:scale(1.3); margin-top:4px; accent-color:#10b981; cursor:pointer;">
+          
+          <div>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <h3 style="margin:0; font-size:16px; color:#0B3D6E; font-weight:800;">
+                {{ item.course_name }}
+              </h3>
+              <span class="chip chip-blue" style="font-size:11px; font-weight:700;">Inscrip. #{{ eid }}</span>
+              {% if item.status == 'active' %}
+              <span class="chip chip-green" style="font-size:10.5px; font-weight:700;">En cours</span>
+              {% elif item.status == 'completed' %}
+              <span class="chip chip-yellow" style="font-size:10.5px; font-weight:700;">Terminé</span>
+              {% elif item.status == 'paused' %}
+              <span class="chip chip-orange" style="font-size:10.5px; font-weight:700;">En pause</span>
+              {% endif %}
+            </div>
+
+            <div style="font-size:12px; color:#64748b; margin-top:3px; display:flex; gap:14px; flex-wrap:wrap;">
+              <span>👨‍🏫 Enseignant : <strong style="color:#1e293b;">{{ item.teacher_name }}</strong></span>
+              <span>🗓️ Horaires : <strong style="color:#1e293b;">{{ item.schedule_label }}</strong></span>
+              <span>💵 Prix unitaire mensuel : <strong style="color:#047857;">{{ '%.2f'|format(item.unit_price) }} {{ settings.currency }}/mois</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right info: Current End Date & Balance -->
+        <div style="text-align:right;">
+          <div style="font-size:12px; color:#64748b;">
+            Fin précédente : <strong style="color:#0B3D6E;">{{ item.end_date.strftime('%d/%m/%Y') if item.end_date else '—' }}</strong>
+          </div>
+          {% if item.balance and item.balance > 0 %}
+          <div style="font-size:11.5px; color:#dc2626; font-weight:800; margin-top:2px;">
+            ⚠️ Ancien impayé : {{ '%.2f'|format(item.balance) }} {{ settings.currency }}
+          </div>
+          {% else %}
+          <div style="font-size:11px; color:#10b981; font-weight:700; margin-top:2px;">
+            ✓ À jour de paiement
+          </div>
+          {% endif %}
+        </div>
+
+      </div>
+
+      <!-- Card Body: Renewal Inputs Grid -->
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:12px; margin-top:14px; align-items:end;">
+        
+        <!-- Renewal Start Date -->
+        <div class="field">
+          <label style="font-size:11.5px; font-weight:700; color:#334155;">Date début renouvellement <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">📅</span>
+            <input type="date" name="renew_date_{{ eid }}" id="renew_date_{{ eid }}" value="{{ item.default_renew_date.strftime('%Y-%m-%d') }}" required onchange="recalculateCourseRow('{{ eid }}')" style="font-weight:700; font-size:13px;">
+          </div>
+        </div>
+
+        <!-- Duration -->
+        <div class="field">
+          <label style="font-size:11.5px; font-weight:700; color:#334155;">Durée à renouveler <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">🗓️</span>
+            <select name="duration_months_{{ eid }}" id="duration_{{ eid }}" onchange="recalculateCourseRow('{{ eid }}')" style="font-weight:800; color:#0B3D6E; font-size:13px;">
+              <option value="1" {% if item.duration_months == 1 %}selected{% endif %}>1 Mois (Mensuel)</option>
+              <option value="2" {% if item.duration_months == 2 %}selected{% endif %}>2 Mois</option>
+              <option value="3" {% if item.duration_months == 3 %}selected{% endif %}>3 Mois (Trimestre)</option>
+              <option value="4" {% if item.duration_months == 4 %}selected{% endif %}>4 Mois</option>
+              <option value="5" {% if item.duration_months == 5 %}selected{% endif %}>5 Mois</option>
+              <option value="6" {% if item.duration_months == 6 %}selected{% endif %}>6 Mois (Semestre)</option>
+              <option value="9" {% if item.duration_months == 9 %}selected{% endif %}>9 Mois</option>
+              <option value="10" {% if item.duration_months == 10 %}selected{% endif %}>10 Mois (Année)</option>
+              <option value="12" {% if item.duration_months == 12 %}selected{% endif %}>12 Mois</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Total Sessions -->
+        <div class="field">
+          <label style="font-size:11.5px; font-weight:700; color:#334155;">Total séances</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">⏱️</span>
+            <input type="number" name="total_sessions_{{ eid }}" id="tot_sess_{{ eid }}" value="{{ item.calc.total_sessions }}" style="font-weight:700; font-size:13px;">
+          </div>
+        </div>
+
+        <!-- Sessions to attend -->
+        <div class="field">
+          <label style="font-size:11.5px; font-weight:700; color:#334155;">Séances restantes</label>
+          <div class="input-field has-ico">
+            <span class="f-ico">✅</span>
+            <input type="number" name="attended_sessions_{{ eid }}" id="rem_sess_{{ eid }}" value="{{ item.calc.remaining_sessions }}" style="font-weight:700; font-size:13px;">
+          </div>
+        </div>
+
+        <!-- Price for this course -->
+        <div class="field">
+          <label style="font-size:11.5px; font-weight:700; color:#047857;">Prix ce cours ({{ settings.currency }}) <span class="req">*</span></label>
+          <div class="input-field has-ico">
+            <span class="f-ico">💰</span>
+            <input type="number" step="0.01" name="monthly_price_{{ eid }}" id="price_{{ eid }}" value="{{ '%.2f'|format(item.calc.full_price) }}" required oninput="updateMasterFinancialSummary()" style="font-weight:800; color:#0B3D6E; font-size:14px; background:#f0fdf4;">
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="field" style="grid-column: 1 / -1;">
+          <input type="text" name="notes_{{ eid }}" placeholder="Remarque spécifique pour cette classe (optionnelle)..." style="font-size:12px; padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0; width:100%;">
+        </div>
+
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ==================== UNIFIED PAYMENT & ENCAISSEMENT CARD ==================== -->
+  <div class="card card-pad mb-3" style="padding:22px; border-top:5px solid #10b981; background:#ffffff; box-shadow:0 4px 18px rgba(0,0,0,0.06); border-radius:14px;">
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div style="width:32px; height:32px; border-radius:8px; background:#d1fae5; display:flex; align-items:center; justify-content:center; color:#047857; font-size:16px; font-weight:800;">
+          🧾
+        </div>
+        <div>
+          <h3 style="margin:0; font-size:17px; color:#0B3D6E; font-weight:800;">
+            Règlement & Reçu Unique (الأداء والوصل الموحد)
+          </h3>
+          <div style="font-size:12px; color:#64748b;">
+            Toutes les matières cochées seront facturées ensemble et figureront sur un seul reçu thermique
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Calculation Pill -->
+      <div style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:10px; padding:8px 16px; display:flex; align-items:center; gap:16px;">
+        <div>
+          <div style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase;">Total Cours Sélectionnés</div>
+          <div style="font-size:16px; font-weight:800; color:#0B3D6E;" id="lblSubtotal">0.00 {{ settings.currency }}</div>
+        </div>
+        <div id="boxCreditDeduction" style="display:none; border-left:1px solid #cbd5e1; padding-left:14px;">
+          <div style="font-size:10.5px; font-weight:700; color:#15803d; text-transform:uppercase;">Avoir Déduit</div>
+          <div style="font-size:16px; font-weight:800; color:#15803d;" id="lblCreditDeduction">-0.00 {{ settings.currency }}</div>
+        </div>
+        <div style="border-left:1px solid #cbd5e1; padding-left:14px;">
+          <div style="font-size:10.5px; font-weight:700; color:#047857; text-transform:uppercase;">Net à Payer</div>
+          <div style="font-size:20px; font-weight:800; color:#059669;" id="lblNetTotal">0.00 {{ settings.currency }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Credit Balance Checkbox Row -->
+    {% if stu.dynamic_credit_balance > 0 %}
+    <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:10px; padding:12px 16px; margin-bottom:18px;">
+      <label style="display:flex; align-items:center; gap:10px; font-weight:800; color:#15803d; cursor:pointer; margin:0; font-size:14px;">
+        <input type="checkbox" name="use_credit" id="chkUseCredit" value="1" checked onchange="updateMasterFinancialSummary()" style="transform:scale(1.3); accent-color:#16a34a;">
+        <span>💳 Déduire automatiquement l'avoir disponible de l'élève (+{{ '%.2f'|format(stu.dynamic_credit_balance) }} {{ settings.currency }})</span>
+      </label>
+      <div style="font-size:12px; color:#166534; margin-top:4px; margin-left:30px;">
+        Le montant de l'avoir sera automatiquement déduit du total et imputé sur ce reçu unique.
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Payment Inputs Grid -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
+      
+      <!-- Payment Amount -->
+      <div class="field">
+        <label style="font-size:12.5px; font-weight:700; color:#047857;">Montant encaissé aujourd'hui ({{ settings.currency }}) <span class="req">*</span></label>
+        <div class="input-field has-ico">
+          <span class="f-ico">💵</span>
+          <input type="number" step="0.01" name="payment_amount" id="inpPaymentAmount" required style="font-weight:800; color:#047857; font-size:18px;">
+        </div>
+        <div style="font-size:11px; color:#64748b; margin-top:3px;">
+          Laissez le montant net pour solder, ou entrez un montant partiel (ou 0 pour différé).
+        </div>
+      </div>
+
+      <!-- Payment Method -->
+      <div class="field">
+        <label style="font-size:12.5px; font-weight:700; color:#334155;">Mode de règlement <span class="req">*</span></label>
+        <div class="input-field has-ico">
+          <span class="f-ico">💳</span>
+          <select name="payment_method" id="selPaymentMethod" style="font-weight:700; font-size:14px;">
+            <option value="cash">💵 Espèces (Cash)</option>
+            <option value="transfer">🏦 Virement bancaire</option>
+            <option value="card">💳 Carte bancaire</option>
+            <option value="cheque">📝 Chèque</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Payment Date -->
+      <div class="field">
+        <label style="font-size:12.5px; font-weight:700; color:#334155;">Date d'encaissement <span class="req">*</span></label>
+        <div class="input-field has-ico">
+          <span class="f-ico">📅</span>
+          <input type="date" name="payment_date" value="{{ today.strftime('%Y-%m-%d') }}" required style="font-weight:700; font-size:14px;">
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Alert / Notice -->
+    <div id="noSelectionAlert" style="display:none; background:#fef2f2; border:1px solid #ef4444; color:#b91c1c; padding:10px 14px; border-radius:8px; font-weight:700; font-size:13px; margin-top:14px;">
+      ⚠️ Veuillez sélectionner au moins une classe à renouveler.
+    </div>
+
+    <!-- Submit Buttons -->
+    <div style="display:flex; gap:12px; margin-top:22px; align-items:center; flex-wrap:wrap;">
+      <button class="btn btn-primary" type="submit" id="btnSubmitRenew" style="font-size:15px; font-weight:800; padding:12px 28px; background:#10b981; border-color:#10b981; box-shadow:0 4px 14px rgba(16,185,129,0.35); display:inline-flex; align-items:center; gap:8px;">
+        <span>⚡ Valider le Renouvellement Groupé & Imprimer Reçu Unique</span>
+      </button>
+      <a class="btn btn-outline" href="{{ url_for('student_view', sid=stu.id) }}" style="padding:12px 20px; font-weight:700;">
+        Annuler
+      </a>
+    </div>
+
+  </div>
+
+</form>
+
+<!-- DATA & CALCULATION ENGINE -->
+<script>
+  var studentCreditBalance = {{ (stu.dynamic_credit_balance or 0.0)|tojson }};
+  var coursesData = {
+    {% for item in items %}
+    "{{ item.enrollment.id }}": {
+      courseId: {{ item.course_id|tojson }},
+      tariffId: {{ item.tariff_id|tojson }},
+      unitPrice: {{ item.unit_price|tojson }},
+      defaultTotalSessions: {{ item.calc.total_sessions|tojson }},
+      defaultDuration: {{ item.duration_months|tojson }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  };
+
+  // 1. Toggle Course Selection
+  function onCourseCheckToggle(eid) {
+    var chk = document.getElementById('chk_' + eid);
+    var card = document.getElementById('card_' + eid);
+    if (chk && card) {
+      if (chk.checked) {
+        card.style.borderColor = '#3b82f6';
+        card.style.background = '#ffffff';
+        card.style.opacity = '1';
+      } else {
+        card.style.borderColor = '#e2e8f0';
+        card.style.background = '#f8fafc';
+        card.style.opacity = '0.6';
+      }
+    }
+    updateMasterFinancialSummary();
+  }
+
+  // 2. Toggle Select All
+  function toggleSelectAll(checked) {
+    var checkboxes = document.querySelectorAll('.course-checkbox');
+    checkboxes.forEach(function(cb) {
+      cb.checked = checked;
+      var card = document.getElementById('card_' + cb.value);
+      if (card) {
+        if (checked) {
+          card.style.borderColor = '#3b82f6';
+          card.style.background = '#ffffff';
+          card.style.opacity = '1';
+        } else {
+          card.style.borderColor = '#e2e8f0';
+          card.style.background = '#f8fafc';
+          card.style.opacity = '0.6';
+        }
+      }
+    });
+    updateMasterFinancialSummary();
+  }
+
+  // 3. Bulk Apply Duration
+  function applyBulkDuration() {
+    var dur = document.getElementById('bulkDurationSelect').value;
+    for (var eid in coursesData) {
+      var sel = document.getElementById('duration_' + eid);
+      if (sel) {
+        sel.value = dur;
+        recalculateCourseRow(eid);
+      }
+    }
+  }
+
+  // 4. Bulk Apply Date
+  function applyBulkDate() {
+    var dt = document.getElementById('bulkDateInput').value;
+    if (!dt) return;
+    for (var eid in coursesData) {
+      var inp = document.getElementById('renew_date_' + eid);
+      if (inp) {
+        inp.value = dt;
+        recalculateCourseRow(eid);
+      }
+    }
+  }
+
+  // 5. Recalculate Course Row
+  function recalculateCourseRow(eid) {
+    var data = coursesData[eid];
+    if (!data) return;
+
+    var dt = document.getElementById('renew_date_' + eid).value;
+    var dur = parseInt(document.getElementById('duration_' + eid).value) || 1;
+
+    if (data.courseId > 0 && dt) {
+      var url = '/api/calculate_prorated?course_id=' + data.courseId + '&enroll_date=' + dt + '&months_count=' + dur + '&custom_unit_price=' + data.unitPrice;
+      fetch(url)
+        .then(function(res) { return res.json(); })
+        .then(function(resData) {
+          if (resData.full_price !== undefined) {
+            document.getElementById('price_' + eid).value = resData.full_price.toFixed(2);
+          }
+          if (resData.total_sessions !== undefined) {
+            document.getElementById('tot_sess_' + eid).value = resData.total_sessions;
+          }
+          if (resData.remaining_sessions !== undefined) {
+            document.getElementById('rem_sess_' + eid).value = resData.remaining_sessions;
+          }
+          updateMasterFinancialSummary();
+        })
+        .catch(function(err) {
+          console.error(err);
+          var totPrice = data.unitPrice * dur;
+          document.getElementById('price_' + eid).value = totPrice.toFixed(2);
+          updateMasterFinancialSummary();
+        });
+    } else {
+      var totPrice = data.unitPrice * dur;
+      document.getElementById('price_' + eid).value = totPrice.toFixed(2);
+      updateMasterFinancialSummary();
+    }
+  }
+
+  // 6. Master Financial Summary Calculation
+  function updateMasterFinancialSummary() {
+    var checkboxes = document.querySelectorAll('.course-checkbox:checked');
+    var selectedCount = checkboxes.length;
+    var totalCount = document.querySelectorAll('.course-checkbox').length;
+
+    // Update count badge
+    var badgeCount = document.getElementById('badgeSelectedCount');
+    if (badgeCount) {
+      badgeCount.textContent = selectedCount + ' / ' + totalCount;
+    }
+
+    var subtotal = 0.0;
+    checkboxes.forEach(function(cb) {
+      var eid = cb.value;
+      var priceInp = document.getElementById('price_' + eid);
+      if (priceInp) {
+        subtotal += parseFloat(priceInp.value) || 0.0;
+      }
+    });
+
+    // Credit deduction
+    var chkCredit = document.getElementById('chkUseCredit');
+    var creditToDeduct = 0.0;
+    if (chkCredit && chkCredit.checked && studentCreditBalance > 0) {
+      creditToDeduct = Math.min(studentCreditBalance, subtotal);
+      document.getElementById('boxCreditDeduction').style.display = 'block';
+      document.getElementById('lblCreditDeduction').textContent = '-' + creditToDeduct.toFixed(2) + ' {{ settings.currency }}';
+    } else {
+      var box = document.getElementById('boxCreditDeduction');
+      if (box) box.style.display = 'none';
+    }
+
+    var netTotal = Math.max(0.0, subtotal - creditToDeduct);
+
+    // Update Labels
+    document.getElementById('lblSubtotal').textContent = subtotal.toFixed(2) + ' {{ settings.currency }}';
+    document.getElementById('lblNetTotal').textContent = netTotal.toFixed(2) + ' {{ settings.currency }}';
+
+    // Auto update payment input if not manually modified by user to a non-zero custom value
+    var payInp = document.getElementById('inpPaymentAmount');
+    if (payInp) {
+      payInp.value = netTotal.toFixed(2);
+    }
+
+    // Submit button state
+    var btnSubmit = document.getElementById('btnSubmitRenew');
+    var alertBox = document.getElementById('noSelectionAlert');
+    if (selectedCount === 0) {
+      btnSubmit.disabled = true;
+      btnSubmit.style.opacity = '0.5';
+      btnSubmit.style.cursor = 'not-allowed';
+      if (alertBox) alertBox.style.display = 'block';
+    } else {
+      btnSubmit.disabled = false;
+      btnSubmit.style.opacity = '1';
+      btnSubmit.style.cursor = 'pointer';
+      if (alertBox) alertBox.style.display = 'none';
+    }
+  }
+
+  // Initial calculation on load
+  document.addEventListener('DOMContentLoaded', function() {
+    updateMasterFinancialSummary();
+  });
+</script>
+
+{% endblock %}

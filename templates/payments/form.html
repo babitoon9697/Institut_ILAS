@@ -1,0 +1,403 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- BREADCRUMB & HEADER -->
+<div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('payments') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ t('payments') }}</a></div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+      <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800;">
+        💳 Encaisser un Paiement (إصدار وصل أداء)
+      </h2>
+      <span class="chip chip-green" style="font-size:11px; font-weight:800;">ENCAISSEMENT CAISSE</span>
+    </div>
+    <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">Enregistrement d'un règlement d'écolage ou facture avec ventilation comptable et émission instantanée de reçu</p>
+  </div>
+  <a class="btn btn-outline" href="{{ url_for('payments') }}">Annuler</a>
+</div>
+
+<form method="post" style="max-width:880px;">
+  <input type="hidden" name="enrollment_id" value="{{ pre_enrollment_id or '' }}">
+
+  {% if target_enrollment %}
+  <div style="background:#eff6ff; border:1.5px solid #3b82f6; border-radius:10px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:12px; box-shadow:0 2px 6px rgba(59,130,246,0.1);">
+    <span style="font-size:24px;">🎯</span>
+    <div>
+      <div style="font-size:14px; font-weight:800; color:#1e40af;">
+        Règlement ciblé : {{ target_enrollment.course_name_display }}
+      </div>
+      <div style="font-size:12px; color:#2563eb; margin-top:2px;">
+        Ce paiement sera affecté à 100% à cette inscription (Reste dû : <strong>{{ '%.2f'|format(target_enrollment.balance) }} {{ settings.currency }}</strong>).
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  
+  <!-- 1. ÉLÈVE & FACTURE -->
+  <div class="card card-pad mb-3" style="padding:20px; border-top:4px solid #1f6feb;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+      <div style="width:28px; height:28px; border-radius:6px; background:#dbeafe; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:14px; font-weight:800;">1</div>
+      <h3 style="margin:0; font-size:15.5px; color:#0B3D6E; font-weight:800;">Élève & Facture à Régler (التلميذ والواجبات)</h3>
+    </div>
+
+    <div class="field mb-3">
+      <label style="font-size:12px; font-weight:700;">Élève concerné <span class="req">*</span></label>
+      <div class="input-field has-ico">
+        <span class="f-ico">👤</span>
+        <select name="student_id" required id="student" onchange="onStudentChange()" style="font-size:13.5px; font-weight:700; color:#0B3D6E;">
+          <option value="">-- Choisir un élève dans la liste --</option>
+          {% for s in students %}
+          <option value="{{ s.id }}" data-credit="{{ s.dynamic_credit_balance }}" {{ 'selected' if pre_student_id and pre_student_id==s.id }}>
+            {{ s.full_name }} ({{ s.code }}) — {{ s.school_level or 'Général' }} {% if s.parent_phone %}(Tél: {{ s.parent_phone }}){% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- DYNAMIC MULTI-CLASS ENROLLMENTS BREAKDOWN -->
+    <div id="studentEnrollmentsCard" style="display:none; margin-bottom:14px; border:1.5px solid #cbd5e1; border-radius:10px; overflow:hidden;">
+      <div style="background:#f1f5f9; padding:8px 12px; font-size:11.5px; font-weight:800; color:#334155; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #cbd5e1;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="formCheckAll" onchange="toggleFormAllRows(this.checked)" checked style="transform:scale(1.15); cursor:pointer;">
+          <span>RÉPARTITION PAR CLASSE (توزيع الأداء على المواد على وصل واحد)</span>
+        </div>
+        <span id="formTotalDebtBadge" style="font-size:11px; font-weight:800; color:#b91c1c;"></span>
+      </div>
+      <div id="formEnrollmentsRows">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <div class="field" id="invoiceField">
+      <label style="font-size:12px; font-weight:700;">Facture / Inscription en attente de règlement (Optionnel)</label>
+      <div class="input-field has-ico">
+        <span class="f-ico">🧾</span>
+        <select name="invoice_id" id="invoiceSelect" onchange="updateInvoiceAmount()" style="font-size:13px; font-weight:600;">
+          <option value="">-- Règlement général ou avance directe --</option>
+          {% if pre_student_id and invoices %}
+            {% for inv in invoices %}
+              {% if inv.student_id == pre_student_id %}
+              <option value="{{ inv.id }}" data-student="{{ inv.student_id }}" data-total="{{ inv.total }}" data-due="{{ inv.total - inv.amount_paid }}" selected>
+                Facture N° {{ inv.number }} — Total: {{ inv.total }} {{ settings.currency }} (Reste à payer : {{ '%.2f'|format(inv.total - inv.amount_paid) }} {{ settings.currency }})
+              </option>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. MONTANT & MODALITÉS -->
+  <div class="card card-pad mb-3" style="padding:20px; border-top:4px solid #10b981;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+      <div style="width:28px; height:28px; border-radius:6px; background:#d1fae5; display:flex; align-items:center; justify-content:center; color:#047857; font-size:14px; font-weight:800;">2</div>
+      <h3 style="margin:0; font-size:15.5px; color:#0B3D6E; font-weight:800;">Montant Encaissé & Date (المبلغ المؤدى وتاريخ الأداء)</h3>
+    </div>
+
+    <div class="form-grid-payment-amounts" style="display:grid; grid-template-columns: 1.2fr 1fr; gap:14px;">
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Montant Encaissé aujourd'hui ({{ settings.currency }}) <span class="req">*</span></label>
+        <div class="input-field has-ico">
+          <span class="f-ico">💵</span>
+          <input type="number" step="0.01" name="amount" id="amountInput" value="{{ '%.2f'|format(pre_amount) if pre_amount else '' }}" required placeholder="Ex : 400.00" style="font-size:16px; font-weight:800; color:#047857;">
+        </div>
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px; font-weight:700;">Date de règlement <span class="req">*</span></label>
+        <div class="input-field has-ico">
+          <span class="f-ico">📅</span>
+          <input type="date" name="date" value="{{ today }}" required style="font-weight:700;">
+        </div>
+      </div>
+    </div>
+
+    <div class="field mt-3">
+      <label style="font-size:12px; font-weight:700; margin-bottom:6px;">Mode de règlement :</label>
+      <div class="form-grid-payment-methods" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px;">
+        <label style="border:1.5px solid #cbd5e1; border-radius:8px; padding:10px 12px; cursor:pointer; display:flex; align-items:center; gap:8px; background:#fff; font-size:13px; font-weight:700;">
+          <input type="radio" name="method" value="cash" checked style="transform:scale(1.2);">
+          <span>💵 Espèces (Cash)</span>
+        </label>
+        <label style="border:1.5px solid #cbd5e1; border-radius:8px; padding:10px 12px; cursor:pointer; display:flex; align-items:center; gap:8px; background:#fff; font-size:13px; font-weight:700;">
+          <input type="radio" name="method" value="transfer" style="transform:scale(1.2);">
+          <span>🏦 Virement</span>
+        </label>
+        <label style="border:1.5px solid #cbd5e1; border-radius:8px; padding:10px 12px; cursor:pointer; display:flex; align-items:center; gap:8px; background:#fff; font-size:13px; font-weight:700;">
+          <input type="radio" name="method" value="card" style="transform:scale(1.2);">
+          <span>💳 Carte bancaire</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="field mt-3">
+      <label style="font-size:12px; font-weight:700;">Remarque / Note comptable (Optionnel)</label>
+      <div class="input-field has-ico">
+        <span class="f-ico">📝</span>
+        <input name="note" placeholder="Ex : Règlement mensuel, avance 1ère tranche...">
+      </div>
+    </div>
+
+    <!-- PROMISE DATE FOR REMAINING BALANCE (Date X) -->
+    <div style="margin-top:14px; background:#eff6ff; border:1.5px dashed #93c5fd; border-radius:10px; padding:12px 14px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+        <label style="font-size:12.5px; font-weight:800; color:#1e40af; display:flex; align-items:center; gap:6px; margin:0;">
+          <span>🤝</span>
+          <span>Accord / Promesse pour le solde restant (Date X) :</span>
+        </label>
+        <span style="font-size:10.5px; color:#2563eb; font-weight:700; background:#dbeafe; padding:1px 6px; border-radius:10px;">🛡️ Anti-Rappel automatique</span>
+      </div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:700; color:#374151; display:block; margin-bottom:4px;">
+            📅 Date convenue pour régler le reste :
+          </label>
+          <input type="date" name="rest_promise_date" style="width:100%; padding:8px 10px; font-size:13px; border:1px solid #93c5fd; border-radius:6px; background:#fff; outline:none; box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:700; color:#374151; display:block; margin-bottom:4px;">
+            📝 Motif / Accord verbal :
+          </label>
+          <input type="text" name="rest_promise_note" placeholder="Ex: Le père passera le 5 régler le reste..." style="width:100%; padding:8px 10px; font-size:13px; border:1px solid #93c5fd; border-radius:6px; background:#fff; outline:none; box-sizing:border-box;">
+        </div>
+      </div>
+      <div style="font-size:11px; color:#1e40af; margin-top:6px; line-height:1.4;">
+        ℹ️ Si une date est fixée, cet élève sera <strong>automatiquement protégé contre les rappels WhatsApp</strong> jusqu'à cette date et <strong>exclu de la sélection groupée</strong>.
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBMIT ACTIONS -->
+  <div class="form-submit-row" style="display:flex; gap:10px; margin-top:20px; flex-wrap:wrap;">
+    <button class="btn btn-primary" type="submit" style="font-size:15px; font-weight:800; padding:12px 28px; background:#10b981; border-color:#10b981; box-shadow:0 4px 14px rgba(16,185,129,0.35);">
+      💾 Enregistrer le Paiement & Imprimer Reçu 80mm
+    </button>
+    <a class="btn btn-outline" href="{{ url_for('payments') }}" style="padding:12px 18px; font-weight:700;">
+      Annuler
+    </a>
+  </div>
+
+</form>
+
+<style>
+@media screen and (max-width: 768px) {
+  .form-grid-payment-amounts {
+    grid-template-columns: 1fr !important;
+  }
+  .form-grid-payment-methods {
+    grid-template-columns: 1fr !important;
+  }
+  .form-submit-row {
+    flex-direction: column !important;
+  }
+  .form-submit-row .btn {
+    width: 100% !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+}
+</style>
+
+<script>
+  const preEnrollmentId = {{ pre_enrollment_id or 'null' }};
+  let formEnrollmentData = [];
+
+  function onStudentChange() {
+    var sid = document.getElementById('student').value;
+    var invSel = document.getElementById('invoiceSelect');
+    if (sid) {
+      loadStudentEnrollmentsForForm(sid);
+    } else {
+      if (invSel) {
+        invSel.innerHTML = '<option value="">-- Règlement général ou avance directe --</option>';
+      }
+      document.getElementById('studentEnrollmentsCard').style.display = 'none';
+      document.getElementById('formEnrollmentsRows').innerHTML = '';
+    }
+  }
+
+  function rebuildInvoicesDropdown(invoices, sid) {
+    var invSel = document.getElementById('invoiceSelect');
+    if (!invSel) return;
+    var currentVal = invSel.value;
+    invSel.innerHTML = '<option value="">-- Règlement général ou avance directe --</option>';
+    if (!invoices || invoices.length === 0) return;
+
+    invoices.forEach(function(inv) {
+      var opt = document.createElement('option');
+      opt.value = inv.id;
+      opt.dataset.student = sid;
+      opt.dataset.total = inv.total;
+      opt.dataset.due = inv.due;
+      opt.textContent = `Facture N° ${inv.number} — Total: ${inv.total.toFixed(2)} DH (Reste à payer : ${inv.due.toFixed(2)} DH)`;
+      if (currentVal && String(inv.id) === String(currentVal)) {
+        opt.selected = true;
+      }
+      invSel.appendChild(opt);
+    });
+
+    if (invoices.length === 1 && !invSel.value) {
+      invSel.selectedIndex = 1;
+    }
+  }
+
+  function updateInvoiceAmount() {
+    var sel = document.getElementById('invoiceSelect');
+    var opt = sel.options[sel.selectedIndex];
+    if (opt && opt.dataset.due) {
+      document.getElementById('amountInput').value = parseFloat(opt.dataset.due).toFixed(2);
+    }
+  }
+
+  function loadStudentEnrollmentsForForm(sid) {
+    const card = document.getElementById('studentEnrollmentsCard');
+    const rowsContainer = document.getElementById('formEnrollmentsRows');
+    const badge = document.getElementById('formTotalDebtBadge');
+    if (!card || !rowsContainer) return;
+
+    fetch(`/api/students/${sid}/unpaid_enrollments`)
+      .then(r => r.json())
+      .then(data => {
+        rebuildInvoicesDropdown(data.invoices || [], sid);
+
+        formEnrollmentData = data.enrollments || [];
+        const unpaid = formEnrollmentData.filter(e => e.balance > 0);
+        if (unpaid.length === 0) {
+          card.style.display = 'none';
+          rowsContainer.innerHTML = '';
+          return;
+        }
+
+        if (badge) badge.textContent = `Total impayé : ${data.total_balance.toFixed(2)} DH`;
+        rowsContainer.innerHTML = '';
+        let sumChecked = 0;
+
+        unpaid.forEach((e, idx) => {
+          const isTarget = preEnrollmentId && e.id === preEnrollmentId;
+          const isChecked = preEnrollmentId ? isTarget : true;
+          if (isChecked) sumChecked += e.balance;
+
+          const row = document.createElement('div');
+          row.style.padding = '8px 12px';
+          row.style.display = 'flex';
+          row.style.justifyContent = 'space-between';
+          row.style.alignItems = 'center';
+          row.style.gap = '10px';
+          row.style.borderBottom = (idx === unpaid.length - 1) ? 'none' : '1px solid #e2e8f0';
+          row.style.background = isTarget ? '#eff6ff' : '#fff';
+
+          row.innerHTML = `
+            <div style="display:flex; align-items:flex-start; gap:8px; flex-grow:1; min-width:0;">
+              <input type="checkbox" name="selected_eids" value="${e.id}" id="f_chk_${e.id}" onchange="onFormRowCheckChange(${e.id})" ${isChecked ? 'checked' : ''} style="margin-top:2px; transform:scale(1.15); cursor:pointer;">
+              <div style="min-width:0;">
+                <div style="font-weight:800; font-size:12.5px; color:#0B3D6E; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                  ${e.course_name}
+                </div>
+                <div style="font-size:11px; color:#64748b;">
+                  👨‍🏫 ${e.teacher_name} &nbsp;·&nbsp; Reste: <strong style="color:#b91c1c;">${e.balance.toFixed(2)} DH</strong>
+                </div>
+              </div>
+            </div>
+            <div style="flex-shrink:0; text-align:right;">
+              <input type="number" step="0.01" min="0" max="${e.balance}" name="alloc_${e.id}" id="f_alloc_${e.id}" value="${isChecked ? e.balance.toFixed(2) : '0.00'}" oninput="recalcFormFromRows()" data-balance="${e.balance}" ${isChecked ? '' : 'disabled'} style="width:105px; text-align:right; font-weight:800; font-size:13.5px; color:#0f172a; padding:4px 6px; border:1.5px solid #cbd5e1; border-radius:6px; outline:none; box-sizing:border-box; background:${isChecked ? '#fff' : '#f1f5f9'};">
+            </div>
+          `;
+          rowsContainer.appendChild(row);
+        });
+
+        card.style.display = 'block';
+
+        const amtInput = document.getElementById('amountInput');
+        if (amtInput && (!amtInput.value || parseFloat(amtInput.value) === 0 || !preEnrollmentId)) {
+          amtInput.value = sumChecked.toFixed(2);
+        }
+      })
+      .catch(err => {
+        console.error("Error loading enrollments:", err);
+      });
+  }
+
+  function onFormRowCheckChange(eid) {
+    const chk = document.getElementById(`f_chk_${eid}`);
+    const inp = document.getElementById(`f_alloc_${eid}`);
+    if (!chk || !inp) return;
+
+    if (chk.checked) {
+      inp.disabled = false;
+      inp.value = parseFloat(inp.dataset.balance || 0).toFixed(2);
+      inp.style.background = '#fff';
+    } else {
+      inp.disabled = true;
+      inp.value = "0.00";
+      inp.style.background = '#f1f5f9';
+    }
+    recalcFormFromRows();
+  }
+
+  function toggleFormAllRows(checked) {
+    const chks = document.querySelectorAll('#formEnrollmentsRows input[name="selected_eids"]');
+    chks.forEach(chk => {
+      chk.checked = checked;
+      const eid = chk.value;
+      const inp = document.getElementById(`f_alloc_${eid}`);
+      if (inp) {
+        inp.disabled = !checked;
+        inp.value = checked ? parseFloat(inp.dataset.balance || 0).toFixed(2) : "0.00";
+        inp.style.background = checked ? '#fff' : '#f1f5f9';
+      }
+    });
+    recalcFormFromRows();
+  }
+
+  function recalcFormFromRows() {
+    const chks = document.querySelectorAll('#formEnrollmentsRows input[name="selected_eids"]:checked');
+    let sum = 0;
+    chks.forEach(chk => {
+      const inp = document.getElementById(`f_alloc_${chk.value}`);
+      if (inp && !inp.disabled) {
+        sum += parseFloat(inp.value) || 0;
+      }
+    });
+    const amtInput = document.getElementById('amountInput');
+    if (amtInput) amtInput.value = sum.toFixed(2);
+  }
+
+  window.addEventListener('DOMContentLoaded', function() {
+    const amtInput = document.getElementById('amountInput');
+    if (amtInput) {
+      amtInput.addEventListener('input', function() {
+        const total = parseFloat(this.value) || 0;
+        const chks = Array.from(document.querySelectorAll('#formEnrollmentsRows input[name="selected_eids"]:checked'));
+        if (chks.length === 0) return;
+
+        let sumBalances = 0;
+        chks.forEach(chk => {
+          const inp = document.getElementById(`f_alloc_${chk.value}`);
+          if (inp) sumBalances += parseFloat(inp.dataset.balance || 0);
+        });
+
+        if (sumBalances <= 0) return;
+
+        let rem = total;
+        chks.forEach((chk, idx) => {
+          const inp = document.getElementById(`f_alloc_${chk.value}`);
+          if (!inp) return;
+          if (idx === chks.length - 1) {
+            inp.value = Math.max(0, rem).toFixed(2);
+          } else {
+            const b = parseFloat(inp.dataset.balance || 0);
+            const share = Math.round((total * (b / sumBalances)) * 100) / 100;
+            inp.value = Math.max(0, share).toFixed(2);
+            rem -= share;
+          }
+        });
+      });
+    }
+
+    onStudentChange();
+  });
+</script>
+
+{% endblock %}

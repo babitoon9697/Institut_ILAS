@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div style="max-width: 760px; margin: 24px auto; padding: 0 12px;">
+
+  <!-- Breadcrumb / Back button -->
+  <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+    <a href="{{ url_for('badges') }}" style="color: #64748b; text-decoration: none; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+      <span>←</span> {{ 'العودة إلى الشارات' if lang=='ar' else 'Retour au studio des badges' }}
+    </a>
+    <a href="{{ url_for('student_view', sid=student.id) }}" class="btn btn-sm btn-outline" style="border-radius: 8px; font-weight: 700; color: #0B3D6E; border-color: #cbd5e1;">
+      📁 {{ 'الملف الكامل' if lang=='ar' else 'Dossier complet' }}
+    </a>
+  </div>
+
+  <!-- Verification Card -->
+  <div style="background: #ffffff; border-radius: 18px; border: 1.5px solid #e2e8f0; box-shadow: 0 10px 30px rgba(11, 61, 110, 0.08); overflow: hidden;">
+    
+    <!-- Tricolor Top Accent -->
+    <div style="height: 5px; width: 100%; background: linear-gradient(90deg, #0B3D6E 0%, #0B3D6E 42%, #C59B27 42%, #C59B27 75%, #C0292B 75%, #C0292B 100%);"></div>
+
+    <!-- Official Header -->
+    <div style="padding: 20px 24px; background: linear-gradient(135deg, #071324 0%, #0B3D6E 100%); color: #ffffff; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="width: 48px; height: 48px; background: #ffffff; border-radius: 10px; padding: 4px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+          <img src="{{ url_for('static', filename='uploads/logo-ilas.png') }}" alt="ILAS" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+        </div>
+        <div>
+          <h2 style="margin: 0; font-size: 18px; font-weight: 800; letter-spacing: 0.3px; color: #ffffff;">
+            {{ settings.inst_name|default('INSTITUT ILAS') }}
+          </h2>
+          <div style="font-size: 11.5px; color: #e2ba55; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">
+            {{ 'التحقق من صحة البطاقة المدرسية' if lang=='ar' else 'Vérification Officielle du Badge' }}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        {% if student.status == 'active' %}
+          <span style="display: inline-flex; align-items: center; gap: 6px; background: #10b981; color: #ffffff; padding: 6px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 800; box-shadow: 0 2px 10px rgba(16, 185, 129, 0.35);">
+            <span style="font-size: 14px;">✓</span>
+            <span>{{ 'تلميذ نشط - بطاقة صالحة' if lang=='ar' else 'Élève Actif · Badge Valide' }}</span>
+          </span>
+        {% else %}
+          <span style="display: inline-flex; align-items: center; gap: 6px; background: #ef4444; color: #ffffff; padding: 6px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 800;">
+            <span>✕</span>
+            <span>{{ 'غير نشط' if lang=='ar' else 'Inactif' }}</span>
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Identity Body -->
+    <div style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+      
+      <!-- Profile Header -->
+      <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
+        {% if photo_url %}
+          <div style="width: 86px; height: 104px; border-radius: 12px; border: 2.5px solid #C59B27; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.1); flex-shrink: 0; background: #f8fafc;">
+            <img src="{{ photo_url }}" alt="{{ student.full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+          </div>
+        {% else %}
+          <div style="width: 86px; height: 104px; border-radius: 12px; border: 2px dashed #cbd5e1; background: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; flex-shrink: 0;">
+            <span style="font-size: 28px;">👤</span>
+            <span style="font-size: 9.5px; font-weight: 800; text-transform: uppercase; margin-top: 4px;">{{ 'بدون صورة' if lang=='ar' else 'Sans photo' }}</span>
+          </div>
+        {% endif %}
+
+        <div style="flex: 1; min-width: 220px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <span style="background: #0B3D6E; color: #fcd34d; font-family: monospace; font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 6px; letter-spacing: 0.5px;">
+              {{ student.code or ('ILAS-' ~ student.id) }}
+            </span>
+            <span style="background: #eff6ff; color: #1d4ed8; font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">
+              {{ student.school_level or 'Formation Générale' }}
+            </span>
+          </div>
+
+          <h1 style="margin: 4px 0 6px 0; font-size: 24px; font-weight: 900; color: #0B3D6E; letter-spacing: -0.2px;">
+            {{ student.full_name }}
+          </h1>
+
+          <div style="display: flex; align-items: center; gap: 14px; font-size: 13px; color: #64748b; flex-wrap: wrap;">
+            {% if student.phone %}
+              <span>📞 <strong style="color: #0f172a;">{{ student.phone }}</strong></span>
+            {% endif %}
+            {% if student.parent_phone %}
+              <span>👨‍👩‍👦 Tél Tuteur: <strong style="color: #0f172a;">{{ student.parent_phone }}</strong></span>
+            {% endif %}
+            {% if student.cin %}
+              <span>🪪 CIN: <strong style="color: #0f172a;">{{ student.cin }}</strong></span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Courses List -->
+      <div style="border-top: 1px solid #f1f5f9; padding-top: 18px;">
+        <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 800; color: #0B3D6E; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;">
+          <span>📚</span>
+          <span>{{ 'الأفواج والمجموعات النشطة' if lang=='ar' else 'Cours & Inscriptions Actives' }}</span>
+          <span style="background: #e0f2fe; color: #0369a1; font-size: 11px; padding: 2px 7px; border-radius: 12px; font-weight: 800;">{{ active_courses|length }}</span>
+        </h3>
+
+        {% if active_courses %}
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px;">
+            {% for c in active_courses %}
+              <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-left: 4px solid #0B3D6E; border-radius: 10px; padding: 10px 14px; display: flex; flex-direction: column; gap: 4px;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <strong style="color: #0f172a; font-size: 13.5px;">{{ c.name }}</strong>
+                  {% if c.level %}
+                    <span style="font-size: 10.5px; background: #e2e8f0; color: #334155; padding: 2px 6px; border-radius: 4px; font-weight: 700;">
+                      Niveau {{ c.level }}
+                    </span>
+                  {% endif %}
+                </div>
+                <div style="font-size: 12px; color: #64748b; display: flex; align-items: center; gap: 8px;">
+                  {% if c.teacher %}
+                    <span>👨‍🏫 {{ c.teacher.full_name }}</span>
+                  {% endif %}
+                  {% if c.group_name %}
+                    <span>· {{ c.group_name }}</span>
+                  {% endif %}
+                  {% if c.room %}
+                    <span style="color: #0369a1; font-weight: 700;">· Salle {{ c.room.name }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="padding: 16px; background: #f8fafc; border-radius: 8px; color: #94a3b8; font-size: 13px; text-align: center;">
+            {{ 'لا توجد تسجيلات نشطة حالياً' if lang=='ar' else 'Aucune inscription active en ce moment' }}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="border-top: 1px solid #f1f5f9; padding-top: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          {% if student.phone %}
+            <a href="tel:{{ student.phone }}" class="btn btn-outline" style="border-radius: 8px; font-weight: 700;">
+              📞 Appeler
+            </a>
+          {% endif %}
+          {% if student.whatsapp or student.phone %}
+            <a href="https://wa.me/{{ (student.whatsapp or student.phone)|replace(' ', '')|replace('+', '') }}" target="_blank" class="btn" style="background: #25D366; color: #ffffff; border-radius: 8px; font-weight: 700;">
+              💬 WhatsApp
+            </a>
+          {% endif %}
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <a href="{{ url_for('badges_print', student_id=student.id) }}" target="_blank" class="btn btn-outline" style="border-radius: 8px; font-weight: 700; color: #0B3D6E;">
+            🖨️ {{ 'طباعة البطاقة' if lang=='ar' else 'Imprimer Badge' }}
+          </a>
+          <a href="{{ url_for('student_view', sid=student.id) }}" class="btn btn-primary" style="background: #0B3D6E; border: none; border-radius: 8px; font-weight: 800; padding: 8px 18px;">
+            📁 {{ 'فتح الملف' if lang=='ar' else 'Accéder au Dossier' }}
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Security & Timestamp Footer -->
+    <div style="padding: 10px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #94a3b8;">
+      <span>Institut ILAS · Système de Gestion Scolaire & Pointage NFC</span>
+      <span>Vérifié le {{ now.strftime('%d/%m/%Y %H:%M') if now else '' }}</span>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

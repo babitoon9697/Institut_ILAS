@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="{{ lang or 'fr' }}" dir="{{ 'rtl' if lang=='ar' else 'ltr' }}">
+<head>
+<meta charset="utf-8">
+<title>Mouvements Élèves {{ period_label_fr }} — {{ settings.inst_name or 'Institut ILAS' }}</title>
+<style>
+  @page {
+    size: A4 landscape;
+    margin: 8mm 10mm;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: #0f172a;
+    background: #ffffff;
+    margin: 0;
+    padding: 14px;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 11px;
+  }
+
+  .no-print-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0B3D6E;
+    color: #ffffff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+  }
+  .no-print-bar a, .no-print-bar button {
+    font-family: inherit;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .inst-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #0B3D6E;
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+  .inst-brand h1 {
+    margin: 0;
+    font-size: 18px;
+    color: #0B3D6E;
+    font-weight: 800;
+  }
+  .inst-brand p {
+    margin: 2px 0 0 0;
+    font-size: 10px;
+    color: #475569;
+  }
+  .inst-meta {
+    text-align: right;
+    font-size: 10px;
+    color: #475569;
+  }
+
+  .title-box {
+    text-align: center;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+  }
+  .title-box h2 {
+    margin: 0;
+    font-size: 15px;
+    color: #0B3D6E;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .title-box p {
+    margin: 2px 0 0 0;
+    font-size: 10.5px;
+    color: #475569;
+  }
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .kpi-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 6px 10px;
+    text-align: center;
+  }
+  .kpi-label {
+    font-size: 9px;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+  }
+  .kpi-value {
+    font-size: 16px;
+    font-weight: 900;
+    margin-top: 2px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 14px;
+    font-size: 10px;
+  }
+  th {
+    background: #0B3D6E;
+    color: #ffffff;
+    font-weight: 700;
+    padding: 6px 8px;
+    border: 1px solid #0B3D6E;
+    text-align: center;
+  }
+  td {
+    padding: 5px 8px;
+    border: 1px solid #cbd5e1;
+    vertical-align: middle;
+  }
+  tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+  .total-row td {
+    background: #e2e8f0 !important;
+    font-weight: 800;
+  }
+
+  .chip {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+  }
+
+  .signatures {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 24px;
+    padding-top: 10px;
+    page-break-inside: avoid;
+  }
+  .sig-box {
+    width: 220px;
+    border-top: 1px dashed #64748b;
+    padding-top: 6px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #334155;
+  }
+
+  @media print {
+    .no-print-bar {
+      display: none !important;
+    }
+    body {
+      padding: 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- NO PRINT BAR -->
+<div class="no-print-bar">
+  <div>
+    <strong>Rapport des Mouvements Élèves ({{ period_label_fr }})</strong> — Prêt pour impression A4 Paysage
+  </div>
+  <div style="display:flex; gap:8px;">
+    <button type="button" onclick="window.print()" style="background:#22c55e; border:none; color:#fff; font-weight:800; padding:6px 14px; border-radius:6px;">
+      🖨️ Imprimer la feuille
+    </button>
+    <button type="button" onclick="window.close()" style="background:#475569; border:none; color:#fff; font-weight:700; padding:6px 12px; border-radius:6px;">
+      Fermer
+    </button>
+  </div>
+</div>
+
+<!-- INSTITUTION HEADER -->
+<div class="inst-header">
+  <div class="inst-brand">
+    <h1>{{ settings.inst_name or 'INSTITUT ILAS' }}</h1>
+    <p>{{ settings.inst_subtitle or 'Centre International des Langues, Soutien Scolaire & Formations Professionnelles' }}</p>
+    <p>{{ settings.inst_address or 'Témara — Maroc' }} • Tél : {{ settings.inst_phone or '05 37 60 70 80' }}</p>
+  </div>
+  <div class="inst-meta">
+    <div><strong>Date du tirage :</strong> {{ today.strftime('%d/%m/%Y') }}</div>
+    <div><strong>Période :</strong> {{ start_date.strftime('%d/%m/%Y') }} au {{ end_date.strftime('%d/%m/%Y') }}</div>
+    <div><strong>Discipline :</strong> {{ 'Toutes les matières' if selected_matiere == 'all' else selected_matiere }}</div>
+  </div>
+</div>
+
+<!-- TITLE BOX -->
+<div class="title-box">
+  <h2>
+    RAPPORT MENSUEL DES MOUVEMENTS D'ÉLÈVES — {{ period_label_fr }}
+    {% if lang == 'ar' %} (تقرير حركة التلاميذ: الوافدون والمغادرون) {% endif %}
+  </h2>
+  <p>Synthèse officielle des flux d'inscriptions, des réinscriptions, des départs/désistements et de la variation nette des effectifs</p>
+</div>
+
+<!-- 5 KPI BOXES -->
+<div class="kpi-row">
+  <div class="kpi-card">
+    <div class="kpi-label">Entrées (Dkhul)</div>
+    <div class="kpi-value" style="color:#15803d;">+{{ total_entries }}</div>
+    <div style="font-size:8.5px; color:#166534;">{{ total_new_students }} Nouveaux • {{ total_renewals }} Renouv.</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Sorties (Quitta)</div>
+    <div class="kpi-value" style="color:#b91c1c;">-{{ total_exits }}</div>
+    <div style="font-size:8.5px; color:#991b1b;">{{ total_dropped }} Abandons • {{ total_non_renewed }} Non renouv.</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Variation Nette</div>
+    <div class="kpi-value" style="color:{{ '#15803d' if total_net > 0 else ('#b91c1c' if total_net < 0 else '#0B3D6E') }};">
+      {{ '+' if total_net > 0 else '' }}{{ total_net }}
+    </div>
+    <div style="font-size:8.5px; color:#475569;">Bilan net du mois</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Actifs en Classe</div>
+    <div class="kpi-value" style="color:#7e22ce;">{{ total_active_students }}</div>
+    <div style="font-size:8.5px; color:#6b21a8;">Effectif actif actuel</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Rétention / Renouv.</div>
+    <div class="kpi-value" style="color:#b45309;">{{ retention_rate }}%</div>
+    <div style="font-size:8.5px; color:#92400e;">Taux de continuité</div>
+  </div>
+</div>
+
+<!-- MASTER CONSOLIDATED TABLE -->
+<table>
+  <thead>
+    <tr>
+      <th style="text-align:left; width:22%;">Matière / Discipline</th>
+      <th style="width:11%;">Entrées (Dkhul)</th>
+      <th style="width:11%;">Nouveaux Élèves</th>
+      <th style="width:11%;">Renouvellements</th>
+      <th style="width:11%;">Sorties (Quitta)</th>
+      <th style="width:11%;">Abandons / Retraits</th>
+      <th style="width:11%;">Non Renouvelés</th>
+      <th style="width:12%;">Variation Nette</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in matieres_summary %}
+    <tr>
+      <td style="font-weight:700;">{{ m.icon }} {{ m.name }} ({{ m.name_ar }})</td>
+      <td style="text-align:center; font-weight:800; color:#15803d;">+{{ m.entries_count }}</td>
+      <td style="text-align:center;">{{ m.entries_new_stu }}</td>
+      <td style="text-align:center;">{{ m.entries_renewal }}</td>
+      <td style="text-align:center; font-weight:800; color:#b91c1c;">-{{ m.exits_count }}</td>
+      <td style="text-align:center;">{{ m.exits_dropped }}</td>
+      <td style="text-align:center;">{{ m.exits_non_renewed }}</td>
+      <td style="text-align:center; font-weight:900; color:{{ '#15803d' if m.net_variation > 0 else ('#b91c1c' if m.net_variation < 0 else '#0f172a') }};">
+        {{ '+' if m.net_variation > 0 else '' }}{{ m.net_variation }}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr class="total-row">
+      <td>TOTAL GÉNÉRAL CONSOLIDÉ</td>
+      <td style="text-align:center; color:#15803d; font-size:12px;">+{{ total_entries }}</td>
+      <td style="text-align:center;">{{ total_new_students }}</td>
+      <td style="text-align:center;">{{ total_renewals }}</td>
+      <td style="text-align:center; color:#b91c1c; font-size:12px;">-{{ total_exits }}</td>
+      <td style="text-align:center;">{{ total_dropped }}</td>
+      <td style="text-align:center;">{{ total_non_renewed }}</td>
+      <td style="text-align:center; font-size:12px; color:{{ '#15803d' if total_net > 0 else ('#b91c1c' if total_net < 0 else '#0f172a') }};">
+        {{ '+' if total_net > 0 else '' }}{{ total_net }}
+      </td>
+    </tr>
+  </tfoot>
+</table>
+
+<!-- SIGNATURES -->
+<div class="signatures">
+  <div class="sig-box">
+    Responsable Pédagogique
+  </div>
+  <div class="sig-box">
+    Service Comptabilité & Caisse
+  </div>
+  <div class="sig-box">
+    Direction Générale de l'Institut
+  </div>
+</div>
+
+</body>
+</html>

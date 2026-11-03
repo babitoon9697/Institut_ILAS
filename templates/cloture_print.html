@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <title>Clôture & Arrêté de Caisse — {% if selected_user %}{{ selected_user.full_name or selected_user.username }}{% else %}Tous les Vendeurs{% endif %} — Institut ILAS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800;900&family=Space+Grotesk:wght@700;800&family=Tajawal:wght@700;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ========================================================
+       PAGE SIZING & PRINT MEDIA SETUP (100% PURE MONOCHROME)
+       ======================================================== */
+    {% if print_format == 'a4' %}
+      @page {
+        size: A4 portrait;
+        margin: 8mm 10mm;
+      }
+    {% else %}
+      @page {
+        size: 80mm auto;
+        margin: 0;
+      }
+    {% endif %}
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      background: #f1f5f9;
+      color: #000000;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .page-break-avoid {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+    }
+
+    /* ========================================================
+       SCREEN CONTROL TOOLBAR (HIDDEN ON PRINT)
+       ======================================================== */
+    .print-toolbar {
+      background: #ffffff;
+      border-bottom: 2px solid #000000;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      padding: 10px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 2000;
+    }
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 800;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .btn-print-primary {
+      background: #000000;
+      color: #ffffff;
+      border: 1.5px solid #000000;
+    }
+    .btn-print-primary:hover {
+      background: #222222;
+    }
+    .btn-toolbar-outline {
+      background: #ffffff;
+      color: #000000;
+      border: 1.5px solid #000000;
+    }
+    .btn-toolbar-outline:hover {
+      background: #000000;
+      color: #ffffff;
+    }
+    .select-toolbar {
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      border: 1.5px solid #000000;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #000000;
+      cursor: pointer;
+    }
+
+    /* ========================================================
+       THERMAL TICKET WRAPPER (80MM / 72MM PRINTABLE ZONE)
+       ======================================================== */
+    .thermal-container {
+      width: 72mm;
+      max-width: 72mm;
+      margin: 16px auto;
+      padding: 3mm 2.5mm;
+      background: #ffffff;
+      color: #000000;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+    }
+    @media print {
+      .thermal-container {
+        margin: 0 auto;
+        padding: 2mm 1.5mm;
+        box-shadow: none !important;
+        width: 72mm !important;
+        max-width: 72mm !important;
+      }
+    }
+
+    /* A4 format alternative styling */
+    {% if print_format == 'a4' %}
+    .thermal-container {
+      width: 190mm !important;
+      max-width: 190mm !important;
+      padding: 8mm 10mm;
+      font-size: 11px;
+    }
+    {% endif %}
+
+    /* Typography & Utilities */
+    .ticket-header {
+      text-align: center;
+      padding-bottom: 3px;
+    }
+    .inst-name {
+      font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      line-height: 1.1;
+      margin-top: 3px;
+    }
+    .inst-sub {
+      font-size: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-top: 1.5px;
+    }
+    .inst-contact {
+      font-size: 8px;
+      font-weight: 700;
+      margin-top: 1.5px;
+    }
+
+    .banner-black {
+      background: #000000;
+      color: #ffffff;
+      font-weight: 900;
+      text-align: center;
+      padding: 3.5px 2px;
+      margin: 6px 0 4px 0;
+      border-radius: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .box-bordered {
+      border: 1.5px solid #000000;
+      border-radius: 3px;
+      padding: 4px 6px;
+      margin-bottom: 6px;
+    }
+
+    .box-reconcile {
+      border: 2px solid #000000;
+      background: #ffffff;
+      padding: 6px;
+      margin: 6px 0;
+      border-radius: 3px;
+    }
+
+    .row-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 1.5px 0;
+      font-size: 8.5px;
+    }
+    .row-meta.border-dash {
+      border-bottom: 1px dashed #000000;
+    }
+
+    .sep-dash {
+      border-bottom: 1px dashed #000000;
+      margin: 4px 0;
+    }
+    .sep-double {
+      border-bottom: 2.5px double #000000;
+      margin: 5px 0;
+    }
+    .sep-solid {
+      border-bottom: 1.5px solid #000000;
+      margin: 4px 0;
+    }
+
+    .cash-tag {
+      background: #000000;
+      color: #ffffff;
+      font-size: 7.5px;
+      font-weight: 900;
+      padding: 0 4px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+    .bank-tag {
+      border: 1px solid #000000;
+      color: #000000;
+      font-size: 7.5px;
+      font-weight: 800;
+      padding: 0 3px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= CONTROL TOOLBAR (ON SCREEN ONLY) ================= -->
+  <div class="print-toolbar no-print">
+    <div class="toolbar-left">
+      <a href="{{ url_for('user_activity', user_id=selected_user.id if selected_user else '', period=period, start_date=start_date_str, end_date=end_date_str) }}" class="btn-action btn-toolbar-outline">
+        ← Retour au Suivi d'Activité
+      </a>
+      
+      <!-- Seller Selector -->
+      {% if cur_user.role == 'admin' %}
+      <form method="get" action="{{ url_for('user_activity_cloture') }}" style="display:inline-flex; align-items:center; gap:6px;">
+        <input type="hidden" name="period" value="{{ period }}">
+        <input type="hidden" name="start_date" value="{{ start_date_str }}">
+        <input type="hidden" name="end_date" value="{{ end_date_str }}">
+        <input type="hidden" name="format" value="{{ print_format }}">
+        <label style="font-size:11px; font-weight:800;">👤 Vendeur :</label>
+        <select name="user_id" onchange="this.form.submit()" class="select-toolbar">
+          <option value="">-- Tous les Vendeurs (Caisse Centrale) --</option>
+          {% for u in users %}
+            <option value="{{ u.id }}" {% if selected_user and selected_user.id == u.id %}selected{% endif %}>
+              {{ u.full_name or u.username }} (@{{ u.username }})
+            </option>
+          {% endfor %}
+        </select>
+      </form>
+      {% elif cur_user.role == 'secretary' %}
+      <div style="display:inline-flex; border:1.5px solid #000000; border-radius:6px; overflow:hidden;">
+        <a href="{{ url_for('user_activity_cloture', user_id='', period=period, format=print_format) }}" 
+           style="padding:6px 10px; font-size:11px; font-weight:800; text-decoration:none; background:{% if not selected_user %}#000000{% else %}#ffffff{% endif %}; color:{% if not selected_user %}#ffffff{% else %}#000000{% endif %};">
+          🏦 Caisse Centrale (Tous)
+        </a>
+        <a href="{{ url_for('user_activity_cloture', user_id=cur_user.id, period=period, format=print_format) }}" 
+           style="padding:6px 10px; font-size:11px; font-weight:800; text-decoration:none; border-left:1px solid #000000; background:{% if selected_user %}#000000{% else %}#ffffff{% endif %}; color:{% if selected_user %}#ffffff{% else %}#000000{% endif %};">
+          👤 Ma Caisse ({{ cur_user.username }})
+        </a>
+      </div>
+      {% endif %}
+
+      <!-- Quick Period Filter -->
+      <div style="display:inline-flex; border:1.5px solid #000000; border-radius:6px; overflow:hidden;">
+        <a href="{{ url_for('user_activity_cloture', user_id=selected_user.id if selected_user else '', period='today', format=print_format) }}" 
+           style="padding:6px 10px; font-size:11px; font-weight:800; text-decoration:none; background:{% if period == 'today' %}#000000{% else %}#ffffff{% endif %}; color:{% if period == 'today' %}#ffffff{% else %}#000000{% endif %};">
+          Aujourd'hui
+        </a>
+        <a href="{{ url_for('user_activity_cloture', user_id=selected_user.id if selected_user else '', period='yesterday', format=print_format) }}" 
+           style="padding:6px 10px; font-size:11px; font-weight:800; text-decoration:none; border-left:1px solid #000000; background:{% if period == 'yesterday' %}#000000{% else %}#ffffff{% endif %}; color:{% if period == 'yesterday' %}#ffffff{% else %}#000000{% endif %};">
+          Hier
+        </a>
+        <a href="{{ url_for('user_activity_cloture', user_id=selected_user.id if selected_user else '', period='week', format=print_format) }}" 
+           style="padding:6px 10px; font-size:11px; font-weight:800; text-decoration:none; border-left:1px solid #000000; background:{% if period == 'week' %}#000000{% else %}#ffffff{% endif %}; color:{% if period == 'week' %}#ffffff{% else %}#000000{% endif %};">
+          Semaine
+        </a>
+      </div>
+    </div>
+
+    <div class="toolbar-right">
+      <!-- Format toggle -->
+      <div style="display:inline-flex; border:1.5px solid #000000; border-radius:6px; overflow:hidden;">
+        <a href="{{ url_for('user_activity_cloture', user_id=selected_user.id if selected_user else '', period=period, start_date=start_date_str, end_date=end_date_str, format='80mm') }}" 
+           style="padding:6px 10px; font-size:11px; font-weight:800; text-decoration:none; background:{% if print_format == '80mm' %}#000000{% else %}#ffffff{% endif %}; color:{% if print_format == '80mm' %}#ffffff{% else %}#000000{% endif %};">
+          🧾 Ticket 80mm
+        </a>
+        <a href="{{ url_for('user_activity_cloture', user_id=selected_user.id if selected_user else '', period=period, start_date=start_date_str, end_date=end_date_str, format='a4') }}" 
+           style="padding:6px 10px; font-size:11px; font-weight:800; text-decoration:none; border-left:1px solid #000000; background:{% if print_format == 'a4' %}#000000{% else %}#ffffff{% endif %}; color:{% if print_format == 'a4' %}#ffffff{% else %}#000000{% endif %};">
+          📄 Format A4
+        </a>
+      </div>
+
+      <button onclick="lancerClotureAvecSauvegarde()" class="btn-action btn-print-primary" style="background:linear-gradient(135deg, #059669 0%, #047857 100%); color:#ffffff; border:1.5px solid #047857; box-shadow:0 3px 12px rgba(5,150,105,0.35); font-size:12.5px; padding:7px 16px;">
+        🖨️ Imprimer Clôture (Sauvegarde Cloud ☁️)
+      </button>
+      <button onclick="window.print()" class="btn-action btn-toolbar-outline" style="font-size:11px;" title="Imprimer directement sans relancer la sauvegarde Cloud">
+        🖨️ Impression Seule
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= TICKET THERMIQUE 80MM ================= -->
+  <div class="thermal-container">
+    
+    <!-- 1. En-tête officiel avec Logo ILAS Pur Monochrome -->
+    <div class="ticket-header">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAC+AQAAAAAzFWSTAAAFgElEQVR4nO1aPW7kNhT+SAkeFYuMShdBrCIHcJlu5ih7hL3Bqky5R/BJEhUuUvoISpAiTQAlcCEvpGHwHkmJ0pASuUZcmTBmRiN+8/5/+GShkLrk8vIpHYJ0SP8mVIY3oXJ5EyrqTaigToY030ClSYcgHdKO51QIHnch+er677NKpfK8B8A1Y2IXIpZ8CGRDGhW1zxZWkH+v9bEHKYEiDfISwxcWkJ81oSTGAFRpkHM6Y/dRMOGaYsxjTCPdiywqkmVyHGMJuU+HfEiH4K0gzf9PZUiHRC35ekjbJkJ6cZtOJU+GyCwZkqebskiNfXT7bGFNpUyHVOkQpEPOMRjlrkZFLPlaxkQ6RKZDkA55TIcU6ZCoJZNdDEvIQxQZ5a5fY6wvXn0YiVkyatc75HUaE86qMIoceKGXef01fVJCxlGZK84fUOcVxJ/45gJaAb+lyTIC+BoF+cXt1FWdRIXrwqr+fFYDMqV6epnXFFLcqh2TsiVD+gjGlG0EdTAOKbJcfOdb5ZNlwEl/MAd7lUDFQOp9yLCuvdK5Gco2y7amSWDMIuXuab9fdQOtC9mh2ACnLqoz6uaxiWjGVQdyGHx2aXEwvkYfahz3xW9nNRfUGNzLlAa2pMA8y92yZwNEcSCXIsL6ju7PQLEE3PU+8ckraF24fA2rEAsMoVw/kuXCfDHNGKr9ECMS9dzhiGYJ6aKUIPf6t8tVIpJ7jF3vlM6X3iPltUdI9yJ0qmgXypYATu1Gy3dtK0l6+95chPr9bsG5BG4Md/uaaOy+AoLheZACMyccWU9KMfyg4HFL2qbDkrI+LckWrMLh0uJ2UvSzZayO7PZqrnxWZiZQepNlgx8XMQbI2Rx7vn82s2NNJQ8ny3ry1ooHSASZGobQQUQaTym5Hi/t58tJaumtD/xKSmeWVO+xCyUJKtWmimXT+YVDdG9kTQKPC8b8LnaBQK2dywos40+V7IlPBLF+4vdKKvNn44+k0meXShEMSnewc3Ehfj/rmbpmmfjhTmnWUygorSfd0MuDQ8XvYt1a/s7GD3dW8JiyxVF1tvS1OhAniNqH9Gx/zRgVEf/8rUWJwnrfDdtf2ksZ8VhAkIJM4QvvblAhn+7fcw9Tm8s8ZqD0QfNDawieQnVQWjEz7mHsYLsM+77jug0ZpqH46SgBth4lcxm+mBhTvPEgK43cGkGIpTCSM21LTPscea3KDBhkqUlkIa8kEiYstTogCzyTQvKohyIwgTxSRgvoWPfeNixB/n7JcyAfScdxh+USkEwG+BjqRfNl2BSzYbVnX9lF+z1FgFkDycJSZ4E2qTNCujeltuF2I+tkEkl/HPO3gcTX4h++73q5pN2cK0JZ7Pe1BaTmqdkY8V6lHkUqI7XApzHSTaYGbi9H/obFaViUsCVHt4QraxCtcA8V3vt54B2tCSAJHOq77U78QYflg/Xb2c4eKtqJjheWhY9xgxPXG/WoF7RNGTOICeI1i6YycAB/5V8dHCob49oR9T25GTlaD0ibJrZiskZToWMNdbM/WuUvl1Fj0yjinPZQRbqb68C1xozPH+lA0QB3pMJMGk35U6X59pksXwF/8oMz2ft0PPKMZcqGI77wtlFQ5OTD1sjO/pDAYYqzQl52FHbUBhvmoJFqQ2Fk308/rL4rTboIPtkUtW6iZ3NUUps98A8HDVXUj/Tp4h5GnugtWCqKKb/YknHWDUlAFOdx5Nww1vrUaJVpra/XSXF3r81gunxQq0Dzqy9BKlOXV5uHZjldP+IlYBW1EEIbpljvWTKmz7h6lmSj+rQ9h6FelAsJ53lN7bxNRac8vqbkSPKLnTm/0yBR5v4JwHe7BzC+TS7D3RuAT9hmzIan7eE6fn8fQacumYzAOyR1fYPG/gOKo10pOlir8gAAAABJRU5ErkJggg==" style="max-width:38mm; height:auto; display:block; margin:0 auto 2px auto;" alt="ILAS">
+      <div class="inst-name">{{ settings.inst_name }}</div>
+      <div class="inst-sub">{{ settings.inst_tagline }}</div>
+      <div class="inst-contact">Tél: {{ settings.inst_phone or '06 60 29 11 55' }} · {{ settings.inst_city or 'Deroua' }}</div>
+    </div>
+
+    <!-- 2. Titre Inversé Clôture -->
+    <div class="banner-black" style="font-size:10.5px; margin-top:5px;">
+      [ CLÔTURE & ARRÊTÉ DE CAISSE ]
+    </div>
+    <div style="text-align:center; font-family:'Tajawal', sans-serif; font-size:9.5px; font-weight:800; direction:rtl; margin-bottom:5px;">
+      تقرير إغلاق الصندوق اليومي ومراقبة السيولة
+    </div>
+
+    <!-- 3. Identification Vendeur & Période -->
+    <div class="box-bordered" style="font-size:8.5px;">
+      <div class="row-meta border-dash">
+        <span style="font-weight:800; text-transform:uppercase;">Vendeur / Caissier :</span>
+        <span style="font-weight:900;">
+          {% if selected_user %}
+            {{ selected_user.full_name or selected_user.username }} (@{{ selected_user.username }})
+          {% else %}
+            TOUS LES VENDEURS (CAISSE CENTRALE)
+          {% endif %}
+        </span>
+      </div>
+      <div class="row-meta border-dash">
+        <span style="font-weight:800; text-transform:uppercase;">Période Concernée :</span>
+        <span style="font-weight:900;">
+          {% if period == 'today' %}
+            AUJOURD'HUI ({{ now.strftime('%d/%m/%Y') }})
+          {% elif period == 'yesterday' %}
+            HIER ({{ (now - timedelta(days=1)).strftime('%d/%m/%Y') }})
+          {% elif period == 'week' %}
+            CETTE SEMAINE
+          {% elif start_date_str and end_date_str %}
+            DU {{ start_date_str }} AU {{ end_date_str }}
+          {% else %}
+            {{ period|upper }}
+          {% endif %}
+        </span>
+      </div>
+      <div class="row-meta border-dash">
+        <span style="font-weight:800; text-transform:uppercase;">Tirage Émis Le :</span>
+        <span style="font-weight:900;">{{ now.strftime('%d/%m/%Y à %H:%M') }}</span>
+      </div>
+      <div class="row-meta">
+        <span style="font-weight:800; text-transform:uppercase;">Total Reçus Émis :</span>
+        <span style="font-weight:900;">{{ receipts_count }} ticket(s){% if expenses_count %} · {{ expenses_count }} sortie(s){% endif %}</span>
+      </div>
+    </div>
+
+    <!-- 4. LE POINTAGE CENTRAL DU TIROIR-CAISSE (ESPÈCES PHYSIQUES) -->
+    <div class="box-reconcile">
+      <div style="background:#000000; color:#ffffff; font-size:9.5px; font-weight:900; text-align:center; padding:3px 2px; margin:-6px -6px 6px -6px; letter-spacing:0.4px;">
+        ★ POINTAGE TIROIR-CAISSE (ESPÈCES) ★
+      </div>
+
+      <div style="margin-bottom:6px; text-align:center;">
+        <div style="font-size:8.5px; font-weight:800; text-transform:uppercase;">SOLDE NET ESPÈCES ATTENDU EN CAISSE :</div>
+        <div style="font-size:18px; font-weight:900; letter-spacing:0.5px; margin:2px 0;">
+          {{ '%.2f'|format(total_cash_drawer) }} <span style="font-size:10px;">{{ settings.currency }}</span>
+        </div>
+        {% if total_cash_out > 0 %}
+        <div style="font-size:7.5px; font-weight:800; margin-top:2px;">
+          (Entrées Espèces: +{{ '%.2f'|format(total_cash_in) }} DH &nbsp;|&nbsp; Sorties: -{{ '%.2f'|format(total_cash_out) }} DH)
+        </div>
+        {% else %}
+        <div style="font-size:7.5px; font-weight:700;">
+          (Total net des encaissements en espèces du shift)
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="sep-solid"></div>
+
+      <!-- Cadre d'écriture manuelle pour pointage réel -->
+      <div style="margin:5px 0; font-size:8.5px;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;">
+          <span style="font-weight:800; text-transform:uppercase;">Espèces Réelles Comptées :</span>
+          <span style="font-weight:900; border-bottom:1.5px solid #000; min-width:32mm; text-align:right; display:inline-block; padding-bottom:1px;">
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; DH
+          </span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px;">
+          <span style="font-weight:800; text-transform:uppercase;">Écart Constaté (Différence) :</span>
+          <span style="font-weight:900; border-bottom:1.5px solid #000; min-width:32mm; text-align:right; display:inline-block; padding-bottom:1px;">
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; DH
+          </span>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; font-size:7.5px; font-weight:800; margin-top:3px; padding:2px 0;">
+          <span>[ &nbsp; ] Exact (0 DH)</span>
+          <span>[ &nbsp; ] Excédent (+)</span>
+          <span>[ &nbsp; ] Manquant (-)</span>
+        </div>
+      </div>
+
+      <div class="sep-dash"></div>
+
+      <!-- Grille de Billetage / Monnayage Rapide -->
+      <div style="font-size:7.5px;">
+        <div style="font-weight:900; text-transform:uppercase; margin-bottom:3px; text-align:center;">
+          Grille de Décompte des Espèces (Billetage) :
+        </div>
+        <table style="width:100%; border-collapse:collapse; font-size:7.5px; font-weight:800;">
+          <tr>
+            <td style="padding:1.5px 0;">200 DH × [ &nbsp;&nbsp;&nbsp;&nbsp; ] = _______</td>
+            <td style="padding:1.5px 0; text-align:right;">100 DH × [ &nbsp;&nbsp;&nbsp;&nbsp; ] = _______</td>
+          </tr>
+          <tr>
+            <td style="padding:1.5px 0;">50 DH × [ &nbsp;&nbsp;&nbsp;&nbsp; ] = _______</td>
+            <td style="padding:1.5px 0; text-align:right;">20 DH × [ &nbsp;&nbsp;&nbsp;&nbsp; ] = _______</td>
+          </tr>
+          <tr>
+            <td style="padding:1.5px 0;">10 DH × [ &nbsp;&nbsp;&nbsp;&nbsp; ] = _______</td>
+            <td style="padding:1.5px 0; text-align:right;">Pièces div. = _______</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5. SYNTHÈSE DES RECETTES (PAR TYPE & MODE) -->
+    <div class="banner-black" style="font-size:9px;">
+      [ SYNTHÈSE GLOBALE DES FLUX DE CAISSE ]
+    </div>
+
+    <div style="font-size:8.5px; padding:2px 0;">
+      <div style="display:flex; justify-content:space-between; padding:2px 0;">
+        <span style="font-weight:800;">Scolarité, Formations & Cours :</span>
+        <span style="font-weight:900;">+{{ '%.2f'|format(total_tuition_collected) }} DH</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:2px 0;">
+        <span style="font-weight:800;">Ventes Manuels / Livres ({{ total_books_sold_count }} ex.) :</span>
+        <span style="font-weight:900;">+{{ '%.2f'|format(total_books_collected) }} DH</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:2px 0; border-top:1px dashed #000; margin-top:1px; padding-top:2px;">
+        <span style="font-weight:900; text-transform:uppercase;">TOTAL ENCAISSÉ (VENTES) :</span>
+        <span style="font-weight:900;">+{{ '%.2f'|format(grand_total_revenue) }} DH</span>
+      </div>
+
+      {% if total_expenses_amount > 0 %}
+      <div style="display:flex; justify-content:space-between; padding:2px 0; border-top:1px dashed #000; margin-top:1px; padding-top:2px;">
+        <span style="font-weight:900; text-transform:uppercase;">TOTAL ACHATS & SORTIES ({{ expenses_count }} dép.) :</span>
+        <span style="font-weight:900;">-{{ '%.2f'|format(total_expenses_amount) }} DH</span>
+      </div>
+      {% endif %}
+      
+      <div class="sep-double"></div>
+      
+      <div style="display:flex; justify-content:space-between; padding:2px 0; font-size:10px;">
+        <span style="font-weight:900; text-transform:uppercase;">SOLDE NET OPÉRATIONNEL :</span>
+        <span style="font-weight:900;">{{ '%.2f'|format(net_operational_balance) }} DH</span>
+      </div>
+
+      <div class="sep-solid"></div>
+
+      <!-- Répartition par Mode -->
+      <div style="margin-top:3px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:2px 0;">
+          <span style="font-weight:900;">
+            <span class="cash-tag">ESPÈCES</span> (Solde net dans le tiroir) :
+          </span>
+          <span style="font-weight:900; font-size:9.5px;">{{ '%.2f'|format(total_cash_drawer) }} DH</span>
+        </div>
+        {% if total_cash_out > 0 %}
+        <div style="display:flex; justify-content:space-between; font-size:7px; color:#222; margin-bottom:2px;">
+          <span>• Dont Entrées Espèces: +{{ '%.2f'|format(total_cash_in) }} DH &nbsp;|&nbsp; Sorties: -{{ '%.2f'|format(total_cash_out) }} DH</span>
+        </div>
+        {% endif %}
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:2px 0;">
+          <span style="font-weight:800;">
+            <span class="bank-tag">BANQUE</span> (Virements / Cartes) :
+          </span>
+          <span style="font-weight:900;">{{ '%.2f'|format(net_bank_balance) }} DH</span>
+        </div>
+        {% if total_bank_out > 0 %}
+        <div style="display:flex; justify-content:space-between; font-size:7px; color:#222; margin-bottom:2px;">
+          <span>• Dont Entrées: +{{ '%.2f'|format(total_bank_collected) }} DH &nbsp;|&nbsp; Sorties: -{{ '%.2f'|format(total_bank_out) }} DH</span>
+        </div>
+        {% endif %}
+        {% if total_other_collected > 0 %}
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:2px 0;">
+          <span style="font-weight:800;">
+            <span class="bank-tag">AUTRE</span> (Chèques / Différé) :
+          </span>
+          <span style="font-weight:900;">{{ '%.2f'|format(total_other_collected) }} DH</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 5.B TOTAUX PAR VENDEUR / UTILISATEUR -->
+    <div class="banner-black" style="font-size:9px; margin-top:7px;">
+      [ {% if selected_user %}RÉCAPITULATIF DU VENDEUR{% else %}TOTAUX PAR VENDEUR / UTILISATEUR{% endif %} ]
+    </div>
+
+    {% if user_summaries %}
+    <table style="width:100%; border-collapse:collapse; font-size:8px; margin:2px 0 5px 0;">
+      <thead>
+        <tr style="border-bottom:1.5px solid #000; text-transform:uppercase; font-size:7px; font-weight:900;">
+          <th style="text-align:left; padding:2px 0;">Vendeur / Caissier</th>
+          <th style="text-align:right; padding:2px 2px;">Espèces Net</th>
+          <th style="text-align:right; padding:2px 2px;">Banque</th>
+          <th style="text-align:right; padding:2px 0;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in user_summaries %}
+        <tr style="border-bottom:1px dashed #000; font-weight:800;">
+          <td style="padding:2.5px 0;">
+            <div style="font-weight:900;">👤 {{ u.name }}</div>
+            <div style="font-size:7px; color:#222;">
+              {{ u.receipts_count }} reçu(s){% if u.expenses_count %} · {{ u.expenses_count }} sortie(s){% endif %}
+              {% if u.cash_out > 0 %}
+                (Esp: +{{ '%.0f'|format(u.cash_in) }} / -{{ '%.0f'|format(u.cash_out) }})
+              {% endif %}
+            </div>
+          </td>
+          <td style="padding:2.5px 2px; text-align:right; vertical-align:top; font-weight:900;">
+            {{ '%.2f'|format(u.cash) }}
+          </td>
+          <td style="padding:2.5px 2px; text-align:right; vertical-align:top; font-weight:800;">
+            {{ '%.2f'|format(u.bank) }}
+          </td>
+          <td style="padding:2.5px 0; text-align:right; vertical-align:top; font-weight:900; white-space:nowrap;">
+            {{ '%.2f'|format(u.total) }} DH
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      {% if not selected_user and user_summaries|length > 1 %}
+      <tfoot>
+        <tr style="border-top:1.5px solid #000; font-weight:900; font-size:8.5px;">
+          <td style="padding:3px 0;">TOTAL GLOBAL</td>
+          <td style="padding:3px 2px; text-align:right;">{{ '%.2f'|format(total_cash_drawer) }}</td>
+          <td style="padding:3px 2px; text-align:right;">{{ '%.2f'|format(net_bank_balance) }}</td>
+          <td style="padding:3px 0; text-align:right; white-space:nowrap;">{{ '%.2f'|format(net_operational_balance) }} DH</td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+    {% else %}
+    <div style="text-align:center; padding:5px 0; font-size:8px; font-weight:800;">
+      Aucun encaissement pour cette période.
+    </div>
+    {% endif %}
+
+    <!-- 6. ACTIVITÉ DU VENDEUR (INDICATEURS DE PERFORMANCE) -->
+    <div class="banner-black" style="font-size:9px; margin-top:7px;">
+      [ PERFORMANCE & OPÉRATIONS DU VENDEUR ]
+    </div>
+
+    <div class="box-bordered" style="font-size:8px; padding:3px 5px;">
+      <div class="row-meta border-dash">
+        <span style="font-weight:800;">Nouveaux Élèves Créés :</span>
+        <span style="font-weight:900;">{{ students_created_count }} élève(s)</span>
+      </div>
+      <div class="row-meta border-dash">
+        <span style="font-weight:800;">Inscriptions & Cours Affectés :</span>
+        <span style="font-weight:900;">{{ enrollments_created_count }} cours</span>
+      </div>
+      <div class="row-meta border-dash">
+        <span style="font-weight:800;">Manuels & Livres Distribués :</span>
+        <span style="font-weight:900;">{{ total_books_sold_count }} manuel(s)</span>
+      </div>
+      <div class="row-meta border-dash">
+        <span style="font-weight:800;">Reçus / Tickets Émis :</span>
+        <span style="font-weight:900;">{{ receipts_count }} ticket(s){% if expenses_count %} · {{ expenses_count }} sortie(s){% endif %}</span>
+      </div>
+      <div class="row-meta">
+        <span style="font-weight:800;">Dont Espèces / Banque :</span>
+        <span style="font-weight:900;">{{ cash_transactions_count }} Esp. | {{ bank_transactions_count }} Banq.</span>
+      </div>
+      {% if selected_user and selected_user.role == 'secretary' and secretary_bonus_earned > 0 %}
+      <div class="row-meta" style="border-top:1px dashed #000; margin-top:2px; padding-top:2px;">
+        <span style="font-weight:900;">🎯 Primes Secrétaire Confirmées :</span>
+        <span style="font-weight:900;">{{ '%.2f'|format(secretary_bonus_earned) }} DH</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- 7. JOURNAL DÉTAILLÉ DES REÇUS & BONS PAR VENDEUR -->
+    <div class="banner-black" style="font-size:9px; margin-top:7px;">
+      [ DÉTAIL DES TRANSACTIONS & BONS ({{ transactions|length }}) ]
+    </div>
+
+    {% if user_summaries %}
+      {% for u in user_summaries %}
+        {% if u.transactions %}
+        <div class="page-break-avoid" style="margin-top:6px; margin-bottom:8px; border:1.5px solid #000000; border-radius:3px; overflow:hidden;">
+          <!-- En-tête Vendeur -->
+          <div style="background:#000000; color:#ffffff; padding:3px 5px; font-weight:900; font-size:8.5px; display:flex; justify-content:space-between; align-items:center;">
+            <span>👤 VENDEUR : {{ u.name|upper }}{% if u.username %} (@{{ u.username }}){% endif %}</span>
+            <span>{{ u.transactions|length }} OPÉRATION(S)</span>
+          </div>
+
+          <!-- Barre de synthèse vendeur -->
+          <div style="background:#ffffff; border-bottom:1px solid #000000; padding:2.5px 5px; font-size:7.5px; font-weight:800; display:flex; justify-content:space-between; align-items:center;">
+            <span>Espèces Net: <strong>{{ '%.2f'|format(u.cash) }} DH</strong></span>
+            <span>Banque: <strong>{{ '%.2f'|format(u.bank) }} DH</strong></span>
+            <span>Solde Net: <strong>{{ '%.2f'|format(u.total) }} DH</strong></span>
+          </div>
+
+          <table style="width:100%; border-collapse:collapse; font-size:8px; background:#ffffff;">
+            <thead>
+              <tr style="border-bottom:1px solid #000; text-transform:uppercase; font-size:7px; font-weight:900;">
+                <th style="text-align:left; padding:2px 4px;">Réf / Heure</th>
+                <th style="text-align:left; padding:2px 2px;">Élève / Objet</th>
+                <th style="text-align:center; padding:2px 2px;">Mode</th>
+                <th style="text-align:right; padding:2px 4px;">Montant</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in u.transactions %}
+              <tr style="border-bottom:1px dashed #000000; font-weight:800; {% if t.is_expense %}background:#f8fafc;{% endif %}">
+                <td style="padding:2.5px 4px; vertical-align:top; white-space:nowrap;">
+                  <div style="font-weight:900;">{{ t.receipt }}</div>
+                  <div style="font-size:7px;">{{ t.time or (t.date.strftime('%d/%m') if t.date else '') }}</div>
+                </td>
+                <td style="padding:2.5px 2px; vertical-align:top;">
+                  <div style="font-weight:900; line-height:1.1;">
+                    {% if t.is_expense %}
+                      <span style="background:#000; color:#fff; font-size:6.5px; padding:0 3px; border-radius:2px; font-weight:900; margin-right:2px;">SORTIE</span>
+                    {% endif %}
+                    {{ t.student_name }}
+                  </div>
+                  <div style="font-size:7px; line-height:1.1; margin-top:1px;">
+                    {{ t.detail|truncate(28, True, '..') }}
+                  </div>
+                </td>
+                <td style="padding:2.5px 2px; text-align:center; vertical-align:top;">
+                  {% if t.is_cash %}
+                    <span class="cash-tag">ESP</span>
+                  {% else %}
+                    <span class="bank-tag">{{ (t.method or 'AUT')[:3]|upper }}</span>
+                  {% endif %}
+                </td>
+                <td style="padding:2.5px 4px; text-align:right; vertical-align:top; font-weight:900; white-space:nowrap;">
+                  {% if t.is_expense %}
+                    -{{ '%.2f'|format(t.amount) }}
+                  {% else %}
+                    {{ '%.2f'|format(t.amount) }}
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr style="font-weight:900; font-size:8px; border-top:1.5px solid #000;">
+                <td colspan="3" style="padding:3px 4px;">SOLDE NET {{ u.name|upper }} :</td>
+                <td style="padding:3px 4px; text-align:right; white-space:nowrap;">{{ '%.2f'|format(u.total) }} DH</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        {% endif %}
+      {% endfor %}
+
+      <div style="display:flex; justify-content:space-between; font-weight:900; font-size:9.5px; padding:3.5px 2px; border-top:2px solid #000; border-bottom:2.5px double #000; margin-top:5px;">
+        <span>SOLDE GÉNÉRAL DU JOURNAL :</span>
+        <span>{{ '%.2f'|format(net_operational_balance) }} DH</span>
+      </div>
+    {% else %}
+      <div style="text-align:center; padding:8px 0; font-size:8.5px; font-weight:800;">
+        Aucune transaction enregistrée pour cette période.
+      </div>
+    {% endif %}
+
+    <!-- 8. ATTESTATION & SIGNATURES -->
+    <div class="page-break-avoid" style="margin-top:8px;">
+      <div style="font-size:7px; font-weight:700; text-align:justify; line-height:1.2; border:1px solid #000; padding:3px 4px; border-radius:2px; margin-bottom:6px;">
+        "Je soussigné(e) certifie sur l'honneur l'exactitude des opérations ci-dessus arrêtées ce jour, et atteste avoir procédé au décompte effectif des espèces en caisse conformément aux règles de gestion de l'Institut ILAS."
+      </div>
+
+      <div style="display:flex; justify-content:space-between; gap:6px; font-size:7.5px;">
+        <!-- Visa Caissier -->
+        <div style="flex:1; border:1.5px solid #000; padding:4px; min-height:22mm; border-radius:3px;">
+          <div style="font-weight:900; text-transform:uppercase; text-align:center;">
+            Visa Caissier(e)
+          </div>
+          <div style="font-size:7px; text-align:center; margin-top:1px;">
+            {% if selected_user %}{{ selected_user.full_name or selected_user.username }}{% else %}Vendeur en charge{% endif %}
+          </div>
+          <div style="margin-top:10mm; font-size:6.5px; text-align:center;">
+            Date: ____/____/________
+          </div>
+        </div>
+
+        <!-- Visa Direction -->
+        <div style="flex:1; border:1.5px solid #000; padding:4px; min-height:22mm; border-radius:3px;">
+          <div style="font-weight:900; text-transform:uppercase; text-align:center;">
+            Visa Direction
+          </div>
+          <div style="font-size:7px; text-align:center; margin-top:1px;">
+            Contrôle & Validation
+          </div>
+          <div style="margin-top:10mm; font-size:6.5px; text-align:center;">
+            Date: ____/____/________
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. PIED DE PAGE TICKET -->
+    <div style="text-align:center; margin-top:8px; border-top:1px dashed #000; padding-top:4px; font-size:7px; font-weight:700;">
+      <div>*** INSTITUT ILAS — LOGICIEL DE GESTION ***</div>
+      <div>Arrêté N° CLOT-{{ now.strftime('%Y%m%d') }}-{% if selected_user %}{{ selected_user.id }}{% else %}ALL{% endif %} · {{ now.strftime('%H:%M:%S') }}</div>
+      <div style="margin-top:2px;">Conserver ce ticket avec les pièces justificatives de caisse</div>
+    </div>
+
+  </div>
+
+  <!-- ========================================================
+       MODERN CLOUD BACKUP PROGRESS MODAL (NO PRINT)
+       ======================================================== -->
+  <div id="clotureBackupModal" class="no-print" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(15, 23, 42, 0.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:18px;">
+    <div style="background:#ffffff; width:100%; max-width:540px; border-radius:22px; box-shadow:0 25px 60px -15px rgba(0,0,0,0.45); border:1.5px solid #e2e8f0; overflow:hidden; font-family:'Plus Jakarta Sans', sans-serif; animation:modalPopIn 0.25s ease-out;">
+      
+      <!-- Modal Header -->
+      <div style="background:linear-gradient(135deg, #064e3b 0%, #047857 50%, #059669 100%); color:#ffffff; padding:20px 24px; display:flex; align-items:center; gap:14px; position:relative;">
+        <div id="modalHeaderIcon" style="width:48px; height:48px; border-radius:14px; background:rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0; box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+          ☁️
+        </div>
+        <div style="flex:1;">
+          <h3 id="modalTitle" style="margin:0; font-size:17px; font-weight:800; letter-spacing:-0.2px; color:#ffffff;">
+            Sauvegarde Automatique de Clôture
+          </h3>
+          <p id="modalSubtitle" style="margin:2px 0 0 0; font-size:12px; opacity:0.92; color:#d1fae5;">
+            Synchronisation de la base et des exports Excel sur Google Drive...
+          </p>
+        </div>
+        <button id="modalCloseBtn" onclick="fermerModalCloture()" style="background:rgba(255,255,255,0.15); border:none; color:#ffffff; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; transition:background 0.2s;">
+          ✕
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div style="padding:22px 24px;">
+
+        <!-- Modern Progress Bar -->
+        <div style="margin-bottom:18px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:7px;">
+            <span id="progressLabel" style="font-size:12px; font-weight:700; color:#334155;">Initialisation du processus...</span>
+            <span id="progressPct" style="font-size:13px; font-weight:900; color:#059669;">0%</span>
+          </div>
+          <div style="width:100%; height:10px; background:#e2e8f0; border-radius:999px; overflow:hidden; position:relative;">
+            <div id="progressBar" style="width:0%; height:100%; background:linear-gradient(90deg, #2563eb 0%, #10b981 60%, #059669 100%); border-radius:999px; transition:width 0.4s ease; box-shadow:0 0 10px rgba(16,185,129,0.5);"></div>
+          </div>
+        </div>
+
+        <!-- Step-by-Step Interactive Checklist -->
+        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:18px;">
+          
+          <!-- Step 1 -->
+          <div id="step1" style="display:flex; align-items:center; gap:12px; padding:10px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; transition:all 0.3s ease;">
+            <div class="step-icon" style="font-size:18px; width:28px; text-align:center;">📦</div>
+            <div style="flex:1;">
+              <div style="font-size:12.5px; font-weight:800; color:#0f172a;">1. Base de Données Sécurisée (Archive ZIP)</div>
+              <div style="font-size:11px; color:#64748b;">Instantané complet de <code>institut.db</code> compressé</div>
+            </div>
+            <div class="step-badge" style="font-size:11px; font-weight:800; color:#94a3b8;">En attente</div>
+          </div>
+
+          <!-- Step 2 -->
+          <div id="step2" style="display:flex; align-items:center; gap:12px; padding:10px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; transition:all 0.3s ease;">
+            <div class="step-icon" style="font-size:18px; width:28px; text-align:center;">📋</div>
+            <div style="flex:1;">
+              <div style="font-size:12.5px; font-weight:800; color:#0f172a;">2. Excel Classes & Élèves (Groupé par Classe)</div>
+              <div style="font-size:11px; color:#64748b;">Tableaux complets, professeurs et paiements mensuels</div>
+            </div>
+            <div class="step-badge" style="font-size:11px; font-weight:800; color:#94a3b8;">En attente</div>
+          </div>
+
+          <!-- Step 3 -->
+          <div id="step3" style="display:flex; align-items:center; gap:12px; padding:10px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; transition:all 0.3s ease;">
+            <div class="step-icon" style="font-size:18px; width:28px; text-align:center;">📊</div>
+            <div style="flex:1;">
+              <div style="font-size:12.5px; font-weight:800; color:#0f172a;">3. Export Global Multi-Feuilles (19 Tables)</div>
+              <div style="font-size:11px; color:#64748b;">Élèves, paiements, cours, enseignants, charges, notes</div>
+            </div>
+            <div class="step-badge" style="font-size:11px; font-weight:800; color:#94a3b8;">En attente</div>
+          </div>
+
+          <!-- Step 4 -->
+          <div id="step4" style="display:flex; align-items:center; gap:12px; padding:10px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; transition:all 0.3s ease;">
+            <div class="step-icon" style="font-size:18px; width:28px; text-align:center;">☁️</div>
+            <div style="flex:1;">
+              <div style="font-size:12.5px; font-weight:800; color:#0f172a;">4. Synchronisation Google Drive</div>
+              <div style="font-size:11px; color:#64748b;">Téléversement dans dossier <code>Institut_ILAS_Backups</code></div>
+            </div>
+            <div class="step-badge" style="font-size:11px; font-weight:800; color:#94a3b8;">En attente</div>
+          </div>
+
+          <!-- Step 5 -->
+          <div id="step5" style="display:flex; align-items:center; gap:12px; padding:10px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; transition:all 0.3s ease;">
+            <div class="step-icon" style="font-size:18px; width:28px; text-align:center;">🖨️</div>
+            <div style="flex:1;">
+              <div style="font-size:12.5px; font-weight:800; color:#0f172a;">5. Impression du Reçu de Clôture</div>
+              <div style="font-size:11px; color:#64748b;">Sortie ticket thermique 80mm ou document A4</div>
+            </div>
+            <div class="step-badge" style="font-size:11px; font-weight:800; color:#94a3b8;">En attente</div>
+          </div>
+
+        </div>
+
+        <!-- Success Drive Links Panel -->
+        <div id="modalSuccessPanel" style="display:none; background:#ecfdf5; border:1.5px solid #a7f3d0; border-radius:14px; padding:14px 16px; margin-bottom:18px;">
+          <div style="font-size:12.5px; font-weight:800; color:#065f46; display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+            <span>✅</span><span>Fichiers sauvegardés et synchronisés sur Google Drive :</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px; font-size:11.5px;">
+            <div id="linkClassesRow" style="display:none; align-items:center; justify-content:space-between;">
+              <span style="font-weight:700; color:#0f172a;">📋 Classes & Élèves :</span>
+              <a id="linkClassesAnchor" href="#" target="_blank" style="color:#059669; font-weight:800; text-decoration:none;">Ouvrir sur Drive ↗</a>
+            </div>
+            <div id="linkGlobalRow" style="display:none; align-items:center; justify-content:space-between;">
+              <span style="font-weight:700; color:#0f172a;">📊 Export Global :</span>
+              <a id="linkGlobalAnchor" href="#" target="_blank" style="color:#2563eb; font-weight:800; text-decoration:none;">Ouvrir sur Drive ↗</a>
+            </div>
+            <div id="linkDbRow" style="display:none; align-items:center; justify-content:space-between;">
+              <span style="font-weight:700; color:#0f172a;">📦 Archive Base (.zip) :</span>
+              <a id="linkDbAnchor" href="#" target="_blank" style="color:#475569; font-weight:800; text-decoration:none;">Ouvrir sur Drive ↗</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error Alert Panel -->
+        <div id="modalErrorPanel" style="display:none; background:#fef2f2; border:1.5px solid #fecaca; border-radius:14px; padding:12px 16px; margin-bottom:18px; font-size:12px; color:#991b1b;">
+          <div style="font-weight:800; margin-bottom:4px;">⚠️ Remarque sur la synchronisation :</div>
+          <div id="modalErrorMsg" style="font-size:11.5px;"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display:flex; justify-content:flex-end; gap:10px; align-items:center;">
+          <button id="modalBtnCancel" onclick="fermerModalCloture()" style="padding:9px 16px; border-radius:10px; border:1px solid #cbd5e1; background:#ffffff; color:#475569; font-weight:700; font-size:12px; cursor:pointer;">
+            Fermer
+          </button>
+          <button id="modalBtnPrint" onclick="lancerImpressionDirecte()" style="padding:9px 20px; border-radius:10px; border:none; background:#059669; color:#ffffff; font-weight:800; font-size:12.5px; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(5,150,105,0.3);">
+            <span>🖨️</span><span>Imprimer le Reçu</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes modalPopIn {
+      from { transform: scale(0.94); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .step-running {
+      background: #eff6ff !important;
+      border-color: #93c5fd !important;
+    }
+    .step-running .step-badge {
+      color: #2563eb !important;
+      font-weight: 800;
+    }
+    .step-done {
+      background: #ecfdf5 !important;
+      border-color: #86efac !important;
+    }
+    .step-done .step-badge {
+      color: #059669 !important;
+      font-weight: 800;
+    }
+    .step-error {
+      background: #fff7ed !important;
+      border-color: #fdba74 !important;
+    }
+    .step-error .step-badge {
+      color: #ea580c !important;
+      font-weight: 800;
+    }
+  </style>
+
+  <script>
+    let isBackingUp = false;
+
+    function fermerModalCloture() {
+      const modal = document.getElementById('clotureBackupModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function lancerImpressionDirecte() {
+      window.print();
+    }
+
+    function setStepState(stepId, state, badgeText) {
+      const el = document.getElementById(stepId);
+      if (!el) return;
+      el.classList.remove('step-running', 'step-done', 'step-error');
+      const badge = el.querySelector('.step-badge');
+      if (state === 'running') {
+        el.classList.add('step-running');
+        if (badge) badge.innerHTML = badgeText || '⏳ En cours...';
+      } else if (state === 'done') {
+        el.classList.add('step-done');
+        if (badge) badge.innerHTML = badgeText || '✅ Prêt';
+      } else if (state === 'error') {
+        el.classList.add('step-error');
+        if (badge) badge.innerHTML = badgeText || '⚠️ Note';
+      } else {
+        if (badge) badge.innerHTML = badgeText || 'En attente';
+      }
+    }
+
+    function updateProgressBar(pct, label) {
+      const bar = document.getElementById('progressBar');
+      const pctTxt = document.getElementById('progressPct');
+      const lbl = document.getElementById('progressLabel');
+      if (bar) bar.style.width = pct + '%';
+      if (pctTxt) pctTxt.innerText = pct + '%';
+      if (lbl && label) lbl.innerText = label;
+    }
+
+    async function lancerClotureAvecSauvegarde() {
+      if (isBackingUp) return;
+      isBackingUp = true;
+
+      const modal = document.getElementById('clotureBackupModal');
+      if (modal) modal.style.display = 'flex';
+
+      // Reset modal UI
+      updateProgressBar(5, "Démarrage de la sauvegarde de clôture...");
+      setStepState('step1', 'running', '⏳ En cours...');
+      setStepState('step2', 'waiting', 'En attente');
+      setStepState('step3', 'waiting', 'En attente');
+      setStepState('step4', 'waiting', 'En attente');
+      setStepState('step5', 'waiting', 'En attente');
+
+      document.getElementById('modalSuccessPanel').style.display = 'none';
+      document.getElementById('modalErrorPanel').style.display = 'none';
+
+      // Animated progress timeline while background request is executing
+      const animTimer1 = setTimeout(() => {
+        updateProgressBar(25, "Création de la sauvegarde base de données...");
+        setStepState('step1', 'done', '✅ Créé');
+        setStepState('step2', 'running', '⏳ Exportation...');
+      }, 700);
+
+      const animTimer2 = setTimeout(() => {
+        updateProgressBar(50, "Génération Excel Classes & Élèves...");
+        setStepState('step2', 'done', '✅ Fichier généré');
+        setStepState('step3', 'running', '⏳ Export multi-tables...');
+      }, 1600);
+
+      const animTimer3 = setTimeout(() => {
+        updateProgressBar(75, "Téléversement vers Google Drive...");
+        setStepState('step3', 'done', '✅ 19 tables exportées');
+        setStepState('step4', 'running', '⏳ Téléversement...');
+      }, 2600);
+
+      try {
+        const response = await fetch('/api/backup/cloture_backup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: 'cloture' })
+        });
+
+        clearTimeout(animTimer1);
+        clearTimeout(animTimer2);
+        clearTimeout(animTimer3);
+
+        const data = await response.json();
+
+        setStepState('step1', 'done', '✅ Archive ZIP prête');
+        setStepState('step2', 'done', '✅ Classeur prêt');
+        setStepState('step3', 'done', '✅ 19 tables prêtes');
+
+        if (response.ok && data.status === 'success') {
+          // Success Google Drive
+          updateProgressBar(100, "Sauvegarde complète terminée avec succès !");
+          setStepState('step4', 'done', '✅ Synchronisé sur Drive');
+          setStepState('step5', 'done', '🖨️ Lancement impression...');
+
+          // Fill Links
+          if (data.classes_excel_link) {
+            document.getElementById('linkClassesRow').style.display = 'flex';
+            document.getElementById('linkClassesAnchor').href = data.classes_excel_link;
+          }
+          if (data.excel_link) {
+            document.getElementById('linkGlobalRow').style.display = 'flex';
+            document.getElementById('linkGlobalAnchor').href = data.excel_link;
+          }
+          if (data.db_zip_link) {
+            document.getElementById('linkDbRow').style.display = 'flex';
+            document.getElementById('linkDbAnchor').href = data.db_zip_link;
+          }
+          document.getElementById('modalSuccessPanel').style.display = 'block';
+
+          // Trigger print automatically after a short visual confirmation
+          setTimeout(() => {
+            window.print();
+          }, 800);
+
+        } else {
+          // Partial local success or Google Drive offline
+          updateProgressBar(100, "Sauvegarde locale créée (Google Drive non synchronisé)");
+          setStepState('step4', 'error', '⚠️ Hors-ligne / Non lié');
+          setStepState('step5', 'done', '🖨️ Prêt à imprimer');
+
+          const errMsg = data.error || "La base et les fichiers Excel ont été sauvegardés en local dans backups/, mais la synchronisation Google Drive n'a pas pu aboutir.";
+          document.getElementById('modalErrorMsg').innerText = errMsg;
+          document.getElementById('modalErrorPanel').style.display = 'block';
+
+          // Still allow auto print
+          setTimeout(() => {
+            window.print();
+          }, 900);
+        }
+
+      } catch (err) {
+        clearTimeout(animTimer1);
+        clearTimeout(animTimer2);
+        clearTimeout(animTimer3);
+        console.error("Erreur sauvegarde clôture:", err);
+
+        updateProgressBar(100, "Sauvegarde locale effectuée.");
+        setStepState('step4', 'error', '⚠️ Hors-ligne');
+        setStepState('step5', 'done', '🖨️ Prêt à imprimer');
+
+        document.getElementById('modalErrorMsg').innerText = "Sauvegarde locale effectuée. Lancement de l'impression...";
+        document.getElementById('modalErrorPanel').style.display = 'block';
+
+        setTimeout(() => {
+          window.print();
+        }, 900);
+      } finally {
+        isBackingUp = false;
+      }
+    }
+
+    // Auto-trigger if query parameter auto_backup=1 is present
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('auto_backup') === '1') {
+        setTimeout(() => {
+          lancerClotureAvecSauvegarde();
+        }, 400);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title or (settings.inst_name ~ (' — ' ~ ('الغياب والحضور' if lang=='ar' else 'Présences') if (cur_user and cur_user.role=='teacher') else ' — ' ~ t('dashboard'))) }}</title>
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=9">
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/tom-select/tom-select.bootstrap5.min.css') }}">
+<!-- PWA & Mobile Web App Meta Tags -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0B3D6E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Institut ILAS">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+<style>
+:root {
+  --primary: {{ settings.theme_color or '#1f6feb' }};
+  --primary-dark: var(--primary);
+  /* Bootstrap 5 Variable Fallbacks (required by tom-select.bootstrap5) */
+  --bs-body-bg: #ffffff;
+  --bs-body-color: #0f172a;
+  --bs-border-color: #cbd5e1;
+  --bs-border-color-translucent: rgba(0, 0, 0, 0.15);
+  --bs-tertiary-bg: #f8fafc;
+  --bs-secondary-bg: #f1f5f9;
+  --bs-border-radius: 10px;
+  --bs-border-radius-sm: 8px;
+  --bs-border-radius-lg: 12px;
+  --bs-border-width: 1px;
+}
+
+/* Native select & option solid backgrounds */
+select option,
+select optgroup {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* ============================================================
+   TOMSELECT MODERN & OPAQUE DROPDOWN THEME
+   ============================================================ */
+.ts-wrapper {
+  display: block;
+  position: relative;
+  width: 100%;
+}
+
+.ts-control {
+  border-radius: 10px !important;
+  border: 1.5px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  line-height: normal !important;
+  padding: 0 36px 0 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  cursor: pointer !important;
+  caret-color: transparent !important; /* Prevents text blinking cursor inside select button */
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+body.rtl .ts-control {
+  padding: 0 12px 0 36px !important;
+}
+
+.ts-wrapper.focus .ts-control {
+  border-color: #1f6feb !important;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.15) !important;
+}
+
+/* Control button items: clean single-line truncation, never wrap */
+.ts-control .item {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: calc(100% - 10px) !important;
+  line-height: 40px !important;
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+/* Control items-placeholder */
+.ts-control .items-placeholder,
+.plugin-dropdown_input .items-placeholder {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  caret-color: transparent !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  color: #94a3b8 !important;
+  height: 40px !important;
+  line-height: 40px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Fallback: if control has input directly, never let it wrap or expand height */
+.ts-control > input:not(.dropdown-input):not(.items-placeholder) {
+  font-size: 13.5px !important;
+  color: #0f172a !important;
+  max-height: 38px !important;
+  height: 38px !important;
+  line-height: 38px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+}
+
+/* When select/TomSelect is placed inside an input-field with an icon, reserve space for the icon */
+.input-field.has-ico .ts-control {
+  padding-left: 44px !important;
+  padding-right: 36px !important;
+}
+.input-field.has-ico .ts-control input {
+  padding-left: 0 !important;
+}
+body.rtl .input-field.has-ico .ts-control {
+  padding-left: 36px !important;
+  padding-right: 44px !important;
+}
+
+/* The Dropdown Menu Popup: 100% Solid Opaque Background */
+.ts-dropdown {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-radius: 12px !important;
+  box-shadow: 0 14px 38px -4px rgba(15, 23, 42, 0.22), 0 4px 14px -2px rgba(15, 23, 42, 0.10) !important;
+  border: 1.5px solid #cbd5e1 !important;
+  z-index: 99999 !important;
+  margin-top: 4px !important;
+  overflow: hidden !important;
+}
+
+/* Dropdown Popup Search Bar (Cleanly placed at top of popup options) */
+.plugin-dropdown_input .dropdown-input-wrap {
+  padding: 8px 10px !important;
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.plugin-dropdown_input .dropdown-input {
+  width: 100% !important;
+  height: 38px !important;
+  padding: 0 12px !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  box-sizing: border-box !important;
+  outline: none !important;
+  caret-color: #1f6feb !important; /* Caret only appears inside this search box! */
+  box-shadow: none !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.plugin-dropdown_input .dropdown-input:focus {
+  border-color: #1f6feb !important;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.15) !important;
+}
+
+body.rtl .plugin-dropdown_input .dropdown-input {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+.ts-dropdown-content {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  max-height: 250px !important;
+  padding: 6px 0 !important;
+}
+
+.ts-dropdown .option {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  padding: 9px 14px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  border-bottom: 1px solid #f8fafc !important;
+  transition: background-color 0.12s ease, color 0.12s ease !important;
+}
+
+.ts-dropdown .option:last-child {
+  border-bottom: none !important;
+}
+
+.ts-dropdown .option:hover,
+.ts-dropdown .option.active {
+  background: #eff6ff !important;
+  background-color: #eff6ff !important;
+  color: #1d4ed8 !important;
+  font-weight: 700 !important;
+}
+
+.ts-dropdown .option.selected {
+  background: #f0fdf4 !important;
+  background-color: #f0fdf4 !important;
+  color: #166534 !important;
+  font-weight: 700 !important;
+}
+
+.ts-dropdown .optgroup-header {
+  background: #f8fafc !important;
+  background-color: #f8fafc !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  padding: 7px 14px !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+.ts-dropdown .no-results {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #94a3b8 !important;
+  padding: 14px !important;
+  font-size: 13px !important;
+  text-align: center !important;
+}
+
+/* RTL Support */
+body.rtl .ts-dropdown {
+  text-align: right !important;
+}
+body.rtl .ts-control {
+  text-align: right !important;
+}
+body.rtl .ts-dropdown .optgroup-header {
+  text-align: right !important;
+}
+
+/* Sidebar Navigation Search Styles */
+.sidebar-search-box {
+  padding: 10px 12px 6px 12px;
+  background: rgba(0, 0, 0, 0.22);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+.sidebar-search-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.sidebar-search-icon {
+  position: absolute;
+  left: 10px;
+  font-size: 13px;
+  color: #94a3b8;
+  pointer-events: none;
+  transition: color 0.15s ease;
+  user-select: none;
+}
+#sidebarNavSearch {
+  width: 100%;
+  height: 35px;
+  padding: 0 28px 0 32px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 9px;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 500;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+#sidebarNavSearch::placeholder {
+  color: #94a3b8;
+  font-size: 11.5px;
+  opacity: 0.85;
+}
+#sidebarNavSearch:focus {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2.5px rgba(56, 189, 248, 0.25);
+}
+#sidebarNavClear {
+  display: none;
+  position: absolute;
+  right: 7px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: none;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  transition: background 0.15s ease;
+}
+#sidebarNavClear:hover {
+  background: rgba(239, 68, 68, 0.85);
+}
+
+/* RTL Support for Nav Search */
+body.rtl .sidebar-search-icon {
+  left: auto;
+  right: 10px;
+}
+body.rtl #sidebarNavSearch {
+  padding: 0 32px 0 28px;
+  text-align: right;
+  direction: rtl;
+}
+body.rtl #sidebarNavClear {
+  right: auto;
+  left: 7px;
+}
+</style>
+</head>
+<body class="{{ 'rtl' if lang == 'ar' else '' }}{{ ' has-bottom-nav' if (cur_user and cur_user.role == 'teacher') else '' }}">
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleMobileSidebar()"></div>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+        <a href="{{ url_for('attendance') if (cur_user and cur_user.role == 'teacher') else url_for('dashboard') }}" style="text-decoration:none; color:inherit; display:block; flex:1; min-width:0;">
+          <h1>{{ settings.inst_name }}</h1>
+          <p>{{ settings.inst_tagline }}</p>
+        </a>
+        <button type="button" class="mobile-sidebar-close" onclick="toggleMobileSidebar()" aria-label="Fermer le menu" title="Fermer">✕</button>
+      </div>
+    </div>
+
+    <!-- Quick Search for Navigation Items / Buttons -->
+    <div class="sidebar-search-box">
+      <div class="sidebar-search-inner">
+        <span class="sidebar-search-icon">🔍</span>
+        <input type="text" id="sidebarNavSearch" 
+               placeholder="{{ 'بحث في القوائم والأزرار...' if lang == 'ar' else 'Chercher un bouton...' }}" 
+               autocomplete="off" 
+               spellcheck="false"
+               oninput="filterNavItems(this.value)"
+               onkeydown="handleNavSearchKey(event)"
+               title="Raccourci: Ctrl+K ou /">
+        <button type="button" id="sidebarNavClear" onclick="clearNavSearch()" title="{{ 'مسح' if lang == 'ar' else 'Effacer' }}">✕</button>
+      </div>
+    </div>
+
+    <nav class="nav">
+      {% set active = active or request.endpoint %}
+      {% set nav_sections = [
+        {
+          'id': 'sec_main',
+          'title': t('nav_sec_main'),
+          'links': [
+            ('dashboard', 'dashboard', '📊', None, 'accueil tableau bord stats dashboard'),
+            ('express_enrollment', 'express_enrollment', '⚡', 'Express', 'inscription rapide nouveau express'),
+            ('staff_notes', 'staff_notes', '📝', 'Liaison', 'taches notes equipe liaison rappel staff notes'),
+          ]
+        },
+        {
+          'id': 'sec_school',
+          'title': t('nav_sec_school'),
+          'links': [
+            ('students', 'students_hub', '👤', 'Hub', 'eleves etudiants inscriptions echeances abonnements demandes profs tests niveau'),
+            ('student_movements', 'student_movements', '🔄', 'Flux', 'mouvements flux eleves entrees sorties quitta dkhul matieres mois abandons desistements non renouveles'),
+            ('attendance', 'attendance_hub', '📍', None, 'absences presences appel borne pointage kiosk'),
+            ('badges', 'documents_hub', '📜', None, 'badges cartes attestations certificats diplomes impression scolarite'),
+          ]
+        },
+        {
+          'id': 'sec_pedagogy',
+          'title': t('nav_sec_pedagogy'),
+          'links': [
+            ('teachers', 'teachers_hub', '👨‍🏫', 'Hub', 'profs enseignants paie salaires avances frais copies listes classes candidats visibilite'),
+            ('teacher_expenses', 'teacher_expenses', '🖨️', 'Copies', 'frais copies tirages photocopies profs documents impressions papier charges'),
+            ('teachers_weekly_pedagogical_plans', 'weekly_pedago', '📝', 'Hebdo', 'fiches pedagogiques programmes semaines langues anglais francais allemand espagnol syllabus'),
+            ('courses', 'courses_hub', '📚', None, 'classes cours matieres groupes salles capacite'),
+            ('schedule', 'schedule_hub', '🗓️', 'WhatsApp', 'emploi du temps whatsapp quotidien vacances planning timetable'),
+          ]
+        },
+        {
+          'id': 'sec_finance',
+          'title': t('nav_sec_finance'),
+          'links': [
+            ('payments', 'finance_hub', '💳', 'Hub', 'caisse paiements recus depenses achats charges previsionnel primes ventes tresorerie'),
+            ('employees', 'employees_hub', '👥', None, 'personnel staff employes secretaires paie avances salaires'),
+            ('tariffs', 'tariffs_hub', '🏷️', None, 'tarifs prix catalogue livres manuels fournitures librairie'),
+          ]
+        },
+        {
+          'id': 'sec_reports',
+          'title': t('nav_sec_reports'),
+          'links': [
+            ('reports', 'reports', '📈', None, 'rapports analyses statistiques bilan exports excel pnl'),
+          ]
+        },
+        {
+          'id': 'sec_system',
+          'title': t('nav_sec_system'),
+          'links': [
+            ('settings', 'settings_hub', '⚙️', 'Admin', 'parametres reglage utilisateurs comptes securite ip sauvegardes backup drive import donnees'),
+            ('user_guide', 'user_guide', '📘', None, 'guide utilisation aide documentation tutoriel manuel'),
+          ]
+        }
+      ] %}
+
+      <!-- Empty state when no navigation items match search -->
+      <div id="navSearchNoResults" style="display:none; padding:22px 14px; text-align:center; background:rgba(255,255,255,0.04); border-radius:10px; margin:8px 4px; border:1px dashed rgba(255,255,255,0.12);">
+        <div style="font-size:24px; margin-bottom:6px;">🔍</div>
+        <div style="font-weight:700; color:#cbd5e1; font-size:12px; margin-bottom:4px;">{{ 'لا توجد نتائج' if lang == 'ar' else 'Aucun bouton trouvé' }}</div>
+        <div style="font-size:11px; color:#94a3b8; line-height:1.4;">{{ 'تحقق من الكلمة المدخلة' if lang == 'ar' else 'Vérifiez les mots saisis' }}</div>
+        <button type="button" onclick="clearNavSearch()" style="margin-top:10px; background:rgba(56,189,248,0.15); border:1px solid #38bdf8; border-radius:6px; color:#38bdf8; font-size:11px; font-weight:700; padding:4px 12px; cursor:pointer;">
+          {{ 'إلغاء البحث' if lang == 'ar' else 'Réinitialiser' }}
+        </button>
+      </div>
+
+      {% if cur_user and cur_user.role == 'teacher' %}
+        <div class="nav-section" id="sec_teacher_attendance">
+          <div class="nav-section-header">
+            <span class="nav-section-title">{{ 'الغياب والحضور' if lang == 'ar' else 'Présences & Absences' }}</span>
+          </div>
+          <div class="nav-section-items">
+            {% set is_att_active = (request.endpoint in ['attendance', 'attendance_save']) %}
+            <a href="{{ url_for('attendance') }}" class="{{ 'active' if is_att_active else '' }}" title="{{ 'تسجيل الغياب' if lang=='ar' else 'Faire Appel' }}">
+              <span class="ico">📋</span>
+              <span class="nav-label">{{ 'تسجيل الغياب' if lang=='ar' else "Faire l'appel" }}</span>
+            </a>
+            {% set is_list_active = (request.endpoint == 'attendance_admin') %}
+            <a href="{{ url_for('attendance_admin') }}" class="{{ 'active' if is_list_active else '' }}" title="{{ 'سجل غيابات قسمي' if lang=='ar' else 'Liste des absences' }}">
+              <span class="ico">📑</span>
+              <span class="nav-label">{{ 'سجل غيابات قسمي' if lang=='ar' else 'Liste des absences' }}</span>
+            </a>
+            {% set is_sched_active = (request.endpoint in ['schedule', 'schedule_print']) %}
+            <a href="{{ url_for('schedule') }}" class="{{ 'active' if is_sched_active else '' }}" title="{{ 'جدول الحصص' if lang=='ar' else 'Emploi du temps' }}">
+              <span class="ico">🗓️</span>
+              <span class="nav-label">{{ 'جدول الحصص' if lang=='ar' else 'Emploi du temps' }}</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="nav-section" id="sec_teacher_payments">
+          <div class="nav-section-header">
+            <span class="nav-section-title">{{ 'المستحقات والأجور' if lang == 'ar' else 'Rémunérations & Paie' }}</span>
+          </div>
+          <div class="nav-section-items">
+            {% set is_pay_active = (request.endpoint in ['teacher_my_payments', 'teacher_salary_receipt']) %}
+            <a href="{{ url_for('teacher_my_payments') }}" class="{{ 'active' if is_pay_active else '' }}" title="{{ 'كشف مستحقاتي' if lang=='ar' else 'Mes Rémunérations' }}">
+              <span class="ico">💰</span>
+              <span class="nav-label">{{ 'مستحقاتي الشهرية' if lang=='ar' else 'Mes Rémunérations' }}</span>
+            </a>
+          </div>
+        </div>
+      {% else %}
+        {% for sec in nav_sections %}
+          {% set visible_items = [] %}
+          {% for endpoint, key, ico, tag, kw in sec.links %}
+            {% if cur_user and cur_user.role == 'secretary' and (key in ['settings_hub', 'reports'] or endpoint in ['settings', 'reports']) %}
+              {# Secretary cannot access settings hub or reports #}
+            {% elif cur_user and cur_user.role == 'admin' and key == 'user_guide' %}
+              {# Admin has user_guide already inside settings_hub tabs #}
+            {% else %}
+              {% set _ = visible_items.append((endpoint, key, ico, tag, kw)) %}
+            {% endif %}
+          {% endfor %}
+
+          {% if visible_items %}
+          <div class="nav-section" id="{{ sec.id }}">
+            <div class="nav-section-header" onclick="toggleNavSection('{{ sec.id }}')">
+              <span class="nav-section-title">{{ sec.title }}</span>
+              <span class="nav-section-toggle">▾</span>
+            </div>
+            <div class="nav-section-items">
+              {% for endpoint, key, ico, tag, kw in visible_items %}
+                {% set is_active = (
+                  (key == 'students_hub' and request.endpoint in [
+                    'students', 'student_new', 'student_view', 'student_edit',
+                    'enrollments', 'enrollment_new', 'enrollment_view', 'enrollment_edit',
+                    'students_by_date', 'students_by_date_print',
+                    'teacher_student_requests',
+                    'placement_tests', 'placement_test_view', 'placement_test_new', 'placement_questions_list'
+                  ]) or
+                  (key == 'attendance_hub' and request.endpoint in ['attendance', 'attendance_save', 'attendance_admin', 'kiosk_page']) or
+                  (key == 'documents_hub' and request.endpoint in ['badges', 'badges_nfc_pairing', 'badge_distribution', 'badge_distribution_report', 'badges_print', 'badges_print_verso', 'certificates', 'certificate_new', 'certificate_print']) or
+                  (key == 'teachers_hub' and request.endpoint in [
+                    'teachers', 'teacher_new', 'teacher_view', 'teacher_edit',
+                    'teachers_payroll', 'teachers_payroll_print', 'teacher_salary_receipt',
+                    'teacher_advances', 'teacher_advance_receipt',
+                    'teacher_class_lists', 'teacher_class_lists_print',
+                    'teacher_student_lists', 'teacher_student_lists_print',
+                    'teacher_candidates',
+                    'teacher_payment_visibility'
+                  ]) or
+                  (key == 'teacher_expenses' and request.endpoint in [
+                    'teacher_expenses', 'teacher_expense_receipt'
+                  ]) or
+                  (key == 'weekly_pedago' and request.endpoint in ['teachers_weekly_pedagogical_plans', 'pedagogical_plan_form', 'pedagogical_plan_print']) or
+                  (key == 'courses_hub' and request.endpoint in ['courses', 'course_new', 'course_view', 'course_edit', 'rooms']) or
+                  (key == 'schedule_hub' and request.endpoint in [
+                    'schedule', 'schedule_print',
+                    'teachers_whatsapp_daily_timetable',
+                    'teachers_whatsapp_vacances_timetable',
+                    'students_whatsapp_vacances_timetable'
+                  ]) or
+                  (key == 'finance_hub' and request.endpoint in [
+                    'payments', 'payment_new', 'payment_view', 'payment_edit', 'payment_receipt_print',
+                    'expenses', 'expense_new', 'expense_edit',
+                    'finance_tresorerie_analytics',
+                    'finance_previsionnel',
+                    'user_activity'
+                  ]) or
+                  (key == 'employees_hub' and request.endpoint in [
+                    'employees', 'employee_new', 'employee_edit',
+                    'employees_payroll', 'employees_payroll_print', 'employee_salary_receipt',
+                    'employee_advances', 'employee_advance_receipt'
+                  ]) or
+                  (key == 'tariffs_hub' and request.endpoint in ['tariffs', 'tariff_new', 'tariff_edit', 'books', 'book_new', 'book_edit', 'book_sale_new']) or
+                  (key == 'settings_hub' and request.endpoint in ['settings', 'users', 'user_new', 'user_edit', 'settings_backups', 'settings_security', 'import_page']) or
+                  (request.endpoint == endpoint) or
+                  (active == key) or
+                  (endpoint == 'reports' and request.endpoint in ['reports', 'reports_print']) or
+                  (endpoint == 'staff_notes' and request.endpoint == 'staff_notes') or
+                  (endpoint == 'user_guide' and request.endpoint == 'user_guide')
+                ) %}
+                <a href="{{ url_for(endpoint) }}" class="{{ 'active' if is_active else '' }}" title="{{ t(key) }}" data-keywords="{{ kw }}">
+                  <span class="ico">{{ ico }}</span>
+                  <span class="nav-label">{{ t(key) }}</span>
+                  {% if tag %}
+                    <span class="nav-tag">{{ tag }}</span>
+                  {% endif %}
+                  {% if key == 'staff_notes' and active_staff_notes_count and active_staff_notes_count > 0 %}
+                    <span style="background:#ef4444; color:#ffffff; font-size:11px; font-weight:800; padding:2px 7px; border-radius:10px; margin-left:auto; line-height:1.2;">{{ active_staff_notes_count }}</span>
+                  {% endif %}
+                  {% if key == 'students_hub' and pending_teacher_requests_count and pending_teacher_requests_count > 0 %}
+                    <span id="badgeTeacherRequests" style="background:#ef4444; color:#ffffff; font-size:11px; font-weight:800; padding:2px 7px; border-radius:10px; margin-left:auto; line-height:1.2;" title="{{ pending_teacher_requests_count }} demandes en attente">{{ pending_teacher_requests_count }}</span>
+                  {% endif %}
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+      <!-- Mobile / PWA App Install Link in Sidebar -->
+      <div class="pwa-install-trigger" style="display:none; padding:10px 12px; margin:10px 14px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; text-align:center;">
+        <div style="font-size:11.5px; font-weight:800; color:#1e40af; margin-bottom:4px; display:flex; align-items:center; justify-content:center; gap:4px;">
+          <span>📲</span><span>Application Mobile</span>
+        </div>
+        <div style="font-size:10.5px; color:#3b82f6; margin-bottom:8px; line-height:1.25;">Accès direct 1-clic aux présences</div>
+        <button type="button" onclick="triggerPWAInstall()" class="btn btn-xs btn-primary" style="width:100%; justify-content:center; font-weight:700; border-radius:8px; padding:6px; font-size:11px; background:linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%); border:none; box-shadow:0 2px 6px rgba(31,111,235,0.3);">
+          Installer l'App
+        </button>
+      </div>
+    </nav>
+    <div class="foot">{{ settings.inst_city }} · {{ settings.school_year }}</div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
+        <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" title="Menu">☰</button>
+        <div class="page-title">{{ title or (('الغياب والحضور' if lang=='ar' else 'Présences & Absences') if (cur_user and cur_user.role=='teacher') else t('dashboard')) }}</div>
+      </div>
+      <div class="actions" style="gap:6px; align-items:center; flex-shrink:0;">
+        {% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+        <a href="{{ url_for('express_enrollment') }}" class="btn btn-xs btn-success topbar-quick-btn" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; color:#fff; font-weight:800; padding:5px 10px; border-radius:8px; box-shadow:0 3px 8px rgba(16,185,129,0.3); text-decoration:none; display:inline-flex; align-items:center; gap:4px;" title="Inscription Express">
+          <span>⚡</span><span class="topbar-btn-text">{{ 'تسجيل سريع' if lang=='ar' else 'Inscription' }}</span>
+        </a>
+        <a href="{{ url_for('payment_new') }}" class="btn btn-xs btn-primary topbar-quick-btn" style="font-weight:800; padding:5px 10px; border-radius:8px; text-decoration:none; display:inline-flex; align-items:center; gap:4px;" title="Nouveau Paiement">
+          <span>💵</span><span class="topbar-btn-text">{{ 'أداء جديد' if lang=='ar' else 'Paiement' }}</span>
+        </a>
+        <a href="{{ url_for('kiosk_page') }}" class="btn btn-xs topbar-quick-btn" style="background:linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%); border:none; color:#fff; font-weight:800; padding:5px 10px; border-radius:8px; box-shadow:0 3px 8px rgba(31,111,235,0.3); text-decoration:none; display:inline-flex; align-items:center; gap:4px;" title="Borne de Pointage Express">
+          <span>🪪</span><span class="topbar-btn-text">{{ 'نقطة الحضور' if lang=='ar' else 'Borne' }}</span>
+        </a>
+        {% endif %}
+        
+        <!-- PWA Install Button (Revealed when installable on mobile/desktop) -->
+        <button id="pwaInstallBtn" type="button" class="btn btn-xs topbar-quick-btn" style="display:none; background:linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%); color:#fff; font-weight:800; padding:5px 10px; border-radius:8px; border:none; box-shadow:0 2px 6px rgba(31,111,235,0.3); align-items:center; gap:5px; cursor:pointer;" onclick="triggerPWAInstall()" title="Installer l'application sur cet appareil">
+          <span>📲</span><span class="topbar-btn-text">{{ 'تثبيت التطبيق' if lang=='ar' else 'Installer l\'App' }}</span>
+        </button>
+
+        <!-- Language Switcher -->
+        <div class="lang-switcher-segmented" style="display:inline-flex; align-items:center; background:#e2e8f0; padding:2px; border-radius:10px; border:1px solid #cbd5e1;">
+          <a href="{{ url_for('set_lang', l='fr') }}" class="lang-segment {{ 'active' if lang=='fr' else '' }}" style="display:flex; align-items:center; gap:3px; padding:3px 8px; border-radius:7px; font-size:11px; font-weight:800; text-decoration:none; transition:all 0.2s; {{ 'background:#1f6feb; color:#ffffff;' if lang=='fr' else 'color:#475569;' }}" title="Français">
+            <span>🇫🇷</span><span class="lang-code-text">FR</span>
+          </a>
+          <a href="{{ url_for('set_lang', l='ar') }}" class="lang-segment {{ 'active' if lang=='ar' else '' }}" style="display:flex; align-items:center; gap:3px; padding:3px 8px; border-radius:7px; font-size:11px; font-weight:800; text-decoration:none; transition:all 0.2s; {{ 'background:#1f6feb; color:#ffffff;' if lang=='ar' else 'color:#475569;' }}" title="العربية">
+            <span>🇲🇦</span><span class="lang-code-text">عرب</span>
+          </a>
+        </div>
+
+        {% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+          <div style="position:relative; display:inline-block;">
+            <button type="button" onclick="toggleNotifDropdown()" style="position:relative; background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:8px; width:32px; height:32px; cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center; padding:0;" title="Notifications">
+              🔔
+              <span id="notifBellBadge" style="{% if unread_notifications_count == 0 %}display:none;{% endif %} position:absolute; top:-4px; right:-4px; background:#ef4444; color:#fff; font-size:9px; font-weight:800; padding:1px 4px; border-radius:10px; border:1.5px solid #fff;">
+                {{ unread_notifications_count }}
+              </span>
+            </button>
+
+            <div id="notifDropdown" style="display:none; position:absolute; right:0; top:38px; width:290px; max-width:calc(100vw - 20px); background:#ffffff; border:1.5px solid #cbd5e1; border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,0.15); z-index:9999; padding:12px; overflow:hidden;">
+              <div style="font-weight:800; color:#0B3D6E; font-size:13px; border-bottom:1px solid #f1f5f9; padding-bottom:8px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                <span>🔔 {{ 'إشعارات الغياب' if lang=='ar' else 'Notifications' }}</span>
+                <span class="chip chip-blue" style="font-size:9px;">{{ unread_notifications_count }} nouvelles</span>
+              </div>
+              
+              <div style="max-height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
+                {% if unread_notifications %}
+                  {% for n in unread_notifications %}
+                  <a href="{{ url_for('notification_read', nid=n.id) }}" style="display:block; padding:8px 10px; background:#f8fafc; border-radius:8px; border-left:3px solid #ef4444; text-decoration:none;">
+                    <div style="font-weight:800; font-size:11.5px; color:#1e293b;">{{ n.title }}</div>
+                    <div style="font-size:10.5px; color:#475569; margin-top:2px;">{{ n.message }}</div>
+                    <div style="font-size:9px; color:#94a3b8; margin-top:3px;">{{ n.created_at.strftime('%H:%M · %d/%m') }}</div>
+                  </a>
+                  {% endfor %}
+                {% else %}
+                  <div style="text-align:center; padding:14px; font-size:11.5px; color:#94a3b8;">{{ 'لا توجد إشعارات جديدة' if lang=='ar' else 'Aucune notification' }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <script>
+            function toggleNotifDropdown() {
+              var dd = document.getElementById('notifDropdown');
+              dd.style.display = (dd.style.display === 'none' || !dd.style.display) ? 'block' : 'none';
+            }
+          </script>
+        {% endif %}
+
+        {% if cur_user %}
+          <div class="user-badge" style="display:flex; align-items:center; gap:6px; background:#f8fafc; padding:3px 8px 3px 4px; border-radius:24px; border:1px solid #e2e8f0;">
+            <div class="avatar avatar-sm" style="background:#1f6feb; color:#fff; font-size:11px; width:26px; height:26px; font-weight:800; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              {{ (cur_user.full_name or cur_user.username)[0]|upper }}
+            </div>
+            <div class="user-info-text" style="line-height:1.15;">
+              <div style="font-weight:700; font-size:12px; color:#0f172a; white-space:nowrap; max-width:80px; overflow:hidden; text-overflow:ellipsis;">{{ cur_user.full_name or cur_user.username }}</div>
+              <div style="font-size:9.5px; font-weight:800; color:#64748b;">
+                {% if cur_user.role == 'admin' %}👑 Admin
+                {% elif cur_user.role == 'secretary' %}📝 Secrétaire
+                {% else %}👨‍🏫 Prof{% endif %}
+              </div>
+            </div>
+          </div>
+          <a class="btn btn-xs btn-outline btn-logout" href="{{ url_for('logout') }}" style="color:#ef4444; border-color:#fca5a5; padding:4px 8px; font-size:11.5px;" title="Déconnexion">
+            <span>🚪</span><span class="logout-text">{{ t('logout') }}</span>
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="content">
+      {% with msgs = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in msgs %}
+          <div class="alert alert-{{ cat }} no-print">{{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
+      {% include '_hub_tabs.html' %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    var formIsDirty = false;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var forms = document.querySelectorAll('form');
+      forms.forEach(function(form) {
+        form.addEventListener('input', function() {
+          formIsDirty = true;
+        });
+        form.addEventListener('change', function() {
+          formIsDirty = true;
+        });
+        form.addEventListener('submit', function() {
+          formIsDirty = false;
+        });
+      });
+    });
+
+    window.addEventListener('beforeunload', function(e) {
+      if (formIsDirty) {
+        var msg = "Vous avez des données non enregistrées. Êtes-vous sûr de vouloir quitter ou rafraîchir la page ?";
+        e.preventDefault();
+        e.returnValue = msg;
+        return msg;
+      }
+    });
+  })();
+
+  function toggleMobileSidebar() {
+    var sb = document.querySelector('.sidebar');
+    var bd = document.getElementById('sidebarBackdrop');
+    if (sb) sb.classList.toggle('open');
+    if (bd) bd.classList.toggle('open');
+  }
+
+  function toggleNavSection(secId) {
+    var sec = document.getElementById(secId);
+    if (!sec) return;
+    sec.classList.toggle('collapsed');
+    var isCollapsed = sec.classList.contains('collapsed');
+    try {
+      localStorage.setItem('ilas_nav_sec_' + secId, isCollapsed ? '1' : '0');
+    } catch(e) {}
+  }
+
+  function initNavSections() {
+    var sections = document.querySelectorAll('.nav-section');
+    sections.forEach(function(sec) {
+      var secId = sec.id;
+      var hasActive = sec.querySelector('a.active');
+      if (hasActive) {
+        sec.classList.remove('collapsed');
+        return;
+      }
+      try {
+        if (localStorage.getItem('ilas_nav_sec_' + secId) === '1') {
+          sec.classList.add('collapsed');
+        }
+      } catch(e) {}
+    });
+  }
+  document.addEventListener('DOMContentLoaded', initNavSections);
+
+  /* ============================================================
+     SIDEBAR NAVIGATION SEARCH & BUTTON FILTERING
+     ============================================================ */
+  function normalizeNavQuery(str) {
+    if (!str) return '';
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[أإآ]/g, 'ا')
+      .replace(/ة/g, 'ه')
+      .replace(/ى/g, 'ي')
+      .trim();
+  }
+
+  function filterNavItems(rawQuery) {
+    var q = normalizeNavQuery(rawQuery);
+    var clearBtn = document.getElementById('sidebarNavClear');
+    var noRes = document.getElementById('navSearchNoResults');
+    var sections = document.querySelectorAll('.nav .nav-section');
+    var totalMatches = 0;
+
+    if (clearBtn) {
+      clearBtn.style.display = q.length > 0 ? 'inline-flex' : 'none';
+    }
+
+    if (!q) {
+      if (noRes) noRes.style.display = 'none';
+      sections.forEach(function(sec) {
+        sec.style.display = '';
+        var links = sec.querySelectorAll('.nav-section-items a');
+        links.forEach(function(a) {
+          a.style.display = '';
+        });
+        var secId = sec.id;
+        var hasActive = sec.querySelector('a.active');
+        if (hasActive) {
+          sec.classList.remove('collapsed');
+        } else {
+          try {
+            if (localStorage.getItem('ilas_nav_sec_' + secId) === '1') {
+              sec.classList.add('collapsed');
+            } else {
+              sec.classList.remove('collapsed');
+            }
+          } catch(e) {}
+        }
+      });
+      return;
+    }
+
+    sections.forEach(function(sec) {
+      var links = sec.querySelectorAll('.nav-section-items a');
+      var secMatches = 0;
+
+      links.forEach(function(a) {
+        var labelEl = a.querySelector('.nav-label');
+        var tagEl = a.querySelector('.nav-tag');
+        var titleAttr = a.getAttribute('title') || '';
+        var labelText = labelEl ? labelEl.textContent : a.textContent;
+        var tagText = tagEl ? tagEl.textContent : '';
+        var keywordsAttr = a.getAttribute('data-keywords') || '';
+
+        var fullText = normalizeNavQuery(labelText + ' ' + tagText + ' ' + titleAttr + ' ' + keywordsAttr);
+        if (fullText.indexOf(q) !== -1) {
+          a.style.display = 'flex';
+          secMatches++;
+          totalMatches++;
+        } else {
+          a.style.display = 'none';
+        }
+      });
+
+      if (secMatches > 0) {
+        sec.style.display = '';
+        sec.classList.remove('collapsed');
+      } else {
+        sec.style.display = 'none';
+      }
+    });
+
+    if (noRes) {
+      noRes.style.display = (totalMatches === 0) ? 'block' : 'none';
+    }
+  }
+
+  function clearNavSearch() {
+    var inp = document.getElementById('sidebarNavSearch');
+    if (inp) {
+      inp.value = '';
+      inp.focus();
+    }
+    filterNavItems('');
+  }
+
+  function handleNavSearchKey(e) {
+    if (e.key === 'Escape') {
+      clearNavSearch();
+      e.preventDefault();
+    } else if (e.key === 'Enter') {
+      var firstVisibleLink = document.querySelector('.nav .nav-section-items a[style="display: flex;"], .nav .nav-section-items a:not([style*="display: none"])');
+      if (firstVisibleLink) {
+        window.location.href = firstVisibleLink.href;
+      }
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    var activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+    var isInput = (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select');
+
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      var inp = document.getElementById('sidebarNavSearch');
+      if (inp) {
+        inp.focus();
+        inp.select();
+      }
+    } else if (e.key === '/' && !isInput) {
+      e.preventDefault();
+      var inp = document.getElementById('sidebarNavSearch');
+      if (inp) {
+        inp.focus();
+        inp.select();
+      }
+    }
+  });
+
+  /* ============================================================
+     UNIVERSAL FLOATING TABLE ACTION DROPDOWNS (FIXED POSITIONING)
+     Prevents dropdowns from being clipped by table overflow or low height
+     ============================================================ */
+  window.openFloatingDropdown = function(btn, dropdown) {
+    if (!dropdown || !btn) return;
+    var isShowing = dropdown.classList.contains('show');
+    window.closeAllFloatingDropdowns();
+
+    if (!isShowing) {
+      btn.classList.add('active');
+      dropdown.classList.add('show');
+      dropdown.style.position = 'fixed';
+      dropdown.style.zIndex = '99999';
+
+      var btnRect = btn.getBoundingClientRect();
+      var dropRect = dropdown.getBoundingClientRect();
+      var isRtl = document.documentElement.dir === 'rtl' || document.body.classList.contains('rtl');
+
+      var left;
+      if (isRtl) {
+        left = btnRect.left;
+        if (left + dropRect.width > window.innerWidth - 10) {
+          left = window.innerWidth - dropRect.width - 10;
+        }
+      } else {
+        left = btnRect.right - dropRect.width;
+        if (left < 10) {
+          left = Math.max(10, btnRect.left);
+        }
+      }
+      left = Math.max(10, Math.min(left, window.innerWidth - dropRect.width - 10));
+      dropdown.style.left = left + 'px';
+      dropdown.style.right = 'auto';
+
+      var spaceBelow = window.innerHeight - btnRect.bottom - 10;
+      var spaceAbove = btnRect.top - 10;
+
+      if (spaceBelow >= dropRect.height || spaceBelow >= spaceAbove) {
+        dropdown.style.top = (btnRect.bottom + 5) + 'px';
+        dropdown.style.bottom = 'auto';
+      } else {
+        dropdown.style.top = 'auto';
+        dropdown.style.bottom = (window.innerHeight - btnRect.top + 5) + 'px';
+      }
+    }
+  };
+
+  window.closeAllFloatingDropdowns = function() {
+    document.querySelectorAll('.dropdown-menu-float.show').forEach(function(el) {
+      el.classList.remove('show');
+      el.style.position = '';
+      el.style.top = '';
+      el.style.bottom = '';
+      el.style.left = '';
+      el.style.right = '';
+      el.style.zIndex = '';
+    });
+    document.querySelectorAll('.btn-menu-trigger.active').forEach(function(el) {
+      el.classList.remove('active');
+    });
+  };
+
+  window.toggleActionDropdown = function(event, dropdownId) {
+    event.stopPropagation();
+    var btn = event.currentTarget;
+    var dropdown = document.getElementById(dropdownId);
+    window.openFloatingDropdown(btn, dropdown);
+  };
+
+  window.toggleActionMenu = function(event, menuId) {
+    event.stopPropagation();
+    var btn = event.currentTarget;
+    var dropdown = document.getElementById(menuId);
+    window.openFloatingDropdown(btn, dropdown);
+  };
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.dropdown-menu-float') && !e.target.closest('.btn-menu-trigger')) {
+      window.closeAllFloatingDropdowns();
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      window.closeAllFloatingDropdowns();
+    }
+  });
+
+  window.addEventListener('scroll', function() {
+    window.closeAllFloatingDropdowns();
+  }, true);
+</script>
+<script src="{{ url_for('static', filename='vendor/tom-select/tom-select.complete.min.js') }}"></script>
+<script>
+/* ── TomSelect: Auto-init all selects (searchable dropdowns) ── */
+(function() {
+  function initTomSelects() {
+    document.querySelectorAll('select:not([data-no-tomselect]):not([multiple])').forEach(function(el) {
+      // Skip if already initialized or has very few options (< 5)
+      if (el.tomselect || el.options.length < 5) return;
+      // Skip hidden selects (inside display:none containers)
+      if (!el.offsetParent && el.closest('[style*="display:none"]')) return;
+
+      var hadOnchange = el.getAttribute('onchange') || '';
+      var submitOnChange = hadOnchange.indexOf('form.submit') !== -1 ||
+                           hadOnchange.indexOf('this.form') !== -1;
+
+      new TomSelect(el, {
+        plugins: ['dropdown_input'],
+        create: false,
+        allowEmptyOption: true,
+        placeholder: el.querySelector('option[value=""]') ? el.querySelector('option[value=""]').textContent : '— Choisir —',
+        onChange: function(val) {
+          try {
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          } catch(e) {}
+          if (submitOnChange && el.form) {
+            // Small delay to allow TomSelect to update the real select value
+            setTimeout(function() { el.form.submit(); }, 10);
+          }
+        },
+        onInitialize: function() {
+          // Remove original onchange to avoid double-submit
+          if (submitOnChange) el.removeAttribute('onchange');
+          if (this.control_input) {
+            this.control_input.placeholder = '🔍 Rechercher...';
+          }
+        },
+        render: {
+          no_results: function(data, escape) {
+            return '<div class="no-results">Aucun résultat pour «' + escape(data.input) + '»</div>';
+          }
+        }
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    initTomSelects();
+  });
+
+  // Also expose globally so modal-loaded selects can call it
+  window.initTomSelects = initTomSelects;
+})();
+</script>
+<script src="{{ url_for('static', filename='pwa.js') }}?v=1"></script>
+
+{% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+<!-- REAL-TIME LIVE LOGIN MONITOR & ALERTS (POP-UP TOASTS) -->
+<div id="liveToastContainer" style="position:fixed; top:20px; right:20px; z-index:9999999; display:flex; flex-direction:column; gap:12px; pointer-events:none; max-width:400px; width:calc(100vw - 40px);"></div>
+
+<style>
+@keyframes slideInRight {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes pulseGlowRed {
+  0% { box-shadow: 0 4px 15px rgba(239, 68, 68, 0.35); }
+  50% { box-shadow: 0 8px 30px rgba(239, 68, 68, 0.75); }
+  100% { box-shadow: 0 4px 15px rgba(239, 68, 68, 0.35); }
+}
+@keyframes pulseGlowGreen {
+  0% { box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25); }
+  50% { box-shadow: 0 8px 25px rgba(16, 185, 129, 0.55); }
+  100% { box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25); }
+}
+.live-toast-item {
+  pointer-events: auto;
+  animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: all 0.25s ease;
+}
+</style>
+
+<script>
+(function() {
+  var liveMaxId = null;
+  var liveFirstCheck = true;
+  var audioCtx = null;
+
+  function playAlertBeep(isError) {
+    try {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      if (isError) {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(330, audioCtx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.35);
+      } else {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.25);
+      }
+    } catch(e) {}
+  }
+
+  function showLiveToast(evt) {
+    var container = document.getElementById('liveToastContainer');
+    if (!container) return;
+
+    var toast = document.createElement('div');
+    toast.className = 'live-toast-item';
+    var isSuccess = evt.success;
+
+    var borderStyle = isSuccess ? 'border-left: 5px solid #10b981;' : 'border-left: 5px solid #ef4444;';
+    var bgStyle = isSuccess ? 'background: #ffffff;' : 'background: #fff5f5;';
+    var glowStyle = isSuccess ? 'animation: slideInRight 0.35s ease, pulseGlowGreen 2s infinite;' : 'animation: slideInRight 0.35s ease, pulseGlowRed 1.5s infinite;';
+    var headerColor = isSuccess ? '#047857' : '#b91c1c';
+    var headerIcon = isSuccess ? '🟢' : '🚨';
+    var headerText = isSuccess ? 'CONNEXION EN DIRECT' : 'ALERTE : TENTATIVE INCORRECTE';
+    var ipBadge = evt.is_local 
+      ? '<span style="background:#f1f5f9; color:#475569; font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px; margin-left:4px;">🏠 Local</span>'
+      : '<span style="background:#eff6ff; color:#1d4ed8; font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px; margin-left:4px;">🌐 Cloudflare / En ligne</span>';
+
+    toast.style.cssText = borderStyle + bgStyle + glowStyle + 'border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.18); padding:14px 16px; border:1px solid ' + (isSuccess ? '#d1fae5' : '#fecaca') + '; font-family:inherit;';
+
+    toast.innerHTML = '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">' +
+      '<div style="display:flex; align-items:center; gap:6px;">' +
+        '<span style="font-size:16px;">' + headerIcon + '</span>' +
+        '<strong style="font-size:12px; color:' + headerColor + '; letter-spacing:0.3px;">' + headerText + '</strong>' +
+      '</div>' +
+      '<div style="display:flex; align-items:center; gap:8px;">' +
+        '<span style="font-size:11px; color:#64748b; font-weight:600;">' + evt.time + '</span>' +
+        '<button type="button" onclick="this.closest(\'.live-toast-item\').remove()" style="background:none; border:none; color:#94a3b8; font-size:16px; line-height:1; cursor:pointer; padding:0 4px;">✕</button>' +
+      '</div>' +
+    '</div>' +
+    '<div style="font-size:13px; color:#0f172a; margin-bottom:4px;">' +
+      '<span style="font-weight:800; color:#0B3D6E;">@' + evt.username + '</span> ' +
+      '<span style="font-size:11.5px; color:#64748b;">(' + evt.full_name + ' · ' + evt.role_display + ')</span>' +
+    '</div>' +
+    '<div style="font-size:11.5px; color:#475569; display:flex; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:8px;">' +
+      '<span>IP : <code style="font-size:11.5px; font-weight:700; color:#0f172a;">' + evt.ip_address + '</code></span>' +
+      ipBadge +
+    '</div>' +
+    (!isSuccess ? '<div style="font-size:11.5px; font-weight:700; color:#dc2626; margin-bottom:8px; background:#fef2f2; padding:4px 8px; border-radius:6px;">⚠️ Mot de passe ou nom d’utilisateur incorrect !</div>' : '') +
+    '<div style="display:flex; justify-content:flex-end; gap:6px;">' +
+      '<a href="/settings/security" style="font-size:11px; font-weight:700; color:#1f6feb; text-decoration:none; display:inline-flex; align-items:center; gap:3px;">' +
+        'Inspecter le journal 🛡️ →' +
+      '</a>' +
+    '</div>';
+
+    container.appendChild(toast);
+    playAlertBeep(!isSuccess);
+
+    setTimeout(function() {
+      if (toast && toast.parentNode) {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(function() { toast.remove(); }, 300);
+      }
+    }, isSuccess ? 8000 : 12000);
+  }
+
+  function escHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function showNotifToast(n) {
+    var container = document.getElementById('liveToastContainer');
+    if (!container) return;
+    var toast = document.createElement('div');
+    toast.className = 'live-toast-item';
+    var isTeacherStudentNotif = (n.title && (n.title.indexOf('élève') !== -1 || n.title.indexOf('Élève') !== -1 || n.title.indexOf('proposé') !== -1 || n.title.indexOf('Profs') !== -1));
+    if (isTeacherStudentNotif) {
+      toast.style.cssText = 'border-left:6px solid #16a34a; background:#f0fdf4; animation: slideInRight 0.35s ease; border-radius:12px; box-shadow:0 12px 35px rgba(22,163,74,0.22); padding:14px 16px; border:1.5px solid #86efac; font-family:inherit; cursor:pointer;';
+    } else {
+      toast.style.cssText = 'border-left:5px solid #f59e0b; background:#fffbeb; animation: slideInRight 0.35s ease; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.18); padding:14px 16px; border:1px solid #fde68a; font-family:inherit; cursor:pointer;';
+    }
+    toast.innerHTML =
+      '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">' +
+        '<strong style="font-size:12px; color:' + (isTeacherStudentNotif ? '#15803d' : '#92400e') + '; letter-spacing:0.3px;">' + (isTeacherStudentNotif ? '👨‍🏫 NOUVEL ÉLÈVE PROPOSÉ (PROF)' : '🔔 NOUVELLE NOTIFICATION') + '</strong>' +
+        '<div style="display:flex; align-items:center; gap:8px;">' +
+          '<span style="font-size:11px; color:#64748b; font-weight:600;">' + escHtml(n.time) + '</span>' +
+          '<button type="button" class="notif-toast-close" style="background:none; border:none; color:#94a3b8; font-size:16px; line-height:1; cursor:pointer; padding:0 4px;">✕</button>' +
+        '</div>' +
+      '</div>' +
+      '<div style="font-size:13.5px; font-weight:800; color:#0f172a; margin-bottom:3px; word-break:break-word;">' + escHtml(n.title) + '</div>' +
+      '<div style="font-size:12px; color:#475569; line-height:1.4; word-break:break-word; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">' + escHtml(n.message) + '</div>' +
+      '<div style="text-align:right; margin-top:8px; font-size:11.5px; font-weight:800; color:' + (isTeacherStudentNotif ? '#16a34a' : '#1f6feb') + ';">' + (isTeacherStudentNotif ? '⚡ Valider & Inscrire Express →' : 'Ouvrir le message →') + '</div>';
+      
+    if (window.Notification && Notification.permission === 'granted') {
+      try {
+        new Notification(n.title, { body: n.message, icon: '/static/icons/icon-192.png' });
+      } catch(e) {}
+    }
+    toast.addEventListener('click', function(ev) {
+      if (ev.target && ev.target.classList.contains('notif-toast-close')) {
+        toast.remove();
+        return;
+      }
+      window.location.href = n.link;
+    });
+    container.appendChild(toast);
+    playAlertBeep(false);
+    setTimeout(function() {
+      if (toast && toast.parentNode) {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(function() { toast.remove(); }, 300);
+      }
+    }, 15000);
+  }
+
+  var liveNotifMaxId = null;
+
+  function checkLiveLogins() {
+    var url = '/api/live_logins?last_id=' + (liveMaxId !== null ? liveMaxId : 0) +
+              (liveNotifMaxId !== null ? ('&last_notif_id=' + liveNotifMaxId) : '');
+    fetch(url)
+      .then(function(r) {
+        if (r.status === 401) {
+          window.location.href = '/login?reason=timeout';
+          return null;
+        }
+        return r.json();
+      })
+      .then(function(data) {
+        if (!data) return;
+        if (data.session_expired) {
+          window.location.href = '/login?reason=timeout';
+          return;
+        }
+        if (!data.success) return;
+
+        var badge = document.getElementById('notifBellBadge');
+        if (badge && typeof data.unread_notifications_count !== 'undefined') {
+          if (data.unread_notifications_count > 0) {
+            badge.textContent = data.unread_notifications_count;
+            badge.style.display = 'inline-block';
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+
+        var tBadge = document.getElementById('badgeTeacherRequests');
+        if (tBadge && typeof data.pending_teacher_requests_count !== 'undefined') {
+          if (data.pending_teacher_requests_count > 0) {
+            tBadge.textContent = data.pending_teacher_requests_count;
+            tBadge.style.display = 'inline-block';
+          } else {
+            tBadge.style.display = 'none';
+          }
+        }
+
+        // Live pop-up for new notifications (first poll only records the baseline)
+        if (typeof data.notif_max_id !== 'undefined') {
+          if (liveNotifMaxId === null) {
+            liveNotifMaxId = data.notif_max_id;
+          } else {
+            if (data.new_notifications && data.new_notifications.length) {
+              data.new_notifications.forEach(function(n) { showNotifToast(n); });
+            }
+            if (data.notif_max_id > liveNotifMaxId) liveNotifMaxId = data.notif_max_id;
+          }
+        }
+
+        if (liveFirstCheck) {
+          liveMaxId = data.max_id;
+          liveFirstCheck = false;
+          if (typeof window.onLiveLoginsInitial === 'function') {
+            window.onLiveLoginsInitial(data.recent);
+          }
+          return;
+        }
+
+        if (data.max_id > liveMaxId) {
+          liveMaxId = data.max_id;
+        }
+
+        if (data.new_events && data.new_events.length > 0) {
+          data.new_events.forEach(function(evt) {
+            showLiveToast(evt);
+          });
+          if (typeof window.onLiveLoginsNewEvents === 'function') {
+            window.onLiveLoginsNewEvents(data.new_events, data.recent);
+          }
+        }
+      })
+      .catch(function(e) {});
+  }
+
+  setInterval(checkLiveLogins, 3000);
+  setTimeout(checkLiveLogins, 1000);
+})();
+</script>
+{% endif %}
+{% if cur_user and cur_user.role == 'teacher' %}
+<style>
+  .teacher-bottom-nav { display:none; }
+  @media (max-width: 768px) {
+    .teacher-bottom-nav { display:flex; position:fixed; left:0; right:0; bottom:0; height:58px; z-index:950; background:#0B3D6E; box-shadow:0 -3px 14px rgba(0,0,0,0.25); padding-bottom:env(safe-area-inset-bottom); box-sizing:content-box; }
+    .teacher-bottom-nav a { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; color:#cbd5e1; text-decoration:none; font-size:11px; font-weight:800; }
+    .teacher-bottom-nav a .tb-ico { font-size:21px; line-height:1; }
+    .teacher-bottom-nav a.active { color:#fff; background:rgba(255,255,255,0.14); }
+    body.has-bottom-nav .content { padding-bottom: 160px !important; }
+  }
+</style>
+<nav class="teacher-bottom-nav" aria-label="Navigation enseignant">
+  <a href="{{ url_for('attendance') }}" class="{{ 'active' if request.endpoint in ['attendance', 'attendance_save'] else '' }}">
+    <span class="tb-ico">📋</span><span>{{ 'النداء' if lang=='ar' else 'Appel' }}</span>
+  </a>
+  <a href="{{ url_for('attendance_admin') }}" class="{{ 'active' if request.endpoint == 'attendance_admin' else '' }}">
+    <span class="tb-ico">📑</span><span>{{ 'الغيابات' if lang=='ar' else 'Absences' }}</span>
+  </a>
+  <a href="{{ url_for('teacher_my_payments') }}" class="{{ 'active' if request.endpoint in ['teacher_my_payments', 'teacher_salary_receipt'] else '' }}">
+    <span class="tb-ico">💰</span><span>{{ 'الأجرة' if lang=='ar' else 'Paie' }}</span>
+  </a>
+</nav>
+{% endif %}
+
+{% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+<!-- Modal de Rappel de Sauvegarde Quotidienne Google Drive (22:00) -->
+<div id="dailyBackupReminderModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:999999; background:rgba(15, 23, 42, 0.7); backdrop-filter:blur(4px); justify-content:center; align-items:center; padding:16px; box-sizing:border-box;">
+  <div style="background:#ffffff; border-radius:18px; max-width:540px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.35); overflow:hidden; border:2px solid #3b82f6; animation:modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+    
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg, #0B3D6E 0%, #1e40af 100%); padding:20px 24px; color:#ffffff; display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-size:22px;">
+          🔔
+        </div>
+        <div>
+          <h3 style="margin:0; font-size:17px; font-weight:800; letter-spacing:0.3px;">
+            Rappel Sauvegarde Quotidienne (22:00)
+          </h3>
+          <p style="margin:2px 0 0 0; font-size:12px; color:#bfdbfe;">
+            تذكير بالنسخ الاحتياطي اليومي على جوجل درايف
+          </p>
+        </div>
+      </div>
+      <button type="button" onclick="dismissDailyBackupModal(false)" style="background:transparent; border:none; color:white; font-size:22px; cursor:pointer; line-height:1; opacity:0.8;" title="Fermer">✕</button>
+    </div>
+
+    <!-- Body Content -->
+    <div style="padding:22px 24px;" id="dailyBackupModalBody">
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:14px; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:700; color:#1e40af;">
+          <span>⚠️</span><span>Action Requise : Sauvegarde Quotidienne non confirmée</span>
+        </div>
+        <p style="margin:6px 0 0 0; font-size:12.5px; color:#334155; line-height:1.5;">
+          Il est plus de 22:00 et la sauvegarde automatique sur votre compte Google Drive n'a pas encore été effectuée aujourd'hui.
+        </p>
+        <div style="margin-top:8px; font-size:12px; color:#64748b;">
+          Dernier statut : <strong id="modalBackupStatusLabel" style="color:#b45309;">Vérification...</strong>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <!-- Button 1: Run Full Google Drive Backup -->
+        <button type="button" id="btnRunDriveBackupNow" onclick="runDailyBackupNow()" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px; font-size:14px; font-weight:800; background:#10b981; border-color:#10b981; box-shadow:0 3px 10px rgba(16,185,129,0.3);">
+          🚀 Lancer la Sauvegarde Google Drive Maintenant
+        </button>
+
+        <!-- Button 2: Export All Excels -->
+        <a href="{{ url_for('settings_backups_download_master_excel') }}" class="btn btn-outline" style="width:100%; justify-content:center; padding:10px; font-size:13px; font-weight:700; border-color:#2563eb; color:#2563eb; background:#eff6ff;">
+          📊 Télécharger l'Export Excel Complet (19 feuilles)
+        </a>
+
+        <!-- Button 3: Download Local DB -->
+        <a href="{{ url_for('settings_backups_download_current') }}" class="btn btn-outline" style="width:100%; justify-content:center; padding:9px; font-size:12.5px; font-weight:600; border-color:#94a3b8; color:#475569;">
+          📥 Télécharger la Base de Données Active (.db) sur ce PC
+        </a>
+      </div>
+
+      <!-- Footer Actions -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:18px; padding-top:14px; border-top:1px solid #f1f5f9;">
+        <button type="button" onclick="snoozeDailyBackupModal(15)" class="btn btn-xs btn-outline" style="color:#64748b; font-weight:600;">
+          ⏳ Me rappeler dans 15 min
+        </button>
+        <button type="button" onclick="dismissDailyBackupModal(true)" class="btn btn-xs btn-outline-danger" style="font-weight:600;">
+          ✕ Ignorer pour ce soir
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes modalPop {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+</style>
+
+<script>
+(function() {
+  var checkInterval = null;
+
+  window.checkDailyBackupReminder = function() {
+    fetch('/api/backup/check_daily_status')
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (!data) return;
+
+        // Si la sauvegarde a déjà été effectuée aujourd'hui avec succès
+        if (data.today_backup_done) {
+          var modal = document.getElementById('dailyBackupReminderModal');
+          if (modal) modal.style.display = 'none';
+          return;
+        }
+
+        // Si l'heure limite (22:00) est dépassée et que la sauvegarde n'est pas faite
+        if (data.is_time_to_ask) {
+          var dismissedDate = localStorage.getItem('ilas_backup_dismissed_date');
+          if (dismissedDate === data.today) {
+            return; // Ignoré pour ce soir
+          }
+
+          var snoozeUntil = localStorage.getItem('ilas_backup_snooze_until');
+          if (snoozeUntil && parseInt(snoozeUntil, 10) > Date.now()) {
+            return; // Snoozé
+          }
+
+          // Mettre à jour les labels
+          var statusLbl = document.getElementById('modalBackupStatusLabel');
+          if (statusLbl) {
+            if (!data.configured) {
+              statusLbl.innerHTML = '<span style="color:#ef4444;">Google Drive non configuré (<a href="/settings/backups#gdrive" style="color:#1d4ed8; text-decoration:underline;">Configurer ici</a>)</span>';
+            } else if (data.token_expired) {
+              statusLbl.innerHTML = '<span style="color:#ef4444; font-weight:700;">⚠️ Session Google Drive expirée (<a href="/settings/gdrive/auth" style="color:#dc2626; text-decoration:underline;">Reconnecter ici en 1 clic</a>)</span>';
+            } else if (data.last_status === 'failed') {
+              statusLbl.innerHTML = '<span style="color:#ef4444;">Échec : ' + (data.last_error || 'Erreur inconnue') + '</span>';
+            } else {
+              statusLbl.innerHTML = '<span style="color:#b45309;">En attente de synchronisation quotidienne</span>';
+            }
+          }
+
+          var modal = document.getElementById('dailyBackupReminderModal');
+          if (modal) modal.style.display = 'flex';
+        }
+      })
+      .catch(function(err) {});
+  };
+
+  window.snoozeDailyBackupModal = function(minutes) {
+    var until = Date.now() + (minutes * 60 * 1000);
+    localStorage.setItem('ilas_backup_snooze_until', until.toString());
+    var modal = document.getElementById('dailyBackupReminderModal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  window.dismissDailyBackupModal = function(forToday) {
+    if (forToday) {
+      var today = new Date().toISOString().split('T')[0];
+      localStorage.setItem('ilas_backup_dismissed_date', today);
+    }
+    var modal = document.getElementById('dailyBackupReminderModal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  window.runDailyBackupNow = function() {
+    var btn = document.getElementById('btnRunDriveBackupNow');
+    var originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Sauvegarde & Envoi vers Google Drive en cours...';
+
+    fetch('/api/backup/run_daily_now', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+      if (result && result.status === 'success') {
+        var body = document.getElementById('dailyBackupModalBody');
+        if (body) {
+          body.innerHTML = '<div style="text-align:center; padding:20px 10px;">' +
+            '<div style="font-size:46px; margin-bottom:12px;">🎉</div>' +
+            '<h3 style="color:#047857; margin:0 0 6px 0; font-size:18px;">Sauvegarde Réussie sur Google Drive !</h3>' +
+            '<p style="color:#334155; font-size:13px; margin:0 0 16px 0;">La base de données et l\'export Excel de toutes les tables ont été synchronisés avec succès.</p>' +
+            '<button type="button" onclick="dismissDailyBackupModal(true)" class="btn btn-primary" style="background:#10b981; border-color:#10b981; font-weight:700; padding:10px 24px;">Fermer</button>' +
+            '</div>';
+        }
+        setTimeout(function() {
+          dismissDailyBackupModal(true);
+        }, 3500);
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        alert("Erreur lors de la sauvegarde : " + ((result && result.error) || "Vérifiez vos identifiants Google Drive dans les Réglages."));
+      }
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      alert("Erreur de connexion au serveur : " + err);
+    });
+  };
+
+  // Démarrer la vérification
+  setTimeout(checkDailyBackupReminder, 2500);
+  checkInterval = setInterval(checkDailyBackupReminder, 45000);
+})();
+</script>
+{% endif %}
+{% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+{% include 'enrollments/_pending_reminders_modal.html' %}
+{% include '_session_security.html' %}
+{% endif %}
+
+<!-- GLOBAL DECIMAL & COMMA (VIRGULE) HANDLER PRO -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Convert comma ',' to dot '.' on keydown for all numeric and amount inputs
+  document.addEventListener('keydown', function(e) {
+    if (e.key === ',' && e.target && e.target.tagName === 'INPUT') {
+      var inp = e.target;
+      var type = (inp.getAttribute('type') || '').toLowerCase();
+      var name = (inp.getAttribute('name') || '').toLowerCase();
+      var isMoney = type === 'number' || name.includes('amount') || name.includes('price') || name.includes('fee') || name.includes('share') || name.includes('total') || name.includes('pay') || name.includes('rate');
+      if (isMoney) {
+        if (type === 'number') {
+          e.preventDefault();
+          var val = inp.value || '';
+          if (val.indexOf('.') === -1) {
+            inp.value = val + '.';
+            inp.dispatchEvent(new Event('input', { bubbles: true }));
+            inp.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        }
+      }
+    }
+  }, true);
+
+  // Auto-convert comma to dot on input for any text-based numeric fields
+  document.addEventListener('input', function(e) {
+    if (e.target && e.target.tagName === 'INPUT') {
+      var inp = e.target;
+      var type = (inp.getAttribute('type') || '').toLowerCase();
+      if (type !== 'number' && typeof inp.value === 'string' && inp.value.indexOf(',') !== -1) {
+        var name = (inp.getAttribute('name') || '').toLowerCase();
+        var id = (inp.getAttribute('id') || '').toLowerCase();
+        var isNum = name.includes('amount') || name.includes('price') || name.includes('fee') || name.includes('share') || name.includes('total') || name.includes('pay') || name.includes('rate') || id.includes('amount') || id.includes('price');
+        if (isNum) {
+          inp.value = inp.value.replace(/,/g, '.');
+        }
+      }
+    }
+  }, true);
+
+  // Before any form submission across the app, replace comma with dot on all input fields
+  document.addEventListener('submit', function(e) {
+    if (e.target && e.target.tagName === 'FORM') {
+      var inputs = e.target.querySelectorAll('input');
+      inputs.forEach(function(inp) {
+        if (inp.value && typeof inp.value === 'string' && inp.value.indexOf(',') !== -1) {
+          inp.value = inp.value.trim().replace(/,/g, '.');
+        }
+      });
+    }
+  }, true);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,2091 @@
+{% extends 'base.html' %}
+{% set title = 'تسجيل الغياب' if session.get('lang')=='ar' else "Faire l'appel" %}
+{% block content %}
+
+<style>
+  .att-save-bar { display:none; }
+
+  /* Modern Unified Control Hub Card */
+  .att-control-hub {
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 18px;
+    box-shadow: 0 4px 18px rgba(15,23,42,0.04);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+  .modern-group-picker-card {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e0eefe 100%);
+    border: 2px solid #1f6feb;
+    border-radius: 14px;
+    box-shadow: 0 3px 12px rgba(31,111,235,0.12);
+    transition: all 0.18s ease;
+  }
+  .modern-group-picker-card:hover {
+    border-color: #1a56db;
+    background: linear-gradient(135deg, #e0eefe 0%, #dbeafe 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(31,111,235,0.18);
+  }
+  .modern-group-picker-card:active {
+    transform: scale(0.99);
+  }
+
+  /* Direct Native Select Dropdown */
+  .modern-group-dropdown-select {
+    width: 100%;
+    height: 44px;
+    padding: 0 38px 0 14px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: all 0.15s ease;
+  }
+  .modern-group-dropdown-select:focus {
+    border-color: #1f6feb;
+    box-shadow: 0 0 0 3px rgba(31,111,235,0.15);
+  }
+  body.rtl .modern-group-dropdown-select {
+    padding: 0 14px 0 38px;
+  }
+
+  /* Bottom Sheet Modal for Groups (Mobile & Desktop) */
+  .att-group-modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    align-items: flex-end; /* bottom sheet on mobile */
+    justify-content: center;
+    padding: 0;
+  }
+  @media (min-width: 769px) {
+    .att-group-modal-backdrop {
+      align-items: center; /* centered modal on desktop */
+      padding: 20px;
+    }
+  }
+  .att-group-modal-dialog {
+    background: #ffffff;
+    width: 100%;
+    max-width: 580px;
+    max-height: 85vh;
+    border-radius: 22px 22px 0 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.25);
+    animation: attSlideUp 0.22s ease-out;
+  }
+  @media (min-width: 769px) {
+    .att-group-modal-dialog {
+      border-radius: 20px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+      animation: attFadeScale 0.2s ease-out;
+    }
+  }
+  @keyframes attSlideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes attFadeScale {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .att-group-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: #f8fafc;
+    border-bottom: 1.5px solid #e2e8f0;
+  }
+  .att-group-modal-body {
+    padding: 14px 18px;
+    overflow-y: auto;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+  }
+  .modal-group-item {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 2px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    transition: all 0.15s ease;
+  }
+  .modal-group-item:hover {
+    border-color: #93c5fd;
+    background: #f0f7ff;
+    transform: translateY(-1px);
+  }
+  .modal-group-item.is-active {
+    border-color: #1f6feb;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    box-shadow: 0 4px 14px rgba(31,111,235,0.18);
+  }
+
+  @media (max-width: 768px) {
+    .att-control-hub {
+      padding: 12px 14px !important;
+      border-radius: 16px !important;
+      margin-bottom: 12px !important;
+    }
+    .modern-group-picker-card {
+      padding: 11px 13px !important;
+    }
+    /* Compact page: hide heavy intro, big class grid and strip duplicates */
+    .att-hide-mobile, .att-strip-counters, .att-strip-save, .att-list-savebar { display:none !important; }
+
+    /* List mode => one big touch card per student */
+    #viewListMode .card { border-radius:12px !important; box-shadow:none !important; border:none !important; background:transparent !important; }
+    #viewListMode .table-wrap { overflow:visible !important; }
+    #viewListMode table, #viewListMode tbody { display:block; width:100%; }
+    #viewListMode thead { display:none; }
+    #viewListMode tr.attendance-row { display:block; background:#fff; border:1.5px solid #e2e8f0; border-radius:14px; padding:10px 12px; margin-bottom:8px; }
+    #viewListMode tr.attendance-row td { display:block; border:none !important; padding:0 !important; }
+    #viewListMode tr.attendance-row td:nth-child(1),
+    #viewListMode tr.attendance-row td:nth-child(3) { display:none; }
+    #viewListMode .attendance-toggle-group { margin-top:10px; gap:6px !important; }
+    #viewListMode .att-pill-label { flex:1; justify-content:center; padding:13px 4px !important; font-size:13.5px !important; border-radius:12px !important; }
+    #viewListMode .att-pill-label input[type=radio] { display:none; }
+
+    /* Sticky bottom save bar - Organized & ergonomic */
+    .att-save-bar {
+      display: flex;
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 900;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: #ffffff;
+      border-top: 1.5px solid #e2e8f0;
+      box-shadow: 0 -4px 18px rgba(15,23,42,0.1);
+      padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+      box-sizing: border-box;
+    }
+    body.has-bottom-nav .att-save-bar {
+      bottom: 58px;
+      padding-bottom: 8px;
+    }
+    .att-save-counters {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .att-save-chip {
+      padding: 4px 7px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      line-height: 1.2;
+    }
+    .att-chip-p { background: #d1fae5; color: #047857; }
+    .att-chip-a { background: #fee2e2; color: #b91c1c; }
+    .att-chip-l { background: #fef3c7; color: #b45309; }
+    .att-save-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      justify-content: flex-end;
+      min-width: 0;
+    }
+    .att-bar-note-btn {
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+      border-radius: 12px;
+      border: 1.5px solid #f59e0b;
+      background: #fffbeb;
+      font-size: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(217,119,6,0.12);
+      transition: transform 0.1s ease;
+      padding: 0;
+    }
+    .att-bar-note-btn:active { transform: scale(0.95); }
+    .att-save-btn {
+      flex: 1;
+      max-width: 175px;
+      height: 44px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #fff;
+      font-weight: 900;
+      font-size: 13.5px;
+      padding: 0 10px;
+      box-shadow: 0 3px 12px rgba(16,185,129,0.35);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .content { padding-bottom: 150px !important; }
+
+    /* Compact class header (blue strip) */
+    .att-strip-name { flex:1 1 100%; font-size:15px !important; line-height:1.3 !important; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; word-break:break-word; }
+    .att-strip-name ~ span:nth-of-type(n+2) { display:none !important; }
+    .att-strip-meta > span:nth-child(2), .att-strip-meta > span:nth-child(3), .att-strip-meta > span:nth-child(4), .att-strip-meta > span:nth-child(7) { display:none !important; }
+    .att-strip-meta { font-size:11.5px !important; margin-top:4px !important; }
+
+    /* Clean student card */
+    #viewStudentMode .student-card-item > .card { padding:14px !important; border-radius:16px !important; box-shadow:0 4px 14px rgba(15,23,42,0.06) !important; }
+    #viewStudentMode .student-card-item .card > div:nth-child(1) { margin-bottom:10px !important; padding-bottom:8px !important; }
+    #viewStudentMode .student-card-item .card > div:nth-child(1) .muted { display:none; }
+    #viewStudentMode .student-card-item .card > div:nth-child(2) { gap:12px !important; margin-bottom:12px !important; }
+    #viewStudentMode .student-card-item .card > div:nth-child(2) .avatar { width:46px !important; height:46px !important; font-size:19px !important; border-radius:13px !important; }
+    #viewStudentMode .student-card-item .card > div:nth-child(2) h3 { font-size:18px !important; }
+    #viewStudentMode .student-card-item .card > div:nth-child(3) { padding:8px 10px !important; margin-bottom:12px !important; }
+    #viewStudentMode .student-card-item .card > div:nth-child(3) .muted { display:none; }
+    #viewStudentMode .student-card-item .card > div:nth-child(3) a span:last-child { display:none; }
+    #viewStudentMode .student-card-item .card > div:nth-child(4) > div:nth-child(1) { display:none; }
+    #viewStudentMode .student-card-item .card > div:nth-child(4) > div:nth-child(2) { grid-template-columns:repeat(3, 1fr) !important; gap:8px !important; }
+    #viewStudentMode .student-card-item .btn-att-choice { min-height:68px !important; font-size:13.5px !important; border-radius:14px !important; padding:6px 2px !important; }
+    #viewStudentMode .student-card-item .card > div:nth-child(5) button[type=submit] { display:none; }
+    #viewStudentMode .student-card-item .card > div:nth-child(5) { padding-top:10px !important; flex-wrap:nowrap !important; }
+    #viewStudentMode .student-card-item .card > div:nth-child(5) button { padding:10px 14px !important; }
+    #viewStudentMode > .card .muted { display:none; }
+  }
+</style>
+<!-- TOP HEADER & TITLE -->
+<div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+  <div>
+    {% if not (cur_user and cur_user.role == 'teacher') %}
+    <div class="muted" style="font-size:12px">
+      <a href="{{ url_for('dashboard') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ t('dashboard') }}</a>
+    </div>
+    {% endif %}
+    <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+      <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800;">
+        📋 {{ 'ورقة تفقّد الحضور والغياب' if session.get('lang')=='ar' else 'Pointage & Feuilles d\'appel' }}
+      </h2>
+      {% if current_teacher %}
+        <span class="chip chip-blue" style="font-size:11.5px; font-weight:800;">
+          👨‍🏫 {{ current_teacher.full_name }}
+        </span>
+      {% endif %}
+    </div>
+    <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">
+      {{ 'اختر الفوج الدراسي وسجل حضور وغياب التلاميذ بسهولة مع إشعار فوري للإدارة' if session.get('lang')=='ar' else 'Sélectionnez votre classe ci-dessous et enregistrez la présence en un clic' }}
+    </p>
+  </div>
+
+  {% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+  <a href="{{ url_for('attendance_admin') }}" class="btn btn-outline" style="border-color:#1f6feb; color:#1f6feb; font-weight:800; background:#fff; box-shadow:0 2px 8px rgba(31,111,235,0.12); display:inline-flex; align-items:center; gap:6px;">
+    <span>📲</span>
+    <span>{{ 'مركز متابعة الغياب و WhatsApp' if session.get('lang')=='ar' else 'Centre Suivi Absences & WhatsApp' }}</span>
+  </a>
+  {% elif cur_user and cur_user.role == 'teacher' %}
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    {% if course %}
+    <button type="button" onclick="openProposeStudentModal()" class="btn btn-outline" style="border-color:#16a34a; color:#15803d; font-weight:800; background:#f0fdf4; box-shadow:0 2px 8px rgba(22,163,74,0.15); display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="{{ 'إضافة تلميذ غير مسجل' if session.get('lang')=='ar' else 'Ajouter un élève non listé' }}">
+      <span>➕</span>
+      <span>{{ 'تلميذ غير مسجل' if session.get('lang')=='ar' else 'Élève non listé' }}</span>
+    </button>
+    <button type="button" onclick="openAttNote()" class="btn btn-outline" style="border-color:#d97706; color:#92400e; font-weight:800; background:#fffbeb; box-shadow:0 2px 8px rgba(217,119,6,0.15); display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+      <span>📝</span>
+      <span>{{ 'رسالة للإدارة' if session.get('lang')=='ar' else 'Message à l\'admin' }}</span>
+    </button>
+    {% endif %}
+    <a href="{{ url_for('attendance_admin') }}" class="btn btn-outline att-hide-mobile" style="border-color:#1f6feb; color:#1f6feb; font-weight:800; background:#fff; box-shadow:0 2px 8px rgba(31,111,235,0.12); display:inline-flex; align-items:center; gap:6px;">
+      <span>📑</span>
+      <span>{{ 'سجل غيابات قسمي' if session.get('lang')=='ar' else 'Liste des Absences' }}</span>
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- AVIS OBLIGATOIRE ENSEIGNANT (5 LANGUES: FR, AR, EN, ES, DE) -->
+{% include 'teachers/_teacher_attendance_alert.html' %}
+
+<!-- ============================================================ -->
+<!-- UNIFIED ATTENDANCE CONTROL PANEL (DATE & MODERN GROUP PICKER) -->
+<!-- ============================================================ -->
+<div class="card card-pad mb-3 att-control-hub">
+  
+  <!-- Form for Date & Course Query Params -->
+  <form id="attendanceFilterForm" method="get" action="{{ url_for('attendance') }}">
+    <input type="hidden" name="course_id" id="hiddenCourseId" value="{{ course.id if course else '' }}">
+    <input type="hidden" name="teacher_id" id="hiddenTeacherId" value="{{ filter_teacher_id or '' }}">
+    
+    <!-- Top Row: Date Selector & Quick Toggles -->
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; padding-bottom:12px; margin-bottom:14px; border-bottom:1px solid #f1f5f9;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:18px;">🗓️</span>
+        <div>
+          <span style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.7px; color:#64748b; display:block;">
+            {{ 'تاريخ الحصة' if session.get('lang')=='ar' else 'Date de la séance' }}
+          </span>
+          <span style="font-size:13.5px; font-weight:800; color:#0f172a;">
+            {{ d.strftime('%d/%m/%Y') if d else today }}
+          </span>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <div style="display:inline-flex; background:#f1f5f9; padding:3px; border-radius:10px; border:1px solid #e2e8f0;">
+          <button type="button" onclick="setQuickDate('{{ today }}')" class="btn btn-xs" style="border:none; background:{{ '#1f6feb; color:#fff;' if d==today else 'transparent; color:#475569;' }} font-weight:800; border-radius:7px; padding:4px 10px; cursor:pointer;">
+            📅 {{ 'اليوم' if session.get('lang')=='ar' else 'Aujourd\'hui' }}
+          </button>
+          <button type="button" onclick="setQuickDate('{{ yesterday }}')" class="btn btn-xs" style="border:none; background:{{ '#1f6feb; color:#fff;' if d==yesterday else 'transparent; color:#475569;' }} font-weight:800; border-radius:7px; padding:4px 10px; cursor:pointer;">
+            ◀ {{ 'أمس' if session.get('lang')=='ar' else 'Hier' }}
+          </button>
+        </div>
+
+        <div class="input-field has-ico" style="min-width:145px; margin:0;">
+          <span class="f-ico">🗓️</span>
+          <input type="date" name="date" id="attendanceDateInput" value="{{ d }}" onchange="document.getElementById('attendanceFilterForm').submit()" style="padding:5px 10px; font-weight:700; border-radius:8px; font-size:12.5px; height:34px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin & Secretary Teacher Filter Dropdown (Event: if Prof selected, filter only his classes) -->
+    {% if not (cur_user and cur_user.role == 'teacher') and all_teachers %}
+    <div style="margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid #f1f5f9;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+        <label for="teacherFilterSelect" style="font-size:11.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.6px; color:#1e40af; display:flex; align-items:center; gap:6px;">
+          <span>👨‍🏫</span>
+          <span>{{ 'تصفية حسب الأستاذ :' if session.get('lang')=='ar' else 'Filtrer par Enseignant (Professeur) :' }}</span>
+          {% if filter_teacher_id %}
+          <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:10.5px; padding:1px 7px; border-radius:10px; font-weight:800;">
+            {{ 'محدد' if session.get('lang')=='ar' else 'Actif' }}
+          </span>
+          {% endif %}
+        </label>
+        {% if filter_teacher_id %}
+        <button type="button" onclick="filterByTeacher('')" class="btn btn-xs btn-outline" style="font-weight:700; color:#dc2626; border-color:#fca5a5; background:#fef2f2; padding:2px 8px; border-radius:6px; cursor:pointer;">
+          ✕ {{ 'عرض جميع الأساتذة' if session.get('lang')=='ar' else 'Tous les professeurs' }}
+        </button>
+        {% endif %}
+      </div>
+      <div style="position:relative;">
+        <select id="teacherFilterSelect" class="modern-group-dropdown-select" onchange="filterByTeacher(this.value)" style="border-color:{{ '#1f6feb' if filter_teacher_id else '#cbd5e1' }}; background:{{ '#f0f7ff' if filter_teacher_id else '#ffffff' }}; font-weight:800;">
+          <option value="">-- {{ 'جميع الأساتذة' if session.get('lang')=='ar' else 'Tous les professeurs' }} ({{ all_teachers|length }}) --</option>
+          {% for t in all_teachers %}
+          <option value="{{ t.id }}" {{ 'selected' if filter_teacher_id == t.id else '' }}>
+            👨‍🏫 Prof. {{ t.full_name }} {% if t.specialty %}({{ t.specialty }}){% endif %}
+          </option>
+          {% endfor %}
+        </select>
+        <span style="position:absolute; right:14px; top:50%; transform:translateY(-50%); pointer-events:none; color:#1f6feb; font-size:11px; font-weight:900;">
+          ▼
+        </span>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Main Section: Modern Group Dropdown Picker -->
+    {% if courses %}
+    <div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+        <label for="courseDirectSelect" style="font-size:11.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.6px; color:#334155; display:flex; align-items:center; gap:6px;">
+          <span>👥</span>
+          <span>{{ 'الفوج الدراسي المطلوب تسجيل حضوره :' if session.get('lang')=='ar' else 'Sélection du Groupe / Classe :' }}</span>
+          <span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:10.5px; padding:1px 7px; border-radius:10px; font-weight:800;">
+            {{ courses|length }} {{ 'أفواج' if session.get('lang')=='ar' else 'groupes' }}
+          </span>
+        </label>
+        
+        <div style="display:flex; align-items:center; gap:8px;">
+          {% if courses|length > 1 %}
+          <button type="button" onclick="openGroupPickerModal()" class="btn btn-xs" style="border:none; background:#eff6ff; color:#1d4ed8; font-weight:800; border-radius:8px; padding:3px 8px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+            <span>🔍</span><span>{{ 'عرض القائمة' if session.get('lang')=='ar' else 'Voir la liste' }}</span>
+          </button>
+          {% endif %}
+          <button type="button" id="btnToggleClassGrid" onclick="toggleClassCardsGrid()" class="btn btn-xs att-hide-mobile" style="border:1px solid #cbd5e1; background:#ffffff; color:#475569; font-weight:800; border-radius:8px; padding:3px 8px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+            <span id="btnToggleClassGridIcon">▦</span><span id="btnToggleClassGridText">{{ 'شبكة الأفواج' if session.get('lang')=='ar' else 'Grille' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 1. MODERN VISUAL DROPDOWN PICKER CARD (CLICKABLE) -->
+      {% set cur_subj_icon = '🇬🇧' if course and 'anglais' in (course.name ~ ' ' ~ (course.language or ''))|lower else ('🇫🇷' if course and 'fran' in (course.name ~ ' ' ~ (course.language or ''))|lower else ('🇩🇪' if course and 'allem' in (course.name ~ ' ' ~ (course.language or ''))|lower else ('🇪🇸' if course and 'espagn' in (course.name ~ ' ' ~ (course.language or ''))|lower else ('📐' if course and course.category=='tutoring' else '📚')))) %}
+      
+      <div class="modern-group-picker-card" onclick="openGroupPickerModal()" title="{{ 'انقر لفتح لائحة الأفواج واختيار فوج آخر' if session.get('lang')=='ar' else 'Touchez pour ouvrir la liste et changer de groupe' }}">
+        
+        <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1;">
+          <div style="width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; background:#dbeafe; color:#1d4ed8; flex-shrink:0; box-shadow:0 2px 6px rgba(31,111,235,0.15);">
+            {{ cur_subj_icon }}
+          </div>
+
+          <div style="min-width:0; flex:1;">
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:2px;">
+              <span class="chip" style="background:#1f6feb; color:#ffffff; font-size:11.5px; font-weight:900; padding:2px 8px; border-radius:8px;">
+                🏷️ {{ course.ui_group_label if course else ('اختر فوجاً' if session.get('lang')=='ar' else 'Sélectionnez un groupe') }}
+              </span>
+              {% if course and course.ui_is_today %}
+              <span style="background:#dcfce7; color:#15803d; font-size:10px; font-weight:900; padding:2px 7px; border-radius:8px; border:0.5px solid #86efac; display:inline-flex; align-items:center; gap:3px;">
+                🟢 {{ 'اليوم' if session.get('lang')=='ar' else 'Aujourd\'hui' }}
+              </span>
+              {% else %}
+              <span style="background:#f1f5f9; color:#64748b; font-size:10px; font-weight:800; padding:2px 6px; border-radius:8px;">
+                ⚪ {{ 'يوم آخر' if session.get('lang')=='ar' else 'Autre jour' }}
+              </span>
+              {% endif %}
+              {% if course and course.level %}
+              <span class="badge" style="background:rgba(31,111,235,0.1); color:#1d4ed8; font-size:10.5px; font-weight:800; padding:2px 6px; border-radius:6px;">
+                {{ course.level }}
+              </span>
+              {% endif %}
+            </div>
+
+            <div style="font-size:14.5px; font-weight:800; color:#0B3D6E; line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              {{ course.display_name if course else ('لم يتم تحديد أي فوج' if session.get('lang')=='ar' else 'Aucun groupe sélectionné') }}
+            </div>
+
+            <div style="font-size:11.5px; color:#475569; margin-top:3px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              {% if course and course.teacher %}
+              <span style="color:#1e40af; font-weight:800; background:#eff6ff; padding:1px 7px; border-radius:6px; border:1px solid #bfdbfe;">
+                👨‍🏫 {{ course.teacher.full_name }}
+              </span>
+              {% endif %}
+              <span>🕒 <strong>{{ course.ui_schedule_label if course else '-' }}</strong></span>
+              {% if course and course.ui_room_name %}
+              <span>· 🚪 {{ course.ui_room_name }}</span>
+              {% endif %}
+              <span>· 👥 <strong>{{ enrolls|length }}</strong> {{ 'تلميذ' if session.get('lang')=='ar' else 'élèves' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+          <div style="display:inline-flex; align-items:center; gap:6px; background:#1f6feb; color:#ffffff; font-weight:800; font-size:12px; padding:7px 12px; border-radius:10px; box-shadow:0 2px 8px rgba(31,111,235,0.25);">
+            <span>{{ 'تغيير' if session.get('lang')=='ar' else 'Changer' }}</span>
+            <span style="font-size:10px;">▼</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. DIRECT MODERN SELECT DROPDOWN (1-TAP INSTANT DROPDOWN PICKER) -->
+      <div style="position:relative; margin-top:8px;">
+        <select id="courseDirectSelect" data-no-tomselect class="modern-group-dropdown-select" onchange="selectCourse(this.value)"
+                aria-label="{{ 'اختيار الفوج' if session.get('lang')=='ar' else 'Sélectionner un groupe' }}">
+          {% for c in courses %}
+          {% set is_active_c = (course and c.id == course.id) %}
+          <option value="{{ c.id }}" {{ 'selected' if is_active_c else '' }}>
+            {{ '🟢' if c.ui_is_today else '⚪' }} {{ c.ui_group_label }} · {{ c.display_name }}{% if c.teacher %} · 👨‍🏫 {{ c.teacher.full_name }}{% endif %} ({{ c.ui_schedule_label }}) — {{ c.enrolled_count }} él.
+          </option>
+          {% endfor %}
+        </select>
+        <span style="position:absolute; right:14px; top:50%; transform:translateY(-50%); pointer-events:none; color:#64748b; font-size:11px; font-weight:900;">
+          ▼
+        </span>
+      </div>
+
+      <!-- Optional Collapsible Grid on Desktop -->
+      <div id="classCardsGrid" style="display:none; margin-top:14px; padding-top:14px; border-top:1px dashed #cbd5e1;">
+        {% if courses|length > 4 %}
+        <div style="margin-bottom:12px; max-width:320px;">
+          <div class="input-field has-ico" style="margin:0;">
+            <span class="f-ico">🔍</span>
+            <input type="text" id="classSearchInput" placeholder="{{ 'بحث في الأفواج...' if session.get('lang')=='ar' else 'Rechercher une classe...' }}" onkeyup="filterClassCards()" style="font-size:12.5px; padding:6px 10px; border-radius:8px;">
+          </div>
+        </div>
+        {% endif %}
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:12px;">
+          {% for c in courses %}
+          {% set is_selected = (course and c.id == course.id) %}
+          {% set subject_icon = '🇬🇧' if 'anglais' in (c.name ~ ' ' ~ (c.language or ''))|lower else ('🇫🇷' if 'fran' in (c.name ~ ' ' ~ (c.language or ''))|lower else ('🇩🇪' if 'allem' in (c.name ~ ' ' ~ (c.language or ''))|lower else ('🇪🇸' if 'espagn' in (c.name ~ ' ' ~ (c.language or ''))|lower else ('📐' if c.category=='tutoring' else '📚')))) %}
+          
+          <div class="class-pick-card" data-name="{{ (c.display_name ~ ' ' ~ (c.level or '') ~ ' ' ~ (c.ui_group_label or '') ~ ' ' ~ (c.teacher.full_name if c.teacher else ''))|lower }}" onclick="selectCourse('{{ c.id }}')"
+               style="cursor:pointer; position:relative; border-radius:14px; padding:14px 16px; transition:all 0.22s ease-in-out; border:2px solid {{ '#1f6feb' if is_selected else '#e2e8f0' }}; background:{{ 'linear-gradient(135deg, #f0f7ff 0%, #e0eefe 100%)' if is_selected else '#ffffff' }}; box-shadow:{{ '0 8px 22px rgba(31,111,235,0.18)' if is_selected else '0 2px 8px rgba(0,0,0,0.02)' }};">
+            
+            {% if is_selected %}
+            <span style="position:absolute; top:8px; right:10px; background:#1f6feb; color:#fff; font-size:10px; font-weight:800; padding:2px 7px; border-radius:20px; display:inline-flex; align-items:center; gap:3px;">
+              ✓ {{ 'محدد' if session.get('lang')=='ar' else 'Sélectionné' }}
+            </span>
+            {% endif %}
+
+            <div style="display:flex; align-items:flex-start; gap:10px; margin-bottom:10px;">
+              <div style="width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:19px; background:{{ '#dbeafe' if is_selected else '#f1f5f9' }}; flex-shrink:0;">
+                {{ subject_icon }}
+              </div>
+              <div style="flex:1; min-width:0; padding-right:{{ '65px' if is_selected else '0' }};">
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:3px;">
+                  <span class="chip" style="background:{{ '#dbeafe; color:#1d4ed8;' if is_selected else '#f1f5f9; color:#334155;' }} font-size:11px; font-weight:900; padding:2px 8px; border-radius:8px;">
+                    🏷️ {{ c.ui_group_label }}
+                  </span>
+                  {% if c.ui_is_today %}
+                  <span style="background:#dcfce7; color:#15803d; font-size:10px; font-weight:900; padding:2px 6px; border-radius:8px; border:0.5px solid #86efac;">
+                    🟢 {{ 'اليوم' if session.get('lang')=='ar' else 'Aujourd\'hui' }}
+                  </span>
+                  {% endif %}
+                </div>
+
+                <h4 style="margin:0; font-size:13.5px; font-weight:800; color:{{ '#0B3D6E' if is_selected else '#1e293b' }}; line-height:1.3;">
+                  {{ c.display_name }}
+                </h4>
+                
+                <div style="font-size:11.5px; color:#64748b; margin-top:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  {% if c.teacher %}
+                  <span style="color:#1e40af; font-weight:800; background:#eff6ff; padding:1px 6px; border-radius:5px; border:1px solid #bfdbfe;">
+                    👨‍🏫 {{ c.teacher.full_name }}
+                  </span>
+                  {% endif %}
+                  <span>🗓️ {{ c.ui_schedule_label }}</span>
+                  {% if c.ui_room_name %}
+                  <span>· 🚪 {{ c.ui_room_name }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; padding-top:8px; border-top:1px solid {{ '#cbd5e1' if is_selected else '#f1f5f9' }}; font-size:11.5px; font-weight:700;">
+              <span style="color:{{ '#047857' if is_selected else '#64748b' }}; display:inline-flex; align-items:center; gap:4px;">
+                👥 {{ c.enrolled_count }} {{ 'تلميذ' if session.get('lang')=='ar' else 'élèves' }}
+              </span>
+              <span style="color:#1f6feb; font-weight:800; font-size:11px;">
+                {{ 'تسجيل الحضور ←' if session.get('lang')=='ar' else 'Faire l\'appel →' }}
+              </span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+    {% else %}
+    <div class="empty" style="padding:28px 16px; text-align:center;">
+      <div style="font-size:36px; margin-bottom:8px;">⚠️</div>
+      <h4 style="margin:0; color:#0f172a;">{{ 'لا يوجد أي فوج دراسي مسند إليك حالياً' if session.get('lang')=='ar' else 'Aucune classe assignée à votre profil enseignant' }}</h4>
+      <p class="muted" style="margin:4px 0 0; font-size:12.5px;">{{ 'يرجى التواصل مع إدارة المعهد لتأكيد إسناد الأفواج والمواد لحسابك' if session.get('lang')=='ar' else 'Veuillez contacter l\'administration pour vous affecter vos cours et vos groupes.' }}</p>
+    </div>
+    {% endif %}
+
+  </form>
+</div>
+
+<!-- MODERN GROUP PICKER BOTTOM SHEET MODAL (MOBILE & DESKTOP) -->
+{% if courses %}
+<div id="attGroupModalBackdrop" class="att-group-modal-backdrop" onclick="closeGroupPickerModal(event)">
+  <div class="att-group-modal-dialog" onclick="event.stopPropagation()">
+    
+    <!-- Modal Header -->
+    <div class="att-group-modal-header">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:22px;">👥</span>
+        <div>
+          <h3 style="margin:0; font-size:16px; font-weight:800; color:#0f172a;">
+            {{ 'أفواجي الدراسية' if session.get('lang')=='ar' else 'Mes Groupes d\'Enseignement' }} ({{ courses|length }})
+          </h3>
+          <span style="font-size:11.5px; color:#64748b;">
+            {{ 'اختر الفوج لفتح لائحة تسجيل الحضور الخاصة به' if session.get('lang')=='ar' else 'Touchez un groupe pour charger sa feuille d\'appel' }}
+          </span>
+        </div>
+      </div>
+      <button type="button" onclick="closeGroupPickerModal()" style="border:none; background:#f1f5f9; width:34px; height:34px; border-radius:10px; font-size:16px; font-weight:800; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+        ✕
+      </button>
+    </div>
+
+    <!-- Quick search if > 3 groups -->
+    {% if courses|length > 3 %}
+    <div style="padding:10px 18px 4px 18px; background:#ffffff;">
+      <div class="input-field has-ico" style="margin:0;">
+        <span class="f-ico">🔍</span>
+        <input type="text" id="modalGroupSearchInput" placeholder="{{ 'بحث في الأفواج...' if session.get('lang')=='ar' else 'Rechercher un groupe...' }}" onkeyup="filterModalGroups()" style="font-size:12.5px; padding:6px 12px; border-radius:10px;">
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Modal Body (Vertical List of Groups) -->
+    <div class="att-group-modal-body">
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        {% for c in courses %}
+        {% set is_active_grp = (course and c.id == course.id) %}
+        {% set grp_icon = '🇬🇧' if 'anglais' in (c.name ~ ' ' ~ (c.language or ''))|lower else ('🇫🇷' if 'fran' in (c.name ~ ' ' ~ (c.language or ''))|lower else ('🇩🇪' if 'allem' in (c.name ~ ' ' ~ (c.language or ''))|lower else ('🇪🇸' if 'espagn' in (c.name ~ ' ' ~ (c.language or ''))|lower else ('📐' if c.category=='tutoring' else '📚')))) %}
+        
+        <div class="modal-group-item {{ 'is-active' if is_active_grp else '' }}"
+             data-name="{{ (c.display_name ~ ' ' ~ (c.level or '') ~ ' ' ~ (c.ui_group_label or '') ~ ' ' ~ (c.teacher.full_name if c.teacher else ''))|lower }}"
+             onclick="selectCourse('{{ c.id }}')">
+          
+          <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1;">
+            <div style="width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; background:{{ '#dbeafe' if is_active_grp else '#f1f5f9' }}; flex-shrink:0;">
+              {{ grp_icon }}
+            </div>
+
+            <div style="min-width:0; flex:1;">
+              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:2px;">
+                <span class="chip" style="background:{{ '#1f6feb; color:#ffffff;' if is_active_grp else '#f1f5f9; color:#334155;' }} font-size:11px; font-weight:900; padding:2px 8px; border-radius:6px;">
+                  🏷️ {{ c.ui_group_label }}
+                </span>
+                {% if c.ui_is_today %}
+                <span style="background:#dcfce7; color:#15803d; font-size:10px; font-weight:900; padding:2px 6px; border-radius:6px; border:0.5px solid #86efac;">
+                  🟢 {{ 'اليوم' if session.get('lang')=='ar' else 'Aujourd\'hui' }}
+                </span>
+                {% else %}
+                <span style="background:#f8fafc; color:#64748b; font-size:10px; font-weight:700; padding:1px 5px; border-radius:6px;">
+                  ⚪ {{ 'يوم آخر' if session.get('lang')=='ar' else 'Autre jour' }}
+                </span>
+                {% endif %}
+                {% if c.level %}
+                <span style="font-size:10.5px; color:#64748b; font-weight:700;">({{ c.level }})</span>
+                {% endif %}
+              </div>
+
+              <div style="font-size:13.5px; font-weight:800; color:{{ '#0B3D6E' if is_active_grp else '#1e293b' }}; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                {{ c.display_name }}
+              </div>
+
+              <div style="font-size:11px; color:#64748b; margin-top:3px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                {% if c.teacher %}
+                <span style="color:#1e40af; font-weight:800; background:#eff6ff; padding:1px 6px; border-radius:5px; border:1px solid #bfdbfe;">
+                  👨‍🏫 {{ c.teacher.full_name }}
+                </span>
+                {% endif %}
+                <span>🗓️ {{ c.ui_schedule_label }}</span>
+                {% if c.ui_room_name %}
+                <span>· 🚪 {{ c.ui_room_name }}</span>
+                {% endif %}
+                <span>· 👥 <strong>{{ c.enrolled_count }}</strong> {{ 'تلميذ' if session.get('lang')=='ar' else 'élèves' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="flex-shrink:0;">
+            {% if is_active_grp %}
+            <span style="background:#1f6feb; color:#fff; font-size:10.5px; font-weight:800; padding:4px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:3px;">
+              ✓ {{ 'محدد' if session.get('lang')=='ar' else 'Sélectionné' }}
+            </span>
+            {% else %}
+            <span style="color:#1f6feb; font-size:12px; font-weight:800;">
+              {{ 'اختيار ←' if session.get('lang')=='ar' else 'Choisir →' }}
+            </span>
+            {% endif %}
+          </div>
+
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div style="padding:12px 18px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end;">
+      <button type="button" onclick="closeGroupPickerModal()" class="btn btn-sm btn-outline" style="border-radius:10px; font-weight:800; font-size:12px; padding:6px 14px;">
+        {{ 'إغلاق' if session.get('lang')=='ar' else 'Fermer' }}
+      </button>
+    </div>
+
+  </div>
+</div>
+{% endif %}
+
+{% if course %}
+<!-- ATTENDANCE SHEET FORM -->
+<form method="post" action="{{ url_for('attendance_save') }}" id="attendanceMainForm">
+  <input type="hidden" name="course_id" value="{{ course.id }}">
+  <input type="hidden" name="date" value="{{ d }}">
+
+  <!-- STICKY ACTION & SUMMARY STRIP -->
+  <div class="card card-pad mb-3" style="background:linear-gradient(135deg, #0B3D6E 0%, #1e40af 100%); color:#ffffff; border:none; border-radius:16px; box-shadow:0 8px 24px rgba(11,61,110,0.25);">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+      
+      <div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <h3 class="att-strip-name" style="margin:0; font-size:18px; font-weight:800; color:#ffffff;">
+            📚 {{ course.display_name }}
+          </h3>
+          <span class="chip" style="background:#fef08a; color:#854d0e; font-size:12px; font-weight:900; border:none; padding:4px 10px; border-radius:10px;">
+            🏷️ {{ course.ui_group_label }}
+          </span>
+          <span class="chip" style="background:rgba(255,255,255,0.2); color:#fff; font-size:11px; font-weight:800; border:none;">
+            {{ course.level }}
+          </span>
+          {% if course.ui_room_name %}
+          <span class="chip" style="background:rgba(255,255,255,0.2); color:#fff; font-size:11px; font-weight:800; border:none;">
+            🚪 {{ course.ui_room_name }}
+          </span>
+          {% endif %}
+        </div>
+        <p class="att-strip-meta" style="margin:6px 0 0; font-size:12.5px; color:#bfdbfe; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span>🕒 <strong>{{ course.ui_schedule_label }}</strong></span>
+          <span>·</span>
+          <span>{{ 'حصة بتاريخ:' if session.get('lang')=='ar' else 'Séance du :' }} <strong>{{ d }}</strong></span>
+          <span>·</span>
+          <span>{{ 'تلاميذ هذا الفوج فقط:' if session.get('lang')=='ar' else 'Élèves de ce groupe :' }} <strong>{{ enrolls|length }}</strong></span>
+          {% set trial_students = enrolls|selectattr('status', 'equalto', 'trial')|list %}
+          {% set active_students = enrolls|selectattr('status', 'equalto', 'active')|list %}
+          <span style="background:rgba(16,185,129,0.25); color:#a7f3d0; padding:2px 8px; border-radius:10px; font-weight:800; font-size:11px;">✓ {{ active_students|length }} {{ 'مؤكد' if session.get('lang')=='ar' else 'validé(s)' }}</span>
+          {% if trial_students|length > 0 %}
+          <span style="background:#fef3c7; color:#b45309; padding:2px 8px; border-radius:10px; font-weight:800; font-size:11px; border:1px solid #fde68a;">🧪 {{ trial_students|length }} {{ 'حصة تجريبية (Essai)' if session.get('lang')=='ar' else 'séance d\'essai' }}</span>
+          {% endif %}
+        </p>
+      </div>
+
+      <!-- Live Counters -->
+      <div class="att-strip-counters" style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.1); padding:6px 14px; border-radius:12px; backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,0.15);">
+        <div style="text-align:center; padding:0 8px;">
+          <div style="font-size:10px; font-weight:700; color:#86efac; text-transform:uppercase;">{{ 'حاضر' if session.get('lang')=='ar' else 'Présents' }}</div>
+          <div id="liveCountPresent" style="font-size:18px; font-weight:900; color:#ffffff;">0</div>
+        </div>
+        <div style="width:1px; height:24px; background:rgba(255,255,255,0.2);"></div>
+        <div style="text-align:center; padding:0 8px;">
+          <div style="font-size:10px; font-weight:700; color:#fca5a5; text-transform:uppercase;">{{ 'غائب' if session.get('lang')=='ar' else 'Absents' }}</div>
+          <div id="liveCountAbsent" style="font-size:18px; font-weight:900; color:#ffffff;">0</div>
+        </div>
+        <div style="width:1px; height:24px; background:rgba(255,255,255,0.2);"></div>
+        <div style="text-align:center; padding:0 8px;">
+          <div style="font-size:10px; font-weight:700; color:#fde68a; text-transform:uppercase;">{{ 'متأخر' if session.get('lang')=='ar' else 'Retards' }}</div>
+          <div id="liveCountLate" style="font-size:18px; font-weight:900; color:#ffffff;">0</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button type="button" onclick="markAllPresent()" class="btn btn-outline" style="background:rgba(255,255,255,0.15); border-color:rgba(255,255,255,0.3); color:#ffffff; font-weight:800; font-size:12.5px; padding:8px 14px; border-radius:10px;" title="Cocher Présent pour tous les élèves">
+          ⚡ {{ 'تحديد الكل حاضر' if session.get('lang')=='ar' else 'Tout marquer Présent' }}
+        </button>
+
+        <button type="submit" class="btn btn-green att-strip-save" style="padding:9px 22px; font-size:13.5px; font-weight:800; border-radius:10px; background:#10b981; border:none; color:#fff; box-shadow:0 4px 14px rgba(16,185,129,0.4);">
+          💾 {{ 'حفظ الغياب' if session.get('lang')=='ar' else 'Enregistrer l\'appel' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- NON-SCHEDULED DAY WARNING BANNER -->
+  {% if course and not course.ui_is_today %}
+  <div class="card mb-3" style="background:#fffbeb; border:1.5px solid #f59e0b; border-radius:14px; padding:12px 18px; display:flex; align-items:center; gap:12px; box-shadow:0 4px 14px rgba(245,158,11,0.12);">
+    <span style="font-size:24px;">⚠️</span>
+    <div>
+      <strong style="color:#b45309; font-size:14px;">
+        {{ 'تنبيه: هذا الفوج غير مبرمج اليوم حسب جدول الحصص الرسمي' if session.get('lang')=='ar' else 'Attention : Cette classe n\'a pas cours aujourd\'hui selon son emploi du temps officiel' }}
+      </strong>
+      <div style="color:#d97706; font-size:12px; margin-top:2px;">
+        {{ 'أيام الحصص المبرمجة: ' ~ course.ui_schedule_label ~ ' — يرجى التأكد قبل تسجيل غياب أو حضور التلاميذ لتفادي أخطاء السجل.' if session.get('lang')=='ar' else 'Jours programmés : ' ~ course.ui_schedule_label ~ ' — Veuillez vérifier avant de pointer pour éviter des absences injustifiées.' }}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- TRIAL COMPLETED ALERT BANNER (IF ANY TRIAL STUDENTS ALREADY TESTED) -->
+  {% set trial_completed_in_class = enrolls|selectattr('status', 'equalto', 'trial')|selectattr('trial_completed')|list %}
+  {% if trial_completed_in_class|length > 0 %}
+  <div class="card mb-3" style="background:linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border:1.5px solid #ea580c; border-radius:14px; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; box-shadow:0 4px 14px rgba(234,88,12,0.12);">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="font-size:24px;">⚠️</span>
+      <div>
+        <strong style="color:#c2410c; font-size:14px;">
+          {{ 'تنبيه إداري : يوجد تلاميذ أجروا الحصة التجريبية الوحيدة' if session.get('lang')=='ar' else 'Alerte : Élève(s) ayant déjà effectué leur unique séance d\'essai (1/1)' }}
+        </strong>
+        <div style="color:#ea580c; font-size:12px;">
+          {{ 'الحصة التجريبية مجانية ومحددة في حصة واحدة فقط. يرجى تأكيد التسجيل النهائي أو تسجيل المغادرة.' if session.get('lang')=='ar' else 'La séance d\'essai est gratuite et strictement limitée à 1 séance. Décision requise : Valider l\'inscription ou Quitter.' }}
+        </div>
+      </div>
+    </div>
+    {% if cur_user and cur_user.role in ['admin', 'secretary'] %}
+    <a href="{{ url_for('enrollments', status='trial') }}" class="btn btn-sm btn-primary" style="background:#ea580c; border-color:#c2410c; font-weight:800; font-size:12px; padding:6px 14px;" target="_blank">
+      ⚡ {{ 'اتخاذ القرار (تأكيد أو مغادرة)' if session.get('lang')=='ar' else 'Valider ou Quitter →' }}
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- VIEW MODE SWITCHER BAR -->
+  <div class="card card-pad mb-3" style="background:#ffffff; border:1.5px solid #e2e8f0; border-radius:14px; padding:12px 18px; box-shadow:0 2px 10px rgba(15,23,42,0.03);">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:12px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px;">
+          📱 {{ 'طريقة تفقّد الحضور :' if session.get('lang')=='ar' else 'Mode d\'appel :' }}
+        </span>
+        <span id="currentModeLabel" style="font-size:12.5px; font-weight:800; color:#0B3D6E;">
+          {{ 'تلميذ بتلميذ (افتراضي)' if session.get('lang')=='ar' else 'Élève par élève (Par défaut)' }}
+        </span>
+      </div>
+
+      <div style="display:inline-flex; background:#f1f5f9; padding:4px; border-radius:12px; border:1px solid #cbd5e1; gap:4px;">
+        <button type="button" id="btnModeStudent" onclick="setAttendanceMode('student', true)" class="btn btn-xs"
+                style="border:none; border-radius:9px; padding:6px 14px; font-weight:800; font-size:12.5px; display:inline-flex; align-items:center; gap:6px; background:#1f6feb; color:#ffffff; box-shadow:0 2px 8px rgba(31,111,235,0.25); cursor:pointer;">
+          <span>👤</span>
+          <span>{{ 'تلميذ بتلميذ' if session.get('lang')=='ar' else 'Élève par élève' }}</span>
+          <span style="background:#10b981; color:#fff; font-size:9.5px; padding:1px 6px; border-radius:10px; font-weight:900;">
+            {{ 'افتراضي' if session.get('lang')=='ar' else 'Par défaut' }}
+          </span>
+        </button>
+        <button type="button" id="btnModeList" onclick="setAttendanceMode('list', true)" class="btn btn-xs"
+                style="border:none; border-radius:9px; padding:6px 14px; font-weight:800; font-size:12.5px; display:inline-flex; align-items:center; gap:6px; background:transparent; color:#475569; box-shadow:none; cursor:pointer;">
+          <span>📋</span>
+          <span>{{ 'لائحة كاملة' if session.get('lang')=='ar' else 'Liste complète' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {% if enrolls %}
+  <!-- ======================================================== -->
+  <!-- 1. STUDENT-BY-STUDENT CARD VIEW (DEFAULT ON PHONES & PC) -->
+  <!-- ======================================================== -->
+  <div id="viewStudentMode" style="display:block;">
+    
+    <!-- PROGRESS BAR & STEP COUNTER -->
+    <div class="card card-pad mb-3" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:12px 18px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:14px; font-weight:800; color:#0B3D6E;" id="studentProgressStep">
+            {{ 'تلميذ' if session.get('lang')=='ar' else 'Élève' }} <span id="currentStudentNum">1</span> / {{ enrolls|length }}
+          </span>
+          <span id="studentProgressPercent" class="badge" style="background:#e0f2fe; color:#0369a1; font-weight:800; font-size:11px; padding:2px 8px; border-radius:10px;">
+            0%
+          </span>
+        </div>
+        <div class="muted" style="font-size:11.5px; font-weight:700;">
+          💡 {{ 'انقر على رقم التلميذ للقفز إليه مباشرة' if session.get('lang')=='ar' else 'Cliquez sur un numéro pour y accéder directement' }}
+        </div>
+      </div>
+
+      <!-- Linear progress bar -->
+      <div style="background:#e2e8f0; height:8px; border-radius:999px; overflow:hidden;">
+        <div id="studentProgressBar" style="height:100%; width:0%; background:linear-gradient(90deg, #10b981 0%, #059669 100%); transition:width 0.25s ease;"></div>
+      </div>
+
+      <!-- Quick horizontal pill scroller -->
+      <div class="student-pill-scroller" style="display:flex; gap:6px; overflow-x:auto; padding:10px 2px 2px 2px; margin-top:8px; scrollbar-width:thin;">
+        {% for e in enrolls %}
+        {% set st = records.get(e.student_id, 'present') %}
+        <button type="button" id="studentNavPill_{{ loop.index0 }}" onclick="jumpToStudentCard({{ loop.index0 }})"
+                class="student-nav-pill" data-sid="{{ e.student_id }}" data-idx="{{ loop.index0 }}"
+                style="flex:0 0 auto; min-width:38px; height:38px; border-radius:10px; font-weight:800; font-size:13px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; border:2px solid {{ '#10b981' if st=='present' else ('#ef4444' if st=='absent' else ('#f59e0b' if st=='late' else '#cbd5e1')) }}; background:{{ '#d1fae5' if st=='present' else ('#fee2e2' if st=='absent' else ('#fef3c7' if st=='late' else '#ffffff')) }}; color:{{ '#047857' if st=='present' else ('#b91c1c' if st=='absent' else ('#b45309' if st=='late' else '#475569')) }};">
+          {{ loop.index }}
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- STUDENT CARDS STACK -->
+    <div id="studentCardsContainer">
+      {% for e in enrolls %}
+      {% set st = records.get(e.student_id, 'present') %}
+      <div class="student-card-item" id="studentCard_{{ loop.index0 }}" data-index="{{ loop.index0 }}" data-sid="{{ e.student_id }}" style="display:{{ 'block' if loop.first else 'none' }};">
+        <div class="card" style="border-radius:18px; border:2px solid #e2e8f0; box-shadow:0 8px 26px rgba(15,23,42,0.06); padding:22px; background:#ffffff; transition:all 0.2s ease;">
+          
+          <!-- Top Row: Student Index & Current Status Badge -->
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid #f1f5f9;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="chip chip-blue" style="font-size:12.5px; font-weight:800; padding:4px 10px;">
+                #{{ loop.index }} / {{ enrolls|length }}
+              </span>
+              <span class="muted" style="font-size:12px; font-weight:700;">
+                {{ 'كود:' if session.get('lang')=='ar' else 'Code :' }} {{ e.student.code or '-' }}
+              </span>
+            </div>
+
+            <!-- Current live status pill -->
+            <div>
+              <span id="studentCardStatusBadge_{{ e.student_id }}" class="status-live-pill"
+                    style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:800; border:1.5px solid {{ '#a7f3d0' if st=='present' else ('#fca5a5' if st=='absent' else '#fde68a') }}; background:{{ '#d1fae5' if st=='present' else ('#fee2e2' if st=='absent' else '#fef3c7') }}; color:{{ '#047857' if st=='present' else ('#b91c1c' if st=='absent' else '#b45309') }};">
+                {% if st == 'present' %}
+                  🟢 {{ 'حاضر' if session.get('lang')=='ar' else 'Présent' }}
+                {% elif st == 'absent' %}
+                  🔴 {{ 'غائب' if session.get('lang')=='ar' else 'Absent' }}
+                {% elif st == 'late' %}
+                  ⚠️ {{ 'متأخر' if session.get('lang')=='ar' else 'En Retard' }}
+                {% else %}
+                  ⚪ {{ 'غير محدد' if session.get('lang')=='ar' else 'Non pointé' }}
+                {% endif %}
+              </span>
+            </div>
+          </div>
+
+          <!-- Main Student Info Row -->
+          {% set binfo = e.attendance_badge_info(d) %}
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:18px;">
+            <div class="avatar" style="width:58px; height:58px; border-radius:16px; font-size:24px; font-weight:900; background:{{ '#b45309' if e.status == 'trial' else ('#dc2626' if binfo.type in ['unpaid', 'expired'] else '#0B3D6E') }}; color:#ffffff; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(11,61,110,0.2); flex-shrink:0;">
+              {{ '🧪' if e.status == 'trial' else ('⚠️' if binfo.type in ['unpaid', 'expired'] else (e.student.first_name[0]|upper if e.student and e.student.first_name else 'S')) }}
+            </div>
+
+            <div style="flex:1; min-width:0;">
+              <h3 style="margin:0 0 5px 0; font-size:21px; font-weight:800; color:#0f172a; word-break:break-word; line-height:1.2;">
+                {{ e.student.full_name }}
+              </h3>
+              
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:800; background:{{ binfo.bg }}; color:{{ binfo.color }}; border:1px solid {{ binfo.border }};">
+                  {{ binfo.ar if session.get('lang')=='ar' else binfo.fr }}
+                </span>
+
+                {% if e.student.age %}
+                  <span class="muted" style="font-size:12px; font-weight:600;">• {{ e.student.age }} {{ 'سنة' if session.get('lang')=='ar' else 'ans' }}</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Contact & Guardian Details -->
+          {% set st_phone = e.student.parent_phone or e.student.phone %}
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px 14px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div style="font-size:12.5px; color:#334155;">
+              <div style="font-weight:700; display:flex; align-items:center; gap:6px;">
+                <span>📱</span>
+                <span>{{ st_phone or ('لا يوجد هاتف' if session.get('lang')=='ar' else 'Pas de téléphone') }}</span>
+              </div>
+              {% if e.student.parent_name %}
+              <div class="muted" style="font-size:11.5px; margin-top:2px;">
+                👤 {{ 'ولي الأمر :' if session.get('lang')=='ar' else 'Tuteur :' }} {{ e.student.parent_name }}
+              </div>
+              {% endif %}
+            </div>
+
+            {% if st_phone %}
+            <div style="display:flex; align-items:center; gap:6px;">
+              <a href="tel:{{ st_phone }}" class="btn btn-xs btn-outline" style="border-radius:8px; font-weight:700; font-size:11px; padding:5px 9px; color:#0284c7; border-color:#bae6fd; background:#fff; display:inline-flex; align-items:center; gap:4px;" title="Appeler">
+                <span>📞</span> <span>{{ 'اتصال' if session.get('lang')=='ar' else 'Appeler' }}</span>
+              </a>
+              {% set clean_phone = st_phone|replace(' ', '')|replace('-', '')|replace('.', '') %}
+              {% set wa_phone = ('212' ~ clean_phone[1:]) if clean_phone.startswith('0') else clean_phone %}
+              <a href="https://wa.me/{{ wa_phone }}" target="_blank" class="btn btn-xs btn-outline" style="border-radius:8px; font-weight:700; font-size:11px; padding:5px 9px; color:#16a34a; border-color:#bbf7d0; background:#fff; display:inline-flex; align-items:center; gap:4px;" title="WhatsApp">
+                <span>💬</span> <span>WhatsApp</span>
+              </a>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- PRIMARY POINTAGE ACTION BUTTONS (BIG & TOUCH FRIENDLY) -->
+          <div style="margin-bottom:16px;">
+            <div style="font-size:11px; font-weight:800; text-transform:uppercase; color:#64748b; letter-spacing:0.6px; margin-bottom:10px; text-align:center;">
+              👇 {{ 'اختر حالة الحضور (ينتقل تلقائياً للتلميذ التالي) :' if session.get('lang')=='ar' else 'Pointer la présence (avance automatique au suivant) :' }}
+            </div>
+            
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:10px;">
+              <!-- 🟢 PRÉSENT -->
+              <button type="button" onclick="recordStudentCardChoice('{{ e.student_id }}', 'present', {{ loop.index0 }})"
+                      class="btn btn-att-choice"
+                      style="min-height:58px; border-radius:14px; border:2px solid #059669; background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:#ffffff; font-weight:900; font-size:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; box-shadow:0 4px 14px rgba(16,185,129,0.32); cursor:pointer; transition:transform 0.12s, box-shadow 0.12s;">
+                <span style="font-size:20px;">🟢</span>
+                <span>{{ 'حاضر' if session.get('lang')=='ar' else 'Présent' }}</span>
+              </button>
+
+              <!-- 🔴 ABSENT -->
+              <button type="button" onclick="recordStudentCardChoice('{{ e.student_id }}', 'absent', {{ loop.index0 }})"
+                      class="btn btn-att-choice"
+                      style="min-height:58px; border-radius:14px; border:2px solid #dc2626; background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color:#ffffff; font-weight:900; font-size:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; box-shadow:0 4px 14px rgba(239,68,68,0.32); cursor:pointer; transition:transform 0.12s, box-shadow 0.12s;">
+                <span style="font-size:20px;">🔴</span>
+                <span>{{ 'غائب' if session.get('lang')=='ar' else 'Absent' }}</span>
+              </button>
+
+              <!-- ⚠️ EN RETARD -->
+              <button type="button" onclick="recordStudentCardChoice('{{ e.student_id }}', 'late', {{ loop.index0 }})"
+                      class="btn btn-att-choice"
+                      style="min-height:58px; border-radius:14px; border:2px solid #d97706; background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color:#ffffff; font-weight:900; font-size:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; box-shadow:0 4px 14px rgba(245,158,11,0.32); cursor:pointer; transition:transform 0.12s, box-shadow 0.12s;">
+                <span style="font-size:20px;">⏱️</span>
+                <span>{{ 'متأخر' if session.get('lang')=='ar' else 'En Retard' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- BOTTOM CONTROLS: PREVIOUS, SKIP (NEXT) -->
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding-top:14px; border-top:1px solid #f1f5f9;">
+            <div>
+              <button type="button" onclick="navigateStudentCard(-1)" class="btn btn-outline"
+                      style="border-radius:10px; font-weight:700; font-size:12.5px; padding:8px 16px; color:#475569; border-color:#cbd5e1; {{ 'visibility:hidden;' if loop.first else '' }}">
+                ◀ {{ 'السابق' if session.get('lang')=='ar' else 'Précédent' }}
+              </button>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:8px;">
+              <!-- SKIP BUTTON -->
+              <button type="button" onclick="navigateStudentCard(1)" class="btn btn-outline"
+                      style="border-radius:10px; font-weight:800; font-size:12.5px; padding:8px 18px; color:#1e293b; border-color:#94a3b8; background:#f8fafc;"
+                      title="Garder l'état actuel et passer au suivant">
+                <span>⏭️ {{ 'تخطي (التالي)' if session.get('lang')=='ar' else 'Passer (Skip) →' }}</span>
+              </button>
+
+              <!-- IMMEDIATE SAVE BUTTON -->
+              <button type="submit" class="btn btn-green" style="border-radius:10px; font-weight:800; font-size:12.5px; padding:8px 16px; background:#10b981; border:none; color:#fff;" title="Enregistrer immédiatement">
+                <span>💾 {{ 'حفظ' if session.get('lang')=='ar' else 'Enregistrer' }}</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- COMPLETION & RECAP SCREEN -->
+    <div id="studentCompletionCard" style="display:none;">
+      <div class="card" style="border-radius:18px; border:2px solid #10b981; box-shadow:0 8px 30px rgba(16,185,129,0.15); padding:28px 24px; background:linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); text-align:center;">
+        <div style="font-size:48px; margin-bottom:10px;">🎉</div>
+        <h3 style="margin:0; font-size:22px; font-weight:900; color:#065f46;">
+          {{ 'اكتمل تفقد الحضور لجميع التلاميذ !' if session.get('lang')=='ar' else 'Appel terminé pour tous les élèves !' }}
+        </h3>
+        <p style="color:#047857; margin:6px 0 20px 0; font-size:13.5px; font-weight:600;">
+          {{ 'تمت مراجعة جميع تلاميذ الفوج بنجاح. يرجى تأكيد وحفظ الورقة أدناه.' if session.get('lang')=='ar' else 'Toutes les présences ont été passées en revue. Enregistrez et validez la séance dès maintenant.' }}
+        </p>
+
+        <!-- KPI SUMMARY TILES -->
+        <div style="display:flex; justify-content:center; gap:12px; margin-bottom:24px; flex-wrap:wrap;">
+          <div style="background:#ffffff; border:1.5px solid #a7f3d0; border-radius:12px; padding:12px 20px; min-width:110px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+            <div style="font-size:11px; font-weight:800; color:#047857; text-transform:uppercase;">{{ 'حاضر' if session.get('lang')=='ar' else 'Présents' }}</div>
+            <div id="summaryCardPresent" style="font-size:26px; font-weight:900; color:#059669;">0</div>
+          </div>
+          <div style="background:#ffffff; border:1.5px solid #fca5a5; border-radius:12px; padding:12px 20px; min-width:110px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+            <div style="font-size:11px; font-weight:800; color:#b91c1c; text-transform:uppercase;">{{ 'غائب' if session.get('lang')=='ar' else 'Absents' }}</div>
+            <div id="summaryCardAbsent" style="font-size:26px; font-weight:900; color:#dc2626;">0</div>
+          </div>
+          <div style="background:#ffffff; border:1.5px solid #fde68a; border-radius:12px; padding:12px 20px; min-width:110px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+            <div style="font-size:11px; font-weight:800; color:#b45309; text-transform:uppercase;">{{ 'متأخر' if session.get('lang')=='ar' else 'Retards' }}</div>
+            <div id="summaryCardLate" style="font-size:26px; font-weight:900; color:#d97706;">0</div>
+          </div>
+        </div>
+
+        <!-- BIG FINAL VALIDATION BUTTON -->
+        <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+          <button type="submit" class="btn btn-green" style="padding:14px 34px; font-size:16px; font-weight:900; border-radius:14px; background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; color:#fff; box-shadow:0 6px 20px rgba(16,185,129,0.4); cursor:pointer;">
+            💾 {{ 'تأكيد وحفظ ورقة الحضور' if session.get('lang')=='ar' else 'Enregistrer et valider l\'appel' }}
+          </button>
+          <button type="button" onclick="jumpToStudentCard(0)" class="btn btn-outline" style="border-radius:12px; padding:12px 20px; font-weight:800; font-size:13px; color:#475569; background:#fff;">
+            🔄 {{ 'مراجعة من البداية' if session.get('lang')=='ar' else 'Revoir depuis le début' }}
+          </button>
+          <button type="button" onclick="setAttendanceMode('list', true)" class="btn btn-outline" style="border-radius:12px; padding:12px 20px; font-weight:800; font-size:13px; color:#1f6feb; border-color:#93c5fd; background:#fff;">
+            📋 {{ 'عرض اللائحة كاملة' if session.get('lang')=='ar' else 'Voir la liste complète' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 2. FULL LIST TABLE VIEW (ALTERNATIVE MODE)               -->
+  <!-- ======================================================== -->
+  <div id="viewListMode" style="display:none;">
+    <div class="card" style="border-radius:16px; overflow:hidden; border:1px solid #e2e8f0; box-shadow:0 4px 16px rgba(0,0,0,0.03);">
+      <div class="table-wrap">
+        <table style="margin:0;">
+          <thead>
+            <tr style="background:#f8fafc; border-bottom:1.5px solid #e2e8f0;">
+              <th style="width:45px; text-align:center;">#</th>
+              <th>{{ 'التلميذ' if session.get('lang')=='ar' else 'Élève' }}</th>
+              <th>{{ 'معلومات التواصل' if session.get('lang')=='ar' else 'Contact & Tuteur' }}</th>
+              <th style="text-align:center; min-width:320px;">{{ 'تسجيل الحضور / الغياب' if session.get('lang')=='ar' else 'Pointage de la Séance' }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in enrolls %}
+            {% set st = records.get(e.student_id, 'present') %}
+            {% set binfo = e.attendance_badge_info(d) %}
+            <tr class="attendance-row" data-sid="{{ e.student_id }}" style="transition:background 0.2s; {{ 'background:#fffbeb;' if e.status == 'trial' else ('background:#fef2f2;' if binfo.type in ['unpaid', 'expired'] else '') }}">
+              <td style="text-align:center; font-weight:700; color:#94a3b8;">
+                {{ loop.index }}
+              </td>
+              
+              <td>
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div class="avatar avatar-sm" style="background:{{ '#b45309' if e.status == 'trial' else ('#dc2626' if binfo.type in ['unpaid', 'expired'] else '#0B3D6E') }}; color:#fff; font-weight:800; width:38px; height:38px; border-radius:10px; font-size:14px;">
+                    {{ '🧪' if e.status == 'trial' else ('⚠️' if binfo.type in ['unpaid', 'expired'] else (e.student.first_name[0]|upper if e.student and e.student.first_name else 'S')) }}
+                  </div>
+                  <div>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                      <strong style="color:#0f172a; font-size:14.5px;">{{ e.student.full_name }}</strong>
+                      <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:800; background:{{ binfo.bg }}; color:{{ binfo.color }}; border:1px solid {{ binfo.border }};">
+                        {{ binfo.ar if session.get('lang')=='ar' else binfo.fr }}
+                      </span>
+                    </div>
+                    <div class="muted" style="font-size:11.5px; margin-top:2px;">
+                      {{ 'كود:' if session.get('lang')=='ar' else 'Code :' }} {{ e.student.code or '-' }}
+                    </div>
+                    {% if e.status == 'trial' and e.trial_completed and cur_user and cur_user.role in ['admin', 'secretary'] %}
+                    <div style="margin-top:4px; display:flex; align-items:center; gap:6px;">
+                      <a href="{{ url_for('enrollments', status='trial') }}" class="btn btn-xs btn-primary" style="background:#10b981; border-color:#10b981; font-size:10.5px; font-weight:800; padding:2px 8px;" target="_blank">
+                        ✅ {{ 'تأكيد التسجيل' if session.get('lang')=='ar' else 'Valider' }}
+                      </a>
+                      <form method="post" action="{{ url_for('enrollment_cancel_trial', eid=e.id) }}" onsubmit="return confirm('{{ 'هل تريد تأكيد مغادرة التلميذ (إلغاء المتابعة)؟' if session.get('lang')=='ar' else 'Confirmer le désistement de l\'élève (quitter) ?' }}');" style="margin:0; display:inline;">
+                        <button type="submit" class="btn btn-xs btn-outline" style="color:#dc2626; border-color:#fca5a5; font-size:10.5px; font-weight:800; padding:2px 8px;">
+                          ❌ {{ 'مغادرة' if session.get('lang')=='ar' else 'Quitter' }}
+                        </button>
+                      </form>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </td>
+
+              <td>
+                <div style="font-size:12px; color:#475569;">
+                  <div>📱 {{ e.student.parent_phone or e.student.phone or ('لا يوجد هاتف' if session.get('lang')=='ar' else 'Pas de téléphone') }}</div>
+                  {% if e.student.parent_name %}
+                  <div class="muted" style="font-size:11px;">👤 {{ e.student.parent_name }}</div>
+                  {% endif %}
+                </div>
+              </td>
+
+              <td>
+                <div class="attendance-toggle-group" style="display:flex; justify-content:center; gap:8px;">
+                  
+                  <!-- PRESENT OPTION -->
+                  <label class="att-pill-label att-pill-present" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:10px; border:1.5px solid #a7f3d0; background:{{ '#d1fae5' if st=='present' else '#f8fafc' }}; font-weight:800; font-size:12.5px; transition:all 0.15s; color:{{ '#047857' if st=='present' else '#64748b' }};">
+                    <input type="radio" name="st_{{ e.student_id }}" value="present" {{ 'checked' if st=='present' }} onchange="onStatusChange(this)" style="width:15px; height:15px; accent-color:#059669; cursor:pointer;">
+                    <span>🟢 {{ 'حاضر' if session.get('lang')=='ar' else 'Présent' }}</span>
+                  </label>
+
+                  <!-- ABSENT OPTION -->
+                  <label class="att-pill-label att-pill-absent" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:10px; border:1.5px solid #fca5a5; background:{{ '#fee2e2' if st=='absent' else '#f8fafc' }}; font-weight:800; font-size:12.5px; transition:all 0.15s; color:{{ '#b91c1c' if st=='absent' else '#64748b' }};">
+                    <input type="radio" name="st_{{ e.student_id }}" value="absent" {{ 'checked' if st=='absent' }} onchange="onStatusChange(this)" style="width:15px; height:15px; accent-color:#dc2626; cursor:pointer;">
+                    <span>🔴 {{ 'غائب' if session.get('lang')=='ar' else 'Absent' }}</span>
+                  </label>
+
+                  <!-- LATE OPTION -->
+                  <label class="att-pill-label att-pill-late" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:10px; border:1.5px solid #fde68a; background:{{ '#fef3c7' if st=='late' else '#f8fafc' }}; font-weight:800; font-size:12.5px; transition:all 0.15s; color:{{ '#b45309' if st=='late' else '#64748b' }};">
+                    <input type="radio" name="st_{{ e.student_id }}" value="late" {{ 'checked' if st=='late' }} onchange="onStatusChange(this)" style="width:15px; height:15px; accent-color:#d97706; cursor:pointer;">
+                    <span>⚠️ {{ 'متأخر' if session.get('lang')=='ar' else 'Retard' }}</span>
+                  </label>
+
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if cur_user and cur_user.role == 'teacher' %}
+    <div style="margin: 14px 0 16px; text-align: center;">
+      <button type="button" onclick="openProposeStudentModal()" class="btn btn-outline" style="border: 2px dashed #86efac; background: #f0fdf4; color: #15803d; font-weight: 800; font-size: 13px; padding: 10px 22px; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 2px 8px rgba(22,163,74,0.08);">
+        <span style="font-size: 16px;">➕</span>
+        <span>{{ 'تلميذ حاضر غير موجود باللائحة ؟ أضفه للإدارة' if session.get('lang')=='ar' else 'Un élève présent n\'est pas dans la liste ? Proposer à l\'administration' }}</span>
+      </button>
+    </div>
+    {% endif %}
+
+    <!-- BOTTOM FLOATING SAVE BAR FOR LIST VIEW -->
+    <div class="att-list-savebar" style="margin-top:16px; display:flex; justify-content:space-between; align-items:center; background:#ffffff; padding:16px 20px; border-radius:14px; border:1.5px solid #e2e8f0; box-shadow:0 4px 14px rgba(0,0,0,0.04);">
+      <div style="font-size:13px; color:#64748b; display:flex; align-items:center; gap:8px;">
+        <span>💡</span>
+        <span>{{ 'يتم إشعار الإدارة فوراً بالتلاميذ الغائبين لإرسال رسائل WhatsApp لأولياء الأمور' if session.get('lang')=='ar' else 'Les absences enregistrées sont automatiquement transmises à l\'administration avec notification WhatsApp.' }}</span>
+      </div>
+
+      <button type="submit" class="btn btn-green" style="padding:11px 28px; font-size:14px; font-weight:800; border-radius:10px; background:#10b981; border:none; color:#fff; box-shadow:0 4px 16px rgba(16,185,129,0.35);">
+        💾 {{ 'تأكيد وحفظ ورقة الحضور' if session.get('lang')=='ar' else 'Enregistrer et valider l\'appel' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- STICKY MOBILE SAVE BAR (phones only) -->
+  <div class="att-save-bar">
+    <div class="att-save-counters">
+      <span class="att-save-chip att-chip-p">🟢 <b id="barCountPresent">0</b></span>
+      <span class="att-save-chip att-chip-a">🔴 <b id="barCountAbsent">0</b></span>
+      <span class="att-save-chip att-chip-l">⏱️ <b id="barCountLate">0</b></span>
+    </div>
+    <div class="att-save-actions">
+      {% if cur_user and cur_user.role == 'teacher' %}
+      <button type="button" class="att-bar-note-btn" onclick="openProposeStudentModal()" title="{{ 'إضافة تلميذ غير مسجل' if session.get('lang')=='ar' else 'Ajouter un élève non listé' }}" aria-label="Ajouter élève" style="background:#f0fdf4; border-color:#86efac; color:#16a34a; font-weight:800;">
+        ➕
+      </button>
+      <button type="button" class="att-bar-note-btn" onclick="openAttNote()" title="{{ 'رسالة للإدارة' if session.get('lang')=='ar' else 'Message à l\'admin' }}" aria-label="Message admin">
+        📝
+      </button>
+      {% endif %}
+      <button type="submit" class="att-save-btn">
+        <span>💾</span> <span>{{ 'حفظ الغياب' if session.get('lang')=='ar' else 'Enregistrer' }}</span>
+      </button>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="card empty" style="padding:48px 24px; text-align:center; border-radius:16px;">
+    <div style="font-size:44px; margin-bottom:10px;">👥</div>
+    <h3 style="margin:0; color:#0B3D6E;">{{ 'لا يوجد أي تلميذ مسجل في هذا الفوج حالياً' if session.get('lang')=='ar' else 'Aucun élève inscrit dans cette classe' }}</h3>
+    <p style="color:#64748b; margin:6px 0 0;">{{ 'يمكنك اقتراح إضافة تلميذ حاضر أو تقوم الإدارة بتسجيله.' if session.get('lang')=='ar' else 'Vous pouvez proposer un élève présent ou attendre que l\'administration finalise l\'inscription.' }}</p>
+    {% if cur_user and cur_user.role == 'teacher' %}
+    <div style="margin-top:16px;">
+      <button type="button" onclick="openProposeStudentModal()" class="btn btn-green" style="background:#16a34a; border-color:#16a34a; font-weight:800; font-size:13px; padding:9px 20px; border-radius:10px;">
+        ➕ {{ 'إضافة تلميذ جديد غير مسجل' if session.get('lang')=='ar' else 'Ajouter un élève non listé' }}
+      </button>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</form>
+
+{% else %}
+<div class="card empty" style="padding:48px 24px; text-align:center; border-radius:16px;">
+  <div style="font-size:52px; margin-bottom:12px;">📚</div>
+  <h3 style="margin:0; color:#0B3D6E; font-size:18px;">{{ 'المرجو اختيار الفوج الدراسي لتسجيل الحضور' if session.get('lang')=='ar' else 'Veuillez sélectionner une classe ci-dessus' }}</h3>
+  <p style="color:#64748b; margin:6px 0 0; font-size:13px;">{{ 'انقر على بطاقة الفصل في الأعلى لعرض ورقة تفقد التلاميذ لهذا اليوم' if session.get('lang')=='ar' else 'Cliquez sur l\'une des cartes de classe ci-dessus pour afficher la feuille d\'appel.' }}</p>
+</div>
+{% endif %}
+
+{% if course and cur_user and cur_user.role == 'teacher' %}
+<style>
+  #attNoteOverlay { position:fixed; inset:0; background:rgba(15,23,42,0.55); z-index:2000; display:flex; align-items:flex-end; justify-content:center; }
+  #attNoteSheet { background:#fff; width:100%; max-width:520px; border-radius:22px 22px 0 0; padding:18px 16px calc(18px + env(safe-area-inset-bottom)); box-shadow:0 -10px 40px rgba(0,0,0,0.3); max-height:92vh; overflow-y:auto; }
+  @media (min-width: 769px) { #attNoteOverlay { align-items:center; } #attNoteSheet { border-radius:22px; } }
+  .att-kind { display:flex; align-items:center; gap:10px; padding:11px 12px; border:2px solid #e2e8f0; border-radius:12px; cursor:pointer; font-weight:700; font-size:13.5px; color:#334155; margin-bottom:8px; }
+  .att-kind input { display:none; }
+  .att-kind.sel { border-color:#1f6feb; background:#eff6ff; color:#1d4ed8; }
+</style>
+<div id="attNoteOverlay" style="{{ '' if request.args.get('saved') else 'display:none;' }}">
+  <div id="attNoteSheet">
+    <div id="attNoteSavedHead" style="text-align:center; margin-bottom:12px; {{ '' if request.args.get('saved') else 'display:none;' }}">
+      <div style="font-size:34px;">✅</div>
+      <div style="font-size:17px; font-weight:900; color:#065f46;">{{ 'تم حفظ الغياب' if session.get('lang')=='ar' else 'Appel enregistré' }}</div>
+      <div style="font-size:12.5px; color:#475569; margin-top:4px; font-weight:700;">
+        🟢 {{ request.args.get('p', 0) }} · 🔴 {{ request.args.get('a', 0) }} · ⏱️ {{ request.args.get('l', 0) }}
+      </div>
+    </div>
+
+    <div id="attNoteFormWrap">
+      <div style="font-size:12px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;">
+        📝 {{ 'ملاحظة للإدارة (اختياري)' if session.get('lang')=='ar' else 'Une remarque pour l\'administration ? (optionnel)' }}
+      </div>
+
+      <label class="att-kind"><input type="radio" name="attKind" value="unregistered"><span>🧑‍🎓 {{ 'تلميذ حاضر وغير مسجل في هذا الفوج' if session.get('lang')=='ar' else 'Élève présent mais non inscrit dans cette classe' }}</span></label>
+      <label class="att-kind"><input type="radio" name="attKind" value="other_class"><span>🔀 {{ 'تلميذ حاضر ومسجل في فوج آخر' if session.get('lang')=='ar' else 'Élève présent, inscrit dans une autre classe' }}</span></label>
+      <label class="att-kind"><input type="radio" name="attKind" value="other"><span>💬 {{ 'ملاحظة أخرى' if session.get('lang')=='ar' else 'Autre remarque' }}</span></label>
+
+      <input type="text" id="attNoteStudent" placeholder="{{ 'اسم التلميذ (إن وجد)' if session.get('lang')=='ar' else 'Nom de l\'élève (si concerné)' }}" style="display:none; width:100%; box-sizing:border-box; padding:11px 12px; border:1.5px solid #cbd5e1; border-radius:12px; font-size:14px; margin-bottom:8px;">
+      <textarea id="attNoteText" rows="3" placeholder="{{ 'اكتب ملاحظتك هنا...' if session.get('lang')=='ar' else 'Écrivez votre message ici...' }}" style="width:100%; box-sizing:border-box; padding:11px 12px; border:1.5px solid #cbd5e1; border-radius:12px; font-size:14px; resize:vertical; margin-bottom:6px;"></textarea>
+      <div id="attNoteErr" style="display:none; color:#dc2626; font-size:12px; font-weight:700; margin-bottom:6px;"></div>
+
+      <div style="display:flex; gap:10px; margin-top:6px;">
+        <button type="button" onclick="closeAttNote()" style="flex:1; padding:13px; border-radius:12px; border:1.5px solid #cbd5e1; background:#f8fafc; font-weight:800; font-size:14px; color:#475569; cursor:pointer;">{{ 'تخطي' if session.get('lang')=='ar' else 'Passer' }}</button>
+        <button type="button" id="attNoteSend" onclick="sendAttNote()" style="flex:1.4; padding:13px; border-radius:12px; border:none; background:#1f6feb; color:#fff; font-weight:900; font-size:14px; cursor:pointer;">📨 {{ 'إرسال للإدارة' if session.get('lang')=='ar' else 'Envoyer à l\'admin' }}</button>
+      </div>
+    </div>
+
+    <div id="attNoteDone" style="display:none; text-align:center; padding:10px 0;">
+      <div style="font-size:30px;">📨</div>
+      <div style="font-weight:900; color:#1d4ed8; margin:4px 0 12px;">{{ 'تم إرسال الملاحظة للإدارة' if session.get('lang')=='ar' else 'Message envoyé à l\'administration' }}</div>
+      <button type="button" onclick="closeAttNote()" style="padding:12px 30px; border-radius:12px; border:none; background:#10b981; color:#fff; font-weight:900; cursor:pointer;">OK</button>
+    </div>
+  </div>
+</div>
+<script>
+  (function() {
+    // Clean the URL so a refresh does not re-open the window
+    try {
+      var u = new URL(window.location.href);
+      ['saved','p','a','l'].forEach(function(k){ u.searchParams.delete(k); });
+      window.history.replaceState({}, '', u.pathname + (u.search || ''));
+    } catch(e) {}
+
+    document.querySelectorAll('.att-kind input').forEach(function(r) {
+      r.addEventListener('change', function() {
+        document.querySelectorAll('.att-kind').forEach(function(l){ l.classList.remove('sel'); });
+        r.closest('.att-kind').classList.add('sel');
+        document.getElementById('attNoteStudent').style.display = (r.value === 'other') ? 'none' : 'block';
+      });
+    });
+  })();
+
+  function closeAttNote() {
+    var o = document.getElementById('attNoteOverlay');
+    if (o) o.style.display = 'none';
+  }
+
+  function openAttNote() {
+    var o = document.getElementById('attNoteOverlay');
+    if (!o) return;
+    // Reset the form each time it is opened
+    document.getElementById('attNoteFormWrap').style.display = 'block';
+    document.getElementById('attNoteDone').style.display = 'none';
+    document.getElementById('attNoteText').value = '';
+    document.getElementById('attNoteStudent').value = '';
+    document.getElementById('attNoteStudent').style.display = 'none';
+    document.getElementById('attNoteErr').style.display = 'none';
+    var s = document.getElementById('attNoteSend');
+    if (s) { s.disabled = false; s.style.opacity = '1'; }
+    document.querySelectorAll('.att-kind').forEach(function(l){ l.classList.remove('sel'); });
+    document.querySelectorAll('input[name="attKind"]').forEach(function(r){ r.checked = false; });
+    var h = document.getElementById('attNoteSavedHead');
+    if (h) h.style.display = 'none';
+    o.style.display = 'flex';
+  }
+
+  function sendAttNote() {
+    var kindEl = document.querySelector('input[name="attKind"]:checked');
+    var kind = kindEl ? kindEl.value : 'other';
+    var text = document.getElementById('attNoteText').value.trim();
+    var stu = document.getElementById('attNoteStudent').value.trim();
+    var err = document.getElementById('attNoteErr');
+    if (!text && !stu) {
+      err.innerText = '{{ "المرجو كتابة ملاحظة أو اسم التلميذ" if session.get("lang")=="ar" else "Veuillez écrire un message ou le nom de l’élève." }}';
+      err.style.display = 'block';
+      return;
+    }
+    err.style.display = 'none';
+    var btn = document.getElementById('attNoteSend');
+    btn.disabled = true; btn.style.opacity = '0.6';
+    var fd = new FormData();
+    fd.append('course_id', '{{ course.id }}');
+    fd.append('date', '{{ d }}');
+    fd.append('kind', kind);
+    fd.append('text', text);
+    fd.append('student_name', stu);
+    fetch('{{ url_for("attendance_note") }}', { method: 'POST', body: fd, credentials: 'same-origin' })
+      .then(function(r){ return r.json(); })
+      .then(function(j) {
+        if (j && j.success) {
+          document.getElementById('attNoteFormWrap').style.display = 'none';
+          document.getElementById('attNoteDone').style.display = 'block';
+        } else {
+          err.innerText = (j && j.error) || 'Erreur';
+          err.style.display = 'block';
+          btn.disabled = false; btn.style.opacity = '1';
+        }
+      })
+      .catch(function() {
+        err.innerText = 'Erreur réseau, réessayez.';
+        err.style.display = 'block';
+        btn.disabled = false; btn.style.opacity = '1';
+      });
+  }
+</script>
+{% endif %}
+
+<!-- ============================================================ -->
+<!-- MODAL / BOTTOM SHEET : PROPOSER UN NOUVEL ELEVE (PROFESSEUR) -->
+<!-- ============================================================ -->
+{% if cur_user and cur_user.role == 'teacher' %}
+<style>
+  #proposeStudentOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    z-index: 99999;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  #proposeStudentSheet {
+    background: #ffffff;
+    width: 100%;
+    max-width: 520px;
+    border-radius: 24px 24px 0 0;
+    padding: 20px 20px calc(24px + env(safe-area-inset-bottom));
+    box-shadow: 0 -12px 48px rgba(0,0,0,0.3);
+    max-height: 92vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+  @media (min-width: 769px) {
+    #proposeStudentOverlay {
+      align-items: center !important;
+      padding: 16px;
+    }
+    #proposeStudentSheet {
+      border-radius: 22px !important;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35) !important;
+    }
+  }
+</style>
+
+<div id="proposeStudentOverlay">
+  <div id="proposeStudentSheet">
+    
+    <!-- Top Header -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid #f1f5f9; padding-bottom:12px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:38px; height:38px; border-radius:10px; background:#dcfce7; color:#15803d; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800;">
+          ➕
+        </div>
+        <div>
+          <h4 style="margin:0; font-size:16px; font-weight:800; color:#0B3D6E;">
+            {{ 'إضافة تلميذ غير مسجل' if session.get('lang')=='ar' else 'Ajouter un élève non listé' }}
+          </h4>
+          <p style="margin:2px 0 0; font-size:12px; color:#64748b;">
+            {{ 'يُطلب فقط الاسم والمستوى الدراسي (المصادقة من الإدارة)' if session.get('lang')=='ar' else 'Nom & Niveau scolaire requis · Validation administrative' }}
+          </p>
+        </div>
+      </div>
+      <button type="button" onclick="closeProposeStudentModal()" style="background:none; border:none; font-size:22px; color:#94a3b8; cursor:pointer; line-height:1;" aria-label="Fermer">✕</button>
+    </div>
+
+    <!-- Active Course Info -->
+    {% if course %}
+    <div style="background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:10px; padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; gap:10px;">
+      <span style="font-size:18px;">📚</span>
+      <div style="font-size:12.5px; color:#1e40af; font-weight:700;">
+        <span>{{ 'الفوج الحالي :' if session.get('lang')=='ar' else 'Classe actuelle :' }}</span> 
+        <strong style="color:#0B3D6E;">{{ course.display_name }}</strong>
+      </div>
+    </div>
+    {% endif %}
+
+    <div id="propFormWrap">
+      <form id="proposeStudentForm" onsubmit="submitProposeStudent(event)">
+        <input type="hidden" name="course_id" id="propHiddenCourseId" value="{{ course.id if course else '' }}">
+
+        {% if not course and courses %}
+        <div class="field" style="margin-bottom:14px;">
+          <label style="display:block; font-size:12px; font-weight:800; color:#334155; margin-bottom:4px;">
+            📚 {{ 'الفوج أو القسم المعني' if session.get('lang')=='ar' else 'Classe concernée' }} <span style="color:#ef4444;">*</span>
+          </label>
+          <select name="course_id" id="propSelectCourseId" style="width:100%; border:1.5px solid #cbd5e1; border-radius:10px; padding:9px 12px; font-size:13px; font-weight:600;" required>
+            <option value="">{{ '-- اختر الفصل --' if session.get('lang')=='ar' else '-- Sélectionner une classe --' }}</option>
+            {% for c in courses %}
+            <option value="{{ c.id }}">{{ c.display_name }} ({{ c.level }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        <!-- 1. FULL NAME -->
+        <div class="field" style="margin-bottom:14px;">
+          <label style="display:block; font-size:12px; font-weight:800; color:#334155; margin-bottom:4px;">
+            👤 {{ 'الاسم والنسب الكامل للتلميذ' if session.get('lang')=='ar' else 'Nom & Prénom de l\'élève' }} <span style="color:#ef4444;">*</span>
+          </label>
+          <input type="text" name="full_name" id="propFullName" required placeholder="{{ 'مثال: كريم العلمي' if session.get('lang')=='ar' else 'Ex : Amine Nakkach' }}" style="width:100%; box-sizing:border-box; border:1.5px solid #cbd5e1; border-radius:10px; padding:10px 14px; font-size:14px; font-weight:700;">
+        </div>
+
+        <!-- 2. SCHOOL LEVEL -->
+        <div class="field" style="margin-bottom:14px;">
+          <label style="display:block; font-size:12px; font-weight:800; color:#334155; margin-bottom:4px;">
+            🎓 {{ 'المستوى الدراسي' if session.get('lang')=='ar' else 'Niveau Scolaire' }} <span style="color:#ef4444;">*</span>
+          </label>
+          <select name="school_level" id="propSchoolLevel" required style="width:100%; box-sizing:border-box; border:1.5px solid #cbd5e1; border-radius:10px; padding:10px 14px; font-size:13.5px; font-weight:600;">
+            <option value="">{{ '-- اختر المستوى الدراسي --' if session.get('lang')=='ar' else '-- Sélectionner le Niveau Scolaire --' }}</option>
+            
+            <optgroup label="── Enseignement Primaire (التعليم الابتدائي) ──">
+              <option value="1ère AEP">1ère AEP (الأول ابتدائي)</option>
+              <option value="2ème AEP">2ème AEP (الثاني ابتدائي)</option>
+              <option value="3ème AEP">3ème AEP (الثالث ابتدائي)</option>
+              <option value="4ème AEP">4ème AEP (الرابع ابتدائي)</option>
+              <option value="5ème AEP">5ème AEP (الخامس ابتدائي)</option>
+              <option value="6ème AEP">6ème AEP (السادس ابتدائي - شهادة)</option>
+            </optgroup>
+
+            <optgroup label="── Enseignement Collégial (التعليم الإعدادي) ──">
+              <option value="Collège">Collège (Général) (الإعدادي)</option>
+              <option value="1AC">1AC (الأولى إعدادي)</option>
+              <option value="2AC">2AC (الثانية إعدادي)</option>
+              <option value="3AC">3AC (الثالثة إعدادي - شهادة)</option>
+            </optgroup>
+
+            <optgroup label="── Enseignement Qualifiant / Lycée (الثانوي التأهيلي) ──">
+              <option value="Tronc Commun">Tronc Commun (الجدع المشترك - TC)</option>
+              <option value="1Bac">1Bac (الأولى باكالوريا - جهوي)</option>
+              <option value="2Bac">2Bac (الثانية باكالوريا - وطني)</option>
+            </optgroup>
+
+            <optgroup label="── Enseignement Supérieur & Adultes (التعليم العالي والكبار) ──">
+              <option value="Supérieur">Supérieur / Université (جامعي / كليات)</option>
+              <option value="BTS / EST / CPGE">BTS / EST / CPGE (أقسام تحضيرية / تقني)</option>
+              <option value="Formation Professionnelle">Formation Professionnelle (تكوين مهني / OFPPT)</option>
+              <option value="Adulte">Adulte / Professionnel (كبار ولغات)</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- Optional Phone & Notes (subtle collapsible) -->
+        <div style="margin-bottom:14px;">
+          <details style="font-size:12px; color:#64748b; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:8px 12px;">
+            <summary style="font-weight:700; cursor:pointer; color:#475569;">
+              ➕ {{ 'معلومات إضافية (اختيارية: هاتف، ملاحظة)' if session.get('lang')=='ar' else 'Informations complémentaires (facultatif : tél, note)' }}
+            </summary>
+            <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+              <input type="tel" name="phone" id="propPhone" placeholder="{{ 'رقم الهاتف / واتساب (اختياري)' if session.get('lang')=='ar' else 'Numéro Tél / WhatsApp (facultatif)' }}" style="width:100%; box-sizing:border-box; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; font-size:13px;">
+              <input type="text" name="notes" id="propNotes" placeholder="{{ 'ملاحظة للإدارة (اختياري)' if session.get('lang')=='ar' else 'Remarque pour l\'administration (facultatif)' }}" style="width:100%; box-sizing:border-box; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; font-size:13px;">
+            </div>
+          </details>
+        </div>
+
+        <div id="propErrorBox" style="display:none; color:#dc2626; font-size:12.5px; font-weight:700; margin-bottom:12px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:8px 12px;"></div>
+
+        <!-- Action Buttons -->
+        <div style="display:flex; gap:10px; margin-top:16px;">
+          <button type="button" onclick="closeProposeStudentModal()" style="flex:1; padding:12px; border-radius:12px; border:1.5px solid #cbd5e1; background:#f8fafc; font-weight:800; font-size:13.5px; color:#475569; cursor:pointer;">
+            {{ 'إلغاء' if session.get('lang')=='ar' else 'Annuler' }}
+          </button>
+          <button type="submit" id="propSubmitBtn" style="flex:1.6; padding:12px; border-radius:12px; border:none; background:#16a34a; color:#fff; font-weight:900; font-size:13.5px; cursor:pointer; box-shadow:0 4px 14px rgba(22,163,74,0.3); display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+            <span>📨</span>
+            <span>{{ 'إرسال للإدارة' if session.get('lang')=='ar' else 'Transmettre à l\'admin' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Done view -->
+    <div id="propDoneWrap" style="display:none; text-align:center; padding:16px 0;">
+      <div style="font-size:42px; margin-bottom:8px;">✅</div>
+      <h3 style="margin:0; font-size:17px; font-weight:900; color:#15803d;" id="propDoneTitle">
+        {{ 'تم إرسال الطلب بنجاح !' if session.get('lang')=='ar' else 'Demande transmise avec succès !' }}
+      </h3>
+      <p style="margin:6px 0 16px; font-size:13px; color:#475569;">
+        {{ 'تم إشعار إدارة المعهد وستقوم بتأكيد التسجيل رسمياً.' if session.get('lang')=='ar' else 'L\'administration a été notifiée et validera l\'inscription officielle.' }}
+      </p>
+      <div style="display:flex; gap:10px; justify-content:center;">
+        <button type="button" onclick="resetAndAddAnotherStudent()" class="btn btn-outline" style="border-color:#16a34a; color:#15803d; font-weight:800; font-size:12.5px; border-radius:10px; padding:8px 16px;">
+          ➕ {{ 'إضافة تلميذ آخر' if session.get('lang')=='ar' else 'Ajouter un autre élève' }}
+        </button>
+        <button type="button" onclick="closeProposeStudentModal()" class="btn btn-primary" style="background:#0B3D6E; border:none; font-weight:800; font-size:12.5px; border-radius:10px; padding:8px 20px;">
+          OK
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function openProposeStudentModal() {
+    var o = document.getElementById('proposeStudentOverlay');
+    if (!o) return;
+    document.getElementById('propFormWrap').style.display = 'block';
+    document.getElementById('propDoneWrap').style.display = 'none';
+    document.getElementById('propErrorBox').style.display = 'none';
+    document.getElementById('propFullName').value = '';
+    document.getElementById('propSchoolLevel').selectedIndex = 0;
+    var phoneEl = document.getElementById('propPhone');
+    if (phoneEl) phoneEl.value = '';
+    var notesEl = document.getElementById('propNotes');
+    if (notesEl) notesEl.value = '';
+    var btn = document.getElementById('propSubmitBtn');
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    o.style.display = 'flex';
+    setTimeout(function() {
+      var fn = document.getElementById('propFullName');
+      if (fn) fn.focus();
+    }, 100);
+  }
+
+  function closeProposeStudentModal() {
+    var o = document.getElementById('proposeStudentOverlay');
+    if (o) o.style.display = 'none';
+  }
+
+  function resetAndAddAnotherStudent() {
+    document.getElementById('propFormWrap').style.display = 'block';
+    document.getElementById('propDoneWrap').style.display = 'none';
+    document.getElementById('propErrorBox').style.display = 'none';
+    document.getElementById('propFullName').value = '';
+    document.getElementById('propSchoolLevel').selectedIndex = 0;
+    var btn = document.getElementById('propSubmitBtn');
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    var fn = document.getElementById('propFullName');
+    if (fn) fn.focus();
+  }
+
+  function submitProposeStudent(e) {
+    e.preventDefault();
+    var fn = document.getElementById('propFullName').value.trim();
+    var lvl = document.getElementById('propSchoolLevel').value.trim();
+    var cid = document.getElementById('propHiddenCourseId') ? document.getElementById('propHiddenCourseId').value : '';
+    if (!cid) {
+      var selC = document.getElementById('propSelectCourseId');
+      if (selC) cid = selC.value;
+    }
+    var phone = document.getElementById('propPhone') ? document.getElementById('propPhone').value.trim() : '';
+    var notes = document.getElementById('propNotes') ? document.getElementById('propNotes').value.trim() : '';
+    var errBox = document.getElementById('propErrorBox');
+
+    if (!fn) {
+      errBox.innerText = "{{ 'المرجو إدخال الاسم الكامل للتلميذ' if session.get('lang')=='ar' else 'Veuillez saisir le nom complet de l\'élève.' }}";
+      errBox.style.display = 'block';
+      return;
+    }
+    if (!lvl) {
+      errBox.innerText = "{{ 'المرجو اختيار المستوى الدراسي' if session.get('lang')=='ar' else 'Veuillez sélectionner le niveau scolaire.' }}";
+      errBox.style.display = 'block';
+      return;
+    }
+
+    errBox.style.display = 'none';
+    var btn = document.getElementById('propSubmitBtn');
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+
+    var fd = new FormData();
+    fd.append('full_name', fn);
+    fd.append('school_level', lvl);
+    if (cid) fd.append('course_id', cid);
+    if (phone) fd.append('phone', phone);
+    if (notes) fd.append('notes', notes);
+
+    fetch('{{ url_for("attendance_propose_student") }}', {
+      method: 'POST',
+      body: fd,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin'
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data && data.success) {
+        document.getElementById('propFormWrap').style.display = 'none';
+        document.getElementById('propDoneWrap').style.display = 'block';
+      } else {
+        errBox.innerText = (data && data.error) ? data.error : "{{ 'حدث خطأ، يرجى المحاولة ثانية' if session.get('lang')=='ar' else 'Une erreur est survenue.' }}";
+        errBox.style.display = 'block';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }
+    })
+    .catch(function() {
+      errBox.innerText = "{{ 'خطأ في الاتصال، يرجى المحاولة ثانية' if session.get('lang')=='ar' else 'Erreur de connexion. Veuillez réessayer.' }}";
+      errBox.style.display = 'block';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    });
+  }
+
+  // Close when clicking overlay backdrop
+  document.addEventListener('DOMContentLoaded', function() {
+    var ov = document.getElementById('proposeStudentOverlay');
+    if (ov) {
+      ov.addEventListener('click', function(e) {
+        if (e.target === this) {
+          closeProposeStudentModal();
+        }
+      });
+    }
+  });
+</script>
+{% endif %}
+
+<!-- INTERACTIVE SCRIPTS -->
+<script>
+  var currentStudentIdx = 0;
+  var totalStudents = {{ enrolls|length if enrolls else 0 }};
+
+  function filterByTeacher(tid) {
+    var hiddenT = document.getElementById('hiddenTeacherId');
+    if (hiddenT) hiddenT.value = tid;
+    var hiddenC = document.getElementById('hiddenCourseId');
+    if (hiddenC) hiddenC.value = '';
+    var f = document.getElementById('attendanceFilterForm');
+    if (f) f.submit();
+  }
+
+  function selectCourse(cid) {
+    var hidden = document.getElementById('hiddenCourseId');
+    if (hidden) hidden.value = cid;
+    var directSel = document.getElementById('courseDirectSelect');
+    if (directSel) directSel.value = cid;
+    var f = document.getElementById('attendanceFilterForm');
+    if (f) f.submit();
+  }
+
+  function openGroupPickerModal() {
+    var m = document.getElementById('attGroupModalBackdrop');
+    if (m) {
+      m.style.display = 'flex';
+      var inp = document.getElementById('modalGroupSearchInput');
+      if (inp) {
+        inp.value = '';
+        filterModalGroups();
+        setTimeout(function(){ inp.focus(); }, 120);
+      }
+    }
+  }
+
+  function closeGroupPickerModal(e) {
+    if (e && e.target && e.target.id !== 'attGroupModalBackdrop' && !e.target.closest('button')) return;
+    var m = document.getElementById('attGroupModalBackdrop');
+    if (m) m.style.display = 'none';
+  }
+
+  function filterModalGroups() {
+    var inp = document.getElementById('modalGroupSearchInput');
+    var q = (inp ? inp.value : '').toLowerCase().trim();
+    var items = document.querySelectorAll('.modal-group-item');
+    items.forEach(function(it) {
+      var name = it.getAttribute('data-name') || '';
+      it.style.display = (!q || name.indexOf(q) !== -1) ? 'flex' : 'none';
+    });
+  }
+
+  function toggleClassCardsGrid() {
+    var g = document.getElementById('classCardsGrid');
+    var ico = document.getElementById('btnToggleClassGridIcon');
+    var txt = document.getElementById('btnToggleClassGridText');
+    if (!g) return;
+    var isHidden = (g.style.display === 'none' || !g.style.display);
+    if (isHidden) {
+      g.style.display = 'block';
+      if (ico) ico.innerText = '✕';
+      if (txt) txt.innerText = '{{ "إخفاء" if session.get("lang")=="ar" else "Masquer" }}';
+    } else {
+      g.style.display = 'none';
+      if (ico) ico.innerText = '▦';
+      if (txt) txt.innerText = '{{ "شبكة الأفواج" if session.get("lang")=="ar" else "Grille" }}';
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      var m = document.getElementById('attGroupModalBackdrop');
+      if (m && m.style.display === 'flex') m.style.display = 'none';
+    }
+  });
+
+  function setQuickDate(dt) {
+    document.getElementById('attendanceDateInput').value = dt;
+    document.getElementById('attendanceFilterForm').submit();
+  }
+
+  function filterClassCards() {
+    var q = (document.getElementById('classSearchInput').value || '').toLowerCase().trim();
+    var cards = document.querySelectorAll('.class-pick-card');
+    cards.forEach(function(c) {
+      var name = c.getAttribute('data-name') || '';
+      c.style.display = (!q || name.indexOf(q) !== -1) ? 'block' : 'none';
+    });
+  }
+
+  /* VIEW MODE SWITCHER */
+  function setAttendanceMode(mode, fromUser) {
+    if (fromUser) localStorage.setItem('ilas_att_user_choice', mode);
+    var studentView = document.getElementById('viewStudentMode');
+    var listView = document.getElementById('viewListMode');
+    var btnStudent = document.getElementById('btnModeStudent');
+    var btnList = document.getElementById('btnModeList');
+    var modeLabel = document.getElementById('currentModeLabel');
+
+    if (mode === 'list') {
+      if (studentView) studentView.style.display = 'none';
+      if (listView) listView.style.display = 'block';
+      if (btnStudent) {
+        btnStudent.style.background = 'transparent';
+        btnStudent.style.color = '#475569';
+        btnStudent.style.boxShadow = 'none';
+      }
+      if (btnList) {
+        btnList.style.background = '#1f6feb';
+        btnList.style.color = '#ffffff';
+        btnList.style.boxShadow = '0 2px 8px rgba(31,111,235,0.25)';
+      }
+      if (modeLabel) modeLabel.innerText = '{{ "لائحة كاملة (جدول)" if session.get("lang")=="ar" else "Liste complète (Tableau)" }}';
+      localStorage.setItem('ilas_attendance_view_mode', 'list');
+    } else {
+      // Student-by-student (default)
+      if (studentView) studentView.style.display = 'block';
+      if (listView) listView.style.display = 'none';
+      if (btnStudent) {
+        btnStudent.style.background = '#1f6feb';
+        btnStudent.style.color = '#ffffff';
+        btnStudent.style.boxShadow = '0 2px 8px rgba(31,111,235,0.25)';
+      }
+      if (btnList) {
+        btnList.style.background = 'transparent';
+        btnList.style.color = '#475569';
+        btnList.style.boxShadow = 'none';
+      }
+      if (modeLabel) modeLabel.innerText = '{{ "تلميذ بتلميذ (افتراضي)" if session.get("lang")=="ar" else "Élève par élève (Par défaut)" }}';
+      localStorage.setItem('ilas_attendance_view_mode', 'student');
+      jumpToStudentCard(currentStudentIdx);
+    }
+  }
+
+  /* STUDENT-BY-STUDENT NAVIGATION & RECORDING */
+  function jumpToStudentCard(idx) {
+    if (totalStudents === 0) return;
+    if (idx < 0) idx = 0;
+    
+    var completionCard = document.getElementById('studentCompletionCard');
+    
+    if (idx >= totalStudents) {
+      // Completed all students -> Show completion screen
+      for (var i = 0; i < totalStudents; i++) {
+        var c = document.getElementById('studentCard_' + i);
+        if (c) c.style.display = 'none';
+      }
+      if (completionCard) {
+        completionCard.style.display = 'block';
+        updateSummaryScreen();
+      }
+      currentStudentIdx = totalStudents;
+      updateProgressUI();
+      return;
+    }
+
+    // Show card idx
+    if (completionCard) completionCard.style.display = 'none';
+    for (var i = 0; i < totalStudents; i++) {
+      var c = document.getElementById('studentCard_' + i);
+      if (c) c.style.display = (i === idx) ? 'block' : 'none';
+    }
+    currentStudentIdx = idx;
+    updateProgressUI();
+
+    // Scroll active nav pill smoothly
+    var activePill = document.getElementById('studentNavPill_' + idx);
+    if (activePill && activePill.scrollIntoView) {
+      activePill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }
+
+  function navigateStudentCard(delta) {
+    jumpToStudentCard(currentStudentIdx + delta);
+  }
+
+  function recordStudentCardChoice(sid, status, studentIdx) {
+    // 1. Check the underlying form radio input
+    var radio = document.querySelector('input[type="radio"][name="st_' + sid + '"][value="' + status + '"]');
+    if (radio) {
+      radio.checked = true;
+      onStatusChange(radio);
+    } else {
+      updateStudentCardUI(sid, status);
+      updateLiveCounters();
+    }
+
+    // 2. Visual snappy transition to next student
+    var currentCard = document.getElementById('studentCard_' + studentIdx);
+    if (currentCard) {
+      currentCard.style.transform = 'scale(0.98)';
+      currentCard.style.opacity = '0.75';
+      setTimeout(function() {
+        currentCard.style.transform = 'none';
+        currentCard.style.opacity = '1';
+        navigateStudentCard(1);
+      }, 140);
+    } else {
+      navigateStudentCard(1);
+    }
+  }
+
+  function updateStudentCardUI(sid, status) {
+    // Badge on the student card
+    var badge = document.getElementById('studentCardStatusBadge_' + sid);
+    if (badge) {
+      if (status === 'present') {
+        badge.style.background = '#d1fae5';
+        badge.style.color = '#047857';
+        badge.style.borderColor = '#a7f3d0';
+        badge.innerHTML = '🟢 {{ "حاضر" if session.get("lang")=="ar" else "Présent" }}';
+      } else if (status === 'absent') {
+        badge.style.background = '#fee2e2';
+        badge.style.color = '#b91c1c';
+        badge.style.borderColor = '#fca5a5';
+        badge.innerHTML = '🔴 {{ "غائب" if session.get("lang")=="ar" else "Absent" }}';
+      } else if (status === 'late') {
+        badge.style.background = '#fef3c7';
+        badge.style.color = '#b45309';
+        badge.style.borderColor = '#fde68a';
+        badge.innerHTML = '⚠️ {{ "متأخر" if session.get("lang")=="ar" else "En Retard" }}';
+      }
+    }
+
+    // Pill in quick scroller
+    var pill = document.querySelector('.student-nav-pill[data-sid="' + sid + '"]');
+    if (pill) {
+      if (status === 'present') {
+        pill.style.background = '#d1fae5';
+        pill.style.color = '#047857';
+        pill.style.borderColor = '#10b981';
+      } else if (status === 'absent') {
+        pill.style.background = '#fee2e2';
+        pill.style.color = '#b91c1c';
+        pill.style.borderColor = '#ef4444';
+      } else if (status === 'late') {
+        pill.style.background = '#fef3c7';
+        pill.style.color = '#b45309';
+        pill.style.borderColor = '#f59e0b';
+      }
+    }
+  }
+
+  function updateProgressUI() {
+    if (totalStudents === 0) return;
+    var displayedNum = Math.min(currentStudentIdx + 1, totalStudents);
+    var numEl = document.getElementById('currentStudentNum');
+    if (numEl) numEl.innerText = displayedNum;
+
+    var pct = Math.round((displayedNum / totalStudents) * 100);
+    var pctEl = document.getElementById('studentProgressPercent');
+    if (pctEl) pctEl.innerText = pct + '%';
+
+    var barEl = document.getElementById('studentProgressBar');
+    if (barEl) barEl.style.width = pct + '%';
+
+    // Highlight current active nav pill
+    for (var i = 0; i < totalStudents; i++) {
+      var p = document.getElementById('studentNavPill_' + i);
+      if (p) {
+        if (i === currentStudentIdx) {
+          p.style.boxShadow = '0 0 0 3px #1f6feb, 0 4px 10px rgba(31,111,235,0.3)';
+          p.style.transform = 'scale(1.1)';
+          p.style.zIndex = '2';
+        } else {
+          p.style.boxShadow = 'none';
+          p.style.transform = 'none';
+          p.style.zIndex = '1';
+        }
+      }
+    }
+  }
+
+  function updateSummaryScreen() {
+    var pCount = document.querySelectorAll('input[type="radio"][value="present"]:checked').length;
+    var aCount = document.querySelectorAll('input[type="radio"][value="absent"]:checked').length;
+    var lCount = document.querySelectorAll('input[type="radio"][value="late"]:checked').length;
+
+    var sP = document.getElementById('summaryCardPresent');
+    var sA = document.getElementById('summaryCardAbsent');
+    var sL = document.getElementById('summaryCardLate');
+
+    if (sP) sP.innerText = pCount;
+    if (sA) sA.innerText = aCount;
+    if (sL) sL.innerText = lCount;
+  }
+
+  /* LIST VIEW ROW SYNC */
+  function onStatusChange(radio) {
+    var sid = radio.name.replace('st_', '');
+    var row = document.querySelector('tr.attendance-row[data-sid="' + sid + '"]');
+    if (row) {
+      var pills = row.querySelectorAll('.att-pill-label');
+      pills.forEach(function(p) {
+        var r = p.querySelector('input[type="radio"]');
+        if (r && r.checked) {
+          if (r.value === 'present') {
+            p.style.background = '#d1fae5';
+            p.style.color = '#047857';
+            p.style.borderColor = '#a7f3d0';
+          } else if (r.value === 'absent') {
+            p.style.background = '#fee2e2';
+            p.style.color = '#b91c1c';
+            p.style.borderColor = '#fca5a5';
+          } else if (r.value === 'late') {
+            p.style.background = '#fef3c7';
+            p.style.color = '#b45309';
+            p.style.borderColor = '#fde68a';
+          }
+        } else {
+          p.style.background = '#f8fafc';
+          p.style.color = '#64748b';
+        }
+      });
+    }
+
+    // Sync card UI as well
+    updateStudentCardUI(sid, radio.value);
+
+    updateLiveCounters();
+    updateSummaryScreen();
+  }
+
+  function markAllPresent() {
+    var presentRadios = document.querySelectorAll('input[type="radio"][value="present"]');
+    presentRadios.forEach(function(r) {
+      r.checked = true;
+      var sid = r.name.replace('st_', '');
+      updateStudentCardUI(sid, 'present');
+      
+      var row = r.closest('tr');
+      if (row) {
+        var pills = row.querySelectorAll('.att-pill-label');
+        pills.forEach(function(p) {
+          var input = p.querySelector('input[type="radio"]');
+          if (input && input.value === 'present') {
+            p.style.background = '#d1fae5';
+            p.style.color = '#047857';
+            p.style.borderColor = '#a7f3d0';
+          } else {
+            p.style.background = '#f8fafc';
+            p.style.color = '#64748b';
+          }
+        });
+      }
+    });
+    updateLiveCounters();
+    updateSummaryScreen();
+  }
+
+  function updateLiveCounters() {
+    var pCount = document.querySelectorAll('input[type="radio"][value="present"]:checked').length;
+    var aCount = document.querySelectorAll('input[type="radio"][value="absent"]:checked').length;
+    var lCount = document.querySelectorAll('input[type="radio"][value="late"]:checked').length;
+
+    var elP = document.getElementById('liveCountPresent');
+    var elA = document.getElementById('liveCountAbsent');
+    var elL = document.getElementById('liveCountLate');
+
+    if (elP) elP.innerText = pCount;
+    if (elA) elA.innerText = aCount;
+    if (elL) elL.innerText = lCount;
+
+    var bP = document.getElementById('barCountPresent');
+    var bA = document.getElementById('barCountAbsent');
+    var bL = document.getElementById('barCountLate');
+    if (bP) bP.innerText = pCount;
+    if (bA) bA.innerText = aCount;
+    if (bL) bL.innerText = lCount;
+  }
+
+  /* KEYBOARD SHORTCUTS FOR FASTER ROLL CALL */
+  document.addEventListener('keydown', function(e) {
+    var studentView = document.getElementById('viewStudentMode');
+    if (!studentView || studentView.style.display === 'none') return;
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+
+    var currentCard = document.getElementById('studentCard_' + currentStudentIdx);
+    if (!currentCard) return;
+    var sid = currentCard.getAttribute('data-sid');
+    if (!sid) return;
+
+    if (e.key === 'p' || e.key === 'P' || e.key === '1') {
+      recordStudentCardChoice(sid, 'present', currentStudentIdx);
+    } else if (e.key === 'a' || e.key === 'A' || e.key === '2') {
+      recordStudentCardChoice(sid, 'absent', currentStudentIdx);
+    } else if (e.key === 'r' || e.key === 'R' || e.key === '3') {
+      recordStudentCardChoice(sid, 'late', currentStudentIdx);
+    } else if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 's' || e.key === 'S') {
+      e.preventDefault();
+      navigateStudentCard(1);
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      navigateStudentCard(-1);
+    }
+  });
+
+  /* INITIALIZATION */
+  document.addEventListener('DOMContentLoaded', function() {
+    updateLiveCounters();
+    
+    // Sync all student cards with their initial radios
+    var checkedRadios = document.querySelectorAll('input[type="radio"]:checked');
+    checkedRadios.forEach(function(r) {
+      if (r.name && r.name.startsWith('st_')) {
+        var sid = r.name.replace('st_', '');
+        updateStudentCardUI(sid, r.value);
+      }
+    });
+
+    // Default: fast list mode on phones, student-by-student on desktop.
+    // An explicit user choice (button click) always wins.
+    var isPhone = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+    var userChoice = localStorage.getItem('ilas_att_user_choice');
+    setAttendanceMode(userChoice || (isPhone ? 'list' : 'student'));
+  });
+</script>
+{% endblock %}

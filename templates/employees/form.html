@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width:800px; margin:0 auto;">
+  <div class="card" style="border-radius:14px; border:1.5px solid #cbd5e1; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,0.04);">
+    
+    <div style="background:#0B3D6E; padding:16px 22px; color:#ffffff; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <h2 style="margin:0; font-size:18px; font-weight:800; display:flex; align-items:center; gap:8px;">
+          <span>{{ '✏️ تعديل بيانات المستخدم' if employee else '➕ إضافة مستخدم جديد للمعهد' }}</span>
+        </h2>
+        <div style="font-size:12px; opacity:0.85; margin-top:2px;">
+          {{ 'مستخدمي الإدارة، السكرتارية، الاستقبال، النظافة والأمن' if lang=='ar' else 'Personnel administratif, accueil, scolarité, entretien et sécurité' }}
+        </div>
+      </div>
+      <a href="{{ url_for('employees') }}" style="color:#ffffff; text-decoration:none; font-weight:700; font-size:12.5px; background:rgba(255,255,255,0.15); padding:6px 12px; border-radius:6px;">
+        ← {{ 'العودة' if lang=='ar' else 'Retour' }}
+      </a>
+    </div>
+
+    <form method="POST" action="{{ url_for('employee_edit', eid=employee.id) if employee else url_for('employee_new') }}" style="padding:24px; display:flex; flex-direction:column; gap:16px;">
+      
+      <!-- Section 1: Identité -->
+      <div style="border-bottom:1px solid #e2e8f0; padding-bottom:14px;">
+        <h3 style="margin:0 0 12px 0; font-size:14px; font-weight:800; color:#0B3D6E; text-transform:uppercase;">
+          1. {{ 'الهوية والمعلومات الأساسية' if lang=='ar' else 'Identité & Informations Générales' }}
+        </h3>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;">
+          <div>
+            <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">{{ 'كود المستخدم' if lang=='ar' else 'Code Employé' }} *</label>
+            <input type="text" name="code" value="{{ employee.code if employee else next_code }}" required class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; font-weight:800; color:#0B3D6E; width:100%;">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">{{ 'الاسم الشخصي' if lang=='ar' else 'Prénom' }} *</label>
+            <input type="text" name="first_name" value="{{ employee.first_name if employee else '' }}" required class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">{{ 'الاسم العائلي' if lang=='ar' else 'Nom' }} *</label>
+            <input type="text" name="last_name" value="{{ employee.last_name if employee else '' }}" required class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-top:12px;">
+          <div>
+            <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">CIN</label>
+            <input type="text" name="cin" value="{{ employee.cin if employee else '' }}" placeholder="Ex: AB123456" class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">{{ 'الهاتف' if lang=='ar' else 'Téléphone' }}</label>
+            <input type="text" name="phone" value="{{ employee.phone if employee else '' }}" placeholder="06..." class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">Email</label>
+            <input type="email" name="email" value="{{ employee.email if employee else '' }}" placeholder="email@..." class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Fonction & Rémunération -->
+      <div style="border-bottom:1px solid #e2e8f0; padding-bottom:14px;">
+        <h3 style="margin:0 0 12px 0; font-size:14px; font-weight:800; color:#0B3D6E; text-transform:uppercase;">
+          2. {{ 'الوظيفة، القسم والراتب' if lang=='ar' else 'Poste, Département & Salaire' }}
+        </h3>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <div>
+            <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">{{ 'المهمة / الوظيفة' if lang=='ar' else 'Poste / Fonction' }} *</label>
+            <input type="text" name="job_title" list="jobTitlesList" value="{{ employee.job_title if employee else '' }}" required placeholder="Ex: Secrétaire, Agent d'entretien..." class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+            <datalist id="jobTitlesList">
+              {% for jt in job_titles %}
+              <option value="{{ jt }}"></option>
+              {% endfor %}
+            </datalist>
+          </div>
+
+          <div>
+            <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">{{ 'القسم / المصلحة' if lang=='ar' else 'Département' }} *</label>
+            <select name="department" class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+              {% for dept in departments %}
+              <option value="{{ dept }}" {{ 'selected' if (employee and employee.department == dept) else '' }}>{{ dept }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-top:12px;">
+          <div>
+            <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">{{ 'الراتب الشهري الأساسي (DH)' if lang=='ar' else 'Salaire de Base Mensuel (DH)' }} *</label>
+            <input type="number" step="0.01" min="0" name="base_salary" value="{{ employee.base_salary if employee else '3000.00' }}" required class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13.5px; font-weight:800; color:#047857; width:100%;">
+          </div>
+
+          <div>
+            <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">{{ 'نوع الأجر' if lang=='ar' else 'Type de Paie' }}</label>
+            <select name="salary_type" class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+              <option value="monthly" {{ 'selected' if (not employee or employee.salary_type == 'monthly') else '' }}>Mensuel Fixe</option>
+              <option value="daily" {{ 'selected' if (employee and employee.salary_type == 'daily') else '' }}>Journalier</option>
+              <option value="hourly" {{ 'selected' if (employee and employee.salary_type == 'hourly') else '' }}>Horaire</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">{{ 'تاريخ التعيين / البداية' if lang=='ar' else 'Date d\'embauche' }}</label>
+            <input type="date" name="hire_date" value="{{ employee.hire_date.strftime('%Y-%m-%d') if (employee and employee.hire_date) else today.strftime('%Y-%m-%d') }}" class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Coordonnées Bancaires & Notes -->
+      <div>
+        <h3 style="margin:0 0 12px 0; font-size:14px; font-weight:800; color:#0B3D6E; text-transform:uppercase;">
+          3. {{ 'البيانات البنكية والملاحظات' if lang=='ar' else 'Coordonnées Bancaires & Notes' }}
+        </h3>
+
+        <div style="display:grid; grid-template-columns:1fr 1.5fr; gap:14px;">
+          <div>
+            <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">{{ 'اسم البنك' if lang=='ar' else 'Banque' }}</label>
+            <input type="text" name="bank_name" value="{{ employee.bank_name if employee else '' }}" placeholder="Ex: Attijariwafa, BMCE, BCP..." class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">RIB (24 chiffres)</label>
+            <input type="text" name="rib" value="{{ employee.rib if employee else '' }}" placeholder="000 000 0000000000000000 00" class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase;">{{ 'ملاحظات' if lang=='ar' else 'Notes / Remarques' }}</label>
+          <input type="text" name="notes" value="{{ employee.notes if employee else '' }}" placeholder="Observations éventuelles..." class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+        </div>
+
+        {% if employee %}
+        <div style="margin-top:14px; background:#f8fafc; padding:10px 14px; border-radius:8px; border:1px solid #e2e8f0; display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" name="active" value="1" id="activeCheck" {{ 'checked' if employee.active else '' }} style="width:16px; height:16px; cursor:pointer;">
+          <label for="activeCheck" style="font-size:13px; font-weight:700; color:#1e293b; cursor:pointer; margin:0;">
+            {{ 'المستخدم نشط حالياً في المعهد' if lang=='ar' else 'Employé actuellement actif au sein de l\'établissement' }}
+          </label>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:10px; border-top:1px solid #e2e8f0; padding-top:16px;">
+        <a href="{{ url_for('employees') }}" class="btn btn-outline" style="font-weight:700; padding:9px 18px;">
+          {{ 'إلغاء' if lang=='ar' else 'Annuler' }}
+        </a>
+        <button type="submit" class="btn btn-primary" style="background:#0B3D6E; font-weight:800; padding:9px 24px;">
+          ✓ {{ 'حفظ البيانات' if lang=='ar' else 'Enregistrer la Fiche' }}
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

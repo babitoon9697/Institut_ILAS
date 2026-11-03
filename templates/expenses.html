@@ -1,0 +1,2076 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Header & Quick Actions -->
+<div class="flex between wrap mb-3" style="align-items:center; gap:14px;">
+  <div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800; display:flex; align-items:center; gap:8px;">
+        💸 <span>{{ 'إدارة المشتريات والمصاريف التشغيلية' if lang=='ar' else 'Achats & Charges d\'Exploitation' }}</span>
+      </h2>
+      <span class="chip chip-blue" style="font-size:10.5px; font-weight:800;">FINANCE & ACHATS</span>
+    </div>
+    <p class="muted" style="margin:4px 0 0 0; font-size:13px;">
+      {{ 'متابعة مشتريات اللوازم، الكتب، التجهيزات وكافة مصاريف التسيير (الكراء، الكهرباء، الأجور، الصيانة...)' if lang=='ar' else 'Enregistrement et suivi des achats de matériel/fournitures, et des charges d\'exploitation (loyer, factures, salaires...)' }}
+    </p>
+  </div>
+
+  <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
+    {% if cur_user and cur_user.role == 'admin' %}
+    <a href="{{ url_for('expenses', tab='recurring', month=req_month) }}" class="btn btn-outline" style="background:#fff; border-color:#4f46e5; color:#4f46e5; font-weight:800; border-radius:10px; padding:9px 14px; display:inline-flex; align-items:center; gap:6px; text-decoration:none; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+      🔄 <span>{{ 'المصاريف القارة' if lang=='ar' else 'Charges Fixes' }}</span>
+      {% if pending_recurring_count > 0 %}
+        <span style="background:#ef4444; color:#fff; font-size:10.5px; font-weight:800; padding:1px 7px; border-radius:10px;">{{ pending_recurring_count }} {{ 'للتأكيد' if lang=='ar' else 'à valider' }}</span>
+      {% endif %}
+    </a>
+    <a href="{{ url_for('employees_payroll') }}" class="btn btn-outline" style="background:#fff; border-color:#0B3D6E; color:#0B3D6E; font-weight:800; border-radius:10px; padding:9px 14px; display:inline-flex; align-items:center; gap:6px; text-decoration:none; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+      👥 <span>{{ 'أجور المستخدمين' if lang=='ar' else 'Paie Personnel' }}</span>
+    </a>
+    {% endif %}
+    <button onclick="openAddExpenseModal('charge')" class="btn btn-primary" style="background:#1f6feb; border-color:#1f6feb; font-weight:800; border-radius:10px; padding:9px 16px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(31,111,235,0.25);">
+      ⚡ <span>{{ 'تسجيل مصروف' if lang=='ar' else '+ Nouvelle Charge' }}</span>
+    </button>
+    <button onclick="openAddExpenseModal('achat')" class="btn btn-primary" style="background:#0284c7; border-color:#0284c7; font-weight:800; border-radius:10px; padding:9px 16px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(2,132,199,0.25);">
+      📦 <span>{{ 'تسجيل شراء' if lang=='ar' else '+ Nouvel Achat' }}</span>
+    </button>
+    <button onclick="document.getElementById('addSupplierModal').style.display='flex'" class="btn btn-outline" style="background:#fff; border-color:#8b5cf6; color:#6d28d9; font-weight:700; border-radius:10px; padding:9px 14px; display:inline-flex; align-items:center; gap:6px;">
+      🏢 <span>{{ 'مورد جديد' if lang=='ar' else '+ Fournisseur' }}</span>
+    </button>
+    <a href="{{ url_for('expenses_export', month=req_month) }}" class="btn btn-outline" style="background:#fff; border-color:#10b981; color:#047857; font-weight:700; border-radius:10px; padding:9px 13px; text-decoration:none;" title="Exporter en format CSV/Excel">
+      📥 <span>{{ 'تصدير CSV' if lang=='ar' else 'Export CSV' }}</span>
+    </a>
+    <button onclick="window.print()" class="btn btn-outline" style="background:#fff; font-weight:700; border-radius:10px; padding:9px 13px;" title="Imprimer">
+      🖨️
+    </button>
+  </div>
+</div>
+
+<!-- Macro Financial KPI Cards -->
+<div class="grid grid-4 mb-3" style="gap:14px;">
+  <!-- Card 1: Total Depenses -->
+  <div class="card stat" style="border-left:4.5px solid #ef4444; padding:14px 16px; background:#fff; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">
+        {{ 'إجمالي النفقات والمصاريف' if lang=='ar' else 'TOTAL DÉPENSÉ (MOIS)' }}
+      </span>
+      <div style="font-size:18px; width:34px; height:34px; border-radius:8px; background:#fee2e2; display:flex; align-items:center; justify-content:center; color:#dc2626;">💸</div>
+    </div>
+    <div style="font-size:24px; font-weight:800; color:#dc2626; margin:6px 0 2px 0;">
+      {{ "%.2f"|format(total_expenses_month) }} <span style="font-size:13px; font-weight:600;">DH</span>
+    </div>
+    <div style="font-size:11.5px; color:#94a3b8; display:flex; justify-content:space-between;">
+      <span>{{ req_month }}</span>
+      <span style="color:#047857; font-weight:700;">Payé: {{ "%.2f"|format(total_paid_month) }} DH</span>
+    </div>
+  </div>
+
+  <!-- Card 2: Total Achats -->
+  <div class="card stat" style="border-left:4.5px solid #0284c7; padding:14px 16px; background:#fff; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">
+        {{ 'مشتريات ولوازم' if lang=='ar' else 'ACHATS & MATÉRIEL' }}
+      </span>
+      <div style="font-size:18px; width:34px; height:34px; border-radius:8px; background:#e0f2fe; display:flex; align-items:center; justify-content:center; color:#0284c7;">📦</div>
+    </div>
+    <div style="font-size:24px; font-weight:800; color:#0284c7; margin:6px 0 2px 0;">
+      {{ "%.2f"|format(total_achats_month) }} <span style="font-size:13px; font-weight:600;">DH</span>
+    </div>
+    <div style="font-size:11.5px; color:#64748b;">
+      Fournitures, livres, équipements...
+    </div>
+  </div>
+
+  <!-- Card 3: Total Charges -->
+  <div class="card stat" style="border-left:4.5px solid #7c3aed; padding:14px 16px; background:#fff; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">
+        {{ 'المصاريف التشغيلية' if lang=='ar' else 'CHARGES D\'EXPLOITATION' }}
+      </span>
+      <div style="font-size:18px; width:34px; height:34px; border-radius:8px; background:#ede9fe; display:flex; align-items:center; justify-content:center; color:#7c3aed;">⚡</div>
+    </div>
+    <div style="font-size:24px; font-weight:800; color:#7c3aed; margin:6px 0 2px 0;">
+      {{ "%.2f"|format(total_charges_month) }} <span style="font-size:13px; font-weight:600;">DH</span>
+    </div>
+    <div style="font-size:11.5px; color:#64748b;">
+      Loyer, eau, électricité, salaires...
+    </div>
+  </div>
+
+  <!-- Card 4: Dettes / Reste a payer -->
+  <div class="card stat" style="border-left:4.5px solid #f59e0b; padding:14px 16px; background:#fff; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">
+        {{ 'فواتير في الانتظار / ديون' if lang=='ar' else 'RESTE À PAYER / DETTES' }}
+      </span>
+      <div style="font-size:18px; width:34px; height:34px; border-radius:8px; background:#fef3c7; display:flex; align-items:center; justify-content:center; color:#b45309;">⏳</div>
+    </div>
+    <div style="font-size:24px; font-weight:800; color:#b45309; margin:6px 0 2px 0;">
+      {{ "%.2f"|format(total_pending_month) }} <span style="font-size:13px; font-weight:600;">DH</span>
+    </div>
+    <div style="font-size:11.5px; color:#b45309; font-weight:700;">
+      {% if total_pending_month > 0 %}
+        ⚠️ Factures ou loyers non soldés
+      {% else %}
+        ✅ Toutes les charges sont soldées
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Tabs Navigation -->
+<div class="card card-pad mb-3" style="padding:10px 14px; border-radius:14px; border:1.5px solid #cbd5e1;">
+  <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+    <a href="{{ url_for('expenses', tab='all', month=req_month) }}" style="padding:8px 16px; border-radius:8px; font-weight:800; font-size:13px; text-decoration:none; transition:all 0.2s; background:{% if tab in ['all', ''] %}#0B3D6E{% else %}#f1f5f9{% endif %}; color:{% if tab in ['all', ''] %}#fff{% else %}#475569{% endif %};">
+      📋 {{ 'جميع العمليات' if lang=='ar' else 'Toutes les Opérations' }}
+    </a>
+    <a href="{{ url_for('expenses', tab='achats', month=req_month) }}" style="padding:8px 16px; border-radius:8px; font-weight:800; font-size:13px; text-decoration:none; transition:all 0.2s; background:{% if tab=='achats' %}#0284c7{% else %}#f1f5f9{% endif %}; color:{% if tab=='achats' %}#fff{% else %}#475569{% endif %};">
+      📦 {{ 'المشتريات فقط' if lang=='ar' else 'Achats & Matériel' }}
+    </a>
+    <a href="{{ url_for('expenses', tab='charges', month=req_month) }}" style="padding:8px 16px; border-radius:8px; font-weight:800; font-size:13px; text-decoration:none; transition:all 0.2s; background:{% if tab=='charges' %}#7c3aed{% else %}#f1f5f9{% endif %}; color:{% if tab=='charges' %}#fff{% else %}#475569{% endif %};">
+      ⚡ {{ 'المصاريف التشغيلية' if lang=='ar' else 'Charges d\'Exploitation' }}
+    </a>
+    {% if cur_user and cur_user.role == 'admin' %}
+    <a href="{{ url_for('expenses', tab='recurring', month=req_month) }}" style="padding:8px 16px; border-radius:8px; font-weight:800; font-size:13px; text-decoration:none; transition:all 0.2s; background:{% if tab=='recurring' %}#4f46e5{% else %}#f1f5f9{% endif %}; color:{% if tab=='recurring' %}#fff{% else %}#475569{% endif %}; display:inline-flex; align-items:center; gap:6px;">
+      🔄 {{ 'المصاريف القارة (شهرية)' if lang=='ar' else 'Charges Fixes & Récurrentes' }}
+      {% if pending_recurring_count > 0 %}
+        <span style="background:#ef4444; color:#fff; font-size:10.5px; font-weight:800; padding:1px 6px; border-radius:10px;">{{ pending_recurring_count }}</span>
+      {% endif %}
+    </a>
+    {% endif %}
+    <a href="{{ url_for('expenses', tab='pending', month=req_month) }}" style="padding:8px 16px; border-radius:8px; font-weight:800; font-size:13px; text-decoration:none; transition:all 0.2s; background:{% if tab=='pending' %}#f59e0b{% else %}#f1f5f9{% endif %}; color:{% if tab=='pending' %}#fff{% else %}#475569{% endif %};">
+      ⏳ {{ 'غير مسددة / آجال' if lang=='ar' else 'Impayés & Échéances' }}
+    </a>
+    <a href="{{ url_for('expenses', tab='suppliers') }}" style="padding:8px 16px; border-radius:8px; font-weight:800; font-size:13px; text-decoration:none; transition:all 0.2s; background:{% if tab=='suppliers' %}#8b5cf6{% else %}#f1f5f9{% endif %}; color:{% if tab=='suppliers' %}#fff{% else %}#475569{% endif %};">
+      🏢 {{ 'دليل الموردين' if lang=='ar' else 'Fournisseurs & Prestataires' }} ({{ suppliers|length }})
+    </a>
+    {% if cur_user and cur_user.role == 'admin' %}
+    <a href="{{ url_for('expenses', tab='pnl', month=req_month) }}" style="padding:8px 16px; border-radius:8px; font-weight:800; font-size:13px; text-decoration:none; transition:all 0.2s; background:{% if tab=='pnl' %}#10b981{% else %}#f1f5f9{% endif %}; color:{% if tab=='pnl' %}#fff{% else %}#475569{% endif %};">
+      📊 {{ 'الحصيلة وصافي الأرباح' if lang=='ar' else 'Bilan & Résultat Net' }}
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+{% if cur_user and cur_user.role == 'admin' and tab != 'suppliers' %}
+<!-- ======================================================== -->
+<!-- MODULE ADMIN : POINTAGE SOLDE RÉEL EN CAISSE PHYSIQUE    -->
+<!-- ======================================================== -->
+<div class="card mb-3" style="border-radius:14px; border:1.5px solid {% if real_cash_data and real_cash_data.is_used %}#86efac{% else %}#cbd5e1{% endif %}; background:{% if real_cash_data and real_cash_data.is_used %}linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%){% else %}#ffffff{% endif %}; padding:16px 20px; box-shadow:0 3px 10px rgba(0,0,0,0.03);">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="width:36px; height:36px; border-radius:10px; background:{% if real_cash_data and real_cash_data.is_used %}#dcfce7{% else %}#eff6ff{% endif %}; display:flex; align-items:center; justify-content:center; font-size:18px;">
+        💵
+      </div>
+      <div>
+        <div style="font-size:14px; font-weight:800; color:#0B3D6E; display:flex; align-items:center; gap:6px;">
+          <span>{{ 'ضبط رصيد الصندوق الفعلي (Pointage Caisse Réelle)' if lang=='ar' else 'Pointage Caisse Réelle & Dépenses Hors Système' }}</span>
+          <span style="font-size:10px; font-weight:800; background:#e0e7ff; color:#3730a3; padding:2px 8px; border-radius:6px;">🔒 Réservé Admin · Analytics</span>
+        </div>
+        <div style="font-size:11.5px; color:#64748b; margin-top:2px;">
+          {{ 'تحديد المبلغ النقدي الموجود فعلياً في الصندوق لشهر' if lang=='ar' else 'Indiquez le montant de cash physique réellement disponible pour le mois de' }} <strong>{{ month_name_fr }}</strong> {{ 'لضبط حسابات "فين واصلين"' if lang=='ar' else 'afin d\'ajuster le Bilan ("فين واصلين") avec exactitude.' }}
+        </div>
+      </div>
+    </div>
+
+    <div>
+      {% if real_cash_data and real_cash_data.is_used %}
+        <span class="chip chip-green" style="font-size:12px; font-weight:800; padding:4px 10px;">
+          ✅ Relevé Réel Actif (Pointé à : {{ '%.2f'|format(real_cash_data.declared_amount) }} DH)
+        </span>
+      {% else %}
+        <span class="chip chip-gray" style="font-size:12px; font-weight:700; padding:4px 10px;">
+          ⚙️ Calcul Théorique Système Actif
+        </span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Real Cash Metrics 4-Col Grid -->
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; background:#f8fafc; padding:12px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:14px;">
+    
+    <!-- 1. Solde Théorique Système -->
+    <div style="background:#fff; padding:10px 12px; border-radius:8px; border:1px solid #e2e8f0;">
+      <div style="font-size:10.5px; font-weight:800; color:#64748b; text-transform:uppercase;">1. Solde Théorique Système</div>
+      <div style="font-size:18px; font-weight:900; color:#0B3D6E; margin-top:3px;">
+        {{ "%.2f"|format(real_cash_data.theoretical_cash if real_cash_data else 0) }} <span style="font-size:11px; font-weight:600;">DH</span>
+      </div>
+      <div style="font-size:10.5px; color:#64748b;">(Recettes encaissées - Frais saisis)</div>
+    </div>
+
+    <!-- 2. Cash Physique Réellement Présent -->
+    <div style="background:#fff; padding:10px 12px; border-radius:8px; border:1.5px solid {% if real_cash_data and real_cash_data.is_used %}#86efac{% else %}#e2e8f0{% endif %};">
+      <div style="font-size:10.5px; font-weight:800; color:#047857; text-transform:uppercase;">2. Cash Réel en Caisse</div>
+      <div style="font-size:18px; font-weight:900; color:#047857; margin-top:3px;">
+        {% if real_cash_data and real_cash_data.is_used %}
+          {{ "%.2f"|format(real_cash_data.effective_cash) }} <span style="font-size:11px; font-weight:600;">DH</span>
+        {% else %}
+          <span style="font-size:13px; color:#94a3b8; font-weight:700;">— Non renseigné —</span>
+        {% endif %}
+      </div>
+      <div style="font-size:10.5px; color:#64748b;">
+        {% if real_cash_data and real_cash_data.is_used and real_cash_data.date %}
+          Pointé au {{ real_cash_data.date }} ({{ "%.0f"|format(real_cash_data.declared_amount) }} DH) + flux
+        {% else %}
+          (Comptage physique réel)
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 3. Écart / Dépenses hors système -->
+    <div style="background:#fff; padding:10px 12px; border-radius:8px; border:1px solid #e2e8f0;">
+      <div style="font-size:10.5px; font-weight:800; color:#dc2626; text-transform:uppercase;">3. Dépenses Hors Système (Écart Fixe)</div>
+      <div style="font-size:18px; font-weight:900; color:{% if real_cash_data and real_cash_data.is_used and real_cash_data.ecart > 0 %}#dc2626{% else %}#64748b{% endif %}; margin-top:3px;">
+        {% if real_cash_data and real_cash_data.is_used %}
+          - {{ "%.2f"|format(real_cash_data.ecart) }} <span style="font-size:11px; font-weight:600;">DH</span>
+        {% else %}
+          0.00 <span style="font-size:11px; font-weight:600;">DH</span>
+        {% endif %}
+      </div>
+      <div style="font-size:10.5px; color:#64748b;">(Différence constante avec la caisse)</div>
+    </div>
+
+    <!-- 4. Résultat Projeté Bilan ("فين واصلين") -->
+    <div style="background:{% if real_cash_data and real_cash_data.projected_bilan_net >= 0 %}#eff6ff{% else %}#fef2f2{% endif %}; padding:10px 12px; border-radius:8px; border:1.5px solid {% if real_cash_data and real_cash_data.projected_bilan_net >= 0 %}#93c5fd{% else %}#fca5a5{% endif %};">
+      <div style="font-size:10.5px; font-weight:800; color:#1e40af; text-transform:uppercase;">4. Bilan ("فين واصلين") Réel</div>
+      <div style="font-size:18px; font-weight:900; color:{% if real_cash_data and real_cash_data.projected_bilan_net >= 0 %}#1e40af{% else %}#dc2626{% endif %}; margin-top:3px;">
+        {{ "%.2f"|format(real_cash_data.projected_bilan_net if real_cash_data else 0) }} <span style="font-size:11px; font-weight:600;">DH</span>
+      </div>
+      <div style="font-size:10.5px; color:#1e40af;">(Après -{{ "%.0f"|format(real_cash_data.pending_recurring_amount if real_cash_data else 0) }} DH charges fixes)</div>
+    </div>
+
+  </div>
+
+  <!-- Formulaire de Saisie / Modification -->
+  <form method="POST" action="{{ url_for('expense_real_cash_save') }}" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <input type="hidden" name="month" value="{{ req_month }}">
+    <input type="hidden" name="tab" value="{{ tab }}">
+
+    <div style="min-width:200px; flex:1;">
+      <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+        💵 {{ 'شحال كاين دابا فالحقيقة كاش (DH) :' if lang=='ar' else 'Nouveau Comptage Cash Réel Présent en Caisse (DH) :' }}
+      </label>
+      <input type="number" step="0.01" name="amount" id="realCashAmountInput" value="{{ '%.2f'|format(real_cash_data.effective_cash) if real_cash_data and real_cash_data.is_used else '' }}" placeholder="Ex: 35000" class="form-control" style="border-radius:8px; border:1.5px solid #059669; font-weight:800; font-size:14px; color:#047857; width:100%;" required>
+      <div id="liveEcartFeedback" style="font-size:11px; color:#64748b; margin-top:3px;">
+        {% if real_cash_data and real_cash_data.is_used %}
+          {{ 'الفرق الحالي الثابت :' if lang=='ar' else 'Écart fixe appliqué :' }} <strong style="color:#dc2626;">-{{ '%.2f'|format(real_cash_data.ecart) }} DH</strong>
+        {% endif %}
+      </div>
+    </div>
+
+    <div style="min-width:260px; flex:2;">
+      <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+        📝 {{ 'ملاحظة / سبب الفرق (اختياري) :' if lang=='ar' else 'Remarque / Justification de l\'écart (facultatif) :' }}
+      </label>
+      <input type="text" name="note" value="{{ real_cash_data.note if real_cash_data else '' }}" placeholder="{{ 'مثلاً: مصاريف قديمة وأشياء تم صرفها ولم تسجل بعد' if lang=='ar' else 'Ex: Dépenses antérieures non saisies, sorties diverses...' }}" class="form-control" style="border-radius:8px; border:1.5px solid #cbd5e1; font-size:13px; width:100%;">
+    </div>
+
+    <div style="display:flex; gap:8px;">
+      <button type="submit" name="action" value="save" class="btn btn-primary" style="background:#059669; border-color:#059669; font-weight:800; border-radius:8px; padding:9px 18px; box-shadow:0 2px 6px rgba(5,150,105,0.25);">
+        💾 {{ 'حفظ الرصيد الفعلي' if lang=='ar' else 'Enregistrer pour ' ~ req_month }}
+      </button>
+
+      {% if real_cash_data and real_cash_data.is_used %}
+      <button type="submit" name="action" value="clear" class="btn btn-outline" style="border-color:#fca5a5; color:#dc2626; font-weight:700; border-radius:8px; padding:9px 14px;" onclick="return confirm('Rétablir le calcul théorique système pour {{ month_name_fr }} ?');">
+        🔄 {{ 'إلغاء والتراجع للثابت' if lang=='ar' else 'Rétablir Théorique' }}
+      </button>
+      {% endif %}
+    </div>
+  </form>
+
+  <script>
+    (function(){
+      var input = document.getElementById('realCashAmountInput');
+      var fb = document.getElementById('liveEcartFeedback');
+      var theo = {{ (real_cash_data.theoretical_cash if real_cash_data else 0) | tojson }};
+      if (input && fb) {
+        input.addEventListener('input', function(){
+          var val = parseFloat(input.value);
+          if (!isNaN(val)) {
+            var diff = Math.round((theo - val) * 100) / 100;
+            if (diff >= 0) {
+              fb.innerHTML = '👉 Écart fixe qui sera appliqué : <strong style="color:#dc2626;">-' + diff.toFixed(2) + ' DH</strong> (Dépenses hors système)';
+            } else {
+              fb.innerHTML = '👉 Surplus qui sera appliqué : <strong style="color:#059669;">+' + Math.abs(diff).toFixed(2) + ' DH</strong> (Apport / Recettes non saisies)';
+            }
+          }
+        });
+      }
+    })();
+  </script>
+
+  {% if real_cash_data and real_cash_data.note %}
+  <div style="margin-top:10px; font-size:11.5px; color:#475569; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0; display:inline-block;">
+    📌 <strong>Note enregistrée :</strong> {{ real_cash_data.note }} {% if real_cash_data.by %}<span style="color:#94a3b8;">(par {{ real_cash_data.by }})</span>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if tab == 'suppliers' %}
+<!-- ======================================================= -->
+<!-- TAB: SUPPLIERS DIRECTORY                                -->
+<!-- ======================================================= -->
+<div class="card" style="border-radius:14px; border:1.5px solid #cbd5e1; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,0.04); margin-bottom:24px;">
+  <div style="padding:14px 20px; background:#f8fafc; border-bottom:1.5px solid #e2e8f0; font-weight:800; font-size:14px; color:#0B3D6E; display:flex; justify-content:space-between; align-items:center;">
+    <span>🏢 {{ 'دليل الموردين ومقدمي الخدمات' if lang=='ar' else 'Répertoire des Fournisseurs & Prestataires' }}</span>
+    <button onclick="document.getElementById('addSupplierModal').style.display='flex'" class="btn btn-xs btn-primary" style="font-weight:700;">
+      ➕ {{ 'إضافة مورد' if lang=='ar' else 'Ajouter Fournisseur' }}
+    </button>
+  </div>
+
+  {% if suppliers %}
+  <div style="overflow-x:auto;">
+    <table class="table" style="margin:0; font-size:13px; width:100%;">
+      <thead>
+        <tr style="background:#ffffff; text-align:center;">
+          <th style="width:40px;">#</th>
+          <th style="text-align:left;">{{ 'المورد / الشركة' if lang=='ar' else 'Nom Fournisseur / Société' }}</th>
+          <th style="text-align:left;">{{ 'النشاط / الفئة' if lang=='ar' else 'Catégorie' }}</th>
+          <th style="text-align:left;">{{ 'الهاتف والمخاطب' if lang=='ar' else 'Contact & Téléphone' }}</th>
+          <th style="text-align:center;">{{ 'الرقم الموحد (ICE)' if lang=='ar' else 'ICE / Identifiant Fiscal' }}</th>
+          <th style="text-align:center;">{{ 'المدينة' if lang=='ar' else 'Ville' }}</th>
+          <th style="text-align:right;">{{ 'إجمالي الفواتير' if lang=='ar' else 'Total Facturé' }}</th>
+          <th style="text-align:right;">{{ 'الرصيد المتبقي' if lang=='ar' else 'Solde Dû' }}</th>
+          <th style="text-align:center;">{{ 'الإجراءات' if lang=='ar' else 'Actions' }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in suppliers %}
+        <tr style="text-align:center;">
+          <td style="font-weight:700; color:#64748b;">{{ loop.index }}</td>
+          <td style="text-align:left; font-weight:800; color:#0f172a;">
+            🏢 {{ s.name }}
+            {% if s.notes %}<div style="font-size:11px; color:#64748b; font-weight:400;">{{ s.notes }}</div>{% endif %}
+          </td>
+          <td style="text-align:left;">
+            <span class="chip chip-blue" style="font-size:11px;">{{ s.category }}</span>
+          </td>
+          <td style="text-align:left;">
+            {% if s.phone %}<div>📞 {{ s.phone }}</div>{% endif %}
+            {% if s.contact_person %}<div style="font-size:11px; color:#64748b;">👤 {{ s.contact_person }}</div>{% endif %}
+            {% if s.email %}<div style="font-size:11px; color:#64748b;">✉️ {{ s.email }}</div>{% endif %}
+          </td>
+          <td style="text-align:center; font-family:monospace; font-weight:700; color:#334155;">
+            {{ s.ice or '—' }}
+          </td>
+          <td style="text-align:center;">{{ s.city or '—' }}</td>
+          <td style="text-align:right; font-weight:800; color:#0B3D6E;">
+            {{ "%.2f"|format(s.total_invoiced) }} DH
+          </td>
+          <td style="text-align:right; font-weight:800; color:{% if s.balance_due > 0 %}#dc2626{% else %}#047857{% endif %};">
+            {{ "%.2f"|format(s.balance_due) }} DH
+          </td>
+          <td style="text-align:center;">
+            <div style="display:flex; justify-content:center; gap:6px;">
+              <button onclick='openEditSupplierModal({{ s.id }}, {{ s.name|tojson }}, {{ s.category|tojson }}, {{ (s.contact_person or "")|tojson }}, {{ (s.phone or "")|tojson }}, {{ (s.email or "")|tojson }}, {{ (s.address or "")|tojson }}, {{ (s.city or "")|tojson }}, {{ (s.ice or "")|tojson }}, {{ (s.if_code or "")|tojson }}, {{ (s.notes or "")|tojson }})' class="btn btn-xs btn-outline" style="border-color:#cbd5e1; border-radius:6px; padding:3px 8px;" title="Modifier">
+                ✏️
+              </button>
+              <a href="{{ url_for('expenses', supplier_id=s.id, tab='all', month='') }}" class="btn btn-xs btn-outline" style="border-color:#93c5fd; color:#1f6feb; border-radius:6px; padding:3px 8px;" title="Voir les opérations">
+                🔍
+              </a>
+              {% if cur_user and cur_user.role == 'admin' %}
+              <form method="POST" action="{{ url_for('supplier_delete', sid=s.id) }}" onsubmit="return confirm('Archiver ce fournisseur ?');" style="display:inline;">
+                <button type="submit" class="btn btn-xs btn-outline" style="color:#ef4444; border-color:#fca5a5; border-radius:6px; padding:3px 8px;" title="Archiver">
+                  🗑️
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="padding:40px; text-align:center; color:#64748b;">
+    <div style="font-size:40px; margin-bottom:8px;">🏢</div>
+    <div style="font-weight:800; font-size:15px; color:#1e293b;">{{ 'لم يتم تسجيل أي مورد بعد' if lang=='ar' else 'Aucun fournisseur enregistré pour le moment.' }}</div>
+    <p style="font-size:12.5px; margin-top:4px;">{{ 'يمكنك إضافة موردين لتتبع فواتيرهم ومستحقاتهم بشكل منظم' if lang=='ar' else 'Ajoutez vos fournisseurs (papeterie, librairie, bailleur, régie électricité...) pour un suivi optimal.' }}</p>
+    <button onclick="document.getElementById('addSupplierModal').style.display='flex'" class="btn btn-sm btn-primary" style="margin-top:10px; font-weight:800;">
+      ➕ {{ 'إضافة مورد جديد' if lang=='ar' else 'Nouveau Fournisseur' }}
+    </button>
+  </div>
+  {% endif %}
+</div>
+
+{% elif tab == 'pnl' %}
+<!-- ======================================================= -->
+<!-- TAB: P&L / BILAN FINANCIER SIMPLIFIÉ                    -->
+<!-- ======================================================= -->
+<div class="grid grid-3 mb-3" style="gap:16px;">
+  <!-- Recettes -->
+  <div class="card" style="padding:20px; border-radius:14px; border-top:4px solid #10b981; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+    <div style="font-size:12px; font-weight:800; color:#64748b; text-transform:uppercase;">
+      📈 {{ 'إجمالي المداخيل (الشهر)' if lang=='ar' else 'Chiffre d\'Affaires Réalisé' }}
+    </div>
+    <div style="font-size:26px; font-weight:800; color:#047857; margin:8px 0 4px 0;">
+      {{ "%.2f"|format(pnl.rev_total) }} DH
+    </div>
+    <div style="font-size:12px; color:#475569; border-top:1px solid #f1f5f9; padding-top:6px; margin-top:6px;">
+      <div>📚 Inscriptions & Cours : <strong>{{ "%.2f"|format(pnl.rev_tuition) }} DH</strong></div>
+      <div>📖 Ventes de Manuels (Centre) : <strong>{{ "%.2f"|format(pnl.rev_books) }} DH</strong></div>
+      {% if pnl.teacher_books_due and pnl.teacher_books_due > 0 %}
+      <div style="font-size:11px; color:#b45309; margin-top:2px;">
+        ⚠️ <em>Dont {{ "%.2f"|format(pnl.teacher_books_due) }} DH reversés aux enseignants</em>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Dépenses -->
+  <div class="card" style="padding:20px; border-radius:14px; border-top:4px solid #ef4444; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+    <div style="font-size:12px; font-weight:800; color:#64748b; text-transform:uppercase;">
+      💸 {{ 'إجمالي النفقات (الشهر)' if lang=='ar' else 'Achats & Charges Globales' }}
+    </div>
+    <div style="font-size:26px; font-weight:800; color:#dc2626; margin:8px 0 4px 0;">
+      {{ "%.2f"|format(pnl.total_expenses) }} DH
+    </div>
+    <div style="font-size:12px; color:#475569; border-top:1px solid #f1f5f9; padding-top:6px; margin-top:6px;">
+      <div>📦 Achats & Fournitures : <strong>{{ "%.2f"|format(pnl.total_achats) }} DH</strong></div>
+      <div>⚡ Charges d'exploitation : <strong>{{ "%.2f"|format(pnl.total_charges) }} DH</strong></div>
+    </div>
+  </div>
+
+  <!-- Résultat Net -->
+  <div class="card" style="padding:20px; border-radius:14px; border-top:4px solid {% if pnl.net_profit >= 0 %}#1f6feb{% else %}#ef4444{% endif %}; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+    <div style="font-size:12px; font-weight:800; color:#64748b; text-transform:uppercase;">
+      🏆 {{ 'صافي الأرباح (الشهر)' if lang=='ar' else 'Bénéfice Net Établissement' }}
+    </div>
+    <div style="font-size:26px; font-weight:800; color:{% if pnl.net_profit >= 0 %}#1e40af{% else %}#dc2626{% endif %}; margin:8px 0 4px 0;">
+      {{ "%.2f"|format(pnl.net_profit) }} DH
+    </div>
+    <div style="font-size:12px; color:#475569; border-top:1px solid #f1f5f9; padding-top:6px; margin-top:6px;">
+      <div>Marge nette : <strong>{{ pnl.profit_margin }}%</strong></div>
+      <div style="font-size:11px; color:#64748b;">(Mois : {{ req_month }})</div>
+    </div>
+  </div>
+</div>
+
+<!-- Category Breakdown Graph -->
+<div class="card" style="padding:20px; border-radius:14px; border:1.5px solid #cbd5e1; margin-bottom:24px;">
+  <h3 style="margin:0 0 16px 0; font-size:16px; color:#0B3D6E; font-weight:800;">
+    📊 {{ 'توزيع المصاريف والنفقات حسب الفئات' if lang=='ar' else 'Ventilation des Achats & Charges par Catégorie' }}
+  </h3>
+
+  {% if pnl.category_breakdown %}
+  <div style="display:flex; flex-direction:column; gap:12px;">
+    {% for cat, amt in pnl.category_breakdown %}
+      {% set pct = ((amt / pnl.total_expenses) * 100)|round(1) if pnl.total_expenses > 0 else 0 %}
+      <div>
+        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700; margin-bottom:4px;">
+          <span>{{ cat }}</span>
+          <span><strong>{{ "%.2f"|format(amt) }} DH</strong> ({{ pct }}%)</span>
+        </div>
+        <div style="background:#e2e8f0; border-radius:6px; height:10px; width:100%; overflow:hidden;">
+          <div style="background:#1f6feb; height:100%; width:{{ pct }}%; border-radius:6px;"></div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center; padding:30px; color:#94a3b8;">
+    {{ 'لا توجد بيانات كافية لهذا الشهر' if lang=='ar' else 'Aucune dépense enregistrée pour cette période pour établir la ventilation.' }}
+  </div>
+  {% endif %}
+</div>
+
+{% elif tab == 'recurring' %}
+<!-- ======================================================= -->
+<!-- TAB: CHARGES FIXES & RÉCURRENTES (MENSUELLES)           -->
+<!-- ======================================================= -->
+
+<!-- Top Action & Month Selection Bar -->
+<div class="card mb-3" style="border-radius:14px; border:1.5px solid #cbd5e1; padding:16px 20px; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:22px;">🔄</span>
+        <h3 style="margin:0; font-size:18px; font-weight:800; color:#1e1b4b;">
+          {{ 'المصاريف القارة والمتكررة شهرياً' if lang=='ar' else 'Charges Fixes & Récurrentes Mensuelles' }}
+        </h3>
+        <span class="chip" style="background:#ede9fe; color:#6d28d9; font-weight:800; font-size:11px;">CONTRÔLE & VALIDATION</span>
+      </div>
+      <p style="margin:4px 0 0 0; font-size:12.5px; color:#64748b;">
+        {{ 'سجل مصاريفك الثابتة مرة واحدة (الكراء، أجور المستخدمين، الأنترنت، الصيانة...)، ثم صادق عليها بنقرة زر واحدة كل شهر دون إعادة كتابتها يدوياً.' if lang=='ar' else 'Enregistrez vos charges régulières une seule fois (Loyer, salaires fixes, fibre, syndic...). Chaque mois, vous les validez en un clic sans saisie manuelle répétitive.' }}
+      </p>
+    </div>
+
+    <!-- Month Selector & Actions -->
+    <div style="display:flex; align-items:center; flex-wrap:wrap; gap:10px;">
+      <form method="GET" action="{{ url_for('expenses') }}" style="display:flex; align-items:center; gap:6px;">
+        <input type="hidden" name="tab" value="recurring">
+        <label style="font-size:11.5px; font-weight:800; color:#475569;">{{ 'الشهر المستهدف' if lang=='ar' else 'Mois :' }}</label>
+        <input type="month" name="month" value="{{ req_month }}" onchange="this.form.submit()" class="form-control" style="border-radius:10px; border:1.5px solid #a5b4fc; padding:7px 12px; font-size:13px; font-weight:700; width:160px; background:#f8fafc;">
+      </form>
+
+      <button type="button" onclick="openAddRecurringModal()" class="btn btn-primary" style="background:#4f46e5; border-color:#4f46e5; font-weight:800; border-radius:10px; padding:8px 16px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 3px 8px rgba(79,70,229,0.25);">
+        ➕ <span>{{ 'إضافة رسم قار' if lang=='ar' else '+ Nouvelle Charge Fixe' }}</span>
+      </button>
+
+      {% if pending_recurring_count > 0 %}
+      <button type="button" onclick="openValidateAllModal()" class="btn btn-outline" style="background:#fff; border-color:#059669; color:#059669; font-weight:800; border-radius:10px; padding:8px 14px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 1px 3px rgba(0,0,0,0.05);" title="Valider toutes les charges restantes pour {{ month_name_fr }}">
+        ⚡ <span>{{ 'مصادقة الكل' if lang=='ar' else 'Tout Valider (' ~ pending_recurring_count ~ ')' }}</span>
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- KPI Summary Cards for Selected Month -->
+<div class="grid grid-4 mb-3" style="gap:14px;">
+  <!-- Card 1: Total Modeles -->
+  <div class="card stat" style="border-left:4.5px solid #4f46e5; padding:14px 16px; background:#fff; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">
+        {{ 'الرسوم المسجلة' if lang=='ar' else 'CHARGES FIXES ACTIVES' }}
+      </span>
+      <div style="font-size:16px; width:32px; height:32px; border-radius:8px; background:#e0e7ff; display:flex; align-items:center; justify-content:center; color:#4338ca;">📋</div>
+    </div>
+    <div style="font-size:22px; font-weight:800; color:#1e1b4b; margin:6px 0 2px 0;">
+      {{ recurring_charges|selectattr('active')|list|length }} <span style="font-size:12px; font-weight:600; color:#64748b;">/ {{ recurring_charges|length }} modèles</span>
+    </div>
+    <div style="font-size:11.5px; color:#64748b;">
+      Total configuré dans le catalogue
+    </div>
+  </div>
+
+  <!-- Card 2: Montant Budget Mensuel Prevu -->
+  <div class="card stat" style="border-left:4.5px solid #7c3aed; padding:14px 16px; background:#fff; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">
+        {{ 'المجموع التقديري للشهر' if lang=='ar' else 'BUDGET MENSUEL ESTIMÉ' }}
+      </span>
+      <div style="font-size:16px; width:32px; height:32px; border-radius:8px; background:#ede9fe; display:flex; align-items:center; justify-content:center; color:#7c3aed;">💰</div>
+    </div>
+    <div style="font-size:22px; font-weight:800; color:#7c3aed; margin:6px 0 2px 0;">
+      {{ "%.2f"|format(total_recurring_monthly) }} <span style="font-size:12px; font-weight:600;">DH</span>
+    </div>
+    <div style="font-size:11.5px; color:#64748b;">
+      Montant récurrent théorique / mois
+    </div>
+  </div>
+
+  <!-- Card 3: Validees pour le mois -->
+  <div class="card stat" style="border-left:4.5px solid #10b981; padding:14px 16px; background:#fff; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">
+        {{ 'تمت المصادقة عليها' if lang=='ar' else 'DÉJÀ VALIDÉES CE MOIS' }}
+      </span>
+      <div style="font-size:16px; width:32px; height:32px; border-radius:8px; background:#d1fae5; display:flex; align-items:center; justify-content:center; color:#047857;">✅</div>
+    </div>
+    <div style="font-size:22px; font-weight:800; color:#047857; margin:6px 0 2px 0;">
+      {{ "%.2f"|format(validated_recurring_amount) }} <span style="font-size:12px; font-weight:600;">DH</span>
+    </div>
+    <div style="font-size:11.5px; color:#047857; font-weight:700;">
+      {{ validated_recurring_count }} charge(s) confirmée(s) pour {{ month_name_fr }}
+    </div>
+  </div>
+
+  <!-- Card 4: En attente de validation -->
+  <div class="card stat" style="border-left:4.5px solid {% if pending_recurring_count > 0 %}#f59e0b{% else %}#10b981{% endif %}; padding:14px 16px; background:#fff; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">
+        {{ 'في انتظار التأكيد' if lang=='ar' else 'EN ATTENTE DE VALIDATION' }}
+      </span>
+      <div style="font-size:16px; width:32px; height:32px; border-radius:8px; background:{% if pending_recurring_count > 0 %}#fef3c7{% else %}#ecfdf5{% endif %}; display:flex; align-items:center; justify-content:center; color:{% if pending_recurring_count > 0 %}#b45309{% else %}#047857{% endif %};">⏳</div>
+    </div>
+    <div style="font-size:22px; font-weight:800; color:{% if pending_recurring_count > 0 %}#b45309{% else %}#047857{% endif %}; margin:6px 0 2px 0;">
+      {{ "%.2f"|format(pending_recurring_amount) }} <span style="font-size:12px; font-weight:600;">DH</span>
+    </div>
+    <div style="font-size:11.5px; color:{% if pending_recurring_count > 0 %}#b45309{% else %}#047857{% endif %}; font-weight:700;">
+      {% if pending_recurring_count > 0 %}
+        ⚠️ {{ pending_recurring_count }} charge(s) à confirmer pour ce mois
+      {% else %}
+        ✅ Toutes les charges sont validées !
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Friendly Info Callout -->
+<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px 16px; margin-bottom:18px; font-size:12.5px; color:#475569; display:flex; align-items:center; gap:10px;">
+  <span style="font-size:18px;">💡</span>
+  <span>
+    <strong>{{ 'مبدأ العمل بدون عشوائية :' if lang=='ar' else 'Principe de fonctionnement :' }}</strong>
+    {{ 'المصاريف القارة لا تُخصم تلقائياً من الصندوق إلا بعد مراجعتك وتأكيدك. يمكنك تعديل المبلغ بكل حرية عند التأكيد (مثلاً فاتورة الماء والكهرباء أو تعديل طفيف في الأجر) ثم الضغط على "تأكيد لهذا الشهر".' if lang=='ar' else 'Les charges fixes ne sont jamais imputées automatiquement sans votre accord. Vous gardez la main totale : vous pouvez vérifier ou adapter le montant exact (ex: facture d\'eau/électricité variable), puis valider chaque ligne d\'un simple clic pour la comptabiliser.' }}
+  </span>
+</div>
+
+<!-- Recurring Charges Table Card -->
+<div class="card" style="border-radius:14px; border:1.5px solid #cbd5e1; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,0.04); margin-bottom:24px;">
+  <div style="padding:14px 20px; background:#f8fafc; border-bottom:1.5px solid #e2e8f0; font-weight:800; font-size:14px; color:#1e1b4b; display:flex; justify-content:space-between; align-items:center;">
+    <span>📋 {{ 'قائمة المصاريف القارة لشهر' if lang=='ar' else 'Tableau de Suivi des Charges Fixes - Mois de' }} <strong>{{ month_name_fr }}</strong></span>
+    <span class="chip chip-purple" style="font-size:11px;">{{ recurring_items_data|length }} Modèle(s)</span>
+  </div>
+
+  {% if recurring_items_data %}
+  <div style="overflow-x:auto;">
+    <table class="table" style="margin:0; font-size:13px; width:100%;">
+      <thead>
+        <tr style="background:#ffffff; text-align:center;">
+          <th style="width:40px;">#</th>
+          <th style="text-align:left;">{{ 'المصروف والقسم' if lang=='ar' else 'Charge & Catégorie' }}</th>
+          <th style="text-align:left;">{{ 'المستفيد / المورد' if lang=='ar' else 'Bénéficiaire / Prestataire' }}</th>
+          <th style="text-align:center;">{{ 'الأجل المعتاد' if lang=='ar' else 'Échéance' }}</th>
+          <th style="text-align:right;">{{ 'المبلغ المرجعي' if lang=='ar' else 'Montant Prévu' }}</th>
+          <th style="text-align:center;">{{ 'طريقة الأداء' if lang=='ar' else 'Mode' }}</th>
+          <th style="text-align:center; min-width:180px;">{{ 'الوضعية لهذا الشهر' if lang=='ar' else 'Statut (' ~ req_month ~ ')' }}</th>
+          <th style="text-align:center; min-width:170px;">{{ 'الإجراء والمصادقة' if lang=='ar' else 'Action / Validation' }}</th>
+          <th style="text-align:center; width:100px;">{{ 'إعدادات النموذج' if lang=='ar' else 'Modèle' }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in recurring_items_data %}
+        {% set rc = item.rc %}
+        {% set is_val = item.is_validated %}
+        {% set gen = item.generated_expense %}
+        <tr style="text-align:center; {% if not rc.active %}background:#f8fafc; opacity:0.65;{% elif is_val %}background:#f0fdf4;{% endif %}">
+          <td style="font-weight:700; color:#64748b;">{{ loop.index }}</td>
+
+          <!-- Charge & Categorie -->
+          <td style="text-align:left;">
+            <div style="font-weight:800; font-size:13.5px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+              <span>{{ rc.title }}</span>
+              {% if rc.employee_id %}
+                <span class="chip" style="background:#e0e7ff; color:#3730a3; font-size:10px; font-weight:700;">👤 {{ 'موظف (تلقائي)' if lang=='ar' else 'Employé (Auto)' }}</span>
+              {% endif %}
+              {% if not rc.active %}
+                <span class="chip" style="background:#f1f5f9; color:#64748b; font-size:10px; font-weight:700;">⏸️ EN PAUSE</span>
+              {% endif %}
+            </div>
+            <div style="margin-top:2px; display:flex; gap:6px; align-items:center;">
+              <span class="chip chip-purple" style="font-size:10.5px; font-weight:700;">{{ rc.category }}</span>
+              {% if rc.notes %}
+                <span style="font-size:11px; color:#64748b; font-style:italic;" title="{{ rc.notes }}">📝 {{ rc.notes|truncate(35) }}</span>
+              {% endif %}
+            </div>
+          </td>
+
+          <!-- Beneficiaire / Fournisseur -->
+          <td style="text-align:left; color:#334155;">
+            {% if rc.effective_beneficiary and rc.effective_beneficiary != '—' %}
+              <div style="font-weight:700;">👤 {{ rc.effective_beneficiary }}</div>
+            {% else %}
+              <span style="color:#94a3b8;">—</span>
+            {% endif %}
+          </td>
+
+          <!-- Echeance dans le mois -->
+          <td style="text-align:center; font-weight:700; color:#475569;">
+            {% if rc.day_of_month == 1 %}
+              1er du mois
+            {% else %}
+              Le {{ rc.day_of_month }} du mois
+            {% endif %}
+          </td>
+
+          <!-- Montant Mensuel Prevu -->
+          <td style="text-align:right; font-weight:800; font-size:13.5px; color:#1e1b4b;">
+            {{ "%.2f"|format(rc.amount) }} <span style="font-size:11px; font-weight:600;">DH</span>
+          </td>
+
+          <!-- Mode de paiement -->
+          <td style="text-align:center;">
+            <span class="chip chip-gray" style="font-size:11px;">{{ rc.payment_method }}</span>
+          </td>
+
+          <!-- Statut pour le mois selectionne -->
+          <td style="text-align:center;">
+            {% if is_val %}
+              <div>
+                <span class="chip chip-green" style="font-size:11.5px; font-weight:800; padding:3px 10px;">
+                  ✅ Validée
+                </span>
+                <div style="font-size:11.5px; color:#047857; font-weight:700; margin-top:3px;">
+                  {{ "%.2f"|format(gen.amount) }} DH ({{ gen.payment_method }})
+                </div>
+                <div style="font-size:10.5px; color:#64748b;">
+                  Réf #{{ gen.id }} - le {{ gen.date.strftime('%d/%m/%Y') }}
+                </div>
+              </div>
+            {% elif not rc.active %}
+              <span class="chip" style="background:#f1f5f9; color:#94a3b8; font-size:11px; font-weight:700;">
+                ⏸️ Modèle en pause
+              </span>
+            {% else %}
+              <span class="chip chip-amber" style="font-size:11.5px; font-weight:800; padding:3px 10px;">
+                ⏳ À valider pour ce mois
+              </span>
+            {% endif %}
+          </td>
+
+          <!-- Actions de validation pour ce mois -->
+          <td style="text-align:center;">
+            {% if is_val %}
+              <div style="display:flex; justify-content:center; gap:6px; flex-wrap:wrap;">
+                <a href="{{ url_for('expenses', tab='all', month=req_month, q=rc.title) }}" class="btn btn-xs btn-outline" style="border-color:#93c5fd; color:#1f6feb; border-radius:6px; padding:4px 8px; font-weight:700; text-decoration:none;" title="Voir la ligne dans le journal">
+                  🔍 Voir
+                </a>
+                {% if cur_user and cur_user.role == 'admin' %}
+                <form method="POST" action="{{ url_for('expense_recurring_cancel_month', rc_id=rc.id) }}" onsubmit="return confirm('Annuler la validation de cette charge pour {{ month_name_fr }} ? L\'écriture sera supprimée du journal de caisse.');" style="display:inline;">
+                  <input type="hidden" name="month" value="{{ req_month }}">
+                  <button type="submit" class="btn btn-xs btn-outline" style="border-color:#fca5a5; color:#dc2626; border-radius:6px; padding:4px 8px; font-weight:700;" title="Annuler la validation pour ce mois">
+                    ↩️ Annuler
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            {% elif not rc.active %}
+              <form method="POST" action="{{ url_for('expense_recurring_toggle', rc_id=rc.id) }}" style="display:inline;">
+                <input type="hidden" name="month" value="{{ req_month }}">
+                <button type="submit" class="btn btn-xs btn-outline" style="border-color:#cbd5e1; border-radius:6px; padding:4px 10px; font-weight:700;">
+                  ▶️ Réactiver
+                </button>
+              </form>
+            {% else %}
+              <button type="button" onclick='openValidateRecurringModal({{ rc.id }}, {{ rc.title|tojson }}, {{ rc.category|tojson }}, {{ rc.amount }}, {{ rc.day_of_month }}, {{ rc.payment_method|tojson }}, {{ (rc.effective_beneficiary or "")|tojson }})' class="btn btn-xs btn-primary" style="background:#059669; border-color:#059669; font-weight:800; border-radius:8px; padding:5px 12px; box-shadow:0 2px 6px rgba(5,150,105,0.25);">
+                ⚡ {{ 'مصادقة وتأكيد' if lang=='ar' else 'Valider pour ce mois' }}
+              </button>
+            {% endif %}
+          </td>
+
+          <!-- Actions sur le modele -->
+          <td style="text-align:center;">
+            <div style="display:flex; justify-content:center; gap:4px;">
+              {% if rc.employee_id %}
+              <a href="{{ url_for('employee_edit', eid=rc.employee_id) }}" class="btn btn-xs btn-outline" style="border-color:#cbd5e1; border-radius:6px; padding:3px 7px;" title="Modifier la fiche employé">
+                👤✏️
+              </a>
+              {% else %}
+              <button type="button" onclick='openEditRecurringModal({{ rc.id }}, {{ rc.title|tojson }}, {{ rc.category|tojson }}, {{ rc.amount }}, {{ rc.day_of_month }}, {{ rc.payment_method|tojson }}, {{ (rc.supplier_id or "")|tojson }}, {{ (rc.supplier_name or "")|tojson }}, {{ (rc.beneficiary or "")|tojson }}, {{ (rc.notes or "")|tojson }}, {{ "1" if rc.active else "0" }})' class="btn btn-xs btn-outline" style="border-color:#cbd5e1; border-radius:6px; padding:3px 7px;" title="Modifier le modèle">
+                ✏️
+              </button>
+              {% endif %}
+              <form method="POST" action="{{ url_for('expense_recurring_toggle', rc_id=rc.id) }}" style="display:inline;">
+                <input type="hidden" name="month" value="{{ req_month }}">
+                <button type="submit" class="btn btn-xs btn-outline" style="border-color:#cbd5e1; border-radius:6px; padding:3px 7px;" title="{{ 'Mettre en pause' if rc.active else 'Reprendre' }}">
+                  {{ '⏸️' if rc.active else '▶️' }}
+                </button>
+              </form>
+              {% if cur_user and cur_user.role == 'admin' %}
+              {% if not rc.employee_id %}
+              <form method="POST" action="{{ url_for('expense_recurring_delete', rc_id=rc.id) }}" onsubmit="return confirm('Supprimer définitivement ce modèle de charge fixe ? (Les écritures déjà passées dans l\'historique seront conservées)');" style="display:inline;">
+                <input type="hidden" name="month" value="{{ req_month }}">
+                <button type="submit" class="btn btn-xs btn-outline" style="border-color:#fca5a5; color:#ef4444; border-radius:6px; padding:3px 7px;" title="Supprimer le modèle">
+                  🗑️
+                </button>
+              </form>
+              {% endif %}
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <!-- Empty State with Quick Presets -->
+  <div style="padding:40px 24px; text-align:center; color:#64748b;">
+    <div style="font-size:46px; margin-bottom:10px;">🔄</div>
+    <div style="font-weight:800; font-size:16px; color:#1e1b4b;">
+      {{ 'لم يتم تسجيل أي مصاريف قارة حتى الآن' if lang=='ar' else 'Aucune charge fixe récurrente configurée pour l\'instant.' }}
+    </div>
+    <p style="font-size:13px; max-width:600px; margin:8px auto 20px auto; color:#64748b; line-height:1.5;">
+      {{ 'وفر وقتك وسجل المصاريف الشهرية التي تتكرر بانتظام. يمكنك إنشاء نموذج جديد أو اختيار أحد النماذج الجاهزة أدناه :' if lang=='ar' else 'Gagnez un temps précieux en définissant une seule fois vos charges mensuelles. Créez votre première charge fixe ou cliquez sur l\'un des modèles types ci-dessous :' }}
+    </p>
+
+    <!-- Quick Presets -->
+    <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:8px; max-width:700px; margin:0 auto 24px auto;">
+      <button type="button" onclick="openAddRecurringModal('Loyer des locaux - Centre Principal', 'Loyer des locaux', 1, 'Virement')" class="btn btn-sm btn-outline" style="border-color:#cbd5e1; border-radius:8px; font-weight:700; background:#fff;">
+        🏢 Loyer des locaux
+      </button>
+      <button type="button" onclick="openAddRecurringModal('Abonnement Internet Fibre Optique', 'Télécom & Internet', 5, 'Prélèvement')" class="btn btn-sm btn-outline" style="border-color:#cbd5e1; border-radius:8px; font-weight:700; background:#fff;">
+        🌐 Fibre & Wifi
+      </button>
+      <button type="button" onclick="openAddRecurringModal('Facture Électricité & Eau', 'Électricité & Eau', 10, 'Espèces')" class="btn btn-sm btn-outline" style="border-color:#cbd5e1; border-radius:8px; font-weight:700; background:#fff;">
+        💡 Électricité & Eau
+      </button>
+      <button type="button" onclick="openAddRecurringModal('Salaire personnel fixe (séparé)', 'Salaires & Primes', 28, 'Espèces')" class="btn btn-sm btn-outline" style="border-color:#cbd5e1; border-radius:8px; font-weight:700; background:#fff;">
+        👥 Salaire employé fixe
+      </button>
+      <button type="button" onclick="openAddRecurringModal('Prestation Ménage & Propreté', 'Maintenance & Réparations', 28, 'Espèces')" class="btn btn-sm btn-outline" style="border-color:#cbd5e1; border-radius:8px; font-weight:700; background:#fff;">
+        🧹 Femme de ménage / Entretien
+      </button>
+      <button type="button" onclick="openAddRecurringModal('Charges de Copropriété / Syndic', 'Maintenance & Réparations', 1, 'Espèces')" class="btn btn-sm btn-outline" style="border-color:#cbd5e1; border-radius:8px; font-weight:700; background:#fff;">
+        🏢 Syndic immeuble
+      </button>
+      <button type="button" onclick="openAddRecurringModal('Honoraires Cabinet Comptable / Fiduciaire', 'Honoraires Comptable / Fiduciaire', 5, 'Virement')" class="btn btn-sm btn-outline" style="border-color:#cbd5e1; border-radius:8px; font-weight:700; background:#fff;">
+        ⚖️ Fiduciaire / Comptable
+      </button>
+    </div>
+
+    <button type="button" onclick="openAddRecurringModal()" class="btn btn-primary" style="background:#4f46e5; border-color:#4f46e5; font-weight:800; border-radius:10px; padding:10px 22px;">
+      ➕ {{ 'إضافة رسم قار جديد' if lang=='ar' else '+ Définir une Charge Fixe' }}
+    </button>
+  </div>
+  {% endif %}
+</div>
+
+{% else %}
+<!-- ======================================================= -->
+<!-- TABS: ALL / ACHATS / CHARGES / PENDING (OPERATIONS TABLE)-->
+<!-- ======================================================= -->
+
+<!-- Reminder Banner if Recurring Charges Pending for this month (Admin only) -->
+{% if pending_recurring_count > 0 and tab in ['all', 'charges', ''] and cur_user and cur_user.role == 'admin' %}
+<div class="card mb-3" style="border-radius:14px; border:1.5px solid #a5b4fc; background:linear-gradient(135deg, #eef2ff 0%, #faf5ff 100%); padding:14px 20px; box-shadow:0 3px 10px rgba(79,70,229,0.08); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+  <div style="display:flex; align-items:center; gap:14px;">
+    <div style="font-size:26px; width:44px; height:44px; border-radius:12px; background:#e0e7ff; display:flex; align-items:center; justify-content:center; color:#4338ca;">🔄</div>
+    <div>
+      <div style="font-size:14.5px; font-weight:800; color:#312e81;">
+        {{ 'تذكير بالمصاريف القارة لهذا الشهر' if lang=='ar' else 'Charges Fixes Récurrentes en attente pour' }} {{ month_name_fr }}
+      </div>
+      <div style="font-size:12.5px; color:#475569; margin-top:2px;">
+        {{ 'لديك' if lang=='ar' else 'Vous avez' }} <strong style="color:#4338ca;">{{ pending_recurring_count }}</strong> {{ 'مصاريف قارة جاهزة للمصادقة (الكراء، الأجور، الأنترنت... - المجموع :' if lang=='ar' else 'charge(s) prête(s) à être validée(s) (Loyer, salaires fixes, fibre... - Total estimé :' }} <strong>{{ "%.2f"|format(pending_recurring_amount) }} DH</strong>).
+      </div>
+    </div>
+  </div>
+  <a href="{{ url_for('expenses', tab='recurring', month=req_month) }}" class="btn btn-sm btn-primary" style="background:#4f46e5; border-color:#4f46e5; font-weight:800; border-radius:10px; padding:9px 18px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 3px 8px rgba(79,70,229,0.3);">
+    ⚡ <span>{{ 'معاينة والمصادقة الآن' if lang=='ar' else 'Examiner & Valider' }}</span> →
+  </a>
+</div>
+{% endif %}
+
+<!-- Filters Bar -->
+<div class="card" style="margin-bottom:20px; border-radius:14px; border:1.5px solid #cbd5e1; padding:16px; background:#fff;">
+  <form method="GET" action="{{ url_for('expenses') }}" style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+    <input type="hidden" name="tab" value="{{ tab }}">
+
+    <div style="min-width:150px; flex:1;">
+      <label style="font-size:11px; font-weight:800; color:#64748b; display:block; margin-bottom:4px;">{{ 'الشهر' if lang=='ar' else 'Mois' }}</label>
+      <input type="month" name="month" value="{{ req_month }}" onchange="this.form.submit()" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+    </div>
+
+    <div style="min-width:140px; flex:1;">
+      <label style="font-size:11px; font-weight:800; color:#64748b; display:block; margin-bottom:4px;">{{ 'النوع' if lang=='ar' else 'Type d\'opération' }}</label>
+      <select name="type" onchange="this.form.submit()" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+        <option value="">{{ 'الكل (مشتريات ومصاريف)' if lang=='ar' else 'Tous les types' }}</option>
+        <option value="achat" {{ 'selected' if selected_type == 'achat' else '' }}>📦 Achats & Fournitures</option>
+        <option value="charge" {{ 'selected' if selected_type == 'charge' else '' }}>⚡ Charges d'exploitation</option>
+      </select>
+    </div>
+
+    <div style="min-width:160px; flex:1;">
+      <label style="font-size:11px; font-weight:800; color:#64748b; display:block; margin-bottom:4px;">{{ 'الفئة' if lang=='ar' else 'Catégorie' }}</label>
+      <select name="category" onchange="this.form.submit()" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+        <option value="">{{ 'جميع الفئات' if lang=='ar' else 'Toutes les catégories' }}</option>
+        <optgroup label="📦 Achats">
+          {% for cat in achat_categories %}
+          <option value="{{ cat }}" {{ 'selected' if selected_category == cat else '' }}>{{ cat }}</option>
+          {% endfor %}
+        </optgroup>
+        <optgroup label="⚡ Charges">
+          {% for cat in charge_categories %}
+          <option value="{{ cat }}" {{ 'selected' if selected_category == cat else '' }}>{{ cat }}</option>
+          {% endfor %}
+        </optgroup>
+      </select>
+    </div>
+
+    <div style="min-width:140px; flex:1;">
+      <label style="font-size:11px; font-weight:800; color:#64748b; display:block; margin-bottom:4px;">{{ 'حالة الأداء' if lang=='ar' else 'Statut Règlement' }}</label>
+      <select name="status" onchange="this.form.submit()" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+        <option value="">{{ 'جميع الحالات' if lang=='ar' else 'Tous statuts' }}</option>
+        <option value="paid" {{ 'selected' if selected_status == 'paid' else '' }}>🟢 Payé</option>
+        <option value="unpaid" {{ 'selected' if selected_status == 'unpaid' else '' }}>🟡 Non payé / En attente</option>
+        <option value="partial" {{ 'selected' if selected_status == 'partial' else '' }}>🟠 Partiellement payé</option>
+        <option value="overdue" {{ 'selected' if selected_status == 'overdue' else '' }}>🔴 En retard d'échéance</option>
+      </select>
+    </div>
+
+    <div style="min-width:150px; flex:1;">
+      <label style="font-size:11px; font-weight:800; color:#64748b; display:block; margin-bottom:4px;">{{ 'المورد' if lang=='ar' else 'Fournisseur' }}</label>
+      <select name="supplier_id" onchange="this.form.submit()" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+        <option value="">{{ 'جميع الموردين' if lang=='ar' else 'Tous fournisseurs' }}</option>
+        {% for sup in suppliers %}
+        <option value="{{ sup.id }}" {{ 'selected' if selected_supplier == sup.id else '' }}>{{ sup.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="min-width:160px; flex:1.2;">
+      <label style="font-size:11px; font-weight:800; color:#64748b; display:block; margin-bottom:4px;">{{ 'بحث نصي' if lang=='ar' else 'Recherche' }}</label>
+      <input type="text" name="q" value="{{ search_q }}" placeholder="Ex: Bureau, facture, ONEE..." class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+    </div>
+
+    <div style="display:flex; gap:6px;">
+      <button type="submit" class="btn btn-sm btn-primary" style="font-weight:700; border-radius:10px; padding:9px 16px;">
+        🔍 <span>{{ 'تصفية' if lang=='ar' else 'Filtrer' }}</span>
+      </button>
+      {% if selected_category or selected_type or selected_status or selected_supplier or search_q or (req_month and req_month != today.strftime('%Y-%m')) %}
+      <a href="{{ url_for('expenses', tab=tab) }}" class="btn btn-sm btn-light" style="font-weight:700; border-radius:10px; padding:9px 12px; text-decoration:none;" title="Réinitialiser">
+        🔄
+      </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Expenses Table -->
+<div class="card" style="border-radius:14px; border:1.5px solid #cbd5e1; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,0.04);">
+  <div style="padding:14px 20px; background:#f8fafc; border-bottom:1.5px solid #e2e8f0; font-weight:800; font-size:14px; color:#0B3D6E; display:flex; justify-content:space-between; align-items:center;">
+    <span>📋 {{ 'سجل المشتريات والمصاريف' if lang=='ar' else 'Registre des Achats & Charges' }}</span>
+    <span class="chip chip-blue" style="font-size:11px;">{{ expenses|length }} {{ 'عملية' if lang=='ar' else 'opération(s)' }}</span>
+  </div>
+
+  {% if expenses %}
+  <div style="overflow-x:auto;">
+    <table class="table" style="margin:0; font-size:13px; width:100%;">
+      <thead>
+        <tr style="background:#ffffff; text-align:center;">
+          <th style="width:40px;">#</th>
+          <th style="text-align:center;">{{ 'التاريخ' if lang=='ar' else 'Date & Échéance' }}</th>
+          <th style="text-align:center;">{{ 'النوع' if lang=='ar' else 'Type' }}</th>
+          <th style="text-align:left;">{{ 'الفئة' if lang=='ar' else 'Catégorie' }}</th>
+          <th style="text-align:left;">{{ 'البيان والمورد' if lang=='ar' else 'Description & Fournisseur' }}</th>
+          <th style="text-align:center;">{{ 'طريقة الأداء' if lang=='ar' else 'Mode Paiement' }}</th>
+          <th style="text-align:center;">{{ 'الحالة' if lang=='ar' else 'Statut' }}</th>
+          <th style="text-align:right;">{{ 'المبلغ (DH)' if lang=='ar' else 'Montant (DH)' }}</th>
+          <th style="text-align:center;">{{ 'الإجراءات' if lang=='ar' else 'Actions' }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for exp in expenses %}
+        <tr style="text-align:center;">
+          <td style="font-weight:700; color:#64748b;">{{ loop.index }}</td>
+
+          <!-- Date & Echeance -->
+          <td style="text-align:center; font-weight:700; color:#1e293b; white-space:nowrap;">
+            <div>📅 {{ exp.date.strftime('%d/%m/%Y') }}</div>
+            {% if exp.due_date %}
+              <div style="font-size:11px; margin-top:2px; color:{% if exp.is_overdue %}#dc2626{% else %}#64748b{% endif %}; font-weight:{% if exp.is_overdue %}800{% else %}600{% endif %};">
+                ⏳ Échéance : {{ exp.due_date.strftime('%d/%m/%Y') }}
+                {% if exp.is_overdue %}<span class="chip chip-red" style="font-size:9px; padding:1px 4px;">EN RETARD</span>{% endif %}
+              </div>
+            {% endif %}
+          </td>
+
+          <!-- Type Badge -->
+          <td style="text-align:center;">
+            {% if exp.expense_type == 'achat' %}
+              <span class="chip" style="background:#e0f2fe; color:#0369a1; font-weight:800; font-size:11px; border:1px solid #bae6fd;">📦 Achat</span>
+            {% else %}
+              <span class="chip" style="background:#ede9fe; color:#6d28d9; font-weight:800; font-size:11px; border:1px solid #ddd6fe;">⚡ Charge</span>
+            {% endif %}
+          </td>
+
+          <!-- Categorie -->
+          <td style="text-align:left;">
+            <span class="chip chip-gray" style="font-size:11px; font-weight:700;">{{ exp.category }}</span>
+          </td>
+
+          <!-- Description & Fournisseur -->
+          <td style="text-align:left; font-weight:700; color:#0f172a;">
+            <div>{{ exp.description }}</div>
+            <div style="font-size:11.5px; color:#64748b; display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:2px;">
+              {% if exp.effective_supplier and exp.effective_supplier != '—' %}
+                <span>🏢 <strong>{{ exp.effective_supplier }}</strong></span>
+              {% endif %}
+              {% if exp.invoice_no %}
+                <span>🧾 Facture: <strong>{{ exp.invoice_no }}</strong></span>
+              {% endif %}
+              {% if exp.reference_no %}
+                <span>🔖 Réf: {{ exp.reference_no }}</span>
+              {% endif %}
+              {% if exp.receipt_file %}
+                <a href="{{ url_for('static', filename='uploads/' + exp.receipt_file) }}" target="_blank" style="color:#1f6feb; text-decoration:none; font-weight:700; display:inline-flex; align-items:center; gap:2px;">
+                  📎 Voir justificatif
+                </a>
+              {% endif %}
+            </div>
+            {% if exp.notes %}
+              <div style="font-size:11px; color:#94a3b8; font-weight:400; font-style:italic;">{{ exp.notes }}</div>
+            {% endif %}
+          </td>
+
+          <!-- Mode de paiement -->
+          <td style="text-align:center;">
+            <span class="chip chip-gray" style="font-size:11px;">{{ exp.payment_method }}</span>
+          </td>
+
+          <!-- Statut -->
+          <td style="text-align:center;">
+            {% if exp.status == 'paid' %}
+              <span class="chip chip-green" style="font-size:11px; font-weight:800;">🟢 Payé</span>
+            {% elif exp.status == 'unpaid' %}
+              <span class="chip chip-amber" style="font-size:11px; font-weight:800;">🟡 En attente</span>
+            {% elif exp.status == 'partial' %}
+              <span class="chip chip-amber" style="font-size:11px; font-weight:800; background:#ffedd5; color:#c2410c;">🟠 Partiel</span>
+            {% endif %}
+          </td>
+
+          <!-- Montant -->
+          <td style="text-align:right; font-weight:800; color:#dc2626; font-size:14px; white-space:nowrap;">
+            <div>- {{ "%.2f"|format(exp.amount) }} DH</div>
+            {% if exp.status in ['partial', 'unpaid'] %}
+              <div style="font-size:11px; color:#b45309; font-weight:700;">
+                Reste: {{ "%.2f"|format(exp.remaining_balance) }} DH
+              </div>
+            {% endif %}
+          </td>
+
+          <!-- Actions -->
+          <td style="text-align:center;">
+            <div style="display:flex; justify-content:center; gap:5px; align-items:center;">
+              {% if exp.status != 'paid' %}
+              <button onclick="openQuickPayModal({{ exp.id }}, '{{ exp.description|replace('\'', '\\\'') }}', {{ exp.remaining_balance }})" class="btn btn-xs btn-primary" style="background:#10b981; border-color:#10b981; padding:3px 8px; font-weight:800;" title="Régler / Payer">
+                💵 Régler
+              </button>
+              {% endif %}
+
+              <button onclick='openEditExpenseModal({{ exp.id }}, {{ exp.expense_type|tojson }}, {{ exp.category|tojson }}, {{ exp.description|tojson }}, {{ exp.amount }}, {{ exp.date.strftime("%Y-%m-%d")|tojson }}, {{ (exp.due_date.strftime("%Y-%m-%d") if exp.due_date else "")|tojson }}, {{ exp.payment_method|tojson }}, {{ (exp.reference_no or "")|tojson }}, {{ (exp.invoice_no or "")|tojson }}, {{ exp.supplier_id or "null" }}, {{ (exp.supplier_name or "")|tojson }}, {{ exp.status|tojson }}, {{ exp.paid_amount or 0 }}, {{ (exp.notes or "")|tojson }})' class="btn btn-xs btn-outline" style="border-color:#cbd5e1; border-radius:6px; padding:3px 8px;" title="Modifier">
+                ✏️
+              </button>
+
+              {% if cur_user and cur_user.role == 'admin' %}
+              <form method="POST" action="{{ url_for('expense_delete', eid=exp.id) }}" onsubmit="return confirm('{{ 'هل أنت متأكد من حذف هذه العملية نهائياً؟' if lang=='ar' else 'Voulez-vous vraiment supprimer cette dépense ?' }}');" style="display:inline;">
+                <button type="submit" class="btn btn-xs btn-outline" style="color:#ef4444; border-color:#fca5a5; border-radius:6px; padding:3px 8px;" title="Supprimer">
+                  🗑️
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="padding:45px; text-align:center; color:#64748b;">
+    <div style="font-size:42px; margin-bottom:10px;">💸</div>
+    <div style="font-weight:800; font-size:16px; color:#1e293b;">
+      {{ 'لا توجد مشتريات أو مصاريف مسجلة في هذه الفترة' if lang=='ar' else 'Aucun achat ou charge enregistré(e) pour cette sélection.' }}
+    </div>
+    <p style="font-size:13px; margin-top:6px; color:#64748b;">
+      {{ 'يمكنك تسجيل مشتريات اللوازم، الكتب، أو مصاريف التسيير عبر الأزرار أعلاه' if lang=='ar' else 'Vous pouvez ajouter un achat de matériel ou une charge d\'exploitation via les boutons en haut de page.' }}
+    </p>
+    <div style="display:flex; justify-content:center; gap:10px; margin-top:14px;">
+      <button onclick="openAddExpenseModal('charge')" class="btn btn-sm btn-primary">
+        ⚡ {{ 'تسجيل مصروف' if lang=='ar' else '+ Nouvelle Charge' }}
+      </button>
+      <button onclick="openAddExpenseModal('achat')" class="btn btn-sm btn-primary" style="background:#0284c7; border-color:#0284c7;">
+        📦 {{ 'تسجيل شراء' if lang=='ar' else '+ Nouvel Achat' }}
+      </button>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+
+<!-- ======================================================= -->
+<!-- MODAL: ADD EXPENSE / ACHAT                              -->
+<!-- ======================================================= -->
+<div id="addExpenseModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:9999; justify-content:center; align-items:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:560px; max-height:92vh; overflow-y:auto; border-radius:16px; box-shadow:0 20px 45px rgba(0,0,0,0.3);">
+    <div style="background:#0B3D6E; padding:16px 20px; color:#ffffff; display:flex; justify-content:space-between; align-items:center; border-radius:16px 16px 0 0;">
+      <h3 id="addModalTitle" style="margin:0; font-size:16px; font-weight:800;">
+        💸 <span>{{ 'تسجيل عملية جديدة' if lang=='ar' else 'Enregistrer un Achat ou une Charge' }}</span>
+      </h3>
+      <button onclick="document.getElementById('addExpenseModal').style.display='none'" style="background:none; border:none; color:#ffffff; font-size:22px; cursor:pointer;">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('expense_add') }}" enctype="multipart/form-data" style="padding:20px; display:flex; flex-direction:column; gap:13px;">
+      
+      <!-- Type Switcher -->
+      <div>
+        <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:6px;">{{ 'نوع العملية' if lang=='ar' else 'Nature de l\'opération' }} *</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <label style="display:flex; align-items:center; gap:8px; padding:10px 14px; border:1.5px solid #cbd5e1; border-radius:10px; cursor:pointer; font-weight:800; font-size:13px;">
+            <input type="radio" name="expense_type" value="charge" checked onchange="updateModalCategories('charge')">
+            <span>⚡ Charge d'exploitation</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; padding:10px 14px; border:1.5px solid #cbd5e1; border-radius:10px; cursor:pointer; font-weight:800; font-size:13px;">
+            <input type="radio" name="expense_type" value="achat" onchange="updateModalCategories('achat')">
+            <span>📦 Achat & Matériel</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Categorie -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'الفئة' if lang=='ar' else 'Catégorie' }} *</label>
+        <select name="category" id="addCategorySelect" required class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+          {% for c in charge_categories %}
+          <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Description / Libellé -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'البيان / تفاصيل العملية' if lang=='ar' else 'Description / Libellé' }} *</label>
+        <input type="text" name="description" required placeholder="Ex: Loyer du local, Achat rames de papier, Facture ONEE..." class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+      </div>
+
+      <!-- Montant & Date -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'المبلغ (DH)' if lang=='ar' else 'Montant Total (DH)' }} *</label>
+          <input type="number" step="0.01" min="0.01" name="amount" required placeholder="0.00" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%; font-weight:800; color:#dc2626;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'التاريخ' if lang=='ar' else 'Date de l\'opération' }} *</label>
+          <input type="date" name="date" value="{{ today.strftime('%Y-%m-%d') }}" required class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <!-- Fournisseur & N° Facture -->
+      <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'المورد / الجهة المستفيدة' if lang=='ar' else 'Fournisseur / Bénéficiaire' }}</label>
+          <select name="supplier_id" id="addSupplierSelect" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;" onchange="toggleCustomSupplierInput(this)">
+            <option value="">— Aucun ou Saisie libre —</option>
+            {% for s in suppliers %}
+            <option value="{{ s.id }}">{{ s.name }} ({{ s.category }})</option>
+            {% endfor %}
+            <option value="custom">✍️ Saisir un autre nom...</option>
+          </select>
+          <input type="text" name="supplier_name" id="addCustomSupplierName" placeholder="Nom du fournisseur ou bénéficiaire" class="form-control" style="display:none; margin-top:6px; border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:12.5px; width:100%;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'رقم الفاتورة / التواصيل' if lang=='ar' else 'N° Facture / Bon fournisseur' }}</label>
+          <input type="text" name="invoice_no" placeholder="Ex: FAC-2026-04" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <!-- Statut de paiement & Echeance -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'حالة التسديد' if lang=='ar' else 'Statut du Règlement' }} *</label>
+          <select name="status" id="addStatusSelect" onchange="toggleAddPartialInput(this.value)" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+            <option value="paid" selected>🟢 Payé (Solder immédiatement)</option>
+            <option value="unpaid">🟡 Non payé / En attente</option>
+            <option value="partial">🟠 Partiellement payé</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'تاريخ الاستحقاق' if lang=='ar' else 'Date d\'échéance' }}</label>
+          <input type="date" name="due_date" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <!-- Partiellement payé field (hidden by default) -->
+      <div id="addPartialAmountBlock" style="display:none;">
+        <label style="font-size:11.5px; font-weight:800; color:#c2410c; display:block; margin-bottom:4px;">Montant déjà réglé (Acompte DH)</label>
+        <input type="number" step="0.01" min="0" name="paid_amount" placeholder="0.00" class="form-control" style="border-radius:10px; border:1.5px solid #fdba74; padding:8px 12px; font-size:13px; width:100%;">
+      </div>
+
+      <!-- Mode de paiement & Reference -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'طريقة الأداء' if lang=='ar' else 'Mode de paiement' }}</label>
+          <select name="payment_method" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+            <option value="Espèces">Espèces (Caisse)</option>
+            <option value="Chèque">Chèque bancaire</option>
+            <option value="Virement">Virement bancaire</option>
+            <option value="Prélèvement">Prélèvement automatique</option>
+            <option value="Carte bancaire">Carte bancaire</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'رقم الشيك أو التحويل' if lang=='ar' else 'Réf / N° Chèque ou Reçu' }}</label>
+          <input type="text" name="reference_no" placeholder="Ex: CHQ-445889" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <!-- Piece jointe / Justificatif -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+          📎 {{ 'إرفاق وصل / فاتورة ممسوحة' if lang=='ar' else 'Pièce jointe / Facture / Photo reçu' }} (PDF, JPG, PNG)
+        </label>
+        <input type="file" name="receipt_file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:7px 12px; font-size:12px; width:100%;">
+      </div>
+
+      <!-- Notes -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'ملاحظات إضافية' if lang=='ar' else 'Notes / Remarques' }}</label>
+        <textarea name="notes" rows="2" placeholder="Détails complémentaires..." class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:12.5px; width:100%;"></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+        <button type="button" onclick="document.getElementById('addExpenseModal').style.display='none'" class="btn btn-light" style="border-radius:10px; font-weight:700;">
+          {{ 'إلغاء' if lang=='ar' else 'Annuler' }}
+        </button>
+        <button type="submit" class="btn btn-primary" style="border-radius:10px; font-weight:800; padding:9px 22px;">
+          💾 {{ 'حفظ العملية' if lang=='ar' else 'Enregistrer' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ======================================================= -->
+<!-- MODAL: QUICK PAY / RÉGLER UNE FACTURE                   -->
+<!-- ======================================================= -->
+<div id="quickPayModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:9999; justify-content:center; align-items:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:440px; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.3); overflow:hidden;">
+    <div style="background:#10b981; padding:16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0; font-size:16px; font-weight:800;">💵 {{ 'تسوية وأداء فاتورة' if lang=='ar' else 'Régler une Facture / Charge' }}</h3>
+      <button onclick="document.getElementById('quickPayModal').style.display='none'" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer;">✕</button>
+    </div>
+
+    <form id="quickPayForm" method="POST" action="" style="padding:20px; display:flex; flex-direction:column; gap:14px;">
+      <div style="background:#f8fafc; border-radius:10px; padding:12px; border:1px solid #e2e8f0;">
+        <div style="font-size:11.5px; color:#64748b; font-weight:700;">Opération concernée :</div>
+        <div id="quickPayDesc" style="font-size:13.5px; font-weight:800; color:#0f172a; margin-top:2px;">—</div>
+        <div style="font-size:12px; color:#dc2626; font-weight:800; margin-top:4px;">
+          Reste à solder : <span id="quickPayRemaining">0.00</span> DH
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'المبلغ المؤدى (DH)' if lang=='ar' else 'Montant à régler (DH)' }} *</label>
+        <input type="number" step="0.01" min="0.01" id="quickPayAmount" name="pay_amount" required class="form-control" style="border-radius:10px; border:1.5px solid #10b981; padding:9px 12px; font-size:14px; width:100%; font-weight:800; color:#047857;">
+      </div>
+
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'طريقة الأداء' if lang=='ar' else 'Mode de règlement' }}</label>
+        <select name="payment_method" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+          <option value="Espèces">Espèces (Caisse)</option>
+          <option value="Chèque">Chèque bancaire</option>
+          <option value="Virement">Virement bancaire</option>
+        </select>
+      </div>
+
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'رقم الشيك أو التحويل' if lang=='ar' else 'Réf Paiement / N° Chèque' }}</label>
+        <input type="text" name="payment_ref" placeholder="Ex: CHQ-5564" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+        <button type="button" onclick="document.getElementById('quickPayModal').style.display='none'" class="btn btn-light" style="border-radius:10px; font-weight:700;">Annuler</button>
+        <button type="submit" class="btn btn-primary" style="background:#10b981; border-color:#10b981; border-radius:10px; font-weight:800; padding:9px 20px;">
+          ✅ Confirmer le Règlement
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ======================================================= -->
+<!-- MODAL: EDIT EXPENSE                                     -->
+<!-- ======================================================= -->
+<div id="editExpenseModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:9999; justify-content:center; align-items:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:560px; max-height:92vh; overflow-y:auto; border-radius:16px; box-shadow:0 20px 45px rgba(0,0,0,0.3);">
+    <div style="background:#0B3D6E; padding:16px 20px; color:#ffffff; display:flex; justify-content:space-between; align-items:center; border-radius:16px 16px 0 0;">
+      <h3 style="margin:0; font-size:16px; font-weight:800;">
+        ✏️ <span>{{ 'تعديل بيانات المصروف / الشراء' if lang=='ar' else 'Modifier l\'Opération' }}</span>
+      </h3>
+      <button onclick="document.getElementById('editExpenseModal').style.display='none'" style="background:none; border:none; color:#ffffff; font-size:22px; cursor:pointer;">✕</button>
+    </div>
+
+    <form id="editExpenseForm" method="POST" action="" enctype="multipart/form-data" style="padding:20px; display:flex; flex-direction:column; gap:13px;">
+      
+      <!-- Type Switcher -->
+      <div>
+        <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:6px;">Type *</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <label style="display:flex; align-items:center; gap:8px; padding:10px 14px; border:1.5px solid #cbd5e1; border-radius:10px; cursor:pointer; font-weight:800; font-size:13px;">
+            <input type="radio" name="expense_type" id="editTypeCharge" value="charge">
+            <span>⚡ Charge d'exploitation</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; padding:10px 14px; border:1.5px solid #cbd5e1; border-radius:10px; cursor:pointer; font-weight:800; font-size:13px;">
+            <input type="radio" name="expense_type" id="editTypeAchat" value="achat">
+            <span>📦 Achat & Matériel</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Categorie -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Catégorie *</label>
+        <select name="category" id="editCategorySelect" required class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+          <optgroup label="📦 Achats">
+            {% for c in achat_categories %}
+            <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
+          </optgroup>
+          <optgroup label="⚡ Charges">
+            {% for c in charge_categories %}
+            <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
+          </optgroup>
+        </select>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Description *</label>
+        <input type="text" name="description" id="editDescInput" required class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+      </div>
+
+      <!-- Montant & Date -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Montant Total (DH) *</label>
+          <input type="number" step="0.01" min="0.01" name="amount" id="editAmountInput" required class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%; font-weight:800; color:#dc2626;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Date *</label>
+          <input type="date" name="date" id="editDateInput" required class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <!-- Fournisseur & Facture -->
+      <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Fournisseur</label>
+          <select name="supplier_id" id="editSupplierSelect" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+            <option value="">— Aucun / Saisie libre —</option>
+            {% for s in suppliers %}
+            <option value="{{ s.id }}">{{ s.name }}</option>
+            {% endfor %}
+          </select>
+          <input type="text" name="supplier_name" id="editCustomSupplierInput" placeholder="Nom libre" class="form-control" style="margin-top:6px; border-radius:10px; border:1.5px solid #cbd5e1; padding:7px 12px; font-size:12px; width:100%;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">N° Facture / Bon</label>
+          <input type="text" name="invoice_no" id="editInvoiceNoInput" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <!-- Statut & Echeance -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Statut *</label>
+          <select name="status" id="editStatusSelect" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+            <option value="paid">🟢 Payé</option>
+            <option value="unpaid">🟡 Non payé / En attente</option>
+            <option value="partial">🟠 Partiellement payé</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Date d'échéance</label>
+          <input type="date" name="due_date" id="editDueDateInput" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <!-- Mode & Ref -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Mode de paiement</label>
+          <select name="payment_method" id="editPaymentMethodSelect" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+            <option value="Espèces">Espèces</option>
+            <option value="Chèque">Chèque</option>
+            <option value="Virement">Virement</option>
+            <option value="Prélèvement">Prélèvement</option>
+            <option value="Carte bancaire">Carte bancaire</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Réf / N° Chèque</label>
+          <input type="text" name="reference_no" id="editRefInput" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <!-- Justificatif file update -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Remplacer justificatif</label>
+        <input type="file" name="receipt_file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:7px 12px; font-size:12px; width:100%;">
+      </div>
+
+      <!-- Notes -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Notes</label>
+        <textarea name="notes" id="editNotesInput" rows="2" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:12.5px; width:100%;"></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+        <button type="button" onclick="document.getElementById('editExpenseModal').style.display='none'" class="btn btn-light" style="border-radius:10px; font-weight:700;">Annuler</button>
+        <button type="submit" class="btn btn-primary" style="border-radius:10px; font-weight:800; padding:9px 20px;">Enregistrer Modifications</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ======================================================= -->
+<!-- MODAL: ADD SUPPLIER                                     -->
+<!-- ======================================================= -->
+<div id="addSupplierModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:9999; justify-content:center; align-items:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:500px; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.3); overflow:hidden;">
+    <div style="background:#8b5cf6; padding:16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0; font-size:16px; font-weight:800;">🏢 {{ 'إضافة مورد أو مقدم خدمة جديد' if lang=='ar' else 'Nouveau Fournisseur / Prestataire' }}</h3>
+      <button onclick="document.getElementById('addSupplierModal').style.display='none'" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer;">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('supplier_add') }}" style="padding:20px; display:flex; flex-direction:column; gap:12px;">
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'اسم المورد / الشركة' if lang=='ar' else 'Nom de l\'entreprise ou du fournisseur' }} *</label>
+        <input type="text" name="name" required placeholder="Ex: Papeterie Centrale, Librairie Al-Kitab, Propriétaire..." class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%; font-weight:700;">
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'النشاط / الصنف' if lang=='ar' else 'Activité / Catégorie' }}</label>
+          <select name="category" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+            <option value="Papeterie & Fournitures">Papeterie & Fournitures</option>
+            <option value="Librairie & Éditions">Librairie & Éditions</option>
+            <option value="Bailleur / Propriétaire">Bailleur / Propriétaire Local</option>
+            <option value="Informatique & Matériel">Informatique & Matériel</option>
+            <option value="Énergie & Télécoms">Énergie & Télécoms</option>
+            <option value="Maintenance & Services">Maintenance & Services</option>
+            <option value="Fiduciaire & Conseil">Fiduciaire & Comptabilité</option>
+            <option value="Général" selected>Fournisseur Général</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'المخاطب المسؤول' if lang=='ar' else 'Personne de contact' }}</label>
+          <input type="text" name="contact_person" placeholder="Nom interlocuteur" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'الهاتف' if lang=='ar' else 'Téléphone' }}</label>
+          <input type="text" name="phone" placeholder="06XXXXXXXX" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'البريد الإلكتروني' if lang=='ar' else 'Email' }}</label>
+          <input type="email" name="email" placeholder="contact@fournisseur.ma" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'الرقم الموحد (ICE)' if lang=='ar' else 'ICE (Identifiant Commun de l\'Entreprise)' }}</label>
+          <input type="text" name="ice" placeholder="00XXXXXXXXXXXXX" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%; font-family:monospace;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'المدينة' if lang=='ar' else 'Ville' }}</label>
+          <input type="text" name="city" value="Marrakech" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">{{ 'العنوان' if lang=='ar' else 'Adresse' }}</label>
+        <input type="text" name="address" placeholder="Adresse du fournisseur" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:12.5px; width:100%;">
+      </div>
+
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Notes</label>
+        <textarea name="notes" rows="2" placeholder="Conditions de paiement, RIB, etc." class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:12px; width:100%;"></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+        <button type="button" onclick="document.getElementById('addSupplierModal').style.display='none'" class="btn btn-light" style="border-radius:10px; font-weight:700;">Annuler</button>
+        <button type="submit" class="btn btn-primary" style="background:#8b5cf6; border-color:#8b5cf6; border-radius:10px; font-weight:800; padding:9px 20px;">
+          💾 Créer le Fournisseur
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ======================================================= -->
+<!-- MODAL: EDIT SUPPLIER                                    -->
+<!-- ======================================================= -->
+<div id="editSupplierModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:9999; justify-content:center; align-items:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:500px; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.3); overflow:hidden;">
+    <div style="background:#8b5cf6; padding:16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0; font-size:16px; font-weight:800;">✏️ Modifier le Fournisseur</h3>
+      <button onclick="document.getElementById('editSupplierModal').style.display='none'" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer;">✕</button>
+    </div>
+
+    <form id="editSupplierForm" method="POST" action="" style="padding:20px; display:flex; flex-direction:column; gap:12px;">
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Nom de l'entreprise *</label>
+        <input type="text" name="name" id="editSupName" required class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%; font-weight:700;">
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Activité</label>
+          <input type="text" name="category" id="editSupCat" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Contact</label>
+          <input type="text" name="contact_person" id="editSupContact" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Téléphone</label>
+          <input type="text" name="phone" id="editSupPhone" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Email</label>
+          <input type="email" name="email" id="editSupEmail" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">ICE</label>
+          <input type="text" name="ice" id="editSupIce" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%; font-family:monospace;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Ville</label>
+          <input type="text" name="city" id="editSupCity" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Adresse</label>
+        <input type="text" name="address" id="editSupAddr" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:12.5px; width:100%;">
+      </div>
+
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Notes</label>
+        <textarea name="notes" id="editSupNotes" rows="2" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:12px; width:100%;"></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+        <button type="button" onclick="document.getElementById('editSupplierModal').style.display='none'" class="btn btn-light" style="border-radius:10px; font-weight:700;">Annuler</button>
+        <button type="submit" class="btn btn-primary" style="background:#8b5cf6; border-color:#8b5cf6; border-radius:10px; font-weight:800; padding:9px 20px;">
+          Enregistrer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- MODAL: ADD RECURRING CHARGE TEMPLATE                    -->
+<!-- ======================================================= -->
+<div id="addRecurringModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:9999; justify-content:center; align-items:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:560px; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.3); overflow:hidden; max-height:92vh; display:flex; flex-direction:column;">
+    <div style="background:linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding:16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0; font-size:16px; font-weight:800; display:flex; align-items:center; gap:8px;">
+        <span>🔄</span>
+        <span>{{ 'نموذج جديد لمصروف قار' if lang=='ar' else 'Nouvelle Charge Fixe Récurrente' }}</span>
+      </h3>
+      <button type="button" onclick="document.getElementById('addRecurringModal').style.display='none'" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer;">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('expense_recurring_add') }}" style="padding:20px; display:flex; flex-direction:column; gap:12px; overflow-y:auto;">
+      <input type="hidden" name="month" value="{{ req_month }}">
+
+      <!-- Presets fast buttons -->
+      <div>
+        <label style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; display:block; margin-bottom:6px;">
+          ⚡ {{ 'نماذج سريعة جاهزة للاختيار' if lang=='ar' else 'Suggestions rapides en 1 clic :' }}
+        </label>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <button type="button" onclick="fillRecurringPreset('Loyer des locaux', 'Loyer des locaux', 1, 'Virement')" class="btn btn-xs btn-outline" style="border-radius:6px; font-size:11px; padding:3px 8px; border-color:#cbd5e1; background:#f8fafc;">
+            🏢 Loyer
+          </button>
+          <button type="button" onclick="fillRecurringPreset('Abonnement Internet Fibre Optique', 'Télécom & Internet', 5, 'Prélèvement')" class="btn btn-xs btn-outline" style="border-radius:6px; font-size:11px; padding:3px 8px; border-color:#cbd5e1; background:#f8fafc;">
+            🌐 Internet
+          </button>
+          <button type="button" onclick="fillRecurringPreset('Facture Électricité & Eau', 'Électricité & Eau', 10, 'Espèces')" class="btn btn-xs btn-outline" style="border-radius:6px; font-size:11px; padding:3px 8px; border-color:#cbd5e1; background:#f8fafc;">
+            💡 Eau/Élec
+          </button>
+          <button type="button" onclick="fillRecurringPreset('Salaire fixe employé (séparé)', 'Salaires & Primes', 28, 'Espèces')" class="btn btn-xs btn-outline" style="border-radius:6px; font-size:11px; padding:3px 8px; border-color:#cbd5e1; background:#f8fafc;">
+            👥 Salaire employé
+          </button>
+          <button type="button" onclick="fillRecurringPreset('Femme de ménage / Entretien', 'Maintenance & Réparations', 28, 'Espèces')" class="btn btn-xs btn-outline" style="border-radius:6px; font-size:11px; padding:3px 8px; border-color:#cbd5e1; background:#f8fafc;">
+            🧹 Ménage
+          </button>
+          <button type="button" onclick="fillRecurringPreset('Frais de Syndic', 'Maintenance & Réparations', 1, 'Espèces')" class="btn btn-xs btn-outline" style="border-radius:6px; font-size:11px; padding:3px 8px; border-color:#cbd5e1; background:#f8fafc;">
+            🏢 Syndic
+          </button>
+        </div>
+      </div>
+
+      <!-- Title -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+          {{ 'عنوان المصروف القار *' if lang=='ar' else 'Intitulé de la charge fixe *' }}
+        </label>
+        <input type="text" name="title" id="addRcTitle" required placeholder="Ex: Loyer Siège Principal, Fibre Maroc Telecom, Salaire Fatima..." class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%; font-weight:700;">
+      </div>
+
+      <!-- Category -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+          {{ 'الفئة' if lang=='ar' else 'Catégorie de charge' }}
+        </label>
+        <select name="category" id="addRcCategory" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+          {% for cat in charge_categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Amount & Day of month -->
+      <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+            {{ 'المبلغ المرجعي الشهري (درهم) *' if lang=='ar' else 'Montant mensuel de référence (DH) *' }}
+          </label>
+          <input type="number" step="0.01" min="0.01" name="amount" id="addRcAmount" required placeholder="Ex: 5000.00" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13.5px; font-weight:800; color:#1e1b4b; width:100%;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+            {{ 'يوم الأداء في الشهر' if lang=='ar' else 'Jour d\'échéance dans le mois' }}
+          </label>
+          <input type="number" min="1" max="31" name="day_of_month" id="addRcDay" value="1" placeholder="1 à 31" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <!-- Payment Method & Beneficiary -->
+      <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+            {{ 'طريقة الأداء المعتادة' if lang=='ar' else 'Mode de règlement habituel' }}
+          </label>
+          <select name="payment_method" id="addRcMethod" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+            <option value="Espèces">Espèces</option>
+            <option value="Virement bancaire">Virement bancaire</option>
+            <option value="Chèque">Chèque</option>
+            <option value="Prélèvement automatique">Prélèvement automatique</option>
+            <option value="Carte bancaire">Carte bancaire</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+            {{ 'المستفيد / الشخص المعني' if lang=='ar' else 'Bénéficiaire / Prestataire' }}
+          </label>
+          <input type="text" name="beneficiary" id="addRcBeneficiary" placeholder="Ex: M. Propriétaire, Fatima..." class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <!-- Quick select for existing employee or supplier -->
+      {% if employees or suppliers %}
+      <div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; padding:10px 12px;">
+        <span style="font-size:11px; font-weight:700; color:#64748b; display:block; margin-bottom:4px;">
+          🔗 {{ 'ربط سريع بمستخدم أو مورد مسجل (اختياري) :' if lang=='ar' else 'Remplissage rapide depuis un Employé ou Fournisseur :' }}
+        </span>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          {% if employees %}
+          <select onchange="if(this.value){ document.getElementById('addRcBeneficiary').value=this.options[this.selectedIndex].text; document.getElementById('addRcCategory').value='Salaires & Primes'; }" class="form-control" style="font-size:11.5px; padding:6px; border-radius:8px;">
+            <option value="">👤 {{ 'المستخدمين' if lang=='ar' else 'Choisir un employé...' }}</option>
+            {% for emp in employees %}
+              <option value="{{ emp.id }}">{{ emp.full_name }} ({{ emp.job_title }})</option>
+            {% endfor %}
+          </select>
+          {% endif %}
+
+          {% if suppliers %}
+          <select name="supplier_id" onchange="if(this.value){ document.getElementById('addRcBeneficiary').value=this.options[this.selectedIndex].text; }" class="form-control" style="font-size:11.5px; padding:6px; border-radius:8px;">
+            <option value="">🏢 {{ 'الموردين' if lang=='ar' else 'Choisir un fournisseur...' }}</option>
+            {% for sup in suppliers %}
+              <option value="{{ sup.id }}">{{ sup.name }}</option>
+            {% endfor %}
+          </select>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Notes -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+          {{ 'ملاحظات / شروط' if lang=='ar' else 'Notes & Détails' }}
+        </label>
+        <textarea name="notes" rows="2" placeholder="RIB bancaire, périodicité, contrat..." class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:12px; width:100%;"></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+        <button type="button" onclick="document.getElementById('addRecurringModal').style.display='none'" class="btn btn-light" style="border-radius:10px; font-weight:700;">Annuler</button>
+        <button type="submit" class="btn btn-primary" style="background:#4f46e5; border-color:#4f46e5; border-radius:10px; font-weight:800; padding:9px 20px;">
+          💾 {{ 'حفظ النموذج' if lang=='ar' else 'Créer la Charge Fixe' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ======================================================= -->
+<!-- MODAL: EDIT RECURRING CHARGE TEMPLATE                   -->
+<!-- ======================================================= -->
+<div id="editRecurringModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:9999; justify-content:center; align-items:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:560px; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.3); overflow:hidden; max-height:92vh; display:flex; flex-direction:column;">
+    <div style="background:#4f46e5; padding:16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0; font-size:16px; font-weight:800;">✏️ {{ 'تعديل نموذج الرسم القار' if lang=='ar' else 'Modifier le Modèle de Charge Fixe' }}</h3>
+      <button type="button" onclick="document.getElementById('editRecurringModal').style.display='none'" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer;">✕</button>
+    </div>
+
+    <form id="editRecurringForm" method="POST" action="" style="padding:20px; display:flex; flex-direction:column; gap:12px; overflow-y:auto;">
+      <input type="hidden" name="month" value="{{ req_month }}">
+
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Intitulé *</label>
+        <input type="text" name="title" id="editRcTitle" required class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%; font-weight:700;">
+      </div>
+
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Catégorie</label>
+        <select name="category" id="editRcCategory" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+          {% for cat in charge_categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Montant mensuel de référence (DH) *</label>
+          <input type="number" step="0.01" min="0.01" name="amount" id="editRcAmount" required class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13.5px; font-weight:800; color:#1e1b4b; width:100%;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Jour habituel dans le mois</label>
+          <input type="number" min="1" max="31" name="day_of_month" id="editRcDay" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Mode de règlement</label>
+          <select name="payment_method" id="editRcMethod" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+            <option value="Espèces">Espèces</option>
+            <option value="Virement bancaire">Virement bancaire</option>
+            <option value="Chèque">Chèque</option>
+            <option value="Prélèvement automatique">Prélèvement automatique</option>
+            <option value="Carte bancaire">Carte bancaire</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Bénéficiaire / Prestataire</label>
+          <input type="text" name="beneficiary" id="editRcBeneficiary" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      {% if suppliers %}
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Fournisseur lié (optionnel)</label>
+        <select name="supplier_id" id="editRcSupplierId" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:9px 12px; font-size:13px; width:100%;">
+          <option value="">-- Aucun fournisseur direct --</option>
+          {% for sup in suppliers %}
+            <option value="{{ sup.id }}">{{ sup.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Notes & Détails</label>
+        <textarea name="notes" id="editRcNotes" rows="2" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:12px; width:100%;"></textarea>
+      </div>
+
+      <div style="background:#f8fafc; border-radius:10px; padding:10px 14px;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700; font-size:13px; color:#1e293b; margin:0;">
+          <input type="checkbox" name="active" id="editRcActive" value="1" style="width:18px; height:18px; accent-color:#4f46e5;">
+          <span>Modèle Actif (si décoché, la charge est mise en pause et n'apparaît pas comme 'À valider')</span>
+        </label>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+        <button type="button" onclick="document.getElementById('editRecurringModal').style.display='none'" class="btn btn-light" style="border-radius:10px; font-weight:700;">Annuler</button>
+        <button type="submit" class="btn btn-primary" style="background:#4f46e5; border-color:#4f46e5; border-radius:10px; font-weight:800; padding:9px 20px;">
+          Enregistrer les modifications
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ======================================================= -->
+<!-- MODAL: VALIDATE RECURRING CHARGE FOR THE MONTH          -->
+<!-- ======================================================= -->
+<div id="validateRecurringModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:9999; justify-content:center; align-items:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:540px; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.3); overflow:hidden;">
+    <div style="background:linear-gradient(135deg, #059669 0%, #0d9488 100%); padding:16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <h3 style="margin:0; font-size:16px; font-weight:800; display:flex; align-items:center; gap:8px;">
+          <span>⚡</span>
+          <span>{{ 'المصادقة وتسجيل المصروف في الصندوق' if lang=='ar' else 'Validation & Enregistrement de la Charge' }}</span>
+        </h3>
+        <div style="font-size:12px; opacity:0.9; margin-top:2px;">Mois : <strong>{{ month_name_fr }}</strong> ({{ req_month }})</div>
+      </div>
+      <button type="button" onclick="document.getElementById('validateRecurringModal').style.display='none'" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer;">✕</button>
+    </div>
+
+    <form id="validateRecurringForm" method="POST" action="" style="padding:20px; display:flex; flex-direction:column; gap:12px;">
+      <input type="hidden" name="month" value="{{ req_month }}">
+
+      <!-- Summary Info Box -->
+      <div style="background:#f0fdf4; border:1.5px solid #bbf7d0; border-radius:10px; padding:12px 14px;">
+        <div style="font-weight:800; font-size:14px; color:#14532d;" id="valSummaryTitle"></div>
+        <div style="font-size:12px; color:#166534; display:flex; gap:12px; margin-top:4px;">
+          <span>Catégorie : <strong id="valSummaryCat"></strong></span>
+          <span>Bénéficiaire : <strong id="valSummaryBeneficiary"></strong></span>
+        </div>
+      </div>
+
+      <!-- Amount to Validate -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+          {{ 'المبلغ الفعلي لهذا الشهر (درهم) *' if lang=='ar' else 'Montant à comptabiliser pour ce mois (DH) *' }}
+        </label>
+        <input type="number" step="0.01" min="0.01" name="amount" id="valAmount" required class="form-control" style="border-radius:10px; border:2px solid #059669; padding:9px 12px; font-size:16px; font-weight:800; color:#065f46; width:100%;">
+        <span style="font-size:11px; color:#64748b; margin-top:2px; display:block;">
+          💡 Vous pouvez modifier le montant s'il diffère du modèle (ex: facture d'eau, ajustement...).
+        </span>
+      </div>
+
+      <!-- Payment Date & Method -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+            {{ 'تاريخ الأداء / المحاسبة' if lang=='ar' else 'Date de règlement' }}
+          </label>
+          <input type="date" name="date" id="valDate" required class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+            {{ 'طريقة الأداء' if lang=='ar' else 'Mode de règlement' }}
+          </label>
+          <select name="payment_method" id="valMethod" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+            <option value="Espèces">Espèces</option>
+            <option value="Virement bancaire">Virement bancaire</option>
+            <option value="Chèque">Chèque</option>
+            <option value="Prélèvement automatique">Prélèvement automatique</option>
+            <option value="Carte bancaire">Carte bancaire</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Status & Reference -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+            {{ 'حالة الأداء' if lang=='ar' else 'Statut de paiement' }}
+          </label>
+          <select name="status" id="valStatus" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+            <option value="paid">🟢 Payé immédiatement</option>
+            <option value="unpaid">🟡 Non payé / À échéance</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+            {{ 'رقم الوصل / الشيك / المرجع' if lang=='ar' else 'N° Reçu / Réf / Chèque' }}
+          </label>
+          <input type="text" name="reference_no" placeholder="Ex: CHQ-89023, FAC-102..." class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">Notes pour ce mois (optionnel)</label>
+        <textarea name="notes" rows="2" placeholder="Observations éventuelles..." class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:12px; width:100%;"></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+        <button type="button" onclick="document.getElementById('validateRecurringModal').style.display='none'" class="btn btn-light" style="border-radius:10px; font-weight:700;">Annuler</button>
+        <button type="submit" class="btn btn-primary" style="background:#059669; border-color:#059669; border-radius:10px; font-weight:800; padding:10px 22px; box-shadow:0 3px 10px rgba(5,150,105,0.3);">
+          ✅ {{ 'تأكيد وحفظ في المصاريف' if lang=='ar' else 'Valider & Enregistrer dans la Caisse' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ======================================================= -->
+<!-- MODAL: BATCH VALIDATE ALL PENDING RECURRING CHARGES     -->
+<!-- ======================================================= -->
+<div id="validateAllModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:9999; justify-content:center; align-items:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:500px; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.3); overflow:hidden;">
+    <div style="background:linear-gradient(135deg, #059669 0%, #0d9488 100%); padding:16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0; font-size:16px; font-weight:800;">⚡ {{ 'المصادقة الجماعية على المصاريف' if lang=='ar' else 'Validation Groupée des Charges Fixes' }}</h3>
+      <button type="button" onclick="document.getElementById('validateAllModal').style.display='none'" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer;">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('expense_recurring_validate_all') }}" style="padding:20px; display:flex; flex-direction:column; gap:14px;">
+      <input type="hidden" name="month" value="{{ req_month }}">
+
+      <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:14px; color:#14532d; font-size:13px; line-height:1.5;">
+        {{ 'أنت على وشك المصادقة وتوليد جميع المصاريف القارة المتبقية لهذا الشهر دفعة واحدة :' if lang=='ar' else 'Vous êtes sur le point de valider et générer toutes les charges fixes actives non encore saisies pour' }}
+        <div style="margin-top:6px; font-size:14px; font-weight:800;">
+          🗓️ {{ month_name_fr }} : <strong>{{ pending_recurring_count }}</strong> {{ 'مصاريف (المجموع التقديري: ' if lang=='ar' else 'charge(s) (Total : ' }}<strong>{{ "%.2f"|format(pending_recurring_amount) }} DH</strong>)
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+          {{ 'تاريخ التسجيل (اتركه فارغاً لاعتماد اليوم المعتاد لكل رسم)' if lang=='ar' else 'Date d\'écriture (vide = jour habituel du modèle)' }}
+        </label>
+        <input type="date" name="date" class="form-control" style="border-radius:10px; border:1.5px solid #cbd5e1; padding:8px 12px; font-size:13px; width:100%;">
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+        <button type="button" onclick="document.getElementById('validateAllModal').style.display='none'" class="btn btn-light" style="border-radius:10px; font-weight:700;">Annuler</button>
+        <button type="submit" class="btn btn-primary" style="background:#059669; border-color:#059669; border-radius:10px; font-weight:800; padding:10px 20px;">
+          ⚡ {{ 'تأكيد المصادقة الجماعية' if lang=='ar' else 'Confirmer la Validation Groupée' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- JavaScript Handlers -->
+<script>
+var achatCats = {{ achat_categories|tojson }};
+var chargeCats = {{ charge_categories|tojson }};
+
+function openAddExpenseModal(defaultType) {
+  var modal = document.getElementById('addExpenseModal');
+  modal.style.display = 'flex';
+
+  var radios = document.querySelectorAll('input[name="expense_type"]');
+  radios.forEach(function(r) {
+    if (r.value === defaultType) {
+      r.checked = true;
+    }
+  });
+  updateModalCategories(defaultType);
+}
+
+function updateModalCategories(type) {
+  var sel = document.getElementById('addCategorySelect');
+  sel.innerHTML = '';
+  var cats = (type === 'achat') ? achatCats : chargeCats;
+  cats.forEach(function(c) {
+    var opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    sel.appendChild(opt);
+  });
+}
+
+function toggleCustomSupplierInput(sel) {
+  var customInput = document.getElementById('addCustomSupplierName');
+  if (sel.value === 'custom') {
+    customInput.style.display = 'block';
+    customInput.focus();
+  } else {
+    customInput.style.display = 'none';
+  }
+}
+
+function toggleAddPartialInput(status) {
+  var block = document.getElementById('addPartialAmountBlock');
+  if (status === 'partial') {
+    block.style.display = 'block';
+  } else {
+    block.style.display = 'none';
+  }
+}
+
+function openQuickPayModal(eid, desc, remaining) {
+  document.getElementById('quickPayForm').action = '/expenses/' + eid + '/pay';
+  document.getElementById('quickPayDesc').textContent = desc;
+  document.getElementById('quickPayRemaining').textContent = Number(remaining).toFixed(2);
+  document.getElementById('quickPayAmount').value = Number(remaining).toFixed(2);
+  document.getElementById('quickPayAmount').max = Number(remaining).toFixed(2);
+  document.getElementById('quickPayModal').style.display = 'flex';
+}
+
+function openEditExpenseModal(id, expType, category, desc, amount, expDate, dueDate, method, refNo, invNo, supId, supName, status, paidAmount, notes) {
+  var form = document.getElementById('editExpenseForm');
+  form.action = '/expenses/' + id + '/edit';
+
+  if (expType === 'achat') {
+    document.getElementById('editTypeAchat').checked = true;
+  } else {
+    document.getElementById('editTypeCharge').checked = true;
+  }
+
+  document.getElementById('editCategorySelect').value = category;
+  document.getElementById('editDescInput').value = desc;
+  document.getElementById('editAmountInput').value = amount;
+  document.getElementById('editDateInput').value = expDate;
+  document.getElementById('editDueDateInput').value = dueDate || '';
+  document.getElementById('editPaymentMethodSelect').value = method;
+  document.getElementById('editRefInput').value = refNo || '';
+  document.getElementById('editInvoiceNoInput').value = invNo || '';
+  document.getElementById('editSupplierSelect').value = supId || '';
+  document.getElementById('editCustomSupplierInput').value = supName || '';
+  document.getElementById('editStatusSelect').value = status;
+  document.getElementById('editNotesInput').value = notes || '';
+
+  document.getElementById('editExpenseModal').style.display = 'flex';
+}
+
+function openEditSupplierModal(id, name, cat, contact, phone, email, addr, city, ice, ifCode, notes) {
+  document.getElementById('editSupplierForm').action = '/suppliers/' + id + '/edit';
+  document.getElementById('editSupName').value = name;
+  document.getElementById('editSupCat').value = cat || '';
+  document.getElementById('editSupContact').value = contact || '';
+  document.getElementById('editSupPhone').value = phone || '';
+  document.getElementById('editSupEmail').value = email || '';
+  document.getElementById('editSupAddr').value = addr || '';
+  document.getElementById('editSupCity').value = city || '';
+  document.getElementById('editSupIce').value = ice || '';
+  document.getElementById('editSupNotes').value = notes || '';
+  document.getElementById('editSupplierModal').style.display = 'flex';
+}
+
+// --- Recurring Charges JavaScript Handlers ---
+function openAddRecurringModal(presetTitle, presetCategory, presetDay, presetMethod) {
+  if (presetTitle) {
+    fillRecurringPreset(presetTitle, presetCategory, presetDay, presetMethod);
+  }
+  document.getElementById('addRecurringModal').style.display = 'flex';
+}
+
+function fillRecurringPreset(title, category, day, method) {
+  if (title) document.getElementById('addRcTitle').value = title;
+  if (category) document.getElementById('addRcCategory').value = category;
+  if (day) document.getElementById('addRcDay').value = day;
+  if (method) document.getElementById('addRcMethod').value = method;
+}
+
+function openEditRecurringModal(id, title, category, amount, day, method, supId, supName, beneficiary, notes, active) {
+  var form = document.getElementById('editRecurringForm');
+  form.action = '/expenses/recurring/' + id + '/edit';
+  document.getElementById('editRcTitle').value = title || '';
+  document.getElementById('editRcCategory').value = category || 'Loyer des locaux';
+  document.getElementById('editRcAmount').value = Number(amount || 0).toFixed(2);
+  document.getElementById('editRcDay').value = day || 1;
+  document.getElementById('editRcMethod').value = method || 'Espèces';
+  if (document.getElementById('editRcSupplierId')) {
+    document.getElementById('editRcSupplierId').value = supId || '';
+  }
+  document.getElementById('editRcBeneficiary').value = beneficiary || supName || '';
+  document.getElementById('editRcNotes').value = notes || '';
+  document.getElementById('editRcActive').checked = (active === '1' || active === 1 || active === true);
+  document.getElementById('editRecurringModal').style.display = 'flex';
+}
+
+function openValidateRecurringModal(rcId, title, category, defaultAmount, dayOfMonth, defaultMethod, beneficiary) {
+  var form = document.getElementById('validateRecurringForm');
+  form.action = '/expenses/recurring/' + rcId + '/validate';
+
+  document.getElementById('valSummaryTitle').textContent = title;
+  document.getElementById('valSummaryCat').textContent = category;
+  document.getElementById('valSummaryBeneficiary').textContent = beneficiary || '—';
+
+  document.getElementById('valAmount').value = Number(defaultAmount || 0).toFixed(2);
+  document.getElementById('valMethod').value = defaultMethod || 'Espèces';
+
+  var curMonth = "{{ req_month }}";
+  var day = Number(dayOfMonth || 1);
+  var dayStr = (day < 10 ? '0' + day : '' + day);
+  var defDate = curMonth + '-' + dayStr;
+
+  var todayStr = new Date().toISOString().slice(0, 10);
+  if (todayStr.slice(0, 7) === curMonth) {
+    document.getElementById('valDate').value = todayStr;
+  } else {
+    document.getElementById('valDate').value = defDate;
+  }
+
+  document.getElementById('validateRecurringModal').style.display = 'flex';
+}
+
+function openValidateAllModal() {
+  document.getElementById('validateAllModal').style.display = 'flex';
+}
+</script>
+
+{% endblock %}

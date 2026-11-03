@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ 'Vérification Officielle — ' ~ cert.cert_number if cert else 'Vérification de Certificat — Institut ILAS' }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;500;600;700;800&family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+<style>
+  :root {
+    --primary: #0B3D6E;
+    --primary-light: #1f6feb;
+    --gold: #d97706;
+    --gold-dark: #b45309;
+    --gold-light: #fef3c7;
+    --emerald: #059669;
+    --emerald-light: #ecfdf5;
+    --emerald-border: #a7f3d0;
+    --bg: #091321;
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background: radial-gradient(circle at 50% 0%, #132742 0%, #070e18 100%);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    color: var(--text-main);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .ar {
+    font-family: 'Alexandria', sans-serif;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  /* Top official ribbon */
+  .official-header {
+    text-align: center;
+    color: #ffffff;
+    margin-bottom: 24px;
+  }
+
+  .official-header .royaume {
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .official-header .inst-brand {
+    font-family: 'Cinzel', serif;
+    font-size: 26px;
+    font-weight: 900;
+    color: #fbbf24;
+    letter-spacing: 1.5px;
+    text-shadow: 0 2px 10px rgba(251, 191, 36, 0.25);
+  }
+
+  .official-header .auth-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    color: #f1f5f9;
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+
+  /* Verification Card */
+  .verify-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .card-top-banner {
+    padding: 28px 24px 22px;
+    text-align: center;
+    position: relative;
+  }
+
+  .card-top-banner.verified {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+    color: #ffffff;
+    border-bottom: 3px solid #10b981;
+  }
+
+  .card-top-banner.invalid {
+    background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #b91c1c 100%);
+    color: #ffffff;
+    border-bottom: 3px solid #ef4444;
+  }
+
+  .shield-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  }
+
+  .shield-icon.verified {
+    background: #10b981;
+    color: #ffffff;
+    border: 3px solid #a7f3d0;
+    animation: pulseGlow 2.5s infinite;
+  }
+
+  .shield-icon.invalid {
+    background: #ef4444;
+    color: #ffffff;
+    border: 3px solid #fecaca;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+    50% { box-shadow: 0 0 0 14px rgba(16, 185, 129, 0); }
+  }
+
+  .status-title {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .status-sub {
+    font-size: 14px;
+    color: #d1fae5;
+    font-weight: 500;
+  }
+
+  .cert-ref-pill {
+    display: inline-block;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 14.5px;
+    font-weight: 700;
+    margin-top: 10px;
+    letter-spacing: 1px;
+    color: #fef08a;
+  }
+
+  /* Main Details Body */
+  .card-body {
+    padding: 32px 30px;
+  }
+
+  .section-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    font-weight: 800;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+  }
+
+  .beneficiary-box {
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .ben-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+  }
+
+  .ben-meta {
+    font-size: 13.5px;
+    color: #475569;
+    margin-top: 4px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .mention-badge {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 13.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* Grid details */
+  .details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+    margin-bottom: 26px;
+  }
+
+  @media (max-width: 600px) {
+    .details-grid { grid-template-columns: 1fr; }
+    .card-body { padding: 22px 18px; }
+  }
+
+  .info-item {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px 16px;
+    transition: all 0.2s ease;
+  }
+  .info-item:hover {
+    border-color: #cbd5e1;
+    background: #fcfcfd;
+  }
+
+  .info-label {
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .info-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .info-value.highlight {
+    color: #0B3D6E;
+    font-weight: 800;
+  }
+
+  /* CEFR / Scores breakdown */
+  .scores-box {
+    background: #eff6ff;
+    border: 1.5px solid #bfdbfe;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 24px;
+  }
+
+  .scores-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 10px;
+  }
+
+  @media (max-width: 500px) {
+    .scores-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .score-cell {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #dbeafe;
+  }
+  .score-cell .skill {
+    font-size: 11px;
+    font-weight: 700;
+    color: #1e40af;
+    text-transform: uppercase;
+  }
+  .score-cell .val {
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 2px;
+  }
+
+  /* Security footer stamp */
+  .security-footer {
+    border-top: 1.5px dashed #cbd5e1;
+    padding-top: 20px;
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .sec-seal {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sec-seal .seal-icon {
+    font-size: 28px;
+  }
+  .sec-seal-text {
+    font-size: 12px;
+    line-height: 1.4;
+    color: #475569;
+  }
+
+  .btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+  .btn-print {
+    background: #0B3D6E;
+    color: #ffffff;
+  }
+  .btn-print:hover {
+    background: #1f6feb;
+  }
+
+  /* Search box for verifying other */
+  .search-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 24px;
+    margin-top: 24px;
+    text-align: center;
+    color: #ffffff;
+  }
+
+  .search-card h3 {
+    font-size: 17px;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+
+  .search-input-wrap {
+    display: flex;
+    max-width: 440px;
+    margin: 14px auto 0;
+    gap: 8px;
+  }
+
+  .search-input {
+    flex: 1;
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 10px;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-size: 14.5px;
+    font-weight: 600;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .search-input:focus {
+    border-color: #38bdf8;
+    background: rgba(255, 255, 255, 0.15);
+  }
+  .search-input::placeholder {
+    color: #94a3b8;
+  }
+
+  .search-btn {
+    height: 44px;
+    padding: 0 20px;
+    background: #10b981;
+    color: #ffffff;
+    border-radius: 10px;
+    border: none;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .search-btn:hover {
+    background: #059669;
+  }
+
+  .footer-copyright {
+    text-align: center;
+    color: #64748b;
+    font-size: 12px;
+    margin-top: 30px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Official Top Ribbon -->
+  <header class="official-header">
+    <div class="royaume">Royaume du Maroc — Ministère de l'Éducation Nationale</div>
+    <div class="inst-brand">INSTITUT LES SAGES — ILAS</div>
+    <div class="auth-badge">
+      <span>🏛️</span>
+      <span>Autorisation Ministérielle N° 22-200/2020</span>
+      <span>•</span>
+      <span class="ar">مؤسسة معتمدة رسمياً</span>
+    </div>
+  </header>
+
+  {% if cert %}
+  <!-- Verified Certificate Card -->
+  <main class="verify-card">
+    <div class="card-top-banner verified">
+      <div class="shield-icon verified">✓</div>
+      <h1 class="status-title">DOCUMENT OFFICIEL & AUTHENTIQUE</h1>
+      <div class="status-sub ar" style="font-size:16px; margin-top:2px;">وثيقة رسمية ومعتمدة ومسجلة في النظام الأكاديمي</div>
+      <div class="cert-ref-pill">RÉFÉRENCE : {{ cert.cert_number }}</div>
+    </div>
+
+    <div class="card-body">
+      <!-- Section: Bénéficiaire -->
+      <div class="section-title">
+        <span>Bénéficiaire / المستفيد(ة)</span>
+      </div>
+
+      <div class="beneficiary-box">
+        <div>
+          <div class="ben-name">{{ cert.beneficiary_name }}</div>
+          <div class="ben-meta">
+            {% if cert.beneficiary_cin %}
+            <span><strong>CIN :</strong> {{ cert.beneficiary_cin }}</span>
+            {% endif %}
+            {% if cert.display_student_code %}
+            <span><strong>Code Élève :</strong> {{ cert.display_student_code }}</span>
+            {% endif %}
+            {% if cert.birth_date %}
+            <span><strong>Né(e) le :</strong> {{ cert.birth_date.strftime('%d/%m/%Y') }}</span>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if cert.mention %}
+        <div class="mention-badge">
+          <span>🏆</span>
+          <span>Mention : {{ cert.mention }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Section: Détails du Document -->
+      <div class="section-title">
+        <span>Détails de la Qualification / تفاصيل الشهادة</span>
+      </div>
+
+      <div class="details-grid">
+        <div class="info-item">
+          <div class="info-label">Type de document / نوع الوثيقة</div>
+          <div class="info-value highlight">{{ cert.cert_type }}</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">Formation / Cours / المادة أو التكوين</div>
+          <div class="info-value">
+            {{ cert.course.display_name if cert.course else (cert.title or 'Formation Professionnelle') }}
+          </div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">Niveau Atteint (CEFR) / المستوى المحصل عليه</div>
+          <div class="info-value">
+            <span style="display:inline-block; background:#0B3D6E; color:#fff; padding:3px 10px; border-radius:6px; font-size:13.5px;">
+              {{ cert.level or 'Validé' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">Date de délivrance / تاريخ التسليم</div>
+          <div class="info-value">
+            {{ cert.issue_date.strftime('%d/%m/%Y') if cert.issue_date else '—' }}
+          </div>
+        </div>
+
+        {% if cert.start_date and cert.end_date %}
+        <div class="info-item">
+          <div class="info-label">Période de formation / فترة التكوين</div>
+          <div class="info-value" style="font-size:13.5px;">
+            Du {{ cert.start_date.strftime('%d/%m/%Y') }} au {{ cert.end_date.strftime('%d/%m/%Y') }}
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="info-item">
+          <div class="info-label">Statut dans le Registre / حالة السجل</div>
+          <div class="info-value" style="color:#059669; display:flex; align-items:center; gap:5px;">
+            <span>●</span> <span>Actif & Validé par la Direction</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Competences / Scores if present -->
+      {% if cert.score_listening or cert.score_speaking or cert.score_reading or cert.score_writing or cert.overall_score %}
+      <div class="scores-box">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size:13px; font-weight:800; color:#1e3a8a; text-transform:uppercase; letter-spacing:0.5px;">
+            📊 Évaluation des Compétences Linguistiques (CEFR)
+          </div>
+          {% if cert.overall_score %}
+          <div style="background:#1d4ed8; color:#fff; padding:3px 9px; border-radius:6px; font-size:12px; font-weight:700;">
+            Score Global : {{ '%.1f'|format(cert.overall_score) }}/100
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="scores-grid">
+          <div class="score-cell">
+            <div class="skill">🎧 Listening</div>
+            <div class="val">{{ '%.0f'|format(cert.score_listening) if cert.score_listening else '—' }}%</div>
+          </div>
+          <div class="score-cell">
+            <div class="skill">🗣️ Speaking</div>
+            <div class="val">{{ '%.0f'|format(cert.score_speaking) if cert.score_speaking else '—' }}%</div>
+          </div>
+          <div class="score-cell">
+            <div class="skill">📖 Reading</div>
+            <div class="val">{{ '%.0f'|format(cert.score_reading) if cert.score_reading else '—' }}%</div>
+          </div>
+          <div class="score-cell">
+            <div class="skill">✍️ Writing</div>
+            <div class="val">{{ '%.0f'|format(cert.score_writing) if cert.score_writing else '—' }}%</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Security Stamp & Legal Signatures -->
+      <footer class="security-footer">
+        <div class="sec-seal">
+          <span class="seal-icon">🛡️</span>
+          <div class="sec-seal-text">
+            <strong>Authentification Numérique Sécurisée</strong><br>
+            Signé par : <strong>{{ director_name or 'AZIZ MARSOUL' }}</strong> (Directeur Général)<br>
+            <span style="font-family:monospace; font-size:11px; color:#64748b;">ID-VERIF: {{ cert.cert_number }}-{{ cert.id }}-OK</span>
+          </div>
+        </div>
+
+        <div>
+          <button onclick="window.print()" class="btn-action btn-print">
+            <span>🖨️</span>
+            <span>Imprimer la Fiche de Vérification</span>
+          </button>
+        </div>
+      </footer>
+    </div>
+  </main>
+
+  {% else %}
+  <!-- Not Found / Invalid State -->
+  <main class="verify-card">
+    <div class="card-top-banner invalid">
+      <div class="shield-icon invalid">✕</div>
+      <h1 class="status-title">DOCUMENT INTROUVABLE</h1>
+      <div class="status-sub ar" style="font-size:16px; margin-top:2px;">لم يتم العثور على أي شهادة بهذا الرمز في قاعدة البيانات الرسمية</div>
+      {% if cert_number %}
+      <div class="cert-ref-pill" style="border-color:#fca5a5; color:#fff;">RÉF RECHERCHÉE : {{ cert_number }}</div>
+      {% endif %}
+    </div>
+
+    <div class="card-body" style="text-align:center; padding:40px 24px;">
+      <p style="font-size:15px; color:#475569; max-width:540px; margin:0 auto 20px; line-height:1.6;">
+        Le numéro de document indiqué n'a pas pu être validé. Il peut s'agir d'une erreur de saisie ou d'un document non accrédité par l'Institut Les Sages ILAS.
+      </p>
+      <div style="font-size:13px; color:#64748b;">
+        Pour toute réclamation officielle, veuillez contacter l'administration de l'établissement :<br>
+        <strong>Tél / WhatsApp :</strong> {{ inst_phone or '+212 5 22 00 00 00' }}
+      </div>
+    </div>
+  </main>
+  {% endif %}
+
+  <!-- Verification Search Box (Always accessible below) -->
+  <section class="search-card">
+    <h3>🔍 Vérifier un autre certificat ou diplôme</h3>
+    <p style="font-size:13px; color:#94a3b8;">Saisissez le numéro officiel figurant sur l'attestation (ex : CERT-2026-0001)</p>
+    <form method="post" action="{{ url_for('verify_portal') }}" class="search-input-wrap">
+      <input type="text" name="cert_number" class="search-input" placeholder="N° Certificat (ex: CERT-2026-0001)" required>
+      <button type="submit" class="search-btn">Vérifier</button>
+    </form>
+  </section>
+
+  <!-- Legal Footer -->
+  <footer class="footer-copyright">
+    <div><strong>{{ inst_name or 'Institut Les Sages (ILAS)' }}</strong> — Établissement d'Enseignement et de Formation Professionnelle</div>
+    <div>{{ inst_address or 'Centre de Langues & de Soutien Scolaire' }}</div>
+    <div style="margin-top:4px;">Système de Traçabilité Numérique des Titres & Diplômes — Conforme aux exigences ministérielles marocaines.</div>
+  </footer>
+
+</div>
+
+</body>
+</html>

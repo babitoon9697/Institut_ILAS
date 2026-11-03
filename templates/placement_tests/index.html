@@ -1,0 +1,677 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+  .pt-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+  .pt-header h2 { margin:0; font-size:1.45rem; font-weight:800; color:var(--primary); display:flex; align-items:center; gap:8px; }
+  
+  .stats-row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+  .stat-card {
+    flex:1; min-width:140px; background:#fff; border-radius:14px; padding:14px 18px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.04); border:1px solid #e2e8f0; display:flex; flex-direction:column;
+  }
+  .stat-card .val { font-size:1.6rem; font-weight:800; color:#0f172a; line-height:1.1; margin-bottom:4px; }
+  .stat-card .lbl { font-size:0.8rem; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.4px; }
+
+  .filter-bar {
+    background:#fff; border-radius:14px; padding:14px 18px; box-shadow:0 2px 8px rgba(0,0,0,0.04);
+    border:1px solid #e2e8f0; display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:20px;
+  }
+  .filter-bar input[type=text] {
+    border:1.5px solid #cbd5e1; border-radius:10px; padding:8px 14px; font-size:0.9rem; flex:1; min-width:200px;
+  }
+  .filter-bar select {
+    border:1.5px solid #cbd5e1; border-radius:10px; padding:8px 12px; font-size:0.9rem; background:#fff;
+  }
+
+  .table-card {
+    background:#fff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,0.04);
+    border:1px solid #e2e8f0; overflow:hidden;
+  }
+  .table-responsive { width:100%; overflow-x:auto; }
+  .pt-table { width:100%; border-collapse:collapse; text-align:left; font-size:0.9rem; }
+  .pt-table th {
+    background:#f8fafc; padding:12px 16px; font-weight:700; color:#475569;
+    border-bottom:1.5px solid #e2e8f0; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.5px;
+  }
+  .pt-table td { padding:14px 16px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+  .pt-table tr:hover td { background:#fbfcfe; }
+
+  .badge-status {
+    display:inline-flex; align-items:center; gap:5px; padding:4px 10px;
+    border-radius:9999px; font-size:0.75rem; font-weight:700;
+  }
+  .badge-pending { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+  .badge-completed { background:#dcfce7; color:#166534; border:1px solid #bbf7d0; }
+  .badge-enrolled { background:#f3e8ff; color:#6b21a8; border:1px solid #e9d5ff; }
+
+  .badge-level {
+    display:inline-flex; align-items:center; padding:3px 9px;
+    background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe;
+    border-radius:8px; font-weight:800; font-size:0.8rem;
+  }
+
+  .action-btns { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .btn-act {
+    padding:6px 10px; border-radius:8px; font-size:0.8rem; font-weight:700;
+    border:none; cursor:pointer; display:inline-flex; align-items:center; gap:4px;
+    text-decoration:none; transition:all 0.15s ease;
+  }
+  .btn-act-qr { background:#0B3D6E; color:#fff; }
+  .btn-act-view { background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; }
+  .btn-act-assign { background:#10b981; color:#fff; }
+  .btn-act-delete { background:#fee2e2; color:#b91c1c; }
+  .btn-act:hover { opacity:0.9; }
+
+  /* Modals */
+  .modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6);
+    z-index:3000; align-items:center; justify-content:center; backdrop-filter:blur(3px);
+  }
+  .modal-overlay.open { display:flex; }
+  .modal-box {
+    background:#fff; border-radius:20px; width:min(620px, 94vw); max-height:92vh;
+    overflow-y:auto; box-shadow:0 20px 50px rgba(0,0,0,0.25); border:1px solid #e2e8f0;
+  }
+  .modal-head {
+    padding:18px 22px; border-bottom:1px solid #f1f5f9; display:flex;
+    justify-content:space-between; align-items:center; position:sticky; top:0; background:#fff; z-index:2;
+  }
+  .modal-head h3 { margin:0; font-size:1.15rem; font-weight:800; color:var(--primary); }
+  .modal-close { background:none; border:none; font-size:1.5rem; cursor:pointer; color:#94a3b8; line-height:1; }
+  .modal-body { padding:22px; }
+  .modal-foot { padding:16px 22px; border-top:1px solid #f1f5f9; display:flex; justify-content:flex-end; gap:10px; background:#f8fafc; }
+
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .form-grid .full { grid-column:1/-1; }
+  .form-group label { display:block; font-size:0.83rem; font-weight:700; color:#334155; margin-bottom:5px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width:100%; border:1.5px solid #cbd5e1; border-radius:10px; padding:9px 12px; font-size:0.92rem; box-sizing:border-box;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color:#1f6feb; outline:none; box-shadow:0 0 0 3px rgba(31,111,235,0.12);
+  }
+
+  /* QR Modal Specifics */
+  .qr-preview-card {
+    text-align:center; padding:20px; background:#f8fafc; border-radius:16px; border:1px solid #e2e8f0;
+  }
+  .qr-img-wrapper {
+    display:inline-block; padding:12px; background:#fff; border-radius:16px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.06); border:1px solid #e2e8f0; margin-bottom:14px;
+  }
+  .qr-img-wrapper img { width:220px; height:220px; display:block; }
+  .copy-link-box {
+    display:flex; gap:8px; margin-top:14px; align-items:center;
+  }
+  .copy-link-box input {
+    flex:1; background:#fff; border:1.5px solid #cbd5e1; border-radius:10px;
+    padding:8px 12px; font-size:0.85rem; color:#475569;
+  }
+
+  /* ========================================================
+     MOBILE SAAS CARDS (PORTRAIT <= 768px)
+     ======================================================== */
+  .mobile-card-label {
+    display: none;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+
+  @media screen and (max-width: 768px) {
+    .stats-row {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 10px !important;
+    }
+    .pt-table thead {
+      display: none !important;
+    }
+    .pt-table, .pt-table tbody {
+      display: block !important;
+      width: 100% !important;
+    }
+    .pt-table tr {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 10px !important;
+      background: #ffffff !important;
+      border: 1.5px solid #cbd5e1 !important;
+      border-radius: 18px !important;
+      padding: 15px !important;
+      margin-bottom: 14px !important;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05) !important;
+      position: relative !important;
+      box-sizing: border-box !important;
+    }
+    .pt-table td {
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      padding: 0 !important;
+      border: none !important;
+      background: transparent !important;
+      min-width: 0 !important;
+    }
+
+    /* 1. Header: Candidate & Date */
+    .pt-table td.cell-candidate {
+      grid-column: 1 / -1 !important;
+      padding-bottom: 10px !important;
+      padding-right: 95px !important;
+      border-bottom: 1px solid #f1f5f9 !important;
+    }
+    body.rtl .pt-table td.cell-candidate {
+      padding-right: 0 !important;
+      padding-left: 95px !important;
+    }
+
+    /* 2. Top-Right Pinned Status */
+    .pt-table td.cell-status {
+      position: absolute !important;
+      top: 15px !important;
+      right: 15px !important;
+      text-align: right !important;
+      z-index: 2 !important;
+    }
+    body.rtl .pt-table td.cell-status {
+      right: auto !important;
+      left: 15px !important;
+      text-align: left !important;
+    }
+
+    /* 3. Middle Boxes: Contact, Language, Score */
+    .pt-table td.cell-contact,
+    .pt-table td.cell-lang {
+      background: #f8fafc !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 12px !important;
+      padding: 9px 11px !important;
+    }
+
+    .pt-table td.cell-score {
+      grid-column: 1 / -1 !important;
+      background: #eff6ff !important;
+      border: 1px solid #bfdbfe !important;
+      border-radius: 12px !important;
+      padding: 8px 12px !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+    }
+
+    /* 4. Footer Actions */
+    .pt-table td.cell-actions {
+      grid-column: 1 / -1 !important;
+      border-top: 1.5px solid #f1f5f9 !important;
+      padding-top: 10px !important;
+      margin-top: 2px !important;
+      width: 100% !important;
+    }
+    .pt-table td.cell-actions .action-btns {
+      width: 100% !important;
+      display: flex !important;
+      gap: 8px !important;
+      align-items: center !important;
+      justify-content: stretch !important;
+    }
+    .pt-table td.cell-actions .btn-act {
+      height: 42px !important;
+      font-size: 13px !important;
+      font-weight: 800 !important;
+      border-radius: 10px !important;
+      justify-content: center !important;
+      padding: 0 12px !important;
+    }
+    .pt-table td.cell-actions .btn-act-qr {
+      flex: 1 1 auto !important;
+    }
+
+    .mobile-card-label {
+      display: block !important;
+    }
+  }
+
+  @media screen and (max-width: 440px) {
+    .stats-row {
+      grid-template-columns: 1fr !important;
+    }
+    .pt-table tr {
+      grid-template-columns: 1fr !important;
+    }
+    .pt-table td.cell-contact,
+    .pt-table td.cell-lang {
+      grid-column: 1 / -1 !important;
+    }
+  }
+</style>
+
+<div class="pt-header">
+  <div>
+    <h2>🎯 Tests de Niveau (Langues)</h2>
+    <p style="margin:4px 0 0 0; font-size:0.88rem; color:#64748b;">
+      Pré-inscriptions, évaluation instantanée sur smartphone et affectation directe aux groupes de langues.
+    </p>
+  </div>
+  <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+    <a href="{{ url_for('placement_questions_list') }}" class="btn btn-secondary" style="border-radius:10px; padding:9px 16px; font-weight:700; font-size:0.88rem;">
+      📚 Banque de Questions
+    </a>
+    <button type="button" class="btn btn-primary" onclick="openNewTestModal()" style="border-radius:10px; padding:9px 18px; font-weight:800; font-size:0.88rem; background:linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%); border:none; box-shadow:0 3px 10px rgba(31,111,235,0.25);">
+      ⚡ Nouveau Test / Pré-inscription
+    </button>
+  </div>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-row">
+  <div class="stat-card" style="border-left:4px solid #0B3D6E;">
+    <div class="val">{{ total_tests }}</div>
+    <div class="lbl">Total Tests</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid #f59e0b;">
+    <div class="val" style="color:#d97706;">{{ pending_tests }}</div>
+    <div class="lbl">En Attente / En Cours</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid #10b981;">
+    <div class="val" style="color:#059669;">{{ completed_tests }}</div>
+    <div class="lbl">Tests Complétés</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid #8b5cf6;">
+    <div class="val" style="color:#7c3aed;">{{ enrolled_tests }}</div>
+    <div class="lbl">Inscrits en Cours</div>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<form method="GET" action="{{ url_for('placement_tests') }}" class="filter-bar">
+  <input type="text" name="q" value="{{ search_query }}" placeholder="Rechercher par nom, prénom ou téléphone...">
+  
+  <select name="lang">
+    <option value="">Toutes les langues</option>
+    {% for l in ['Anglais', 'Français', 'Espagnol', 'Allemand'] %}
+      <option value="{{ l }}" {% if selected_lang == l %}selected{% endif %}>{{ l }}</option>
+    {% endfor %}
+  </select>
+
+  <select name="status">
+    <option value="">Tous les statuts</option>
+    <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>🟡 En attente de passage</option>
+    <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>🟢 Complété</option>
+    <option value="enrolled" {% if selected_status == 'enrolled' %}selected{% endif %}>🟣 Déjà inscrit en cours</option>
+  </select>
+
+  <button type="submit" class="btn btn-secondary" style="border-radius:10px; font-weight:700;">
+    Filtrer
+  </button>
+  {% if search_query or selected_lang or selected_status %}
+    <a href="{{ url_for('placement_tests') }}" class="btn btn-link" style="color:#64748b; font-size:0.85rem; text-decoration:none;">Réinitialiser</a>
+  {% endif %}
+</form>
+
+<!-- Table -->
+<div class="table-card">
+  <div class="table-responsive">
+    <table class="pt-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Candidat</th>
+          <th>Contact & WhatsApp</th>
+          <th>Langue</th>
+          <th>Statut</th>
+          <th>Score & Niveau</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if tests %}
+          {% for t in tests %}
+          <tr>
+            <!-- 1. Candidate & Date -->
+            <td class="cell-candidate">
+              <span class="mobile-card-label">Candidat</span>
+              <div>
+                <strong style="color:#0f172a; font-size:0.95rem;">{{ t.full_name }}</strong>
+                {% if t.school_level %}
+                  <div style="font-size:0.78rem; color:#64748b;">{{ t.school_level }}</div>
+                {% endif %}
+              </div>
+              <div style="color:#64748b; font-size:0.75rem; margin-top:3px;">
+                📆 {{ t.created_at.strftime('%d/%m/%Y %H:%M') }}
+              </div>
+            </td>
+
+            <!-- Hidden date td for desktop -->
+            <td style="display:none;"></td>
+
+            <!-- 2. Contact & WhatsApp -->
+            <td class="cell-contact">
+              <span class="mobile-card-label">Contact</span>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span>{{ t.phone or '—' }}</span>
+                {% if t.whatsapp or t.phone %}
+                  {% set wa_num = (t.whatsapp or t.phone)|replace(' ', '')|replace('-', '') %}
+                  {% if wa_num.startswith('0') %}
+                    {% set wa_clean = '212' ~ wa_num[1:] %}
+                  {% else %}
+                    {% set wa_clean = wa_num %}
+                  {% endif %}
+                  <a href="https://wa.me/{{ wa_clean }}" target="_blank" title="Contacter sur WhatsApp" style="text-decoration:none; font-size:1.05rem;">
+                    💬
+                  </a>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- 3. Langue -->
+            <td class="cell-lang">
+              <span class="mobile-card-label">Langue</span>
+              <strong style="font-size:0.9rem;">
+                {% if t.language == 'Anglais' %}🇬🇧 Anglais
+                {% elif t.language == 'Français' %}🇫🇷 Français
+                {% elif t.language == 'Espagnol' %}🇪🇸 Espagnol
+                {% elif t.language == 'Allemand' %}🇩🇪 Allemand
+                {% else %}{{ t.language }}{% endif %}
+              </strong>
+            </td>
+
+            <!-- 4. Statut -->
+            <td class="cell-status">
+              {% if t.is_level_mismatch %}
+                <span class="badge-status" style="background:#fee2e2; color:#b91c1c; border:1px solid #f87171; font-weight:800;" title="Le niveau du test diffère de la classe actuelle">⚠️ Niveau à réorienter</span>
+              {% elif t.is_enrolled %}
+                <span class="badge-status badge-enrolled">🟣 Inscrit</span>
+              {% elif t.status == 'completed' %}
+                <span class="badge-status badge-completed">🟢 Terminé</span>
+              {% else %}
+                <span class="badge-status badge-pending">🟡 En attente</span>
+              {% endif %}
+            </td>
+
+            <!-- 5. Score & Niveau -->
+            <td class="cell-score">
+              <span class="mobile-card-label" style="margin-bottom:0;">Résultat</span>
+              {% if t.status == 'completed' %}
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="badge-level">{{ t.recommended_level or 'Évalué' }}</span>
+                  <span style="font-size:0.83rem; font-weight:700; color:#475569;">
+                    {{ t.score|int }}/{{ t.max_score|int }} ({{ t.percentage }}%)
+                  </span>
+                </div>
+              {% else %}
+                <span style="color:#94a3b8; font-size:0.82rem; font-style:italic;">En attente de passage...</span>
+              {% endif %}
+            </td>
+
+            <!-- 6. Actions -->
+            <td class="cell-actions" style="text-align:right;">
+              <div class="action-btns" style="justify-content:flex-end;">
+                <button type="button" class="btn-act btn-act-qr" onclick="showQRModal('{{ t.id }}', '{{ t.full_name|replace('\'', '\\\'') }}', '{{ t.language }}', '{{ t.token }}', '{{ t.phone or '' }}')" title="Afficher le QR Code">
+                  📱 QR Code
+                </button>
+                <button type="button" class="btn-act" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0;" onclick="openPlacementWhatsAppModal('{{ t.id }}')" title="Envoyer le lien par WhatsApp (Anti-Ban)">
+                  📲 WhatsApp
+                </button>
+                <a href="{{ url_for('placement_test_view', test_id=t.id) }}" class="btn-act btn-act-view" title="Voir Détails">
+                  👁️ Détails
+                </a>
+                {% if t.status == 'completed' and not t.is_enrolled %}
+                  <a href="{{ url_for('placement_test_view', test_id=t.id) }}#affecter" class="btn-act btn-act-assign" title="Affecter à un cours">
+                    🎯 Affecter
+                  </a>
+                {% endif %}
+                <form method="POST" action="{{ url_for('placement_test_delete', test_id=t.id) }}" style="display:inline;" onsubmit="return confirm('Confirmer la suppression de ce test ?');">
+                  <button type="submit" class="btn-act btn-act-delete" title="Supprimer">
+                    🗑️
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="7" style="text-align:center; padding:48px 20px; color:#94a3b8;">
+              <div style="font-size:2.5rem; margin-bottom:10px;">🎯</div>
+              <p style="font-size:0.95rem; margin-bottom:12px; font-weight:600;">Aucun test de niveau trouvé.</p>
+              <button type="button" class="btn btn-primary" onclick="openNewTestModal()" style="border-radius:10px; font-size:0.85rem;">
+                Créer une pré-inscription & Générer QR Code
+              </button>
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: New Placement Test (Pré-inscription) -->
+<div class="modal-overlay" id="newTestModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>⚡ Pré-inscription & Génération du Test de Niveau</h3>
+      <button type="button" class="modal-close" onclick="closeNewTestModal()">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('placement_test_new') }}">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Prénom du Candidat *</label>
+            <input type="text" name="first_name" required placeholder="Ex: Mohamed">
+          </div>
+          <div class="form-group">
+            <label>Nom de Famille *</label>
+            <input type="text" name="last_name" required placeholder="Ex: Alami">
+          </div>
+          <div class="form-group">
+            <label>Téléphone *</label>
+            <input type="text" name="phone" id="inPhone" required placeholder="Ex: 06 12 34 56 78" oninput="syncWhatsApp(this.value)">
+          </div>
+          <div class="form-group">
+            <label>WhatsApp (Optionnel)</label>
+            <input type="text" name="whatsapp" id="inWhatsapp" placeholder="Ex: 06 12 34 56 78">
+          </div>
+          <div class="form-group">
+            <label>Langue Ciblée *</label>
+            <select name="language" required>
+              <option value="Anglais">🇬🇧 Anglais</option>
+              <option value="Français">🇫🇷 Français</option>
+              <option value="Espagnol">🇪🇸 Espagnol</option>
+              <option value="Allemand">🇩🇪 Allemand</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Profil / Niveau Scolaire</label>
+            <select name="school_level">
+              <option value="Adulte / Professionnel">Adulte / Professionnel</option>
+              <option value="Étudiant Supérieur">Étudiant Supérieur (Fac / École)</option>
+              <option value="Lycéen (Bac)">Lycéen (Tronc commun / Bac)</option>
+              <option value="Collégien">Collégien</option>
+              <option value="Primaire">Primaire</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date de Naissance (Optionnel)</label>
+            <input type="date" name="birth_date">
+          </div>
+          <div class="form-group">
+            <label>Objectif Principal</label>
+            <select name="objective">
+              <option value="Communication & Expression Orale">Communication & Expression Orale</option>
+              <option value="Emploi & Carrière Professionnelle">Emploi & Carrière Professionnelle</option>
+              <option value="Études à l'Étranger (TOEFL, IELTS, TCF)">Études à l'Étranger (Tests Officiels)</option>
+              <option value="Soutien & Consolidation Scolaire">Soutien & Consolidation Scolaire</option>
+              <option value="Débutant Complet">Débutant Complet</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Remarques / Notes Internes</label>
+            <textarea name="notes" placeholder="Remarques éventuelles sur la disponibilité, le niveau autodéclaré, etc..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" onclick="closeNewTestModal()">Annuler</button>
+        <button type="submit" class="btn btn-primary" style="background:linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%); border:none; font-weight:800;">
+          Générer le QR Code & Enregistrer 🎯
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: QR Code Display -->
+<div class="modal-overlay" id="qrModal">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-head">
+      <h3 id="qrModalTitle">📱 QR Code du Test</h3>
+      <button type="button" class="modal-close" onclick="closeQRModal()">&times;</button>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <div class="qr-preview-card">
+        <div style="font-weight:800; font-size:1.15rem; color:#0f172a; margin-bottom:4px;" id="qrCandidateName"></div>
+        <div style="font-size:0.88rem; font-weight:700; color:#0369a1; margin-bottom:16px;" id="qrCandidateLang"></div>
+
+        <div class="qr-img-wrapper">
+          <img id="qrImage" src="" alt="QR Code">
+        </div>
+
+        <p style="font-size:0.85rem; color:#64748b; line-height:1.4; margin-bottom:12px;">
+          Faites scanner ce code au candidat avec l'appareil photo de son smartphone pour lancer le test instantanément.
+        </p>
+
+        <div class="copy-link-box">
+          <input type="text" id="qrLinkInput" readonly>
+          <button type="button" class="btn btn-secondary" onclick="copyTestLink()" style="font-size:0.82rem; font-weight:700; white-space:nowrap;">
+            📋 Copier
+          </button>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:18px;">
+        <button type="button" id="qrWhatsappBtn" onclick="openWaFromQR()" class="btn btn-success" style="flex:1; justify-content:center; background:#25D366; border:none; color:#fff; font-weight:700; text-decoration:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+          📲 Envoyer sur WhatsApp
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="printQRCode()" style="flex:1; justify-content:center; font-weight:700;">
+          🖨️ Imprimer Ticket
+        </button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-secondary" onclick="closeQRModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let activeQrTestId = null;
+
+  function openNewTestModal() {
+    document.getElementById('newTestModal').classList.add('open');
+  }
+  function closeNewTestModal() {
+    document.getElementById('newTestModal').classList.remove('open');
+  }
+
+  function syncWhatsApp(val) {
+    const wa = document.getElementById('inWhatsapp');
+    if (!wa.value || wa.value.trim() === '') {
+      wa.value = val;
+    }
+  }
+
+  function showQRModal(testId, candidateName, lang, token, phone) {
+    activeQrTestId = testId;
+    document.getElementById('qrCandidateName').textContent = candidateName;
+    document.getElementById('qrCandidateLang').textContent = 'Test de Niveau : ' + lang;
+    
+    // Set QR code base64 source via dedicated endpoint
+    document.getElementById('qrImage').src = '/placement-tests/' + testId + '/qr-image';
+    
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '0.0.0.0';
+    const baseDomain = isLocal ? 'https://app.institutilas.com' : window.location.origin;
+    const testUrl = baseDomain + '/test/' + token;
+    document.getElementById('qrLinkInput').value = testUrl;
+
+    document.getElementById('qrModal').classList.add('open');
+  }
+
+  function openWaFromQR() {
+    closeQRModal();
+    if (activeQrTestId) {
+      openPlacementWhatsAppModal(activeQrTestId);
+    }
+  }
+
+  function closeQRModal() {
+    document.getElementById('qrModal').classList.remove('open');
+  }
+
+  function copyTestLink() {
+    const copyText = document.getElementById('qrLinkInput');
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(copyText.value);
+    alert('Lien copié dans le presse-papier !');
+  }
+
+  function printQRCode() {
+    const imgUrl = document.getElementById('qrImage').src;
+    const name = document.getElementById('qrCandidateName').textContent;
+    const lang = document.getElementById('qrCandidateLang').textContent;
+    const link = document.getElementById('qrLinkInput').value;
+
+    const w = window.open('', '_blank', 'width=500,height=600');
+    w.document.write(`
+      <html>
+      <head>
+        <title>Ticket Test - ${name}</title>
+        <style>
+          body { font-family:sans-serif; text-align:center; padding:20px; }
+          .ticket { border:2px dashed #0B3D6E; border-radius:12px; padding:20px; max-width:320px; margin:0 auto; }
+          h2 { margin:0 0 6px 0; color:#0B3D6E; font-size:18px; }
+          p { margin:4px 0; font-size:13px; color:#555; }
+          img { width:180px; height:180px; margin:14px 0; }
+          .foot { font-size:11px; color:#888; margin-top:10px; }
+        </style>
+      </head>
+      <body>
+        <div class="ticket">
+          <h2>INSTITUT ILAS</h2>
+          <p><strong>Test de Niveau</strong></p>
+          <hr style="border:none; border-top:1px solid #ddd; margin:10px 0;">
+          <p style="font-size:15px; font-weight:bold; color:#111;">${name}</p>
+          <p style="color:#0284c7; font-weight:600;">${lang}</p>
+          <img src="${imgUrl}" alt="QR">
+          <p style="font-size:12px;">Scannez pour démarrer le test sur votre téléphone</p>
+          <div class="foot">Institut ILAS · Casablanca</div>
+        </div>
+        <script>
+          window.onload = function() { window.print(); }
+        <\/script>
+      </body>
+      </html>
+    `);
+    w.document.close();
+  }
+
+  // Check if directed from a new creation to show QR automatically
+  {% if auto_show_qr_id %}
+    window.addEventListener('DOMContentLoaded', () => {
+      showQRModal(
+        '{{ auto_show_qr_id }}',
+        '{{ auto_show_name|replace('\'', '\\\'') }}',
+        '{{ auto_show_lang }}',
+        '{{ auto_show_token }}',
+        '{{ auto_show_phone }}'
+      );
+    });
+  {% endif %}
+</script>
+
+{% include 'placement_tests/_whatsapp_modal.html' %}
+{% endblock %}

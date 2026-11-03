@@ -1,0 +1,1546 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+/* ============================================================
+   BADGE DISTRIBUTION & CLASSROOM DISPATCH STATION
+   ============================================================ */
+
+:root {
+  --distrib-navy: #0b3d6e;
+  --distrib-blue: #1f6feb;
+  --distrib-cyan: #06b6d4;
+  --distrib-emerald: #10b981;
+  --distrib-amber: #f59e0b;
+  --distrib-rose: #ef4444;
+  --distrib-purple: #8b5cf6;
+}
+
+.distrib-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-bottom: 60px;
+}
+
+/* Header */
+.distrib-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.distrib-title-zone h1 {
+  font-size: 25px;
+  font-weight: 900;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 4px 0;
+}
+
+.distrib-title-zone p {
+  color: #64748b;
+  font-size: 14px;
+  margin: 0;
+}
+
+.distrib-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  color: #334155;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.distrib-badge-pill.date { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.distrib-badge-pill.admin { background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8; }
+.distrib-badge-pill.status-live { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+
+.distrib-actions-zone {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.btn-save-batch {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff !important;
+  border: none;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.btn-save-batch:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+}
+.btn-save-batch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-quick-reports {
+  background: #ffffff;
+  color: #0b3d6e !important;
+  border: 1.5px solid #cbd5e1;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 800;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.btn-quick-reports:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.btn-clear-batch {
+  background: #fff1f2;
+  color: #e11d48 !important;
+  border: 1.5px solid #fecdd3;
+  padding: 9px 15px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+.btn-clear-batch:hover { background: #ffe4e6; }
+
+/* Recent Batch Banner (For PC 2 Instant Print) */
+.last-batch-alert-banner {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 2px solid #86efac;
+  border-radius: 16px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+}
+
+.last-batch-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.last-batch-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-size: 14px;
+  color: #065f46;
+  background: #d1fae5;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* ============================================================
+   SCANNER RADAR ZONE
+   ============================================================ */
+.scanner-card {
+  background: linear-gradient(135deg, #0b3d6e 0%, #172554 100%);
+  border-radius: 20px;
+  padding: 22px 26px;
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(11, 61, 110, 0.25);
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.scanner-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 280px;
+}
+
+.scanner-radar-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.scanner-radar-pulse {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  border: 2px solid #34d399;
+  animation: radarPulse 2s infinite;
+  opacity: 0;
+}
+
+@keyframes radarPulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.scanner-text-zone h3 {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0 0 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.scanner-text-zone p {
+  font-size: 13px;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+.scanner-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  max-width: 560px;
+  min-width: 280px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 14px;
+  padding: 6px 10px;
+  transition: all 0.2s;
+}
+
+.scanner-input-wrap:focus-within {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.35);
+}
+
+.scanner-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  width: 100%;
+  font-family: inherit;
+  padding: 8px 6px;
+}
+
+.scanner-input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.scanner-submit-btn {
+  background: #38bdf8;
+  color: #082f49;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.scanner-submit-btn:hover { background: #7dd3fc; }
+
+/* ============================================================
+   STATS COUNTERS BAR
+   ============================================================ */
+.distrib-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.stat-box {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px 20px;
+  border: 2px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.stat-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.stat-icon-wrap.total { background: #eff6ff; color: #1d4ed8; }
+.stat-icon-wrap.present { background: #ecfdf5; color: #047857; }
+.stat-icon-wrap.rooms { background: #f5f3ff; color: #6d28d9; }
+.stat-icon-wrap.absent { background: #f8fafc; color: #64748b; }
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-subtext {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* ============================================================
+   TABS BAR
+   ============================================================ */
+.distrib-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 2.5px solid #e2e8f0;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.distrib-tab {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  font-weight: 800;
+  color: #64748b;
+  padding: 12px 20px;
+  cursor: pointer;
+  position: relative;
+  border-bottom: 3.5px solid transparent;
+  margin-bottom: -2.5px;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.distrib-tab.active {
+  color: #1f6feb;
+  border-bottom-color: #1f6feb;
+}
+
+.tab-badge-count {
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-weight: 800;
+}
+.distrib-tab.active .tab-badge-count {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* ============================================================
+   GROUP BY CLASS CARDS
+   ============================================================ */
+.class-group-card {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 2px solid #e2e8f0;
+  margin-bottom: 18px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.class-group-header {
+  background: linear-gradient(135deg, #0b3d6e 0%, #1e3a5f 100%);
+  color: #ffffff;
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.class-group-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.class-title-text {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.class-room-pill {
+  background: #0ea5e9;
+  color: #082f49;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 6px;
+}
+
+.class-timing-pill {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 6px;
+}
+
+.class-group-sub {
+  background: #f8fafc;
+  border-bottom: 1.5px solid #e2e8f0;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  display: flex;
+  justify-content: space-between;
+}
+
+.class-students-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.class-students-table th {
+  background: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 18px;
+  text-align: left;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.class-students-table td {
+  padding: 12px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
+  color: #1e293b;
+  vertical-align: middle;
+}
+.class-students-table tr:last-child td { border-bottom: none; }
+.class-students-table tr:hover td { background: #f8fafc; }
+
+.stu-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 800;
+  color: #475569;
+  flex-shrink: 0;
+}
+
+.stu-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.stu-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+.timing-pill {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.timing-pill.current { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.timing-pill.upcoming { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.timing-pill.passed { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+
+.btn-remove-item {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+.btn-remove-item:hover { color: #ef4444; background: #fee2e2; }
+
+/* Empty State */
+.distrib-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 2px dashed #cbd5e1;
+  color: #64748b;
+}
+
+/* History Batches Table */
+.batches-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.batches-history-table th {
+  background: #f8fafc;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e2e8f0;
+  text-align: left;
+}
+
+.batches-history-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13.5px;
+  color: #1e293b;
+  vertical-align: middle;
+}
+.batches-history-table tr:last-child td { border-bottom: none; }
+.batches-history-table tr:hover td { background: #f8fafc; }
+
+.progress-pill-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f1f5f9;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.progress-track {
+  width: 50px;
+  height: 6px;
+  background: #cbd5e1;
+  border-radius: 999px;
+  overflow: hidden;
+  display: inline-block;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: #10b981;
+}
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-content {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 520px;
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.modal-title { font-size: 18px; font-weight: 800; color: #0f172a; margin: 0; }
+.modal-close { background: transparent; border: none; font-size: 20px; cursor: pointer; color: #94a3b8; }
+.modal-close:hover { color: #0f172a; }
+
+.modal-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 14px;
+  margin-top: 6px;
+  margin-bottom: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+.modal-input:focus {
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.15);
+}
+</style>
+
+<div class="distrib-container">
+
+  <!-- 1. Header Zone -->
+  <div class="distrib-header">
+    <div class="distrib-title-zone">
+      <h1>
+        <span>📦</span>
+        <span>Tournée de Distribution des Badges en Salle</span>
+      </h1>
+      <p>Scannez les badges imprimés à la chaîne. La station classe chaque élève par Classe, Salle et Horaire avec suivi d'émargement.</p>
+      <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+        <span class="distrib-badge-pill date">📅 {{ today_str }}</span>
+        <span class="distrib-badge-pill admin">🔒 Admin Uniquement</span>
+        <span class="distrib-badge-pill status-live">🟢 Lecteur NFC en écoute</span>
+      </div>
+    </div>
+
+    <div class="distrib-actions-zone">
+      <button type="button" class="btn-clear-batch" id="btnClearBatch" onclick="confirmClearBatch()" style="display:none;">
+        <span>🗑️</span>
+        <span>Vider la file</span>
+      </button>
+
+      <button type="button" class="btn-save-batch" id="btnSaveBatch" onclick="openSaveModal()" disabled>
+        <span>💾</span>
+        <span>Sauvegarder & Générer Rapport (<span id="btnSaveCount">0</span>)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. Most Recent Batch Banner (Direct 1-Click Print for PC 2) -->
+  {% if recent_batches %}
+    {% set lb = recent_batches[0] %}
+    <div class="last-batch-alert-banner">
+      <div class="last-batch-info">
+        <span style="font-size:22px;">🖨️</span>
+        <div>
+          <div style="font-size:14px; font-weight:800; color:#065f46;">
+            Dernier Lot Enregistré : <span class="last-batch-code">{{ lb.batch_code }}</span>
+            <span style="font-weight:600; color:#047857; margin-left:6px;">{{ lb.title }}</span>
+          </div>
+          <div style="font-size:12px; color:#047857; margin-top:2px;">
+            Enregistré le {{ lb.created_at.strftime('%d/%m/%Y à %H:%M') if lb.created_at else '' }} &bull;
+            <strong>{{ lb.total_present_today }}</strong> en classe aujourd'hui &bull;
+            Salles : <strong>{{ lb.rooms_summary }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px;">
+        <a href="{{ url_for('badge_distribution_report', batch_id=lb.id) }}"
+           target="_blank"
+           class="btn-save-batch"
+           style="padding:8px 16px; font-size:13px; text-decoration:none;">
+          <span>🖨️</span>
+          <span>Imprimer la Feuille A4</span>
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- 3. Hardware / Manual Scanner Card -->
+  <div class="scanner-card">
+    <div class="scanner-left">
+      <div class="scanner-radar-icon">
+        <span>📡</span>
+        <div class="scanner-radar-pulse"></div>
+      </div>
+      <div class="scanner-text-zone">
+        <h3>Scanner NFC / Code-Barres</h3>
+        <p id="scannerHint">Passez un badge sur le lecteur USB ou tapez le code...</p>
+      </div>
+    </div>
+
+    <form class="scanner-input-wrap" id="scannerForm" onsubmit="handleManualSubmit(event)">
+      <span style="font-size:18px; opacity:0.8;">🔍</span>
+      <input type="text"
+             class="scanner-input"
+             id="scannerInput"
+             placeholder="Prêt pour le scan... (ex: badge NFC ou tapez 166 ↵)"
+             autocomplete="off"
+             autofocus>
+      <button type="submit" class="scanner-submit-btn">Valider ↵</button>
+    </form>
+  </div>
+
+  <!-- 4. Stats Summary Cards -->
+  <div class="distrib-stats-grid">
+    <div class="stat-box">
+      <div class="stat-icon-wrap total">🪪</div>
+      <div>
+        <div class="stat-value" id="statTotalScanned">0</div>
+        <div class="stat-label">Total Badges Scannés</div>
+        <div class="stat-subtext" id="statTotalSubtext">Aucun badge dans ce lot</div>
+      </div>
+    </div>
+
+    <div class="stat-box" style="border-color:#a7f3d0;">
+      <div class="stat-icon-wrap present">🚪</div>
+      <div>
+        <div class="stat-value" id="statPresentToday" style="color:#047857;">0</div>
+        <div class="stat-label">En Classe Aujourd'hui</div>
+        <div class="stat-subtext" id="statPresentSubtext">À distribuer en salle</div>
+      </div>
+    </div>
+
+    <div class="stat-box">
+      <div class="stat-icon-wrap rooms">🏫</div>
+      <div>
+        <div class="stat-value" id="statTotalRooms" style="color:#6d28d9;">0</div>
+        <div class="stat-label">Classes à Visiter</div>
+        <div class="stat-subtext" id="statRoomsListText">Aucune classe</div>
+      </div>
+    </div>
+
+    <div class="stat-box">
+      <div class="stat-icon-wrap absent">🏠</div>
+      <div>
+        <div class="stat-value" id="statNoClassToday" style="color:#64748b;">0</div>
+        <div class="stat-label">Sans Cours Aujourd'hui</div>
+        <div class="stat-subtext">À garder à la réception</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Navigation Tabs -->
+  <div class="distrib-tabs-bar">
+    <button type="button" class="distrib-tab active" id="tabBtnClasses" onclick="switchTab('classes')">
+      <span>📚</span>
+      <span>Par Classe & Salle (Lot en cours de scan)</span>
+      <span class="tab-badge-count" id="badgeCountClasses">0</span>
+    </button>
+    <button type="button" class="distrib-tab" id="tabBtnChrono" onclick="switchTab('chrono')">
+      <span>⏱️</span>
+      <span>Ordre Chronologique</span>
+      <span class="tab-badge-count" id="badgeCountChrono">0</span>
+    </button>
+    <button type="button" class="distrib-tab" id="tabBtnHistory" onclick="switchTab('history')">
+      <span>🗂️</span>
+      <span>Tous les Rapports Enregistrés (Toutes Machines)</span>
+      <span class="tab-badge-count" style="background:#bfdbfe; color:#1d4ed8;">{{ recent_batches|length }}</span>
+    </button>
+  </div>
+
+  <!-- 6. View: Grouped by Class & Room -->
+  <div id="viewClassesContainer">
+    <div class="distrib-empty-state" id="emptyStateClasses">
+      <div style="font-size:48px; margin-bottom:12px;">🪪</div>
+      <h3 style="font-size:18px; font-weight:800; color:#1e293b; margin:0 0 6px 0;">Aucun badge scanné pour le moment</h3>
+      <p style="font-size:13px; max-width:480px; margin:0 auto; color:#64748b;">
+        Passez les badges imprimés un à un sur le lecteur NFC. La page va automatiquement les regrouper par classe avec la salle et l'horaire de cours.
+      </p>
+    </div>
+    <div id="classesGroupedList"></div>
+  </div>
+
+  <!-- 7. View: Chronological Scan List -->
+  <div id="viewChronoContainer" style="display:none;">
+    <div class="distrib-empty-state" id="emptyStateChrono">
+      <div style="font-size:48px; margin-bottom:12px;">⏱️</div>
+      <h3 style="font-size:18px; font-weight:800; color:#1e293b; margin:0 0 6px 0;">La file chronologique est vide</h3>
+      <p style="font-size:13px; color:#64748b;">Les badges scannés apparaîtront ici par ordre d'arrivée.</p>
+    </div>
+    <div id="chronoList"></div>
+  </div>
+
+  <!-- 8. View: All Previous Batches & Reports (Sync on all machines) -->
+  <div id="viewHistoryContainer" style="display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+      <div>
+        <h3 style="font-size:17px; font-weight:800; color:#0f172a; margin:0;">
+          🗂️ Historique de Tous les Lots de Distribution
+        </h3>
+        <p style="font-size:12.5px; color:#64748b; margin:2px 0 0 0;">
+          Tous les lots enregistrés depuis n'importe quel ordinateur sont disponibles ici en temps réel pour impression ou émargement.
+        </p>
+      </div>
+      <button type="button" class="btn-quick-reports" onclick="window.location.reload()">
+        <span>🔄</span>
+        <span>Actualiser la liste</span>
+      </button>
+    </div>
+
+    {% if recent_batches %}
+      <table class="batches-history-table">
+        <thead>
+          <tr>
+            <th style="width:130px;">Code du Lot</th>
+            <th style="width:140px;">Date & Heure</th>
+            <th>Titre & Salles Concernées</th>
+            <th style="text-align:center; width:90px;">Badges</th>
+            <th style="text-align:center; width:120px;">En Classe</th>
+            <th style="text-align:center; width:140px;">Suivi Remise</th>
+            <th style="text-align:right; width:190px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in recent_batches %}
+          <tr>
+            <td>
+              <span class="last-batch-code" style="font-size:12px;">{{ b.batch_code }}</span>
+            </td>
+            <td style="color:#64748b; font-size:12.5px;">
+              {{ b.created_at.strftime('%d/%m/%Y %H:%M') if b.created_at else '—' }}
+            </td>
+            <td>
+              <div style="font-weight:800; color:#0f172a;">{{ b.title }}</div>
+              <div style="font-size:11.5px; color:#64748b; margin-top:2px;">
+                🚪 Salles : <strong>{{ b.rooms_summary }}</strong>
+              </div>
+            </td>
+            <td style="text-align:center; font-weight:700;">
+              {{ b.total_scanned }}
+            </td>
+            <td style="text-align:center; font-weight:800; color:#047857;">
+              {{ b.total_present_today }}
+            </td>
+            <td style="text-align:center;">
+              <span class="progress-pill-box">
+                <span class="progress-track">
+                  <span class="progress-bar-fill" style="width: {{ b.delivery_pct }}%;"></span>
+                </span>
+                <span>{{ b.total_delivered }}/{{ b.total_present_today }}</span>
+              </span>
+            </td>
+            <td style="text-align:right; white-space:nowrap;">
+              <a href="{{ url_for('badge_distribution_report', batch_id=b.id) }}"
+                 target="_blank"
+                 class="btn-save-batch"
+                 style="padding:6px 14px; font-size:12px; text-decoration:none;">
+                <span>🖨️</span>
+                <span>Imprimer A4</span>
+              </a>
+
+              <form action="{{ url_for('badge_distribution_batch_delete', batch_id=b.id) }}"
+                    method="POST"
+                    style="display:inline;"
+                    onsubmit="return confirm('Supprimer définitivement ce lot {{ b.batch_code }} ?');">
+                <button type="submit" class="btn-remove-item" style="padding:6px 8px; margin-left:4px;" title="Supprimer ce lot">🗑️</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="distrib-empty-state">
+        <div style="font-size:48px; margin-bottom:12px;">🗂️</div>
+        <h3 style="font-size:18px; font-weight:800; color:#1e293b; margin:0 0 6px 0;">Aucun lot enregistré</h3>
+        <p style="font-size:13px; color:#64748b;">Dès que vous enregistrez un lot de badges scannés, il apparaîtra ici automatiquement.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ============================================================
+     SAVE BATCH MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="saveBatchModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">💾 Sauvegarder ce Lot de Distribution</h3>
+      <button type="button" class="modal-close" onclick="closeSaveModal()">✕</button>
+    </div>
+    <p style="font-size:13px; color:#64748b; margin-top:0;">
+      Ce lot sera enregistré dans le système. Vous pourrez l'ouvrir et l'imprimer directement depuis n'importe quel ordinateur connecté au réseau sans aucun lien à copier.
+    </p>
+
+    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px 16px; margin-bottom:14px;">
+      <div style="font-size:12px; font-weight:700; color:#475569;">Résumé du lot :</div>
+      <div style="font-size:14px; font-weight:800; color:#0f172a; margin-top:2px;">
+        <span id="modalStatTotal">0</span> badges au total &bull;
+        <span id="modalStatPresent" style="color:#047857;">0</span> en classe aujourd'hui &bull;
+        <span id="modalStatNoClass" style="color:#64748b;">0</span> sans cours
+      </div>
+    </div>
+
+    <label style="font-size:12px; font-weight:700; color:#334155;">Titre ou Référence du Lot :</label>
+    <input type="text" class="modal-input" id="batchTitleInput" placeholder="Ex: Lot #1 — 24 badges B1 & Enfants">
+
+    <label style="font-size:12px; font-weight:700; color:#334155;">Notes / Remarques (Optionnel) :</label>
+    <textarea class="modal-input" id="batchNotesInput" rows="2" placeholder="Ex: Tournée de 19h00 assurée par M. le Directeur..." style="resize:vertical;"></textarea>
+
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+      <button type="button" class="btn-quick-reports" onclick="closeSaveModal()">Annuler</button>
+      <button type="button" class="btn-save-batch" id="btnConfirmSave" onclick="executeSaveBatch()">
+        <span>💾</span>
+        <span>Confirmer & Ouvrir le Rapport</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// AUDIO FEEDBACK SYSTEM (Web Audio API Synthesizer)
+// ============================================================
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSoundSuccess() {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+  osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.12); // A5
+  gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.25);
+}
+
+function playSoundNoClass() {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+  osc.frequency.setValueAtTime(370, audioCtx.currentTime + 0.08);
+  gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.22);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.22);
+}
+
+function playSoundDuplicate() {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(260, audioCtx.currentTime);
+  osc.frequency.setValueAtTime(220, audioCtx.currentTime + 0.1);
+  gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.25);
+}
+
+// ============================================================
+// STATE & SCANNER INTERCEPTOR
+// ============================================================
+let scannedItems = [];
+let activeTab = 'classes';
+let hardwareBuffer = '';
+let lastKeyTime = 0;
+const scannerInput = document.getElementById('scannerInput');
+
+window.addEventListener('keydown', (e) => {
+  if (document.getElementById('saveBatchModal').style.display === 'flex') return;
+
+  const now = Date.now();
+  const isInputFocused = (document.activeElement === scannerInput);
+
+  if (e.key === 'Enter') {
+    const rawToProcess = isInputFocused ? scannerInput.value.trim() : hardwareBuffer.trim();
+    if (rawToProcess) {
+      e.preventDefault();
+      hardwareBuffer = '';
+      scannerInput.value = '';
+      processBadgeScan(rawToProcess);
+      return;
+    }
+  }
+
+  if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+    if (now - lastKeyTime > 300) {
+      hardwareBuffer = '';
+    }
+    lastKeyTime = now;
+    hardwareBuffer += e.key;
+
+    if (!isInputFocused) {
+      scannerInput.focus();
+    }
+  }
+});
+
+function handleManualSubmit(e) {
+  e.preventDefault();
+  const val = scannerInput.value.trim();
+  if (val) {
+    scannerInput.value = '';
+    hardwareBuffer = '';
+    processBadgeScan(val);
+  }
+}
+
+// ============================================================
+// PROCESS SCAN
+// ============================================================
+let isScanning = false;
+
+async function processBadgeScan(rawCode) {
+  if (isScanning) return;
+  isScanning = true;
+  document.getElementById('scannerHint').textContent = `Recherche pour "${rawCode}"...`;
+
+  try {
+    const resp = await fetch('{{ url_for("api_badge_distribution_scan") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ raw: rawCode })
+    });
+
+    const data = await resp.json();
+
+    if (!data.success) {
+      playSoundDuplicate();
+      document.getElementById('scannerHint').textContent = `❌ ${data.message || 'Badge non reconnu'}`;
+      document.getElementById('scannerHint').style.color = '#f87171';
+      setTimeout(() => {
+        document.getElementById('scannerHint').textContent = 'Passez un badge sur le lecteur USB ou tapez le code...';
+        document.getElementById('scannerHint').style.color = '#cbd5e1';
+      }, 3500);
+      return;
+    }
+
+    const stu = data.student;
+
+    // Duplicate check
+    const existingIdx = scannedItems.findIndex(it => it.student_id === stu.id);
+    if (existingIdx !== -1) {
+      playSoundDuplicate();
+      document.getElementById('scannerHint').textContent = `⚠️ Badge déjà scanné dans ce lot : ${stu.full_name} (${stu.code})`;
+      document.getElementById('scannerHint').style.color = '#fde047';
+      flashExistingItem(stu.id);
+      setTimeout(() => {
+        document.getElementById('scannerHint').textContent = 'Passez un badge sur le lecteur USB ou tapez le code...';
+        document.getElementById('scannerHint').style.color = '#cbd5e1';
+      }, 3500);
+      return;
+    }
+
+    const pClass = data.primary_class || {};
+    const newItem = {
+      student_id: stu.id,
+      student_code: stu.code,
+      student_name: stu.full_name,
+      photo_url: stu.photo_url,
+      phone: stu.phone,
+      school_level: stu.school_level,
+      has_class_today: data.has_class_today,
+      course_name: pClass.course_name || 'Formation ILAS',
+      room_name: pClass.room_name || 'Salle non assignée',
+      teacher_name: pClass.teacher_name || 'Non assigné',
+      time_slot: pClass.time_slot || 'Horaire non précisé',
+      timing_state: pClass.timing_state || 'none',
+      timing_label: pClass.timing_label || '',
+      next_class_info: data.next_class_info || null,
+      scanned_raw: rawCode,
+      scanned_at: new Date().toLocaleTimeString(),
+      is_delivered: false
+    };
+
+    scannedItems.unshift(newItem);
+
+    if (newItem.has_class_today) {
+      playSoundSuccess();
+      document.getElementById('scannerHint').textContent = `✅ ${stu.full_name} ➔ ${newItem.course_name} (${newItem.room_name} • ${newItem.time_slot})`;
+      document.getElementById('scannerHint').style.color = '#6ee7b7';
+    } else {
+      playSoundNoClass();
+      document.getElementById('scannerHint').textContent = `ℹ️ ${stu.full_name} ➔ Pas de cours aujourd'hui (${newItem.next_class_info || 'À garder à la réception'})`;
+      document.getElementById('scannerHint').style.color = '#93c5fd';
+    }
+
+    setTimeout(() => {
+      document.getElementById('scannerHint').textContent = 'Passez un badge sur le lecteur USB ou tapez le code...';
+      document.getElementById('scannerHint').style.color = '#cbd5e1';
+    }, 4000);
+
+    renderAll();
+
+  } catch (err) {
+    console.error('Scan error:', err);
+    document.getElementById('scannerHint').textContent = 'Erreur de communication avec le serveur';
+  } finally {
+    isScanning = false;
+    scannerInput.focus();
+  }
+}
+
+function removeItem(studentId) {
+  scannedItems = scannedItems.filter(it => it.student_id !== studentId);
+  renderAll();
+}
+
+function confirmClearBatch() {
+  if (scannedItems.length === 0) return;
+  if (confirm(`Voulez-vous vraiment vider la file de ${scannedItems.length} badges ?`)) {
+    scannedItems = [];
+    renderAll();
+  }
+}
+
+function flashExistingItem(studentId) {
+  const row = document.getElementById(`stu-row-${studentId}`);
+  if (row) {
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    row.style.background = '#fef08a';
+    setTimeout(() => { row.style.background = ''; }, 1200);
+  }
+}
+
+// ============================================================
+// RENDER VIEWS & STATS
+// ============================================================
+function renderAll() {
+  renderStats();
+  renderClassesView();
+  renderChronoView();
+
+  const count = scannedItems.length;
+  document.getElementById('btnClearBatch').style.display = count > 0 ? 'inline-flex' : 'none';
+  document.getElementById('btnSaveBatch').disabled = count === 0;
+  document.getElementById('btnSaveCount').textContent = count;
+}
+
+function renderStats() {
+  const total = scannedItems.length;
+  const present = scannedItems.filter(it => it.has_class_today).length;
+  const noClass = total - present;
+
+  // Distinct classes
+  const classesSet = new Set();
+  scannedItems.filter(it => it.has_class_today).forEach(it => {
+    classesSet.add(`${it.course_name}__${it.room_name}__${it.time_slot}`);
+  });
+  const totalClasses = classesSet.size;
+
+  document.getElementById('statTotalScanned').textContent = total;
+  document.getElementById('statTotalSubtext').textContent = total > 0 ? `${total} badge(s) dans la pile` : 'Aucun badge dans ce lot';
+
+  document.getElementById('statPresentToday').textContent = present;
+  document.getElementById('statPresentSubtext').textContent = present > 0 ? `${Math.round(present/total*100)}% ont cours aujourd'hui` : 'Aucun élève en cours';
+
+  document.getElementById('statTotalRooms').textContent = totalClasses;
+  document.getElementById('statRoomsListText').textContent = totalClasses > 0 ? `${totalClasses} classe(s) concernée(s)` : 'Aucune classe';
+
+  document.getElementById('statNoClassToday').textContent = noClass;
+
+  document.getElementById('badgeCountClasses').textContent = total;
+  document.getElementById('badgeCountChrono').textContent = total;
+}
+
+// Render grouped by CLASS (with room & time)
+function renderClassesView() {
+  const container = document.getElementById('classesGroupedList');
+  const emptyState = document.getElementById('emptyStateClasses');
+
+  if (scannedItems.length === 0) {
+    emptyState.style.display = 'block';
+    container.innerHTML = '';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  const presentItems = scannedItems.filter(it => it.has_class_today);
+  const noClassItems = scannedItems.filter(it => !it.has_class_today);
+
+  // Group by (course_name, room_name, time_slot)
+  const groups = {};
+  presentItems.forEach(it => {
+    const key = `${it.course_name}___${it.room_name}___${it.time_slot}`;
+    if (!groups[key]) {
+      groups[key] = {
+        course_name: it.course_name,
+        room_name: it.room_name,
+        time_slot: it.time_slot,
+        teacher_name: it.teacher_name,
+        timing_state: it.timing_state,
+        timing_label: it.timing_label,
+        items: []
+      };
+    }
+    groups[key].items.push(it);
+  });
+
+  let html = '';
+
+  const groupKeys = Object.keys(groups);
+  if (groupKeys.length > 0) {
+    groupKeys.forEach(key => {
+      const g = groups[key];
+      const count = g.items.length;
+
+      let timingBadge = '';
+      if (g.timing_state === 'current') {
+        timingBadge = `<span class="timing-pill current">🟢 En cours</span>`;
+      } else if (g.timing_state === 'upcoming') {
+        timingBadge = `<span class="timing-pill upcoming">🔵 ${g.timing_label || 'À venir'}</span>`;
+      } else if (g.timing_state === 'passed') {
+        timingBadge = `<span class="timing-pill passed">⚪ ${g.timing_label || 'Terminé'}</span>`;
+      }
+
+      html += `
+        <div class="class-group-card">
+          <div class="class-group-header">
+            <div class="class-group-title">
+              <span class="class-title-text">📚 ${g.course_name}</span>
+              <span class="class-room-pill">🚪 ${g.room_name}</span>
+              <span class="class-timing-pill">⏰ ${g.time_slot}</span>
+              ${timingBadge}
+            </div>
+            <span class="room-count-pill" style="background:rgba(255,255,255,0.2); color:#ffffff; border:none;">
+              ${count} badge${count > 1 ? 's' : ''} à donner
+            </span>
+          </div>
+
+          <div class="class-group-sub">
+            <span>👨‍🏫 Enseignant : <strong>${g.teacher_name}</strong></span>
+            <span>🚪 Salle : <strong>${g.room_name}</strong> &bull; Horaire : <strong>${g.time_slot}</strong></span>
+          </div>
+
+          <table class="class-students-table">
+            <thead>
+              <tr>
+                <th style="width:50px;">Élève</th>
+                <th>ID & Code</th>
+                <th>Nom & Prénom</th>
+                <th>Téléphone</th>
+                <th style="text-align:right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      g.items.forEach(it => {
+        const initials = it.student_name ? it.student_name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase() : 'E';
+        const avatarHtml = it.photo_url
+          ? `<img src="${it.photo_url}" class="stu-avatar" alt="${it.student_name}">`
+          : `<div class="stu-avatar">${initials}</div>`;
+
+        html += `
+          <tr id="stu-row-${it.student_id}">
+            <td style="width:50px;">${avatarHtml}</td>
+            <td>
+              <span class="stu-code">${it.student_code}</span>
+              <span style="font-size:10px; color:#94a3b8; margin-left:4px;">#${it.student_id}</span>
+            </td>
+            <td>
+              <div class="stu-name">${it.student_name}</div>
+              ${it.school_level ? `<div style="font-size:11px; color:#64748b;">${it.school_level}</div>` : ''}
+            </td>
+            <td>
+              ${it.phone ? `<a href="tel:${it.phone}" style="color:#1f6feb; text-decoration:none; font-weight:700;">📞 ${it.phone}</a>` : '<span style="color:#94a3b8;">—</span>'}
+            </td>
+            <td style="text-align:right;">
+              <button type="button" class="btn-remove-item" onclick="removeItem(${it.student_id})" title="Retirer ce badge du lot">✕</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      `;
+    });
+  }
+
+  // Section: No class today
+  if (noClassItems.length > 0) {
+    const count = noClassItems.length;
+    html += `
+      <div class="class-group-card" style="border-color:#cbd5e1;">
+        <div class="class-group-header" style="background:#475569;">
+          <div class="class-group-title">
+            <span class="class-title-text">🏠 Pas de cours aujourd'hui (À garder à la réception)</span>
+          </div>
+          <span class="room-count-pill" style="background:rgba(255,255,255,0.2); color:#ffffff; border:none;">
+            ${count} badge${count > 1 ? 's' : ''}
+          </span>
+        </div>
+
+        <div class="class-group-sub">
+          <span>Conserver ces badges au secrétariat / accueil pour leur prochain passage en classe.</span>
+          <span>Tiroir Accueil</span>
+        </div>
+
+        <table class="class-students-table">
+          <thead>
+            <tr>
+              <th style="width:50px;">Élève</th>
+              <th>ID & Code</th>
+              <th>Nom & Prénom</th>
+              <th>Téléphone</th>
+              <th>Prochain Cours Prévu</th>
+              <th style="text-align:right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    noClassItems.forEach(it => {
+      const initials = it.student_name ? it.student_name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase() : 'E';
+      const avatarHtml = it.photo_url
+        ? `<img src="${it.photo_url}" class="stu-avatar" alt="${it.student_name}">`
+        : `<div class="stu-avatar">${initials}</div>`;
+
+      html += `
+        <tr id="stu-row-${it.student_id}">
+          <td style="width:50px;">${avatarHtml}</td>
+          <td>
+            <span class="stu-code">${it.student_code}</span>
+            <span style="font-size:10px; color:#94a3b8; margin-left:4px;">#${it.student_id}</span>
+          </td>
+          <td>
+            <div class="stu-name">${it.student_name}</div>
+          </td>
+          <td>
+            ${it.phone ? `<a href="tel:${it.phone}" style="color:#1f6feb; text-decoration:none; font-weight:700;">📞 ${it.phone}</a>` : '<span style="color:#94a3b8;">—</span>'}
+          </td>
+          <td>
+            <span style="color:#1e293b; font-weight:700;">📅 ${it.next_class_info || 'Non programmé cette semaine'}</span>
+          </td>
+          <td style="text-align:right;">
+            <button type="button" class="btn-remove-item" onclick="removeItem(${it.student_id})" title="Retirer ce badge du lot">✕</button>
+          </td>
+        </tr>
+      `;
+    });
+
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderChronoView() {
+  const container = document.getElementById('chronoList');
+  const emptyState = document.getElementById('emptyStateChrono');
+
+  if (scannedItems.length === 0) {
+    emptyState.style.display = 'block';
+    container.innerHTML = '';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  let html = `
+    <div class="class-group-card">
+      <table class="class-students-table">
+        <thead>
+          <tr>
+            <th style="width:70px;">Heure</th>
+            <th style="width:50px;">Élève</th>
+            <th>ID & Code</th>
+            <th>Nom Complet</th>
+            <th>Classe & Salle</th>
+            <th>Statut Présence</th>
+            <th style="text-align:right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  scannedItems.forEach(it => {
+    const initials = it.student_name ? it.student_name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase() : 'E';
+    const avatarHtml = it.photo_url
+      ? `<img src="${it.photo_url}" class="stu-avatar" alt="${it.student_name}">`
+      : `<div class="stu-avatar">${initials}</div>`;
+
+    const statusBadge = it.has_class_today
+      ? `<span class="timing-pill current">🟢 En cours aujourd'hui</span>`
+      : `<span class="timing-pill passed">⚪ Pas de cours</span>`;
+
+    const classDetails = it.has_class_today
+      ? `<strong>${it.course_name}</strong> &bull; 🚪 ${it.room_name} (${it.time_slot})`
+      : `<span style="color:#64748b;">📅 Prochain: ${it.next_class_info || 'Non programmé'}</span>`;
+
+    html += `
+      <tr id="stu-row-${it.student_id}">
+        <td style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#64748b;">${it.scanned_at}</td>
+        <td>${avatarHtml}</td>
+        <td>
+          <span class="stu-code">${it.student_code}</span>
+        </td>
+        <td>
+          <div class="stu-name">${it.student_name}</div>
+        </td>
+        <td>${classDetails}</td>
+        <td>${statusBadge}</td>
+        <td style="text-align:right;">
+          <button type="button" class="btn-remove-item" onclick="removeItem(${it.student_id})" title="Retirer ce badge du lot">✕</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  container.innerHTML = html;
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tabBtnClasses').classList.toggle('active', tab === 'classes');
+  document.getElementById('tabBtnChrono').classList.toggle('active', tab === 'chrono');
+  document.getElementById('tabBtnHistory').classList.toggle('active', tab === 'history');
+
+  document.getElementById('viewClassesContainer').style.display = tab === 'classes' ? 'block' : 'none';
+  document.getElementById('viewChronoContainer').style.display = tab === 'chrono' ? 'block' : 'none';
+  document.getElementById('viewHistoryContainer').style.display = tab === 'history' ? 'block' : 'none';
+}
+
+// ============================================================
+// SAVE BATCH
+// ============================================================
+function openSaveModal() {
+  if (scannedItems.length === 0) return;
+  const total = scannedItems.length;
+  const present = scannedItems.filter(it => it.has_class_today).length;
+  const noClass = total - present;
+
+  document.getElementById('modalStatTotal').textContent = total;
+  document.getElementById('modalStatPresent').textContent = present;
+  document.getElementById('modalStatNoClass').textContent = noClass;
+
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2, '0')}h${String(now.getMinutes()).padStart(2, '0')}`;
+  document.getElementById('batchTitleInput').value = `Lot de distribution (${total} badges) — ${timeStr}`;
+  document.getElementById('saveBatchModal').style.display = 'flex';
+}
+
+function closeSaveModal() {
+  document.getElementById('saveBatchModal').style.display = 'none';
+}
+
+async function executeSaveBatch() {
+  const btn = document.getElementById('btnConfirmSave');
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span><span>Enregistrement en cours...</span>';
+
+  const title = document.getElementById('batchTitleInput').value.trim();
+  const notes = document.getElementById('batchNotesInput').value.trim();
+
+  try {
+    const resp = await fetch('{{ url_for("api_badge_distribution_save_batch") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: title,
+        notes: notes,
+        items: scannedItems
+      })
+    });
+
+    const data = await resp.json();
+
+    if (data.success) {
+      closeSaveModal();
+      scannedItems = [];
+      renderAll();
+      // Redirect to the printable report directly!
+      window.location.href = data.report_url;
+    } else {
+      alert(`Erreur : ${data.message || 'Impossible de sauvegarder le lot'}`);
+      btn.disabled = false;
+      btn.innerHTML = '<span>💾</span><span>Confirmer & Ouvrir le Rapport</span>';
+    }
+  } catch (err) {
+    console.error('Save error:', err);
+    alert('Erreur réseau lors de la sauvegarde du lot');
+    btn.disabled = false;
+    btn.innerHTML = '<span>💾</span><span>Confirmer & Ouvrir le Rapport</span>';
+  }
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,2864 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+/* Modern SaaS Schedule Slot Cards */
+.schedule-card.schedule-slot-card {
+  background: #ffffff;
+  border-radius: 11px;
+  border: 1px solid #e2e8f0;
+  padding: 8px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+.schedule-card.schedule-slot-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px -2px rgba(15, 23, 42, 0.1);
+  border-color: #cbd5e1;
+}
+.schedule-card.schedule-slot-card.theme-lang {
+  border-left: 3.5px solid #2563eb;
+}
+.schedule-card.schedule-slot-card.theme-support {
+  border-left: 3.5px solid #10b981;
+}
+
+.slot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+}
+.slot-time {
+  font-size: 10px;
+  font-weight: 800;
+  color: #1e293b;
+  background: #f1f5f9;
+  padding: 2px 5px;
+  border-radius: 5px;
+  white-space: nowrap;
+  letter-spacing: -0.2px;
+}
+.slot-room-btn {
+  font-size: 9.5px;
+  font-weight: 700;
+  border-radius: 5px;
+  padding: 2px 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+}
+.slot-room-btn.has-room {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+.slot-room-btn.has-room:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+.slot-room-btn.no-room {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px dashed #fcd34d;
+}
+.slot-room-btn.no-room:hover {
+  background: #fef3c7;
+}
+
+.slot-title {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #0B3D6E;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+.slot-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  font-size: 10px;
+  color: #64748b;
+}
+.slot-teacher {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+.slot-teacher.muted-prof {
+  color: #94a3b8;
+  font-style: italic;
+}
+.slot-badge-pill {
+  font-size: 8.5px;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 1px 4px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.slot-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  padding-top: 5px;
+  border-top: 1px solid #f1f5f9;
+}
+.slot-btn-wa {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.slot-btn-wa:hover {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #059669;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+}
+.slot-quick-icons {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.slot-icon-btn {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  font-size: 11px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  background: transparent;
+  padding: 0;
+}
+.slot-icon-btn.sub {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+  color: #7c3aed;
+}
+.slot-icon-btn.sub:hover {
+  background: #7c3aed;
+  color: #ffffff;
+  border-color: #6d28d9;
+}
+.slot-icon-btn.del {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #e11d48;
+}
+.slot-icon-btn.del:hover {
+  background: #e11d48;
+  color: #ffffff;
+  border-color: #be123c;
+}
+</style>
+
+<!-- TOP HEADER & ACTIONS -->
+<div class="flex between wrap mb-3" style="align-items:center; gap:12px;">
+  <div>
+    <div class="muted" style="font-size:12px"><a href="{{ url_for('dashboard') }}" style="text-decoration:none; color:#1f6feb; font-weight:700;">← {{ t('dashboard') }}</a></div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+      <h2 class="mt-0 mb-0" style="font-size:22px; color:#0B3D6E; font-weight:800;">
+        🗓️ Emploi du Temps Hebdomadaire (جدول الحصص والتوقيت)
+      </h2>
+      <span class="chip chip-blue" style="font-size:11px; font-weight:800;">{{ total_slots_count }} séance(s)</span>
+    </div>
+    <p class="muted" style="margin:2px 0 0 0; font-size:12.5px;">Planning hebdomadaire interactif, gestion des salles, anti-collision et affectation des créneaux</p>
+  </div>
+
+  <div class="flex wrap" style="gap:8px;">
+    <form method="post" action="{{ url_for('schedule_auto_sync') }}" style="display:inline;" onsubmit="return confirm('Voulez-vous synchroniser automatiquement l\'emploi du temps pour toutes les classes à partir de leur nom ?');">
+      <button type="submit" class="btn btn-outline" style="font-weight:800; font-size:13px; padding:7px 12px; background:#f0fdf4; border-color:#86efac; color:#15803d;" title="Détecte automatiquement les horaires dans les noms des cours et remplit le planning">
+        ⚡ Synchroniser depuis les Noms
+      </button>
+    </form>
+    <button type="button" class="btn btn-outline" onclick="openScheduleWhatsAppModal()" style="font-weight:800; font-size:13px; padding:7px 14px; background:#f0fdf4; border:1.5px solid #16a34a; color:#15803d; box-shadow:0 2px 6px rgba(22,163,74,0.15);" title="Diffuser l'emploi du temps aux parents et élèves par WhatsApp">
+      📲 WhatsApp aux Groupes
+    </button>
+    <a href="{{ url_for('teachers_whatsapp_daily_timetable') }}" class="btn btn-outline" style="font-weight:800; font-size:13px; padding:7px 14px; background:#eff6ff; border:1.5px solid #2563eb; color:#1d4ed8; box-shadow:0 2px 6px rgba(37,99,235,0.15); text-decoration:none; display:inline-flex; align-items:center; gap:6px;" title="Envoyer l'emploi du temps du jour avec les salles à chaque enseignant individuellement">
+      <span>🗓️</span> <span>Emploi du Jour aux Profs</span>
+    </a>
+    <button type="button" class="btn btn-outline" onclick="openPrintFormatModal()" style="font-weight:700; font-size:13px; padding:7px 12px; background:#fff;">
+      🖨️ Imprimer le Planning
+    </button>
+    <a class="btn btn-outline" href="{{ url_for('rooms') }}" style="font-weight:700; font-size:13px; padding:7px 12px; background:#fff;">
+      🏢 Gérer les Salles
+    </a>
+    <button type="button" class="btn btn-primary" onclick="toggleAddSlotBar()" style="background:#1f6feb; border-color:#1f6feb; font-weight:800; font-size:13px; padding:7px 14px;">
+      + Programmer une Séance
+    </button>
+  </div>
+</div>
+
+<!-- PLANNING KPIS -->
+<div class="grid grid-4 mb-3" style="gap:12px;">
+  <div class="card stat" style="border-left:4px solid #1f6feb; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">SÉANCES PROGRAMMÉES</div>
+    <div class="value" style="font-size:22px; font-weight:800; color:#0B3D6E; margin:2px 0;">{{ total_slots_count }} <span style="font-size:12px; font-weight:600; color:#64748b;">créneaux</span></div>
+    <div class="sub" style="font-size:11px; color:#1f6feb; font-weight:600;">Planning hebdomadaire actif</div>
+  </div>
+
+  <div class="card stat" style="border-left:4px solid #10b981; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">CLASSES COUVERTES</div>
+    <div class="value" style="font-size:22px; font-weight:800; color:#047857; margin:2px 0;">{{ active_courses_count }} <span style="font-size:12px; font-weight:600; color:#64748b;">classes</span></div>
+    <div class="sub" style="font-size:11px; color:#047857; font-weight:700;"><a href="{{ url_for('courses') }}" style="text-decoration:none; color:#047857;">Voir les classes →</a></div>
+  </div>
+
+  <div class="card stat" style="border-left:4px solid #f59e0b; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">SALLES DISPONIBLES</div>
+    <div class="value" style="font-size:22px; font-weight:800; color:#b45309; margin:2px 0;">{{ rooms|length }} <span style="font-size:12px; font-weight:600; color:#64748b;">salles</span></div>
+    <div class="sub" style="font-size:11px; color:#b45309; font-weight:600;"><a href="{{ url_for('rooms') }}" style="text-decoration:none; color:#b45309;">Gérer les salles →</a></div>
+  </div>
+
+  <div class="card stat" style="border-left:4px solid #8b5cf6; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">CORPS ENSEIGNANT</div>
+    <div class="value" style="font-size:22px; font-weight:800; color:#6d28d9; margin:2px 0;">{{ teachers|length }} <span style="font-size:12px; font-weight:600; color:#64748b;">profs</span></div>
+    <div class="sub" style="font-size:11px; color:#6d28d9; font-weight:600;"><a href="{{ url_for('teachers') }}" style="text-decoration:none; color:#6d28d9;">Voir les professeurs →</a></div>
+  </div>
+</div>
+
+<!-- QUICK ADD SLOT ACCORDION DRAWER -->
+<div id="addSlotBar" class="card card-pad mb-3" style="display:none; border-top:4px solid #1f6feb; background:#ffffff; box-shadow:0 10px 25px rgba(0,0,0,0.06); padding:18px 20px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+    <div style="font-weight:800; color:#0B3D6E; font-size:15px; display:flex; align-items:center; gap:8px;">
+      <span>➕ Programmer une Séance Hebdomadaire</span>
+    </div>
+    <button type="button" onclick="toggleAddSlotBar()" style="background:none; border:none; font-size:16px; cursor:pointer; color:#64748b;">✕</button>
+  </div>
+
+  <form method="post" action="{{ url_for('schedule_add') }}" style="display:grid; grid-template-columns: 1.5fr 1fr 1.2fr auto; gap:12px; align-items:end;">
+    <div class="field mb-0">
+      <label style="font-size:12px; font-weight:700;">Classe / Groupe <span class="req">*</span></label>
+      <div class="input-field has-ico">
+        <span class="f-ico">📖</span>
+        <select name="course_id" required style="font-weight:700; color:#0B3D6E; font-size:13px;">
+          <option value="">-- Choisir la classe --</option>
+          {% for c in courses %}
+          <option value="{{ c.id }}">{{ c.name }} ({{ c.teacher.full_name if c.teacher else 'Sans prof' }})</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="field mb-0">
+      <label style="font-size:12px; font-weight:700;">Jour de la semaine <span class="req">*</span></label>
+      <div class="input-field has-ico">
+        <span class="f-ico">📅</span>
+        <select name="day_of_week" required style="font-weight:700; font-size:13px;">
+          {% for i in range(7) %}
+          <option value="{{ i }}">{{ days[i] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="field mb-0" style="display:flex; gap:8px;">
+      <div style="flex:1;">
+        <label style="font-size:12px; font-weight:700;">Heure Début</label>
+        <input type="time" name="start_time" required value="09:00" style="font-weight:700; font-size:13px;">
+      </div>
+      <div style="flex:1;">
+        <label style="font-size:12px; font-weight:700;">Heure Fin</label>
+        <input type="time" name="end_time" required value="10:30" style="font-weight:700; font-size:13px;">
+      </div>
+    </div>
+
+    <div style="display:flex; gap:6px;">
+      <button type="submit" class="btn btn-primary" style="background:#10b981; border-color:#10b981; font-weight:800; font-size:13px; padding:8px 16px;">
+        💾 Enregistrer
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- PROFESSIONAL & MODERN ADVANCED MULTI-FILTER BAR -->
+<div class="card card-pad mb-3" style="padding:16px 20px; border:1px solid #e2e8f0; border-radius:16px; background:#ffffff; box-shadow:0 4px 20px rgba(15,23,42,0.04); position:relative;">
+  
+  <!-- Header Bar: Day switcher + Stats & Filter summary -->
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid #f1f5f9;">
+    
+    <!-- Day View Tabs (Modern Segmented Pill Controller) -->
+    <div style="display:inline-flex; background:#f1f5f9; padding:4px; border-radius:10px; gap:4px; flex-wrap:wrap;">
+      <button type="button" class="day-tab-btn active" onclick="switchDayView('all')" id="btnDayAll" style="padding:6px 12px; border-radius:8px; font-weight:800; font-size:12px; border:none; cursor:pointer; background:#1f6feb; color:#fff; transition:all 0.2s;">
+        🌐 Toute la Semaine
+      </button>
+      {% for i in range(7) %}
+      <button type="button" class="day-tab-btn" onclick="switchDayView({{ i }})" id="btnDay{{ i }}" style="padding:6px 10px; border-radius:8px; font-weight:700; font-size:12px; border:none; cursor:pointer; background:transparent; color:#475569; transition:all 0.2s;">
+        {{ days[i] }}
+      </button>
+      {% endfor %}
+    </div>
+
+    <!-- Quick Count & Status Badge -->
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <span class="chip chip-blue" style="font-size:11.5px; font-weight:800; padding:4px 10px;">
+        🗓️ {{ total_slots_count }} séance(s) affichée(s)
+      </span>
+
+      <!-- CONFLICT AUDIT BADGE BUTTON -->
+      {% if total_conflicts_count and total_conflicts_count > 0 %}
+      <button type="button" onclick="openConflictModal()" style="display:inline-flex; align-items:center; gap:6px; background:#fee2e2; border:1.5px solid #ef4444; color:#b91c1c; font-size:11.5px; font-weight:800; padding:4px 10px; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(239,68,68,0.2); transition:all 0.2s;" title="Cliquer pour afficher les détails des conflits">
+        <span>⚠️</span>
+        <span>{{ total_conflicts_count }} Conflit(s) d'horaires</span>
+        <span style="background:#b91c1c; color:#fff; font-size:9.5px; padding:1px 6px; border-radius:10px;">Audit & Résolution 🔎</span>
+      </button>
+      {% else %}
+      <span class="chip" style="font-size:11px; font-weight:800; padding:4px 10px; background:#dcfce7; color:#15803d; border:1px solid #86efac;">
+        ✓ 0 Conflit (Planning Optimisé)
+      </span>
+      {% endif %}
+
+      {% if active_filters_count > 0 %}
+      <span class="chip chip-amber" style="font-size:11.5px; font-weight:800; padding:4px 10px;">
+        🎯 {{ active_filters_count }} filtre(s) actif(s)
+      </span>
+      <a href="{{ url_for('schedule') }}" class="btn btn-xs btn-outline" style="font-weight:700; color:#dc2626; border-color:#fca5a5; background:#fef2f2; padding:3px 8px; border-radius:6px; text-decoration:none;">
+        ✕ Tout réinitialiser
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Filter Form Controls Grid -->
+  <form method="get" action="{{ url_for('schedule') }}" id="scheduleFilterForm">
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; align-items:end;">
+      
+      <!-- 1. Filter: Professeur -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; margin-bottom:5px; display:flex; align-items:center; gap:5px;">
+          <span>👨‍🏫 Enseignant (Prof)</span>
+          {% if filter_teacher_id %}<span style="width:6px; height:6px; border-radius:50%; background:#1f6feb; display:inline-block;"></span>{% endif %}
+        </label>
+        <div>
+          <select name="teacher_id" onchange="this.form.submit()" style="font-size:12.5px; font-weight:{% if filter_teacher_id %}800{% else %}600{% endif %}; background:{% if filter_teacher_id %}#eff6ff{% else %}#fff{% endif %}; border-color:{% if filter_teacher_id %}#1f6feb{% else %}#cbd5e1{% endif %}; color:{% if filter_teacher_id %}#1e40af{% else %}#1e293b{% endif %};">
+            <option value="">Tous les professeurs</option>
+            {% for t in teachers %}
+            <option value="{{ t.id }}" {{ 'selected' if filter_teacher_id == t.id else '' }}>{{ t.full_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- 2. Filter: Niveau (المستوى) -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; margin-bottom:5px; display:flex; align-items:center; gap:5px;">
+          <span>🎓 Niveau (المستوى)</span>
+          {% if filter_level %}<span style="width:6px; height:6px; border-radius:50%; background:#10b981; display:inline-block;"></span>{% endif %}
+        </label>
+        <div>
+          <select name="level" onchange="this.form.submit()" style="font-size:12.5px; font-weight:{% if filter_level %}800{% else %}600{% endif %}; background:{% if filter_level %}#ecfdf5{% else %}#fff{% endif %}; border-color:{% if filter_level %}#10b981{% else %}#cbd5e1{% endif %}; color:{% if filter_level %}#065f46{% else %}#1e293b{% endif %};">
+            <option value="">Tous les niveaux</option>
+            {% for lvl in all_levels %}
+            <option value="{{ lvl }}" {{ 'selected' if filter_level == lvl else '' }}>{{ lvl }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- 3. Filter: Matière / Discipline (المادة) -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; margin-bottom:5px; display:flex; align-items:center; gap:5px;">
+          <span>📚 Matière (المادة)</span>
+          {% if filter_subject %}<span style="width:6px; height:6px; border-radius:50%; background:#8b5cf6; display:inline-block;"></span>{% endif %}
+        </label>
+        <div>
+          <select name="subject" onchange="this.form.submit()" style="font-size:12.5px; font-weight:{% if filter_subject %}800{% else %}600{% endif %}; background:{% if filter_subject %}#faf5ff{% else %}#fff{% endif %}; border-color:{% if filter_subject %}#8b5cf6{% else %}#cbd5e1{% endif %}; color:{% if filter_subject %}#6b21a8{% else %}#1e293b{% endif %};">
+            <option value="">Toutes les matières</option>
+            {% for sub in all_subjects %}
+            <option value="{{ sub }}" {{ 'selected' if filter_subject == sub else '' }}>{{ sub }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- 4. Filter: Groupe / Section (الفوج) -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; margin-bottom:5px; display:flex; align-items:center; gap:5px;">
+          <span>👥 Groupe (الفوج)</span>
+          {% if filter_group %}<span style="width:6px; height:6px; border-radius:50%; background:#f59e0b; display:inline-block;"></span>{% endif %}
+        </label>
+        <div>
+          <select name="group" onchange="this.form.submit()" style="font-size:12.5px; font-weight:{% if filter_group %}800{% else %}600{% endif %}; background:{% if filter_group %}#fffbeb{% else %}#fff{% endif %}; border-color:{% if filter_group %}#f59e0b{% else %}#cbd5e1{% endif %}; color:{% if filter_group %}#92400e{% else %}#1e293b{% endif %};">
+            <option value="">Tous les groupes</option>
+            {% for grp in all_groups %}
+            <option value="{{ grp }}" {{ 'selected' if filter_group == grp else '' }}>{{ grp }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- 5. Filter: Salle (القاعة) -->
+      <div>
+        <label style="font-size:11.5px; font-weight:800; color:#334155; margin-bottom:5px; display:flex; align-items:center; gap:5px;">
+          <span>🚪 Salle (القاعة)</span>
+          {% if filter_room_id %}<span style="width:6px; height:6px; border-radius:50%; background:#0284c7; display:inline-block;"></span>{% endif %}
+        </label>
+        <div>
+          <select name="room_id" onchange="this.form.submit()" style="font-size:12.5px; font-weight:{% if filter_room_id %}800{% else %}600{% endif %}; background:{% if filter_room_id %}#f0f9ff{% else %}#fff{% endif %}; border-color:{% if filter_room_id %}#0284c7{% else %}#cbd5e1{% endif %}; color:{% if filter_room_id %}#075985{% else %}#1e293b{% endif %};">
+            <option value="">Toutes les salles</option>
+            {% for r in rooms %}
+            <option value="{{ r.id }}" {{ 'selected' if filter_room_id == r.id else '' }}>{{ r.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- 6. Search input & Actions -->
+      <div style="display:flex; gap:6px;">
+        <div class="input-field has-ico" style="flex:1; min-width:140px;">
+          <span class="f-ico">🔍</span>
+          <input type="text" name="q" id="scheduleSearchInput" value="{{ search_q }}" placeholder="Recherche directe..." style="font-size:12.5px; font-weight:600; padding-left:32px; background:#fff;" oninput="liveFilterScheduleCards(this.value)">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm" style="font-weight:800; padding:8px 14px; background:#1f6feb; border-color:#1f6feb; border-radius:8px;" title="Appliquer les filtres">
+          Filtrer
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ACTIVE FILTER CHIPS -->
+    {% if active_filters_count > 0 %}
+    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; padding-top:10px; border-top:1px dashed #e2e8f0; align-items:center;">
+      <span style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Filtres actifs :</span>
+
+      {% if filter_teacher_id %}
+        {% for t in teachers if t.id == filter_teacher_id %}
+        <span class="chip chip-blue" style="font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:6px; padding:3px 8px;">
+          👨‍🏫 Prof : {{ t.full_name }}
+          <a href="{{ url_for('schedule', room_id=filter_room_id, level=filter_level, subject=filter_subject, group=filter_group, q=search_q) }}" style="text-decoration:none; color:inherit; font-weight:900; margin-left:2px;" title="Retirer">✕</a>
+        </span>
+        {% endfor %}
+      {% endif %}
+
+      {% if filter_level %}
+        <span class="chip chip-green" style="font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:6px; padding:3px 8px;">
+          🎓 Niveau : {{ filter_level }}
+          <a href="{{ url_for('schedule', teacher_id=filter_teacher_id, room_id=filter_room_id, subject=filter_subject, group=filter_group, q=search_q) }}" style="text-decoration:none; color:inherit; font-weight:900; margin-left:2px;" title="Retirer">✕</a>
+        </span>
+      {% endif %}
+
+      {% if filter_subject %}
+        <span class="chip chip-purple" style="font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:6px; padding:3px 8px; background:#f3e8ff; color:#7e22ce; border:1px solid #d8b4fe;">
+          📚 Matière : {{ filter_subject }}
+          <a href="{{ url_for('schedule', teacher_id=filter_teacher_id, room_id=filter_room_id, level=filter_level, group=filter_group, q=search_q) }}" style="text-decoration:none; color:inherit; font-weight:900; margin-left:2px;" title="Retirer">✕</a>
+        </span>
+      {% endif %}
+
+      {% if filter_group %}
+        <span class="chip chip-amber" style="font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:6px; padding:3px 8px;">
+          👥 Groupe : {{ filter_group }}
+          <a href="{{ url_for('schedule', teacher_id=filter_teacher_id, room_id=filter_room_id, level=filter_level, subject=filter_subject, q=search_q) }}" style="text-decoration:none; color:inherit; font-weight:900; margin-left:2px;" title="Retirer">✕</a>
+        </span>
+      {% endif %}
+
+      {% if filter_room_id %}
+        {% for r in rooms if r.id == filter_room_id %}
+        <span class="chip chip-blue" style="font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:6px; padding:3px 8px; background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc;">
+          🚪 Salle : {{ r.name }}
+          <a href="{{ url_for('schedule', teacher_id=filter_teacher_id, level=filter_level, subject=filter_subject, group=filter_group, q=search_q) }}" style="text-decoration:none; color:inherit; font-weight:900; margin-left:2px;" title="Retirer">✕</a>
+        </span>
+        {% endfor %}
+      {% endif %}
+
+      {% if search_q %}
+        <span class="chip chip-gray" style="font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:6px; padding:3px 8px;">
+          🔍 Mot-clé : "{{ search_q }}"
+          <a href="{{ url_for('schedule', teacher_id=filter_teacher_id, room_id=filter_room_id, level=filter_level, subject=filter_subject, group=filter_group) }}" style="text-decoration:none; color:inherit; font-weight:900; margin-left:2px;" title="Retirer">✕</a>
+        </span>
+      {% endif %}
+
+      <a href="{{ url_for('schedule') }}" style="font-size:11.5px; font-weight:800; color:#ef4444; margin-left:auto; text-decoration:none;" title="Effacer tous les filtres">
+        ✕ Tout effacer
+      </a>
+    </div>
+    {% endif %}
+
+  </form>
+</div>
+
+<!-- 7-DAY WEEKLY CALENDAR GRID -->
+<div class="schedule-calendar-container">
+  <div id="scheduleGrid" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:10px;">
+    {% for i in range(7) %}
+    {% set day_slots = grid[i] %}
+    <div class="day-column day-col-{{ i }}" style="background:#ffffff; border:1.5px solid #e2e8f0; border-radius:14px; box-shadow:0 4px 16px rgba(15,23,42,0.03); display:flex; flex-direction:column; overflow:hidden;">
+      
+      <!-- Day Column Header -->
+      <div style="background:linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%); color:#ffffff; padding:10px; text-align:center;">
+        <div style="font-size:13.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">{{ days[i] }}</div>
+        <div style="font-size:10.5px; opacity:0.85; margin-top:2px;">{{ day_slots|length }} séance(s)</div>
+      </div>
+
+      <!-- Day Body Slots List -->
+      <div style="padding:8px; flex:1; display:flex; flex-direction:column; gap:8px; min-height:420px; background:#f8fafc;">
+        {% if day_slots %}
+          {% for s in day_slots %}
+          {% if not s.is_merged_secondary %}
+          {% if s.is_merged_session %}
+          <!-- CARTE SÉANCE COMMUNE (GROUPES REGROUPÉS - AFFICHAGE UNIQUE SANS DOUBLON) -->
+          <div class="schedule-card schedule-slot-card theme-lang"
+               style="border: 2px solid #818cf8 !important; background: linear-gradient(180deg, #ffffff 0%, #f5f3ff 100%) !important; box-shadow: 0 4px 14px rgba(99,102,241,0.12) !important;">
+            
+            <!-- Header: Time Pill + Interactive Room Action -->
+            <div class="slot-header">
+              <span class="slot-time" style="background:#4338ca; color:#fff; font-weight:800;">⏱️ {{ s.start_time }}–{{ s.end_time }}</span>
+              <button type="button" 
+                      class="slot-room-btn has-room" 
+                      style="background:#ede9fe; color:#5b21b6; border:1.5px solid #a855f7; font-weight:800;"
+                      onclick="openRoomAssignModal({{ s.id }}, {{ s.course_id if s.course else 0 }}, '{{ (s.course.name if (s.course and s.course.name) else (s.course.display_name if s.course else ''))|e }}', {{ s.day_of_week }}, '{{ s.start_time }}', '{{ s.end_time }}', '{{ days[s.day_of_week] if (s.day_of_week is not none and s.day_of_week < days|length) else '' }}', {{ s.effective_room.id if s.effective_room else 'null' }})"
+                      title="Salle commune : {{ s.effective_room.name if s.effective_room else 'Salle non assignée' }} (Cliquer pour changer pour les deux groupes)">
+                🚪 {{ s.effective_room.name if s.effective_room else '+ Salle' }}
+              </button>
+            </div>
+
+            <!-- Merged Pill Banner -->
+            <div style="margin: 6px 0 8px 0; padding: 4px 8px; background: #ede9fe; border: 1px solid #c4b5fd; border-radius: 7px; display:flex; align-items:center; justify-content:space-between;">
+              <span style="font-size: 11px; font-weight: 800; color: #5b21b6; display:flex; align-items:center; gap:4px;">
+                <span>🤝</span> <span>Séance Commune (Groupe 1 + 2)</span>
+              </span>
+              <span style="font-size: 10px; font-weight: 800; background: #7c3aed; color:#fff; padding: 1px 7px; border-radius: 10px;">
+                👥 {{ (s.course.enrolled_count or 0) + (s.co_slots[0].course.enrolled_count or 0 if s.co_slots else 0) }} élèves
+              </span>
+            </div>
+
+            <!-- Combined Group Titles -->
+            <div class="slot-title" style="font-size: 11.5px; font-weight: 800; color: #1e1b4b; line-height: 1.35; margin-bottom: 6px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:4px;">
+                <span style="color:#4338ca;">● {{ s.course.display_name }}</span>
+                <span style="font-size:10px; color:#6b7280; font-weight:700;">({{ s.course.enrolled_count or 0 }} él.)</span>
+              </div>
+              {% for cs in s.co_slots %}
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; margin-top:2px; color:#6d28d9;">
+                <span>● {{ cs.course.display_name }}</span>
+                <span style="font-size:10px; color:#6b7280; font-weight:700;">({{ cs.course.enrolled_count or 0 }} él.)</span>
+              </div>
+              {% endfor %}
+            </div>
+
+            <!-- Meta: Teacher -->
+            <div class="slot-meta" style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e1; display:flex; justify-content:space-between; align-items:center;">
+              {% set prof = s.effective_teacher %}
+              <span class="slot-teacher" style="color: #1e293b; font-weight: 800;">
+                👨‍🏫 {{ prof.full_name if prof else 'Professeur' }}
+              </span>
+              <span class="chip" style="font-size: 9.5px; background: #ede9fe; color: #5b21b6; font-weight:800; padding: 1px 6px; border-radius: 4px;">
+                Groupe 1 + 2
+              </span>
+            </div>
+
+            <!-- Actions Row: WhatsApp & Options -->
+            <div class="slot-actions">
+              <button type="button" 
+                      class="slot-btn-wa" 
+                      onclick="openScheduleWhatsAppModal({{ s.course_id if s.course else 0 }})" 
+                      title="Diffuser l'emploi du temps aux élèves par WhatsApp">
+                <span>📲</span> <span>WhatsApp</span>
+              </button>
+
+              <div class="slot-quick-icons">
+                <button type="button" 
+                        class="slot-icon-btn sub" 
+                        onclick="openSubstituteModal({{ s.course_id if s.course else 0 }}, '{{ (s.course.name if (s.course and s.course.name) else (s.course.display_name if s.course else ''))|e }}')" 
+                        title="Affecter un enseignant remplaçant">
+                  🤝
+                </button>
+              </div>
+            </div>
+
+          </div>
+          {% else %}
+<div class="schedule-card schedule-slot-card {% if is_lang %}theme-lang{% else %}theme-support{% endif %}"
+               style="{% if s.has_conflict %}border: 2px solid #ef4444 !important; background: #fffbfb !important; box-shadow: 0 0 10px rgba(239,68,68,0.2) !important;{% endif %}">
+            
+            <!-- Header: Time Pill + Interactive Room Action -->
+            <div class="slot-header">
+              <span class="slot-time">⏱️ {{ s.start_time }}–{{ s.end_time }}</span>
+              <button type="button" 
+                      class="slot-room-btn {% if s.effective_room %}has-room{% else %}no-room{% endif %}" 
+                      onclick="openRoomAssignModal({{ s.id }}, {{ s.course_id if s.course else 0 }}, '{{ (s.course.name if (s.course and s.course.name) else (s.course.display_name if s.course else ''))|e }}', {{ s.day_of_week }}, '{{ s.start_time }}', '{{ s.end_time }}', '{{ days[s.day_of_week] if (s.day_of_week is not none and s.day_of_week < days|length) else '' }}', {{ s.effective_room.id if s.effective_room else 'null' }})"
+                      title="{% if s.effective_room %}Salle : {{ s.effective_room.name }} (Cliquer pour changer pour ce jour){% else %}Salle non assignée (Cliquer pour affecter à ce jour){% endif %}">
+                🚪 {{ s.effective_room.name if s.effective_room else '+ Salle' }}
+              </button>
+            </div>
+
+            {% if s.has_conflict %}
+            <!-- Visual Conflict Alert Badge -->
+            <div class="slot-conflict-alert" onclick="openConflictModal()" style="cursor:pointer; margin: 4px 0 6px 0; padding:5px 8px; background:#fee2e2; border:1px solid #f87171; border-radius:7px; color:#991b1b; font-size:10.5px; font-weight:800; line-height:1.3;" title="Cliquer pour afficher les détails du conflit">
+              {% for conf in s.conflicts %}
+                {% set other = conf.s2 if conf.s1.id == s.id else conf.s1 %}
+                <div style="display:flex; align-items:flex-start; gap:4px; margin-bottom:1px;">
+                  <span>⚠️</span>
+                  <span>
+                    {% if conf.is_room and conf.is_teacher %}
+                      Conflit Salle & Prof avec <u>{{ other.course.display_name if other.course else 'autre cours' }}</u>
+                    {% elif conf.is_room %}
+                      Conflit Salle ({{ conf.room.name if conf.room else 'Salle' }}) avec <u>{{ other.course.display_name if other.course else 'autre cours' }}</u>
+                    {% elif conf.is_teacher %}
+                      Conflit Prof ({{ conf.teacher.full_name if conf.teacher else 'Prof' }}) avec <u>{{ other.course.display_name if other.course else 'autre cours' }}</u>
+                    {% endif %}
+                  </span>
+                </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Course Title -->
+            <div class="slot-title" title="{{ s.course.name if s.course else '' }}">
+              {{ s.course.name if s.course and s.course.name else (s.course.display_name if s.course else 'Matière') }}
+            </div>
+
+            <!-- Meta: Teacher & Group/Level -->
+            <div class="slot-meta">
+              {% set prof = s.effective_teacher if hasattr(s, 'effective_teacher') else (s.teacher or (s.course.teacher if s.course else None)) %}
+              {% if prof %}
+                <span class="slot-teacher" title="Professeur : {{ prof.full_name }}">
+                  👨‍🏫 {{ prof.full_name }}
+                </span>
+              {% else %}
+                <span class="slot-teacher muted-prof">👨‍🏫 Sans prof</span>
+              {% endif %}
+
+              {% if s.course and s.course.group_name %}
+                <span class="slot-badge-pill" title="Groupe : {{ s.course.group_name }}">{{ s.course.group_name }}</span>
+              {% elif s.course and s.course.level %}
+                <span class="slot-badge-pill" title="Niveau : {{ s.course.level }}">{{ s.course.level }}</span>
+              {% endif %}
+            </div>
+
+            <!-- Actions Row: WhatsApp Pill + Icon Buttons -->
+            <div class="slot-actions">
+              <button type="button" 
+                      class="slot-btn-wa" 
+                      onclick="openScheduleWhatsAppModal({{ s.course_id if s.course else 0 }})" 
+                      title="Diffuser cet emploi du temps aux élèves par WhatsApp">
+                <span>📲</span> <span>WhatsApp</span>
+              </button>
+
+              <div class="slot-quick-icons">
+                <button type="button" 
+                        class="slot-icon-btn sub" 
+                        onclick="openSubstituteModal({{ s.course_id if s.course else 0 }}, '{{ (s.course.name if (s.course and s.course.name) else (s.course.display_name if s.course else ''))|e }}')" 
+                        title="Affecter un enseignant remplaçant">
+                  🤝
+                </button>
+
+                {% if cur_user and cur_user.role == 'admin' %}
+                <form method="post" action="{{ url_for('schedule_delete', sid=s.id) }}" onsubmit="return confirm('⚠️ ATTENTION : Cela supprimera définitivement ce créneau récurrent de l\'emploi du temps pour toutes les semaines !\n\nÊtes-vous sûr de vouloir supprimer ce créneau ?');" style="margin:0; display:inline;">
+                  <button type="submit" class="slot-icon-btn del" title="Supprimer la séance">
+                    🗑️
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </div>
+
+          </div>
+          {% endif %}
+          {% endif %}
+          {% endfor %}
+        {% else %}
+          <div style="text-align:center; padding:40px 10px; color:#94a3b8; font-size:11.5px;">
+            <div style="font-size:22px; margin-bottom:4px; opacity:0.5;">☕</div>
+            Aucune séance
+          </div>
+        {% endif %}
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- MODAL 1: PRINT FORMAT DIALOG -->
+<div id="printFormatModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); z-index:9999; justify-content:center; align-items:center;">
+  <div style="background:#ffffff; width:92%; max-width:480px; padding:22px; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.25); border:1.5px solid #cbd5e1;">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1.5px solid #f1f5f9; padding-bottom:12px; margin-bottom:14px;">
+      <h3 style="margin:0; color:#0B3D6E; font-size:16px; font-weight:800;">
+        🖨️ Options d'Impression Emploi du Temps
+      </h3>
+      <button type="button" onclick="closePrintFormatModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+    </div>
+
+    <form onsubmit="event.preventDefault(); launchPrint();">
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px; font-weight:700; color:#334155; display:block; margin-bottom:6px;">Format d'impression :</label>
+        
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <label style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:10px; cursor:pointer;">
+            <input type="radio" name="printFormat" value="a4" checked style="width:16px; height:16px;">
+            <div>
+              <div style="font-weight:800; font-size:13px; color:#0f172a;">📄 A4 Landscape (Paysage A4 Officiel)</div>
+              <div style="font-size:11px; color:#64748b;">Format tableau complet haute résolution pour affichage</div>
+            </div>
+          </label>
+
+          <label style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:10px; cursor:pointer;">
+            <input type="radio" name="printFormat" value="a5" style="width:16px; height:16px;">
+            <div>
+              <div style="font-weight:800; font-size:13px; color:#0f172a;">📄 A5 Portrait (A5)</div>
+              <div style="font-size:11px; color:#64748b;">Format réduit pour élèves et professeurs</div>
+            </div>
+          </label>
+
+          <label style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:10px; cursor:pointer;">
+            <input type="radio" name="printFormat" value="80mm" style="width:16px; height:16px;">
+            <div>
+              <div style="font-weight:800; font-size:13px; color:#0f172a;">🧾 Ticket Thermique 80mm</div>
+              <div style="font-size:11px; color:#64748b;">Impression rapide sur ticket de caisse</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Filters in Modal -->
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11.5px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">📅 Période ou jour d'impression :</label>
+        <select id="modalPrintDay" style="width:100%; padding:8px 10px; border-radius:8px; border:1.5px solid #93c5fd; font-size:12.5px; font-weight:700; background:#f0f7ff; color:#0B3D6E;">
+          <option value="">🌐 Toute la semaine (Planning Hebdomadaire Complet)</option>
+          <option value="today">📌 Aujourd'hui uniquement (Planning du Jour)</option>
+          {% for i in range(7) %}
+          <option value="{{ i }}">📅 {{ days[i] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">👨‍🏫 Par Enseignant</label>
+          <select id="modalPrintTeacher" style="width:100%; padding:7px; border-radius:8px; border:1px solid #cbd5e1; font-size:12px;">
+            <option value="">Tous les professeurs</option>
+            {% for t in teachers %}
+            <option value="{{ t.id }}" {{ 'selected' if filter_teacher_id == t.id else '' }}>{{ t.full_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:11.5px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">🚪 Par Salle</label>
+          <select id="modalPrintRoom" style="width:100%; padding:7px; border-radius:8px; border:1px solid #cbd5e1; font-size:12px;">
+            <option value="">Toutes les salles</option>
+            {% for r in rooms %}
+            <option value="{{ r.id }}" {{ 'selected' if filter_room_id == r.id else '' }}>{{ r.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-bottom:16px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">🎓 Par Niveau</label>
+          <select id="modalPrintLevel" style="width:100%; padding:7px; border-radius:8px; border:1px solid #cbd5e1; font-size:11.5px;">
+            <option value="">Tous</option>
+            {% for lvl in all_levels %}
+            <option value="{{ lvl }}" {{ 'selected' if filter_level == lvl else '' }}>{{ lvl }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:11.5px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">📚 Par Matière</label>
+          <select id="modalPrintSubject" style="width:100%; padding:7px; border-radius:8px; border:1px solid #cbd5e1; font-size:11.5px;">
+            <option value="">Toutes</option>
+            {% for sub in all_subjects %}
+            <option value="{{ sub }}" {{ 'selected' if filter_subject == sub else '' }}>{{ sub }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:11.5px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">👥 Par Groupe</label>
+          <select id="modalPrintGroup" style="width:100%; padding:7px; border-radius:8px; border:1px solid #cbd5e1; font-size:11.5px;">
+            <option value="">Tous</option>
+            {% for grp in all_groups %}
+            <option value="{{ grp }}" {{ 'selected' if filter_group == grp else '' }}>{{ grp }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="closePrintFormatModal()">Annuler</button>
+        <button type="submit" class="btn btn-primary btn-sm" style="background:#10b981; border-color:#10b981; font-weight:800; padding:8px 16px;">
+          🖨️ Générer l'Emploi du Temps Pro
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL 2: ROOM ASSIGNMENT MODAL (ANTI-COLLISION) -->
+<div id="roomAssignModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); z-index:9999; justify-content:center; align-items:center;">
+  <div style="background:#ffffff; width:92%; max-width:480px; padding:22px; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.25); border:1.5px solid #cbd5e1;">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1.5px solid #f1f5f9; padding-bottom:12px; margin-bottom:12px;">
+      <h3 style="margin:0; color:#0B3D6E; font-size:16px; font-weight:800;">
+        🚪 Affectation de Salle (Anti-Collision)
+      </h3>
+      <button type="button" onclick="closeRoomAssignModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+    </div>
+
+    <form method="post" action="{{ url_for('schedule_assign_room') }}" id="roomAssignForm" onsubmit="return handleRoomAssignSubmit(event);">
+      <input type="hidden" name="slot_id" id="assignSlotId">
+      <input type="hidden" name="course_id" id="assignCourseId">
+      
+      <div style="background:#f0f7ff; border:1px solid #93c5fd; padding:10px 14px; border-radius:10px; margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-weight:800; color:#1d4ed8; font-size:13.5px;" id="assignCourseTitle"></div>
+          <span id="assignDayBadge" style="background:#dbeafe; color:#1e40af; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;"></span>
+        </div>
+        <div style="font-size:11.5px; color:#475569; margin-top:2px;" id="assignSlotTime"></div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px; font-weight:700; color:#334155; display:block; margin-bottom:8px;">
+          Salles disponibles à cet horaire :
+        </label>
+        
+        <div id="availableRoomsContainer" style="display:flex; flex-direction:column; gap:6px; max-height:200px; overflow-y:auto; padding:2px;">
+          <div style="text-align:center; padding:14px; color:#94a3b8; font-size:12px;">⏳ Vérification des disponibilités...</div>
+        </div>
+      </div>
+
+      <!-- Option Groupe Fusionné (Même Professeur & Même Créneau) -->
+      <div id="syncMergedContainer" style="display:none; margin-bottom:12px; padding:10px 14px; background:#eff6ff; border:1.5px solid #93c5fd; border-radius:10px;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12.5px; font-weight:700; color:#1d4ed8; margin:0;">
+          <input type="checkbox" name="sync_merged" value="1" id="assignSyncMerged" checked style="width:16px; height:16px; cursor:pointer;">
+          <span>🤝 Assigner également cette salle au groupe fusionné (<span id="syncMergedCourseName"></span>)</span>
+        </label>
+        <div style="font-size:10.5px; color:#3b82f6; margin-left:24px; margin-top:2px;">
+          (Les deux groupes seront réunis dans la même salle pour ce créneau).
+        </div>
+      </div>
+
+      <!-- Scope Option: Indépendance par jour par défaut, ou propager à tous les jours si désiré -->
+      <div style="margin-bottom:14px; padding:9px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; font-weight:600; color:#334155; margin:0;">
+          <input type="checkbox" name="apply_all" value="1" id="assignApplyAll" style="width:16px; height:16px; cursor:pointer;">
+          <span>Appliquer également cette salle à toutes les autres séances de ce groupe</span>
+        </label>
+        <div style="font-size:10.5px; color:#64748b; margin-left:24px; margin-top:2px;">
+          (Par défaut non coché : la salle sera assignée <strong>uniquement pour ce jour</strong>).
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <button type="button" onclick="submitUnassignRoom()" style="background:none; border:none; color:#ef4444; font-size:12px; font-weight:700; cursor:pointer;">
+          ❌ Retirer la salle de ce jour
+        </button>
+
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="closeRoomAssignModal()">Annuler</button>
+          <button type="submit" class="btn btn-primary btn-sm" style="background:#1f6feb; border-color:#1f6feb; font-weight:700;">
+            💾 Enregistrer la Salle
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL 3: SUBSTITUTE TEACHER -->
+<div id="substituteModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+  <div style="background:#fff; width:90%; max-width:440px; padding:20px; border-radius:14px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+    <h3 style="margin-top:0; color:#0B3D6E; font-size:16px; font-weight:800;">
+      🤝 Affecter un Professeur Remplaçant
+    </h3>
+    <form method="post" action="{{ url_for('schedule_substitute') }}">
+      <input type="hidden" name="course_id" id="subCourseId">
+      <p style="font-size:12.5px; font-weight:700; color:#1e293b; margin-bottom:12px;" id="subCourseTitle"></p>
+
+      <div class="field mb-3">
+        <label style="font-size:12px; font-weight:700;">Professeur Remplaçant :</label>
+        <select name="substitute_teacher_id" required style="font-weight:600; font-size:13px;">
+          <option value="">-- Choisir le professeur remplaçant --</option>
+          {% for t in teachers %}
+          <option value="{{ t.id }}">{{ t.full_name }} ({{ t.specialty or 'Général' }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field mb-3">
+        <label style="font-size:12px; font-weight:700;">Date de la séance :</label>
+        <input type="date" name="session_date" value="{{ today }}" required style="font-weight:700;">
+      </div>
+
+      <div class="field mb-3">
+        <label style="font-size:12px; font-weight:700;">Motif / Type :</label>
+        <select name="session_type" style="font-size:12.5px;">
+          <option value="remplacement">Remplacement temporaire (Absence du titulaire)</option>
+          <option value="rattrapage">Séance de rattrapage exceptionnelle</option>
+          <option value="soutien_extra">Séance de renforcement extra</option>
+        </select>
+      </div>
+
+      <div class="field mb-3">
+        <label style="font-size:12px; font-weight:700;">Remarques :</label>
+        <input name="note" placeholder="Optionnel...">
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeSubstituteModal()">Annuler</button>
+        <button type="submit" class="btn btn-primary btn-sm" style="background:#7c3aed; border-color:#7c3aed; font-weight:700;">
+          Confirmer le Remplacement
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- MODAL: AUDIT & GESTION DES CONFLITS D'HORAIRES                 -->
+<!-- ============================================================== -->
+<div id="scheduleConflictModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); backdrop-filter:blur(5px); z-index:99999; justify-content:center; align-items:center; padding:15px; box-sizing:border-box;">
+  <div style="background:#ffffff; width:100%; max-width:840px; max-height:90vh; border-radius:18px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); border:1.5px solid #cbd5e1; display:flex; flex-direction:column; overflow:hidden;">
+    
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg, #b91c1c 0%, #ef4444 100%); color:#ffffff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:22px;">⚠️</span>
+        <div>
+          <h3 style="margin:0; font-size:16px; font-weight:800; color:#fff;">Audit des Conflits d'Horaires (Salles & Enseignants)</h3>
+          <div style="font-size:11.5px; opacity:0.9; margin-top:2px;">{{ total_conflicts_count }} chevauchement(s) détecté(s) dans le planning</div>
+        </div>
+      </div>
+      <button type="button" onclick="closeConflictModal()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; font-size:18px; width:32px; height:32px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+    </div>
+
+    <!-- Body / List of Conflicts -->
+    <div style="padding:18px 20px; overflow-y:auto; flex:1; background:#f8fafc;">
+      {% if conflicts %}
+        <div style="margin-bottom:12px; font-size:12px; color:#475569; background:#fff; padding:10px 14px; border-radius:10px; border:1px solid #e2e8f0; line-height:1.4;">
+          💡 <strong>Note de direction :</strong> Si un conflit est volontaire (ex : deux cours regroupés dans une même salle pour une séance commune), vous pouvez le laisser tel quel. Pour séparer les créneaux, réaffectez une salle ou modifiez les cours ci-dessous :
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          {% for conf in conflicts %}
+          <div style="background:#ffffff; border:1.5px solid #fca5a5; border-radius:14px; padding:14px 16px; box-shadow:0 4px 12px rgba(239,68,68,0.06);">
+            
+            <!-- Conflict Header: Day, Overlap Time, Cause Badge -->
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px; border-bottom:1px solid #fee2e2; padding-bottom:8px;">
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span class="chip" style="background:#fee2e2; color:#b91c1c; font-weight:900; font-size:11px; padding:3px 10px; border-radius:8px;">
+                  📅 {{ conf.day_name }} · ⏱️ {{ conf.overlap_time }}
+                </span>
+                {% if conf.is_room %}
+                <span class="chip" style="background:#ffedd5; color:#c2410c; font-weight:800; font-size:11px; padding:3px 10px; border-radius:8px; border:1px solid #fdba74;">
+                  🚪 Conflit Salle : {{ conf.room.name if conf.room else 'Salle' }}
+                </span>
+                {% endif %}
+                {% if conf.is_teacher %}
+                <span class="chip" style="background:#fef3c7; color:#92400e; font-weight:800; font-size:11px; padding:3px 10px; border-radius:8px; border:1px solid #fcd34d;">
+                  👨‍🏫 Conflit Prof : {{ conf.teacher.full_name if conf.teacher else 'Prof' }}
+                </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Two Conflicting Classes Grid -->
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:12px;">
+              
+              <!-- Class 1 -->
+              <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:10px 12px;">
+                <div style="font-size:10px; font-weight:800; color:#991b1b; text-transform:uppercase;">Classe 1 :</div>
+                <div style="font-weight:800; color:#1e293b; font-size:13px; margin:2px 0 4px 0;">
+                  {{ conf.s1.course.display_name if conf.s1.course else 'Classe' }}
+                </div>
+                <div style="font-size:11px; color:#475569; display:flex; flex-direction:column; gap:2px;">
+                  <span>⏱️ Horaire : {{ conf.s1.start_time }} – {{ conf.s1.end_time }}</span>
+                  <span>👨‍🏫 Prof : {{ conf.s1.effective_teacher.full_name if conf.s1.effective_teacher else 'Non assigné' }}</span>
+                  <span>🚪 Salle : {{ conf.s1.effective_room.name if conf.s1.effective_room else 'Non assignée' }}</span>
+                </div>
+                <div style="margin-top:8px; display:flex; gap:6px;">
+                  <button type="button" class="btn btn-xs btn-outline" style="font-weight:700; font-size:10.5px; border-color:#0B3D6E; color:#0B3D6E; background:#fff;"
+                          onclick="closeConflictModal(); openRoomAssignModal({{ conf.s1.id }}, {{ conf.s1.course_id }}, '{{ (conf.s1.course.display_name if conf.s1.course else '')|e }}', {{ conf.day }}, '{{ conf.s1.start_time }}', '{{ conf.s1.end_time }}', '{{ conf.day_name }}', {{ conf.s1.effective_room.id if conf.s1.effective_room else 'null' }})">
+                    🚪 Réaffecter Salle
+                  </button>
+                  <a href="{{ url_for('course_form', cid=conf.s1.course_id) }}" target="_blank" class="btn btn-xs btn-outline" style="font-weight:700; font-size:10.5px; background:#fff; text-decoration:none;">
+                    ✏️ Modifier
+                  </a>
+                </div>
+              </div>
+
+              <!-- Class 2 -->
+              <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:10px 12px;">
+                <div style="font-size:10px; font-weight:800; color:#991b1b; text-transform:uppercase;">Classe 2 :</div>
+                <div style="font-weight:800; color:#1e293b; font-size:13px; margin:2px 0 4px 0;">
+                  {{ conf.s2.course.display_name if conf.s2.course else 'Classe' }}
+                </div>
+                <div style="font-size:11px; color:#475569; display:flex; flex-direction:column; gap:2px;">
+                  <span>⏱️ Horaire : {{ conf.s2.start_time }} – {{ conf.s2.end_time }}</span>
+                  <span>👨‍🏫 Prof : {{ conf.s2.effective_teacher.full_name if conf.s2.effective_teacher else 'Non assigné' }}</span>
+                  <span>🚪 Salle : {{ conf.s2.effective_room.name if conf.s2.effective_room else 'Non assignée' }}</span>
+                </div>
+                <div style="margin-top:8px; display:flex; gap:6px;">
+                  <button type="button" class="btn btn-xs btn-outline" style="font-weight:700; font-size:10.5px; border-color:#0B3D6E; color:#0B3D6E; background:#fff;"
+                          onclick="closeConflictModal(); openRoomAssignModal({{ conf.s2.id }}, {{ conf.s2.course_id }}, '{{ (conf.s2.course.display_name if conf.s2.course else '')|e }}', {{ conf.day }}, '{{ conf.s2.start_time }}', '{{ conf.s2.end_time }}', '{{ conf.day_name }}', {{ conf.s2.effective_room.id if conf.s2.effective_room else 'null' }})">
+                    🚪 Réaffecter Salle
+                  </button>
+                  <a href="{{ url_for('course_form', cid=conf.s2.course_id) }}" target="_blank" class="btn btn-xs btn-outline" style="font-weight:700; font-size:10.5px; background:#fff; text-decoration:none;">
+                    ✏️ Modifier
+                  </a>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align:center; padding:40px 10px; color:#15803d;">
+          <div style="font-size:40px; margin-bottom:8px;">✅</div>
+          <h4 style="margin:0; font-size:16px; font-weight:800; color:#166534;">Aucun conflit détecté !</h4>
+          <p style="font-size:13px; color:#475569; margin-top:4px;">Toutes les salles et tous les enseignants ont des créneaux distincts et bien organisés.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <div style="background:#ffffff; border-top:1px solid #e2e8f0; padding:12px 20px; display:flex; justify-content:flex-end;">
+      <button type="button" class="btn btn-outline" onclick="closeConflictModal()">Fermer</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- MODAL 4: WHATSAPP TIMETABLE BROADCAST MODAL                    -->
+<!-- ============================================================== -->
+<div id="scheduleWhatsAppModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); backdrop-filter:blur(5px); z-index:99999; justify-content:center; align-items:center; padding:15px; box-sizing:border-box;">
+  <div style="background:#ffffff; width:100%; max-width:860px; max-height:92vh; border-radius:18px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); border:1.5px solid #cbd5e1; display:flex; flex-direction:column; overflow:hidden;">
+    
+    <!-- Modal Header -->
+    <div style="background:linear-gradient(135deg, #0B3D6E 0%, #15803d 100%); color:#ffffff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:24px;">📲</span>
+        <div>
+          <h3 style="margin:0; font-size:16px; font-weight:800; letter-spacing:0.3px;">
+            Diffusion WhatsApp de l'Emploi du Temps (جدول الحصص)
+          </h3>
+          <p style="margin:2px 0 0; font-size:11.5px; opacity:0.9;">
+            Sauvegarde automatique sur le Bureau (1x par groupe) + Envoi assisté aux élèves & parents
+          </p>
+        </div>
+      </div>
+      <button type="button" onclick="closeScheduleWhatsAppModal()" style="background:rgba(255,255,255,0.2); border:none; width:32px; height:32px; border-radius:50%; color:#fff; font-size:16px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Fermer">✕</button>
+    </div>
+
+    <!-- Modal Body (Scrollable) -->
+    <div style="padding:20px; overflow-y:auto; flex:1;">
+      
+      <!-- STEP 1: CONFIGURATION & PREVIEW -->
+      <div id="waStepConfig">
+        
+        <!-- 1. GROUP SCOPE SELECTION & ADVANCED FRIENDLY FILTERS -->
+        <div style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:12px; padding:12px 16px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+            <label style="font-size:12.5px; font-weight:800; color:#0B3D6E; margin:0;">
+              👥 1. Choisir les Groupes / Classes :
+            </label>
+            <!-- Scope Pill Buttons -->
+            <div style="display:inline-flex; background:#e2e8f0; padding:3px; border-radius:8px; gap:4px;">
+              <button type="button" class="wa-scope-btn" id="btnScopeSingle" onclick="setGroupScope('single')" style="padding:5px 12px; border-radius:6px; font-weight:800; font-size:11.5px; border:none; cursor:pointer; background:#1f6feb; color:#fff; transition:all 0.2s;">
+                🎯 Groupe unique
+              </button>
+              <button type="button" class="wa-scope-btn" id="btnScopeMulti" onclick="setGroupScope('multi')" style="padding:5px 12px; border-radius:6px; font-weight:700; font-size:11.5px; border:none; cursor:pointer; background:transparent; color:#475569; transition:all 0.2s;">
+                👥 Plusieurs groupes au choix
+              </button>
+              <button type="button" class="wa-scope-btn" id="btnScopeAll" onclick="setGroupScope('all')" style="padding:5px 12px; border-radius:6px; font-weight:700; font-size:11.5px; border:none; cursor:pointer; background:transparent; color:#475569; transition:all 0.2s;">
+                🌐 Tous les groupes (All)
+              </button>
+            </div>
+          </div>
+
+          <!-- SMART FILTER BAR: TEACHER + LIVE SEARCH + CATEGORY PILLS -->
+          <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; margin-bottom:10px; box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+            <div style="display:grid; grid-template-columns: 1.1fr 1fr; gap:10px; align-items:end; margin-bottom:8px;">
+              <!-- Filter by Teacher -->
+              <div>
+                <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:3px;">
+                  👨‍🏫 Filtrer par Enseignant (Prof) :
+                </label>
+                <select id="waTeacherFilterSelect" data-no-tomselect="true" onchange="onWaTeacherFilterChanged()" style="width:100%; padding:6px 10px; border-radius:7px; border:1.5px solid #cbd5e1; font-size:12px; font-weight:700; color:#0B3D6E; background:#f8fafc;">
+                  <option value="">👨‍🏫 Tous les professeurs ({{ teachers|length }})</option>
+                  {% for t in teachers %}
+                  <option value="{{ t.id }}" {{ 'selected' if filter_teacher_id == t.id else '' }}>{{ t.full_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Live Search Input -->
+              <div>
+                <label style="font-size:11px; font-weight:800; color:#475569; display:block; margin-bottom:3px;">
+                  🔍 Recherche rapide de groupe :
+                </label>
+                <input type="text" id="waGroupLiveSearch" oninput="onWaGroupSearchInput(this.value)" placeholder="Taper : Maths, Groupe 1, BAC, Anglais..." style="width:100%; padding:6px 10px; border-radius:7px; border:1.5px solid #cbd5e1; font-size:12px; font-weight:600; box-sizing:border-box; background:#ffffff;">
+              </div>
+            </div>
+
+            <!-- Category Filter Pills -->
+            <div style="display:flex; gap:5px; flex-wrap:wrap; align-items:center;">
+              <span style="font-size:10.5px; font-weight:700; color:#64748b; margin-right:2px;">Matière :</span>
+              <button type="button" class="wa-cat-pill" id="waCatPillAll" onclick="filterByCourseCategory('all')" style="padding:2px 8px; border-radius:5px; font-size:10.5px; font-weight:800; border:1px solid #cbd5e1; background:#1f6feb; color:#fff; cursor:pointer;">Tout</button>
+              <button type="button" class="wa-cat-pill" id="waCatPillAnglais" onclick="filterByCourseCategory('Anglais')" style="padding:2px 8px; border-radius:5px; font-size:10.5px; font-weight:700; border:1px solid #cbd5e1; background:#f1f5f9; color:#475569; cursor:pointer;">🇬🇧 Anglais</button>
+              <button type="button" class="wa-cat-pill" id="waCatPillFrancais" onclick="filterByCourseCategory('Français')" style="padding:2px 8px; border-radius:5px; font-size:10.5px; font-weight:700; border:1px solid #cbd5e1; background:#f1f5f9; color:#475569; cursor:pointer;">🇫🇷 Français</button>
+              <button type="button" class="wa-cat-pill" id="waCatPillAllemand" onclick="filterByCourseCategory('Allemand')" style="padding:2px 8px; border-radius:5px; font-size:10.5px; font-weight:700; border:1px solid #cbd5e1; background:#f1f5f9; color:#475569; cursor:pointer;">🇩🇪 Allemand</button>
+              <button type="button" class="wa-cat-pill" id="waCatPillEspagnol" onclick="filterByCourseCategory('Espagnol')" style="padding:2px 8px; border-radius:5px; font-size:10.5px; font-weight:700; border:1px solid #cbd5e1; background:#f1f5f9; color:#475569; cursor:pointer;">🇪🇸 Espagnol</button>
+              <button type="button" class="wa-cat-pill" id="waCatPillSoutien" onclick="filterByCourseCategory('Soutien')" style="padding:2px 8px; border-radius:5px; font-size:10.5px; font-weight:700; border:1px solid #cbd5e1; background:#f1f5f9; color:#475569; cursor:pointer;">📐 Soutien Scolaire</button>
+            </div>
+          </div>
+
+          <!-- A. Single Course: Visual Interactive Card Selector -->
+          <div id="waSingleCourseContainer" style="display:block;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-size:11.5px; font-weight:800; color:#0B3D6E;">
+                👉 Cliquez sur le groupe souhaité :
+              </span>
+              <span id="waGroupMatchCount" class="chip chip-blue" style="font-size:10.5px; font-weight:700;">
+                {{ courses|length }} groupe(s)
+              </span>
+            </div>
+            
+            <!-- Scrollable Interactive Card List -->
+            <div id="waSingleCardsList" style="max-height:160px; overflow-y:auto; border:1.5px solid #cbd5e1; border-radius:8px; background:#ffffff; padding:6px; display:flex; flex-direction:column; gap:4px;">
+              <!-- Injected dynamically by renderGroupSelectors() -->
+            </div>
+
+            <!-- Hidden native select for form consistency -->
+            <select id="waCourseSelect" data-no-tomselect="true" onchange="onWaCourseChanged()" style="display:none;">
+              <option value="">-- Choisir une classe --</option>
+              {% for c in courses %}
+              <option value="{{ c.id }}">{{ c.name }} ({{ c.teacher.full_name if c.teacher else 'Sans prof' }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- B. Multi Courses Checklist -->
+          <div id="waMultiCoursesContainer" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:8px;">
+              <span style="font-size:11.5px; font-weight:800; color:#0B3D6E;">
+                Cochez les groupes à inclure :
+              </span>
+              <div style="display:flex; gap:6px;">
+                <button type="button" onclick="selectAllCourses(true)" class="btn btn-xs btn-outline" style="font-weight:700; font-size:10.5px; padding:2px 8px;">☑️ Tout cocher</button>
+                <button type="button" onclick="selectAllCourses(false)" class="btn btn-xs btn-outline" style="font-weight:700; font-size:10.5px; padding:2px 8px;">⬜ Tout décocher</button>
+              </div>
+            </div>
+            <div id="waCourseChecklistWrapper" style="max-height:160px; overflow-y:auto; border:1.5px solid #cbd5e1; border-radius:8px; background:#fff; padding:6px;">
+              <!-- Injected dynamically by renderGroupSelectors() -->
+            </div>
+          </div>
+
+          <!-- C. All Courses Notice -->
+          <div id="waAllCoursesNotice" style="display:none; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:8px 12px; color:#065f46; font-size:12px; font-weight:700;">
+            🌐 <strong>Toutes les classes actives</strong> sont sélectionnées ({{ courses|length }} classes). Chaque classe aura son emploi du temps propre généré et sauvegardé sur le Bureau.
+          </div>
+        </div>
+
+        <!-- 2. STUDENT CHECKLIST (Single student / Multi chosen / All) -->
+        <div style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:12px; padding:12px 16px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+            <div>
+              <label style="font-size:12.5px; font-weight:800; color:#0B3D6E; margin:0;">
+                🎒 2. Sélection des Élèves Destinataires :
+              </label>
+              <div style="font-size:11px; color:#64748b;">
+                Cochez les élèves souhaités (un seul, plusieurs au choix, ou tous), ou cliquez sur <em>💬 Envoyer seul</em>
+              </div>
+            </div>
+            
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="chip chip-blue" style="font-size:11px; font-weight:800;" id="waSelectionSummaryBadge">
+                🎯 0 sélectionné(s) / 0
+              </span>
+              <button type="button" onclick="selectAllStudents(true)" class="btn btn-xs btn-outline" style="font-weight:700; font-size:11px; padding:3px 8px;">
+                ☑️ Tout cocher
+              </button>
+              <button type="button" onclick="selectAllStudents(false)" class="btn btn-xs btn-outline" style="font-weight:700; font-size:11px; padding:3px 8px;">
+                ⬜ Tout décocher
+              </button>
+            </div>
+          </div>
+
+          <!-- Live Student Search Filter -->
+          <div style="margin-bottom:8px;">
+            <input type="text" id="waStudentSearchFilter" oninput="filterStudentChecklist(this.value)" placeholder="🔍 Rechercher un élève par son nom ou numéro de téléphone..." style="width:100%; padding:7px 12px; border-radius:8px; border:1.5px solid #cbd5e1; font-size:12px; font-weight:600; box-sizing:border-box;">
+          </div>
+
+          <!-- Scrollable Students Checklist Container -->
+          <div id="waStudentChecklistWrapper" style="border:1px solid #cbd5e1; border-radius:8px; max-height:170px; overflow-y:auto; background:#f8fafc; padding:4px;">
+            <div id="waStudentChecklistLoading" style="text-align:center; padding:18px; color:#64748b; font-size:12px;">
+              👈 Veuillez sélectionner au moins une classe pour charger les élèves
+            </div>
+            <div id="waStudentChecklistBody">
+              <!-- Injected dynamically: checkboxes for each student -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. PARAMETERS: RECIPIENT & WHATSAPP APP TARGET -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:14px;">
+          <!-- Recipient Target -->
+          <div>
+            <label style="font-size:12px; font-weight:800; color:#0B3D6E; display:block; margin-bottom:4px;">
+              🎯 3. Destinataire WhatsApp
+            </label>
+            <select id="waRecipientTarget" data-no-tomselect="true" onchange="renderStudentChecklist()" style="width:100%; padding:8px 10px; border-radius:8px; border:1.5px solid #cbd5e1; font-size:12.5px; font-weight:600; color:#1e293b; background:#fff;">
+              <option value="parent_pref" selected>👨‍👩‍👧 Parent en priorité (Recommandé)</option>
+              <option value="parent_only">👨‍👩‍👧 Téléphone Parent uniquement</option>
+              <option value="student_only">🎒 Téléphone Élève uniquement</option>
+            </select>
+          </div>
+
+          <!-- WhatsApp App Mode -->
+          <div>
+            <label style="font-size:12px; font-weight:800; color:#0B3D6E; display:block; margin-bottom:4px;">
+              ⚡ Application WhatsApp
+            </label>
+            <div style="display:flex; gap:12px; align-items:center; background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:8px; padding:7px 10px; height:37px; box-sizing:border-box;">
+              <label style="display:flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; color:#15803d; cursor:pointer;">
+                <input type="radio" name="waAppMode" value="desktop" checked style="accent-color:#16a34a;">
+                <span>💻 Desktop (whatsapp://)</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; color:#475569; cursor:pointer;">
+                <input type="radio" name="waAppMode" value="web" style="accent-color:#16a34a;">
+                <span>🌐 Web (Navigateur)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. TIMETABLE PREVIEW & DESKTOP SAVE NOTICE -->
+        <div style="margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+            <label style="font-size:12px; font-weight:800; color:#0B3D6E;">
+              🖼️ Aperçu de l'Emploi du Temps qui sera exporté en image :
+            </label>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <span class="chip chip-green" style="font-size:10.5px; font-weight:800;">
+                💾 Sauvegarde auto sur le Bureau (1x par groupe)
+              </span>
+              <button type="button" onclick="exportCurrentTimetableToDesktopManual()" class="btn btn-xs btn-outline" style="border-color:#16a34a; color:#15803d; background:#f0fdf4; font-weight:800; padding:2px 8px; font-size:11px;" title="Enregistrer manuellement l'image PNG sur votre Bureau">
+                📥 Enregistrer l'image sur le Bureau
+              </button>
+            </div>
+          </div>
+
+          <div id="waTimetablePreviewWrapper" style="border:1.5px solid #cbd5e1; border-radius:10px; padding:10px; background:#f8fafc; max-height:220px; overflow-y:auto;">
+            <div id="waTimetableLoading" style="text-align:center; padding:18px; color:#64748b; font-size:12px;">
+              ⏳ Chargement de l'emploi du temps...
+            </div>
+            <div id="waTimetablePreviewCard" style="display:none; background:#ffffff; border-radius:10px; border:1.5px solid #0B3D6E; box-shadow:0 3px 10px rgba(0,0,0,0.05); padding:14px; max-width:640px; margin:0 auto; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+              <div style="border-bottom:2px solid #0B3D6E; padding-bottom:8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <div style="font-size:15px; font-weight:900; color:#0B3D6E; text-transform:uppercase;">INSTITUT LES SAGES ILAS</div>
+                  <div style="font-size:9.5px; color:#475569;">Formation Professionnelle & Soutien Scolaire d'Excellence</div>
+                </div>
+                <div style="background:#1f6feb; color:#fff; padding:3px 8px; border-radius:6px; font-size:9.5px; font-weight:800;">
+                  OFFICIEL · 2025/2026
+                </div>
+              </div>
+
+              <div style="background:linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%); color:#ffffff; padding:8px 12px; border-radius:8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <div style="font-size:9px; font-weight:700; text-transform:uppercase; opacity:0.85;">EMPLOI DU TEMPS OFFICIEL — جدول الحصص الأسبوعي</div>
+                  <div style="font-size:13.5px; font-weight:900; margin-top:1px;" id="previewCourseName">Groupe</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:6px; font-size:10px; font-weight:800;" id="previewSessionsCount">
+                  Séances Hebdomadaires
+                </div>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:6px 10px;">
+                <div>
+                  <div style="font-size:8.5px; color:#64748b; font-weight:700; text-transform:uppercase;">👨‍🏫 Professeur</div>
+                  <div style="font-size:11.5px; font-weight:800; color:#0B3D6E; margin-top:1px;" id="previewTeacherName">-</div>
+                </div>
+                <div>
+                  <div style="font-size:8.5px; color:#64748b; font-weight:700; text-transform:uppercase;">🚪 Salle assignée</div>
+                  <div style="font-size:11.5px; font-weight:800; color:#047857; margin-top:1px;" id="previewRoomName">-</div>
+                </div>
+                <div>
+                  <div style="font-size:8.5px; color:#64748b; font-weight:700; text-transform:uppercase;">⏱️ Durée séance</div>
+                  <div style="font-size:11.5px; font-weight:800; color:#b45309; margin-top:1px;" id="previewDuration">-</div>
+                </div>
+              </div>
+
+              <table style="width:100%; border-collapse:collapse; margin-bottom:8px; border:1px solid #cbd5e1; border-radius:6px; overflow:hidden;">
+                <thead>
+                  <tr style="background:#0B3D6E; color:#ffffff; font-size:10px; text-transform:uppercase;">
+                    <th style="padding:5px 8px; text-align:left; width:35%;">Jour (اليوم)</th>
+                    <th style="padding:5px 8px; text-align:left; width:35%;">Horaires (التوقيت)</th>
+                    <th style="padding:5px 8px; text-align:left; width:30%;">Salle (القاعة)</th>
+                  </tr>
+                </thead>
+                <tbody id="previewSlotsTableBody">
+                </tbody>
+              </table>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0; padding-top:6px; font-size:9px; color:#64748b;">
+                <div>📞 Contact : <strong>06 60 29 11 55</strong></div>
+                <div style="font-weight:700; color:#0B3D6E;">INSTITUT ILAS · Direction Pédagogique</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. MESSAGE CUSTOMIZATION -->
+        <div style="margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <label style="font-size:12px; font-weight:800; color:#0B3D6E;">
+              💬 5. Texte du Message WhatsApp (Personnalisable)
+            </label>
+            <div style="display:flex; gap:6px;">
+              <button type="button" onclick="switchWaMsgLang('ar')" id="waBtnLangAr" style="padding:2px 8px; border-radius:6px; border:1px solid #cbd5e1; font-size:11px; font-weight:700; background:#1f6feb; color:#fff; cursor:pointer;">العربية 🇲🇦</button>
+              <button type="button" onclick="switchWaMsgLang('fr')" id="waBtnLangFr" style="padding:2px 8px; border-radius:6px; border:1px solid #cbd5e1; font-size:11px; font-weight:700; background:#f1f5f9; color:#475569; cursor:pointer;">Français 🇫🇷</button>
+            </div>
+          </div>
+          <textarea id="waMessageText" rows="3" style="width:100%; padding:8px 10px; border-radius:8px; border:1.5px solid #cbd5e1; font-size:12px; font-family:inherit; line-height:1.4; box-sizing:border-box;"></textarea>
+          <div style="display:flex; gap:6px; margin-top:3px; font-size:10px; color:#64748b; flex-wrap:wrap;">
+            <span>Variables :</span>
+            <span style="background:#e2e8f0; padding:1px 4px; border-radius:3px; font-family:monospace; color:#0f172a;">{nom_eleve}</span>
+            <span style="background:#e2e8f0; padding:1px 4px; border-radius:3px; font-family:monospace; color:#0f172a;">{classe}</span>
+          </div>
+        </div>
+
+        <!-- Launch Button -->
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" class="btn btn-outline" onclick="closeScheduleWhatsAppModal()">Annuler</button>
+          <button type="button" id="btnStartBroadcast" onclick="startWhatsAppBroadcast()" class="btn btn-primary" style="background:#16a34a; border-color:#16a34a; font-weight:800; font-size:13.5px; padding:10px 22px; display:inline-flex; align-items:center; gap:8px;">
+            <span>🚀</span> <span>Démarrer l'Envoi WhatsApp (<span id="btnSendStudentCount">0</span> élève(s))</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- STEP 2: DISPATCH & PROGRESS -->
+      <div id="waStepDispatch" style="display:none;">
+        
+        <!-- Desktop Save Success Alert -->
+        <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:20px;">🖼️</span>
+            <div>
+              <div style="font-size:12.5px; font-weight:800; color:#15803d;">
+                Image enregistrée sur votre Bureau : <span id="waSavedFileName" style="color:#047857; text-decoration:underline;">Emploi.png</span>
+              </div>
+              <div style="font-size:11px; color:#166534;">
+                📋 L'image est aussi copiée dans votre presse-papiers ! Dans WhatsApp, faites simplement <kbd style="background:#dcfce7; padding:1px 5px; border-radius:4px; font-weight:800; border:1px solid #86efac;">Ctrl + V</kbd>.
+              </div>
+            </div>
+          </div>
+          <button type="button" onclick="copyImageAgainToClipboard()" class="btn btn-xs btn-outline" style="border-color:#86efac; color:#15803d; background:#fff; font-weight:700;" title="Re-copier l'image dans le presse-papiers">
+            📋 Re-copier l'image
+          </button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div style="margin-bottom:16px; background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:14px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:13px; font-weight:800; color:#0B3D6E;" id="waProgressTitle">
+              Progression : Élève 1 sur 10
+            </div>
+            <div style="font-size:12px; font-weight:800; color:#16a34a;" id="waProgressPercent">
+              0%
+            </div>
+          </div>
+          <div style="background:#e2e8f0; border-radius:10px; height:12px; overflow:hidden; position:relative;">
+            <div id="waProgressBarFill" style="background:linear-gradient(90deg, #10b981 0%, #16a34a 100%); height:100%; width:0%; transition:width 0.3s ease; border-radius:10px;"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; font-size:11px; color:#64748b;">
+            <span id="waProgressCompleted">0 envoyé(s)</span>
+            <span id="waProgressRemaining">0 restant(s)</span>
+          </div>
+        </div>
+
+        <!-- ACTIVE CURRENT STUDENT HERO CARD -->
+        <div id="waCurrentStudentCard" style="background:#ffffff; border:2px solid #3b82f6; border-radius:14px; padding:16px 18px; margin-bottom:18px; box-shadow:0 6px 18px rgba(59,130,246,0.12);">
+          
+          <div id="waCurrentStudentContent">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #cbd5e1; padding-bottom:12px; margin-bottom:12px;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:44px; height:44px; border-radius:50%; background:#eff6ff; border:2px solid #93c5fd; color:#1d4ed8; font-weight:900; font-size:17px; display:flex; align-items:center; justify-content:center;" id="waCurrentStudentAvatar">
+                  ?
+                </div>
+                <div>
+                  <div style="font-size:16px; font-weight:900; color:#0B3D6E;" id="waCurrentStudentName">
+                    Nom de l'élève
+                  </div>
+                  <div style="font-size:12px; color:#64748b; margin-top:2px;" id="waCurrentStudentPhone">
+                    📱 Tél : 06 00 00 00 00
+                  </div>
+                </div>
+              </div>
+
+              <div id="waCurrentStudentStatusBadge">
+                <span class="chip chip-blue" style="font-size:11px; font-weight:800; padding:4px 10px;">En cours 💬</span>
+              </div>
+            </div>
+
+            <!-- ACTION BUTTONS ROW -->
+            <div style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;">
+              
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <!-- 1. Open WhatsApp Desktop -->
+                <button type="button" id="btnOpenCurrentWa" onclick="triggerCurrentStudentWhatsApp('desktop')" style="background:#22c55e; border:none; color:#ffffff; font-weight:800; font-size:13.5px; padding:10px 18px; border-radius:10px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(34,197,94,0.35);">
+                  <span>💻</span> <span>1. Ouvrir WhatsApp (Desktop)</span>
+                </button>
+
+                <!-- Open WhatsApp Web as fallback -->
+                <button type="button" onclick="triggerCurrentStudentWhatsApp('web')" class="btn btn-outline btn-xs" style="color:#047857; border-color:#86efac; background:#f0fdf4; font-weight:700; padding:8px 12px; border-radius:10px;" title="Ouvrir dans WhatsApp Web si l'application desktop ne s'ouvre pas">
+                  <span>🌐 WhatsApp Web</span>
+                </button>
+
+                <!-- Optional student phone secondary button if available -->
+                <button type="button" id="btnOpenSecondaryWa" onclick="triggerSecondaryWhatsApp()" style="display:none; background:#f8fafc; border:1.5px solid #cbd5e1; color:#334155; font-weight:700; font-size:12px; padding:8px 12px; border-radius:10px; cursor:pointer;">
+                  <span>📱</span> <span id="btnOpenSecondaryWaLabel">Tél Élève</span>
+                </button>
+              </div>
+
+              <!-- 2. Next Button -->
+              <button type="button" id="btnNextStudent" onclick="advanceToNextStudent()" style="background:#1f6feb; border:none; color:#ffffff; font-weight:800; font-size:14px; padding:10px 22px; border-radius:10px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 14px rgba(31,111,235,0.35);">
+                <span>Suivant ➡️</span>
+              </button>
+            </div>
+
+            <div style="margin-top:12px; padding-top:10px; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:#64748b;">
+              <span>💡 <em>Dès que WhatsApp s'ouvre : collez l'image avec <strong>Ctrl + V</strong> puis envoyez, et revenez cliquer sur <strong>Suivant ➡️</strong></em></span>
+              <button type="button" onclick="skipCurrentStudent()" style="background:none; border:none; color:#94a3b8; font-size:11px; cursor:pointer; text-decoration:underline;">
+                Passer cet élève ⏭️
+              </button>
+            </div>
+          </div>
+
+          <!-- FINISH CONGRATULATIONS SCREEN (PRESERVES DOM) -->
+          <div id="waFinishCard" style="display:none; text-align:center; padding:22px;">
+            <div style="font-size:38px; margin-bottom:8px;">🎉</div>
+            <div style="font-size:18px; font-weight:900; color:#15803d; margin-bottom:4px;">Félicitations ! Diffusion terminée</div>
+            <div style="font-size:13px; color:#475569;">Tous les élèves sélectionnés ont été contactés.</div>
+            <div style="margin-top:16px; display:flex; justify-content:center; gap:10px;">
+              <button type="button" onclick="backToWaConfig()" class="btn btn-outline" style="font-weight:700; padding:8px 18px;">← Autre Groupe</button>
+              <button type="button" onclick="closeScheduleWhatsAppModal()" class="btn btn-primary" style="background:#16a34a; border-color:#16a34a; font-weight:800; padding:8px 22px;">Terminer</button>
+            </div>
+          </div>
+
+          <!-- EMPTY SELECTION NOTICE -->
+          <div id="waEmptyCard" style="display:none; text-align:center; padding:16px; color:#64748b; font-size:12px;">
+            Aucun élève dans la sélection.
+          </div>
+
+        </div>
+
+        <!-- FULL STUDENTS LIST (WITH INDIVIDUAL BUTTON PER STUDENT) -->
+        <div style="border:1.5px solid #e2e8f0; border-radius:12px; overflow:hidden;">
+          <div style="background:#f8fafc; padding:10px 14px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-weight:800; color:#0B3D6E; font-size:12.5px;">
+              📋 Liste complète des élèves du groupe (<span id="waTableCount">0</span>)
+            </div>
+            <div style="font-size:11px; color:#64748b;">
+              Vous pouvez cliquer sur n'importe quel élève pour lui envoyer individuellement
+            </div>
+          </div>
+
+          <div style="max-height:220px; overflow-y:auto;">
+            <table class="table" style="margin:0; font-size:12px; width:100%; border-collapse:collapse;">
+              <thead>
+                <tr style="background:#f1f5f9; color:#475569;">
+                  <th style="padding:6px 10px; text-align:center; width:30px;">#</th>
+                  <th style="padding:6px 10px;">Élève</th>
+                  <th style="padding:6px 10px;">Contact Parent / Élève</th>
+                  <th style="padding:6px 10px; text-align:center;">État</th>
+                  <th style="padding:6px 10px; text-align:right;">Action Individuelle</th>
+                </tr>
+              </thead>
+              <tbody id="waStudentsTableBody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Bottom Controls -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+          <button type="button" onclick="backToWaConfig()" class="btn btn-outline btn-sm" style="font-weight:700;">
+            ← Changer de Groupe / Paramètres
+          </button>
+          <button type="button" onclick="closeScheduleWhatsAppModal()" class="btn btn-outline btn-sm" style="font-weight:800; color:#0B3D6E;">
+            Fermer la Fenêtre
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- OFF-SCREEN TIMETABLE CARD FOR HIGH-RES PNG CAPTURE            -->
+<!-- ============================================================== -->
+<div id="waTimetableExportContainer" style="position:fixed; left:-9999px; top:0; width:720px; background:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; box-sizing:border-box; padding:24px; border:2px solid #0B3D6E; border-radius:16px; color:#0f172a;">
+  <div id="waHdCard">
+    <div style="border-bottom:2.5px solid #0B3D6E; padding-bottom:12px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-size:20px; font-weight:900; color:#0B3D6E; text-transform:uppercase; letter-spacing:0.5px;">INSTITUT LES SAGES ILAS</div>
+        <div style="font-size:11px; color:#475569; margin-top:2px;">Formation Professionnelle & Soutien Scolaire d'Excellence</div>
+        <div style="font-size:10.5px; color:#64748b; margin-top:1px;">📍 Lot Nora, N°10, Makhlouf - Deroua · 📞 06 60 29 11 55</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="background:#1f6feb; color:#fff; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:800; display:inline-block;">
+          OFFICIEL · 2025/2026
+        </div>
+        <div style="font-size:10px; color:#64748b; margin-top:3px;">Autorisation N° 22-200/2020</div>
+      </div>
+    </div>
+
+    <div style="background:linear-gradient(135deg, #0B3D6E 0%, #1f6feb 100%); color:#ffffff; padding:12px 16px; border-radius:10px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-size:10.5px; font-weight:700; text-transform:uppercase; opacity:0.85; letter-spacing:0.5px;">EMPLOI DU TEMPS OFFICIEL — جدول الحصص الأسبوعي</div>
+        <div style="font-size:16px; font-weight:900; margin-top:2px;" id="exportCourseName">Groupe</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.2); padding:5px 12px; border-radius:8px; font-size:11.5px; font-weight:800;" id="exportSessionsCount">
+        Séances Hebdomadaires
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px;">
+      <div>
+        <div style="font-size:9.5px; color:#64748b; font-weight:700; text-transform:uppercase;">👨‍🏫 Professeur</div>
+        <div style="font-size:12.5px; font-weight:800; color:#0B3D6E; margin-top:2px;" id="exportTeacherName">-</div>
+      </div>
+      <div>
+        <div style="font-size:9.5px; color:#64748b; font-weight:700; text-transform:uppercase;">🚪 Salle assignée</div>
+        <div style="font-size:12.5px; font-weight:800; color:#047857; margin-top:2px;" id="exportRoomName">-</div>
+      </div>
+      <div>
+        <div style="font-size:9.5px; color:#64748b; font-weight:700; text-transform:uppercase;">⏱️ Durée par séance</div>
+        <div style="font-size:12.5px; font-weight:800; color:#b45309; margin-top:2px;" id="exportDuration">-</div>
+      </div>
+    </div>
+
+    <table style="width:100%; border-collapse:collapse; margin-bottom:14px; border:1.5px solid #cbd5e1; border-radius:8px; overflow:hidden;">
+      <thead>
+        <tr style="background:#0B3D6E; color:#ffffff; font-size:11.5px; text-transform:uppercase;">
+          <th style="padding:8px 12px; text-align:left; width:35%;">Jour (اليوم)</th>
+          <th style="padding:8px 12px; text-align:left; width:35%;">Horaires (التوقيت)</th>
+          <th style="padding:8px 12px; text-align:left; width:30%;">Salle (القاعة)</th>
+        </tr>
+      </thead>
+      <tbody id="exportSlotsTableBody">
+      </tbody>
+    </table>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1.5px solid #e2e8f0; padding-top:10px; font-size:10.5px; color:#64748b;">
+      <div>
+        <div>⚠️ <em>Prière de respecter scrupuleusement les horaires des cours.</em></div>
+        <div>Pour toute absence ou renseignement : <strong>06 60 29 11 55</strong></div>
+      </div>
+      <div style="border:1.5px dashed #94a3b8; border-radius:8px; padding:6px 14px; text-align:center; background:#f8fafc;">
+        <div style="font-size:10px; font-weight:800; color:#0B3D6E;">INSTITUT ILAS</div>
+        <div style="font-size:8.5px; color:#64748b;">Direction Pédagogique</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='vendor/html2canvas.min.js') }}"></script>
+<script>
+  function toggleAddSlotBar() {
+    var b = document.getElementById('addSlotBar');
+    b.style.display = (b.style.display === 'none' || b.style.display === '') ? 'block' : 'none';
+  }
+
+  function switchDayView(dayIndex) {
+    var allCols = document.querySelectorAll('.day-column');
+    var allBtns = document.querySelectorAll('.day-tab-btn');
+
+    allBtns.forEach(function(btn) {
+      btn.style.background = 'transparent';
+      btn.style.color = '#475569';
+      btn.style.fontWeight = '700';
+    });
+
+    if (dayIndex === 'all') {
+      allCols.forEach(function(col) { col.style.display = 'flex'; });
+      document.getElementById('scheduleGrid').style.gridTemplateColumns = 'repeat(7, 1fr)';
+      document.getElementById('btnDayAll').style.background = '#1f6feb';
+      document.getElementById('btnDayAll').style.color = '#fff';
+      document.getElementById('btnDayAll').style.fontWeight = '800';
+    } else {
+      allCols.forEach(function(col, idx) {
+        col.style.display = (idx == dayIndex) ? 'flex' : 'none';
+      });
+      document.getElementById('scheduleGrid').style.gridTemplateColumns = '1fr';
+      var activeBtn = document.getElementById('btnDay' + dayIndex);
+      if (activeBtn) {
+        activeBtn.style.background = '#1f6feb';
+        activeBtn.style.color = '#fff';
+        activeBtn.style.fontWeight = '800';
+      }
+    }
+  }
+
+  function openPrintFormatModal() {
+    document.getElementById('printFormatModal').style.display = 'flex';
+  }
+  function closePrintFormatModal() {
+    document.getElementById('printFormatModal').style.display = 'none';
+  }
+  function launchPrint() {
+    var formatRadios = document.getElementsByName('printFormat');
+    var selectedFormat = 'a4';
+    for (var i = 0; i < formatRadios.length; i++) {
+      if (formatRadios[i].checked) {
+        selectedFormat = formatRadios[i].value;
+        break;
+      }
+    }
+    var printDay = document.getElementById('modalPrintDay') ? document.getElementById('modalPrintDay').value : '';
+    var teacherId = document.getElementById('modalPrintTeacher') ? document.getElementById('modalPrintTeacher').value : '';
+    var roomId = document.getElementById('modalPrintRoom') ? document.getElementById('modalPrintRoom').value : '';
+    var level = document.getElementById('modalPrintLevel') ? document.getElementById('modalPrintLevel').value : '';
+    var subject = document.getElementById('modalPrintSubject') ? document.getElementById('modalPrintSubject').value : '';
+    var group = document.getElementById('modalPrintGroup') ? document.getElementById('modalPrintGroup').value : '';
+
+    var url = '{{ url_for("schedule_print") }}?format=' + encodeURIComponent(selectedFormat);
+    if (printDay) url += '&day=' + encodeURIComponent(printDay);
+    if (teacherId) url += '&teacher_id=' + encodeURIComponent(teacherId);
+    if (roomId) url += '&room_id=' + encodeURIComponent(roomId);
+    if (level) url += '&level=' + encodeURIComponent(level);
+    if (subject) url += '&subject=' + encodeURIComponent(subject);
+    if (group) url += '&group=' + encodeURIComponent(group);
+
+    closePrintFormatModal();
+    window.open(url, '_blank');
+  }
+
+  function liveFilterScheduleCards(query) {
+    query = (query || '').trim().toLowerCase();
+    var cards = document.querySelectorAll('.schedule-card');
+    cards.forEach(function(card) {
+      if (!query) {
+        card.style.display = '';
+      } else {
+        var txt = (card.textContent || card.innerText || '').toLowerCase();
+        if (txt.indexOf(query) !== -1) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      }
+    });
+  }
+
+  function openRoomAssignModal(slotId, courseId, courseTitle, dayOfWeek, startTime, endTime, dayName, currentRoomId) {
+    // Backwards compatibility if called with old signature: openRoomAssignModal(courseId, title, day, start, end)
+    if (arguments.length === 5 && typeof dayOfWeek === 'number') {
+      var _cId = slotId; var _cTitle = courseId; var _dOfW = courseTitle; var _st = dayOfWeek; var _et = startTime;
+      slotId = null; courseId = _cId; courseTitle = _cTitle; dayOfWeek = _dOfW; startTime = _st; endTime = _et; dayName = ''; currentRoomId = null;
+    }
+
+    document.getElementById('assignSlotId').value = slotId || '';
+    document.getElementById('assignCourseId').value = courseId || '';
+    document.getElementById('assignCourseTitle').innerText = 'Classe : ' + (courseTitle || 'Séance');
+    var badge = document.getElementById('assignDayBadge');
+    if (badge) badge.innerText = dayName ? ('📅 ' + dayName) : '';
+    document.getElementById('assignSlotTime').innerText = 'Créneau : ' + (dayName ? (dayName + ' ') : '') + startTime + ' → ' + endTime;
+    var chk = document.getElementById('assignApplyAll');
+    if (chk) chk.checked = false; // default: INDEPENDENT DAY ONLY
+    
+    var container = document.getElementById('availableRoomsContainer');
+    container.innerHTML = '<div style="text-align:center; padding:12px; color:#94a3b8; font-size:12px;">⏳ Recherche des salles disponibles...</div>';
+    document.getElementById('roomAssignModal').style.display = 'flex';
+
+    var url = '/schedule/available_rooms?slot_id=' + encodeURIComponent(slotId || '') +
+              '&course_id=' + encodeURIComponent(courseId || '') +
+              '&day_of_week=' + encodeURIComponent(dayOfWeek) +
+              '&start_time=' + encodeURIComponent(startTime) +
+              '&end_time=' + encodeURIComponent(endTime);
+
+    fetch(url)
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (!data.rooms || data.rooms.length === 0) {
+          container.innerHTML = '<div style="color:#ef4444; font-size:12px; text-align:center; padding:10px;">Aucune salle configurée.</div>';
+          return;
+        }
+        var syncBox = document.getElementById('syncMergedContainer');
+        var syncName = document.getElementById('syncMergedCourseName');
+        var syncChk = document.getElementById('assignSyncMerged');
+        if (data.co_course_name) {
+          if (syncBox) syncBox.style.display = 'block';
+          if (syncName) syncName.innerText = data.co_course_name;
+          if (syncChk) syncChk.checked = true;
+        } else {
+          if (syncBox) syncBox.style.display = 'none';
+          if (syncChk) syncChk.checked = false;
+        }
+
+        var html = '';
+        data.rooms.forEach(function(r) {
+          var isCurrent = (currentRoomId && currentRoomId === r.id);
+          var checkedAttr = isCurrent ? ' checked' : '';
+          if (r.is_same_teacher) {
+            html += '<label style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:' + (isCurrent ? '#ede9fe' : '#f5f3ff') + '; border:1.5px solid ' + (isCurrent ? '#7c3aed' : '#a78bfa') + '; border-radius:8px; cursor:pointer;" title="Même enseignant : salle commune recommandée pour regroupement">' +
+                      '<div style="display:flex; align-items:center; gap:8px;">' +
+                        '<input type="radio" name="room_id" value="' + r.id + '" required data-available="true" data-same-teacher="true" data-name="' + (r.name || '') + '"' + checkedAttr + '>' +
+                        '<strong style="color:#6d28d9; font-size:13px;">🚪 ' + r.name + '</strong>' +
+                        (isCurrent ? '<span style="font-size:10px; background:#7c3aed; color:#fff; padding:1px 6px; border-radius:10px; font-weight:700;">Actuelle</span>' : '') +
+                      '</div>' +
+                      '<span class="chip" style="font-size:10px; background:#ede9fe; color:#6d28d9; font-weight:800; border:1px solid #c4b5fd;">🤝 Même Professeur (' + (r.occupied_by || '') + ') · Salle Commune</span>' +
+                    '</label>';
+          } else if (r.available) {
+            html += '<label style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:' + (isCurrent ? '#ecfdf5' : '#f0fdf4') + '; border:1.5px solid ' + (isCurrent ? '#059669' : '#86efac') + '; border-radius:8px; cursor:pointer;">' +
+                      '<div style="display:flex; align-items:center; gap:8px;">' +
+                        '<input type="radio" name="room_id" value="' + r.id + '" required data-available="true" data-name="' + (r.name || '') + '"' + checkedAttr + '>' +
+                        '<strong style="color:#15803d; font-size:13px;">🚪 ' + r.name + '</strong>' +
+                        (isCurrent ? '<span style="font-size:10px; background:#10b981; color:#fff; padding:1px 6px; border-radius:10px; font-weight:700;">Actuelle</span>' : '') +
+                      '</div>' +
+                      '<span class="chip chip-green" style="font-size:10px;">🟢 Libre (' + (r.capacity || 20) + ' places)</span>' +
+                    '</label>';
+          } else {
+            html += '<label style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#fff7ed; border:1.5px solid #fdba74; border-radius:8px; cursor:pointer;" title="Cliquez pour forcer cette salle malgré le conflit">' +
+                      '<div style="display:flex; align-items:center; gap:8px;">' +
+                        '<input type="radio" name="room_id" value="' + r.id + '" data-available="false" data-name="' + (r.name || '') + '" data-occ="' + (r.occupied_by || '') + '"' + checkedAttr + '>' +
+                        '<strong style="color:#9a3412; font-size:13px;">🚪 ' + r.name + '</strong>' +
+                      '</div>' +
+                      '<span class="chip chip-amber" style="font-size:9.5px; background:#ffedd5; color:#c2410c; border:1px solid #f97316;">⚠️ Occupée : ' + (r.occupied_by || 'Autre cours') + ' (Cliquer pour forcer)</span>' +
+                    '</label>';
+          }
+        });
+        container.innerHTML = html;
+      })
+      .catch(function() {
+        container.innerHTML = '<div style="color:#ef4444; font-size:12px; padding:10px;">Erreur lors du chargement des salles.</div>';
+      });
+  }
+
+  function handleRoomAssignSubmit(e) {
+    var selectedRadio = document.querySelector('input[name="room_id"]:checked');
+    if (!selectedRadio) {
+      alert("Veuillez sélectionner une salle ou cliquer sur Annuler.");
+      if (e) e.preventDefault();
+      return false;
+    }
+    if (selectedRadio.getAttribute('data-same-teacher') === 'true') {
+      return true;
+    }
+    if (selectedRadio.getAttribute('data-available') === 'false') {
+      var rName = selectedRadio.getAttribute('data-name');
+      var occBy = selectedRadio.getAttribute('data-occ');
+      var msg = "⚠️ ATTENTION : CONFLIT DE SALLE DÉTECTÉ !\n\n" +
+                "La salle \"" + rName + "\" est déjà occupée sur ce même créneau par :\n👉 " + occBy + "\n\n" +
+                "Voulez-vous quand même assigner cette salle à ce cours ? (Ex: cours regroupé / exception)\n\n" +
+                "- Cliquez sur [OK] pour CONFIRMER et forcer l'assignation.\n" +
+                "- Cliquez sur [Annuler] pour choisir une autre salle.";
+      if (!confirm(msg)) {
+        if (e) e.preventDefault();
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function openConflictModal() {
+    var m = document.getElementById('scheduleConflictModal');
+    if (m) m.style.display = 'flex';
+  }
+
+  function closeConflictModal() {
+    var m = document.getElementById('scheduleConflictModal');
+    if (m) m.style.display = 'none';
+  }
+
+  function closeRoomAssignModal() {
+    document.getElementById('roomAssignModal').style.display = 'none';
+  }
+
+  function submitUnassignRoom() {
+    var sid = document.getElementById('assignSlotId').value;
+    var cid = document.getElementById('assignCourseId').value;
+    var applyAll = document.getElementById('assignApplyAll') && document.getElementById('assignApplyAll').checked ? '1' : '0';
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ url_for("schedule_assign_room") }}';
+    if (sid) {
+      var in0 = document.createElement('input'); in0.type = 'hidden'; in0.name = 'slot_id'; in0.value = sid;
+      form.appendChild(in0);
+    }
+    var in1 = document.createElement('input'); in1.type = 'hidden'; in1.name = 'course_id'; in1.value = cid;
+    var in2 = document.createElement('input'); in2.type = 'hidden'; in2.name = 'room_id'; in2.value = '';
+    var in3 = document.createElement('input'); in3.type = 'hidden'; in3.name = 'apply_all'; in3.value = applyAll;
+    form.appendChild(in1); form.appendChild(in2); form.appendChild(in3);
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  function openSubstituteModal(courseId, courseTitle) {
+    document.getElementById('subCourseId').value = courseId;
+    document.getElementById('subCourseTitle').innerText = 'Classe : ' + courseTitle;
+    document.getElementById('substituteModal').style.display = 'flex';
+  }
+  function closeSubstituteModal() {
+    document.getElementById('substituteModal').style.display = 'none';
+  }
+
+  /* ========================================================================= */
+  /* WHATSAPP TIMETABLE BROADCAST LOGIC (SINGLE / MULTI GROUP & STUDENTS)      */
+  /* ========================================================================= */
+  var ALL_COURSES_META = [
+    {% for c in courses %}
+    {
+      id: {{ c.id }},
+      name: {{ (c.name or '')|tojson }},
+      display_name: {{ (c.display_name or c.name or '')|tojson }},
+      teacher_id: {{ (c.teacher_id if c.teacher_id else '')|tojson }},
+      teacher_name: {{ (c.teacher.full_name if c.teacher else 'Sans prof')|tojson }},
+      category: {{ (c.category or '')|tojson }},
+      language: {{ (c.language or '')|tojson }},
+      level: {{ (c.level or '')|tojson }},
+      group_name: {{ (c.group_name or '')|tojson }},
+      room_name: {{ (c.room.name if c.room else 'Salle ILAS')|tojson }},
+      sessions_per_week: {{ c.sessions_per_week or 3 }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  var waGroupFilter = {
+    teacherId: '{{ filter_teacher_id or "" }}',
+    category: 'all',
+    searchQuery: '',
+    selectedCourseId: null
+  };
+
+  var waState = {
+    groupScope: 'single', // 'single' | 'multi' | 'all'
+    currentCourseId: null,
+    coursesMap: {},       // course_id -> course object with slots
+    coursesList: [],
+    allStudents: [],      // array of student objects from current fetch
+    selectedStudentIds: new Set(), // student IDs currently checked
+    queue: [],            // final array of students to process in Step 2
+    currentQueueIndex: 0,
+    statuses: {},         // student_id -> 'pending' | 'sent' | 'skipped'
+    cachedBlobs: {},      // course_id -> blob
+    cachedFileNames: {},  // course_id -> filename
+    selectedMsgLang: 'ar'
+  };
+
+  function getFilteredCourses() {
+    return ALL_COURSES_META.filter(function(c) {
+      // 1. Filter by Teacher
+      if (waGroupFilter.teacherId && String(c.teacher_id) !== String(waGroupFilter.teacherId)) {
+        return false;
+      }
+      // 2. Filter by Category / Subject
+      if (waGroupFilter.category && waGroupFilter.category !== 'all') {
+        var cat = waGroupFilter.category.toLowerCase();
+        var cName = (c.name || '').toLowerCase();
+        var cLang = (c.language || '').toLowerCase();
+        var cCat = (c.category || '').toLowerCase();
+        if (cat === 'soutien') {
+          if (cCat !== 'tutoring' && cName.indexOf('soutien') === -1) return false;
+        } else {
+          if (cLang.indexOf(cat) === -1 && cName.indexOf(cat) === -1) return false;
+        }
+      }
+      // 3. Filter by Search Query
+      if (waGroupFilter.searchQuery) {
+        var q = waGroupFilter.searchQuery;
+        var matchStr = ((c.name || '') + ' ' + (c.teacher_name || '') + ' ' + (c.level || '') + ' ' + (c.group_name || '') + ' ' + (c.room_name || '')).toLowerCase();
+        if (matchStr.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderGroupSelectors() {
+    var filtered = getFilteredCourses();
+
+    // 1. Update Match Counter
+    var countEl = document.getElementById('waGroupMatchCount');
+    if (countEl) countEl.innerText = filtered.length + ' classe(s) trouvée(s)';
+
+    // 2. Render Single Mode Cards
+    var singleContainer = document.getElementById('waSingleCardsList');
+    if (singleContainer) {
+      if (filtered.length === 0) {
+        singleContainer.innerHTML = '<div style="text-align:center; padding:16px; color:#64748b; font-size:12px;">🔍 Aucun groupe trouvé avec ces filtres. Essayez de réinitialiser la recherche.</div>';
+      } else {
+        // Check if selected course is still in filtered set
+        var isCurrentInFiltered = filtered.some(function(c) { return c.id === waGroupFilter.selectedCourseId; });
+        if (!isCurrentInFiltered) {
+          waGroupFilter.selectedCourseId = filtered[0].id;
+        }
+
+        var html = '';
+        filtered.forEach(function(c) {
+          var isSel = (c.id === waGroupFilter.selectedCourseId);
+          html += '<div class="wa-single-group-card" data-cid="' + c.id + '" onclick="selectSingleCourse(' + c.id + ')" ' +
+            'style="padding:7px 11px; border-radius:8px; border:2px solid ' + (isSel ? '#16a34a' : '#e2e8f0') + '; ' +
+            'background:' + (isSel ? '#f0fdf4' : '#ffffff') + '; cursor:pointer; transition:all 0.15s; display:flex; justify-content:space-between; align-items:center;">' +
+            '<div style="flex:1; min-width:0; padding-right:8px;">' +
+              '<div style="font-weight:800; font-size:12px; color:' + (isSel ? '#15803d' : '#0B3D6E') + '; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' +
+                c.name +
+              '</div>' +
+              '<div style="display:flex; gap:5px; margin-top:2px; flex-wrap:wrap; align-items:center;">' +
+                '<span class="chip chip-purple" style="font-size:9.5px; padding:1px 6px;">👨‍🏫 ' + c.teacher_name + '</span>' +
+                '<span class="chip chip-green" style="font-size:9.5px; padding:1px 6px;">🚪 ' + c.room_name + '</span>' +
+                '<span class="chip chip-blue" style="font-size:9.5px; padding:1px 6px;">⏱️ ' + c.sessions_per_week + ' s/sem</span>' +
+              '</div>' +
+            '</div>' +
+            '<div>' +
+              '<span class="wa-card-check chip chip-green" style="font-size:10px; font-weight:800; display:' + (isSel ? 'inline-block' : 'none') + ';">✓ Choisi</span>' +
+            '</div>' +
+          '</div>';
+        });
+        singleContainer.innerHTML = html;
+      }
+    }
+
+    // 3. Render Multi Mode Checkboxes
+    var multiContainer = document.getElementById('waCourseChecklistWrapper');
+    if (multiContainer) {
+      if (filtered.length === 0) {
+        multiContainer.innerHTML = '<div style="text-align:center; padding:14px; color:#64748b; font-size:12px;">Aucun groupe trouvé.</div>';
+      } else {
+        var mHtml = '';
+        filtered.forEach(function(c) {
+          mHtml += '<label class="wa-course-item" data-cname="' + (c.name || '').toLowerCase() + '" style="display:flex; align-items:center; gap:8px; padding:5px 8px; border-radius:6px; margin-bottom:3px; font-size:12px; cursor:pointer; background:#f8fafc; border:1px solid #e2e8f0;">' +
+            '<input type="checkbox" class="wa-course-cb" value="' + c.id + '" onchange="onCourseCheckboxesChanged()">' +
+            '<div style="flex:1; min-width:0;">' +
+              '<strong style="color:#0B3D6E; font-size:12px;">' + c.name + '</strong>' +
+              '<div style="display:flex; gap:4px; margin-top:2px;">' +
+                '<span class="chip chip-purple" style="font-size:9px;">👨‍🏫 ' + c.teacher_name + '</span>' +
+                '<span class="chip chip-gray" style="font-size:9px;">🚪 ' + c.room_name + '</span>' +
+              '</div>' +
+            '</div>' +
+          '</label>';
+        });
+        multiContainer.innerHTML = mHtml;
+      }
+    }
+
+    // 4. Synced native select
+    var sel = document.getElementById('waCourseSelect');
+    if (sel && waGroupFilter.selectedCourseId) {
+      sel.value = waGroupFilter.selectedCourseId;
+    }
+  }
+
+  function selectSingleCourse(cid) {
+    waGroupFilter.selectedCourseId = cid;
+    var sel = document.getElementById('waCourseSelect');
+    if (sel) sel.value = cid;
+
+    // Update active highlight classes
+    document.querySelectorAll('.wa-single-group-card').forEach(function(card) {
+      var itemCid = parseInt(card.getAttribute('data-cid'));
+      var isCur = (itemCid === cid);
+      card.style.borderColor = isCur ? '#16a34a' : '#e2e8f0';
+      card.style.background = isCur ? '#f0fdf4' : '#ffffff';
+      var titleEl = card.querySelector('div > div');
+      if (titleEl) titleEl.style.color = isCur ? '#15803d' : '#0B3D6E';
+      var chk = card.querySelector('.wa-card-check');
+      if (chk) chk.style.display = isCur ? 'inline-block' : 'none';
+    });
+
+    reloadGroupData();
+  }
+
+  function onWaTeacherFilterChanged() {
+    var sel = document.getElementById('waTeacherFilterSelect');
+    waGroupFilter.teacherId = sel ? sel.value : '';
+    renderGroupSelectors();
+    if (waState.groupScope === 'single' && waGroupFilter.selectedCourseId) {
+      reloadGroupData();
+    }
+  }
+
+  function onWaGroupSearchInput(query) {
+    waGroupFilter.searchQuery = (query || '').trim().toLowerCase();
+    renderGroupSelectors();
+    if (waState.groupScope === 'single' && waGroupFilter.selectedCourseId) {
+      reloadGroupData();
+    }
+  }
+
+  function filterByCourseCategory(cat) {
+    waGroupFilter.category = cat;
+    document.querySelectorAll('.wa-cat-pill').forEach(function(btn) {
+      btn.style.background = '#f1f5f9';
+      btn.style.color = '#475569';
+      btn.style.fontWeight = '700';
+    });
+    var activeId = 'waCatPill' + (cat === 'all' ? 'All' : (cat === 'Français' ? 'Francais' : cat));
+    var activeBtn = document.getElementById(activeId);
+    if (activeBtn) {
+      activeBtn.style.background = '#1f6feb';
+      activeBtn.style.color = '#fff';
+      activeBtn.style.fontWeight = '800';
+    }
+    renderGroupSelectors();
+    if (waState.groupScope === 'single' && waGroupFilter.selectedCourseId) {
+      reloadGroupData();
+    }
+  }
+
+  function openScheduleWhatsAppModal(courseId) {
+    var modal = document.getElementById('scheduleWhatsAppModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    document.getElementById('waStepConfig').style.display = 'block';
+    document.getElementById('waStepDispatch').style.display = 'none';
+
+    // Reset scope to single
+    setGroupScope('single', false);
+
+    if (courseId) {
+      var found = ALL_COURSES_META.find(function(c) { return c.id === courseId; });
+      if (found) {
+        waGroupFilter.teacherId = found.teacher_id ? String(found.teacher_id) : '';
+        var tSel = document.getElementById('waTeacherFilterSelect');
+        if (tSel) tSel.value = waGroupFilter.teacherId;
+      }
+      waGroupFilter.selectedCourseId = courseId;
+    } else {
+      var pageTeacherId = '{{ filter_teacher_id or "" }}';
+      if (pageTeacherId) {
+        waGroupFilter.teacherId = String(pageTeacherId);
+        var tSel = document.getElementById('waTeacherFilterSelect');
+        if (tSel) tSel.value = waGroupFilter.teacherId;
+      } else {
+        waGroupFilter.teacherId = '';
+        var tSel = document.getElementById('waTeacherFilterSelect');
+        if (tSel) tSel.value = '';
+      }
+      waGroupFilter.selectedCourseId = null;
+    }
+
+    waGroupFilter.category = 'all';
+    waGroupFilter.searchQuery = '';
+    var searchInput = document.getElementById('waGroupLiveSearch');
+    if (searchInput) searchInput.value = '';
+
+    renderGroupSelectors();
+    reloadGroupData();
+  }
+
+  function closeScheduleWhatsAppModal() {
+    var modal = document.getElementById('scheduleWhatsAppModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function setGroupScope(scope, autoReload) {
+    if (autoReload === undefined) autoReload = true;
+    waState.groupScope = scope;
+
+    var btnSingle = document.getElementById('btnScopeSingle');
+    var btnMulti = document.getElementById('btnScopeMulti');
+    var btnAll = document.getElementById('btnScopeAll');
+
+    [btnSingle, btnMulti, btnAll].forEach(function(b) {
+      b.style.background = 'transparent';
+      b.style.color = '#475569';
+      b.style.fontWeight = '700';
+    });
+
+    var activeBtn = (scope === 'single') ? btnSingle : (scope === 'multi' ? btnMulti : btnAll);
+    activeBtn.style.background = '#1f6feb';
+    activeBtn.style.color = '#fff';
+    activeBtn.style.fontWeight = '800';
+
+    document.getElementById('waSingleCourseContainer').style.display = (scope === 'single') ? 'block' : 'none';
+    document.getElementById('waMultiCoursesContainer').style.display = (scope === 'multi') ? 'block' : 'none';
+    document.getElementById('waAllCoursesNotice').style.display = (scope === 'all') ? 'block' : 'none';
+
+    if (autoReload) {
+      reloadGroupData();
+    }
+  }
+
+  function onWaCourseChanged() {
+    if (waState.groupScope === 'single') {
+      var sel = document.getElementById('waCourseSelect');
+      if (sel && sel.value) {
+        selectSingleCourse(parseInt(sel.value));
+      }
+    }
+  }
+
+  function onCourseCheckboxesChanged() {
+    if (waState.groupScope === 'multi') {
+      reloadGroupData();
+    }
+  }
+
+  function selectAllCourses(checkAll) {
+    var cbs = document.querySelectorAll('.wa-course-cb');
+    cbs.forEach(function(cb) { cb.checked = checkAll; });
+    onCourseCheckboxesChanged();
+  }
+
+  function reloadGroupData() {
+    var url = '/schedule/group_whatsapp_data?';
+    if (waState.groupScope === 'single') {
+      var cid = waGroupFilter.selectedCourseId;
+      if (!cid) {
+        var sel = document.getElementById('waCourseSelect');
+        cid = sel ? sel.value : null;
+      }
+      if (!cid) {
+        document.getElementById('waStudentChecklistLoading').innerHTML = '👈 Choisissez une classe ci-dessus';
+        document.getElementById('waStudentChecklistBody').innerHTML = '';
+        return;
+      }
+      url += 'course_id=' + cid;
+    } else if (waState.groupScope === 'multi') {
+      var checkedCids = [];
+      document.querySelectorAll('.wa-course-cb:checked').forEach(function(cb) {
+        checkedCids.push(cb.value);
+      });
+      if (checkedCids.length === 0) {
+        document.getElementById('waStudentChecklistLoading').innerHTML = '👈 Cochez au moins une classe ci-dessus';
+        document.getElementById('waStudentChecklistBody').innerHTML = '';
+        return;
+      }
+      url += 'course_ids=' + checkedCids.join(',');
+    } else {
+      url += 'all=1';
+    }
+
+    document.getElementById('waTimetableLoading').innerText = '⏳ Chargement des données...';
+    document.getElementById('waTimetableLoading').style.display = 'block';
+    document.getElementById('waTimetablePreviewCard').style.display = 'none';
+
+    document.getElementById('waStudentChecklistLoading').innerText = '⏳ Chargement de la liste des élèves...';
+    document.getElementById('waStudentChecklistLoading').style.display = 'block';
+    document.getElementById('waStudentChecklistBody').innerHTML = '';
+
+    fetch(url)
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.error) {
+          alert(data.error);
+          return;
+        }
+
+        waState.coursesMap = data.courses_map || {};
+        waState.coursesList = data.courses_list || [data.course];
+        waState.allStudents = data.students || [];
+
+        // Check all students by default
+        waState.selectedStudentIds = new Set();
+        waState.allStudents.forEach(function(s) {
+          waState.selectedStudentIds.add(s.id);
+        });
+
+        // Set message templates
+        waState.msg_ar = data.msg_ar;
+        waState.msg_fr = data.msg_fr;
+        updateWaMessageTemplate();
+
+        // Render Timetable Preview using currently selected course
+        var cToPreview = null;
+        if (waState.groupScope === 'single' && waGroupFilter.selectedCourseId && waState.coursesMap[waGroupFilter.selectedCourseId]) {
+          cToPreview = waState.coursesMap[waGroupFilter.selectedCourseId];
+        } else {
+          cToPreview = data.course;
+        }
+
+        if (cToPreview) {
+          renderTimetableCards(cToPreview);
+          // Pre-capture image in background so broadcast starts instantly
+          setTimeout(function() {
+            var cid = cToPreview.id;
+            if (!waState.cachedBlobs[cid]) {
+              var hdCard = document.getElementById('waHdCard');
+              if (hdCard && typeof html2canvas !== 'undefined') {
+                html2canvas(hdCard, {
+                  scale: 2,
+                  backgroundColor: '#ffffff',
+                  useCORS: true,
+                  logging: false
+                }).then(function(canvas) {
+                  var dataUrl = canvas.toDataURL('image/png');
+                  canvas.toBlob(function(blob) {
+                    if (blob) {
+                      waState.cachedBlobs[cid] = blob;
+                      fetch('/schedule/save_timetable_image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image_base64: dataUrl, group_name: cToPreview.name || cToPreview.display_name })
+                      }).then(function(res) { return res.json(); }).then(function(result) {
+                        if (result.success) {
+                          waState.cachedFileNames[cid] = result.file_name;
+                        }
+                      }).catch(function() {});
+                    }
+                  });
+                }).catch(function() {});
+              }
+            }
+          }, 300);
+        }
+
+        document.getElementById('waTimetableLoading').style.display = 'none';
+        document.getElementById('waTimetablePreviewCard').style.display = 'block';
+
+        // Render Student Checklist
+        document.getElementById('waStudentChecklistLoading').style.display = 'none';
+        renderStudentChecklist();
+      })
+      .catch(function(err) {
+        console.error(err);
+        document.getElementById('waTimetableLoading').innerText = '❌ Erreur de chargement.';
+        document.getElementById('waStudentChecklistLoading').innerText = '❌ Erreur de chargement.';
+      });
+  }
+
+  function renderStudentChecklist() {
+    var container = document.getElementById('waStudentChecklistBody');
+    if (!container) return;
+
+    var targetMode = document.getElementById('waRecipientTarget').value;
+    var html = '';
+
+    if (waState.allStudents.length === 0) {
+      container.innerHTML = '<div style="text-align:center; padding:18px 12px; color:#64748b; font-size:12px; background:#fff; border-radius:8px; border:1px dashed #cbd5e1;">' +
+        '<div style="font-size:22px; margin-bottom:4px;">ℹ️</div>' +
+        '<strong style="color:#0B3D6E;">Aucun élève actif pour ce groupe ce mois-ci.</strong><br>' +
+        '<span style="font-size:11px; color:#64748b;">Les inscriptions précédentes sont terminées / expirées.</span>' +
+        '</div>';
+      updateStudentSelectionCount();
+      return;
+    }
+
+    waState.allStudents.forEach(function(s) {
+      var isChecked = waState.selectedStudentIds.has(s.id);
+      var phone = getStudentTargetPhone(s, targetMode);
+      var phoneFmt = phone ? formatPhoneDisplay(phone) : '<span style="color:#ef4444; font-weight:700;">Sans tél</span>';
+
+      html += '<div class="wa-student-check-row" data-name="' + (s.full_name || '').toLowerCase() + '" data-phone="' + (phone || '') + '" style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; border-radius:6px; margin-bottom:3px; background:' + (isChecked ? '#f0fdf4' : '#ffffff') + '; border:1px solid ' + (isChecked ? '#bbf7d0' : '#e2e8f0') + '; transition:all 0.15s;">' +
+        '<label style="display:flex; align-items:center; gap:8px; cursor:pointer; flex:1; margin:0;">' +
+          '<input type="checkbox" class="wa-stu-cb" value="' + s.id + '" ' + (isChecked ? 'checked' : '') + ' onchange="onStudentCheckboxChanged(this)">' +
+          '<div>' +
+            '<span style="font-weight:800; font-size:12px; color:#0B3D6E;">' + s.full_name + '</span>' +
+            '<span class="chip chip-blue" style="font-size:9.5px; padding:1px 6px; margin-left:6px;">' + s.course_name + '</span>' +
+          '</div>' +
+        '</label>' +
+        '<div style="display:flex; align-items:center; gap:8px;">' +
+          '<span style="font-size:11px; color:#475569;">📱 ' + phoneFmt + '</span>' +
+          '<button type="button" onclick="sendSingleStudentDirect(' + s.id + ', ' + s.course_id + ')" class="btn btn-xs btn-outline" style="border-color:#16a34a; color:#15803d; background:#fff; font-weight:800; font-size:10.5px; padding:2px 7px;" title="Envoyer immédiatement à cet élève sans file d\'attente">' +
+            '💬 Envoyer seul' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+    });
+
+    container.innerHTML = html;
+    updateStudentSelectionCount();
+  }
+
+  function onStudentCheckboxChanged(cb) {
+    var sid = parseInt(cb.value);
+    if (cb.checked) {
+      waState.selectedStudentIds.add(sid);
+      cb.closest('.wa-student-check-row').style.background = '#f0fdf4';
+      cb.closest('.wa-student-check-row').style.borderColor = '#bbf7d0';
+    } else {
+      waState.selectedStudentIds.delete(sid);
+      cb.closest('.wa-student-check-row').style.background = '#ffffff';
+      cb.closest('.wa-student-check-row').style.borderColor = '#e2e8f0';
+    }
+    updateStudentSelectionCount();
+  }
+
+  function selectAllStudents(checkAll) {
+    var cbs = document.querySelectorAll('.wa-stu-cb');
+    waState.selectedStudentIds.clear();
+    cbs.forEach(function(cb) {
+      cb.checked = checkAll;
+      if (checkAll) waState.selectedStudentIds.add(parseInt(cb.value));
+      var row = cb.closest('.wa-student-check-row');
+      if (row) {
+        row.style.background = checkAll ? '#f0fdf4' : '#ffffff';
+        row.style.borderColor = checkAll ? '#bbf7d0' : '#e2e8f0';
+      }
+    });
+    updateStudentSelectionCount();
+  }
+
+  function filterStudentChecklist(query) {
+    query = (query || '').trim().toLowerCase();
+    var rows = document.querySelectorAll('.wa-student-check-row');
+    rows.forEach(function(row) {
+      var n = row.getAttribute('data-name') || '';
+      var p = row.getAttribute('data-phone') || '';
+      row.style.display = (!query || n.indexOf(query) !== -1 || p.indexOf(query) !== -1) ? 'flex' : 'none';
+    });
+  }
+
+  function updateStudentSelectionCount() {
+    var count = waState.selectedStudentIds.size;
+    var total = waState.allStudents.length;
+    var badge = document.getElementById('waSelectionSummaryBadge');
+    if (badge) badge.innerText = '🎯 ' + count + ' sélectionné(s) / ' + total;
+
+    var btnCount = document.getElementById('btnSendStudentCount');
+    if (btnCount) btnCount.innerText = count;
+
+    var btnStart = document.getElementById('btnStartBroadcast');
+    if (btnStart) {
+      btnStart.disabled = (count === 0);
+      btnStart.style.opacity = (count === 0) ? '0.5' : '1';
+    }
+  }
+
+  function setElText(id, txt) {
+    var el = document.getElementById(id);
+    if (el) el.innerText = txt;
+  }
+
+  function setElHtml(id, html) {
+    var el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  }
+
+  function renderTimetableCards(courseObj) {
+    if (!courseObj) return;
+    var slots = courseObj.slots || [];
+    var cName = courseObj.name || courseObj.display_name || 'Classe';
+    var tName = courseObj.teacher_name || 'Non assigné';
+    var rName = courseObj.room_name || 'Salle ILAS';
+    var dur = courseObj.session_duration || '1h30';
+    var sessCount = (slots.length || courseObj.sessions_per_week || 3) + ' séance(s) / sem';
+
+    var slotsHtml = '';
+    if (slots.length > 0) {
+      slots.forEach(function(s) {
+        slotsHtml += '<tr style="border-bottom:1px solid #e2e8f0; font-size:11.5px;">' +
+          '<td style="padding:6px 10px; font-weight:800; color:#0B3D6E;">📅 ' + s.day_fr + ' <span style="font-size:10px; opacity:0.8; font-weight:600;">(' + s.day_ar + ')</span></td>' +
+          '<td style="padding:6px 10px; font-weight:800; color:#1f6feb;">⏱️ ' + s.start_time + ' → ' + s.end_time + '</td>' +
+          '<td style="padding:6px 10px; font-weight:700; color:#047857;">🚪 ' + rName + '</td>' +
+        '</tr>';
+      });
+    } else {
+      slotsHtml = '<tr><td colspan="3" style="padding:10px; text-align:center; color:#64748b; font-size:11.5px;">Créneaux à définir</td></tr>';
+    }
+
+    // 1. Update Visible Preview Card (in modal)
+    setElText('previewCourseName', cName);
+    setElText('previewTeacherName', tName);
+    setElText('previewRoomName', rName);
+    setElText('previewDuration', dur);
+    setElText('previewSessionsCount', sessCount);
+    setElHtml('previewSlotsTableBody', slotsHtml);
+
+    // 2. Update Off-Screen Export Card (for html2canvas)
+    setElText('exportCourseName', cName);
+    setElText('exportTeacherName', tName);
+    setElText('exportRoomName', rName);
+    setElText('exportDuration', dur);
+    setElText('exportSessionsCount', sessCount);
+    setElHtml('exportSlotsTableBody', slotsHtml);
+  }
+
+  function switchWaMsgLang(lang) {
+    waState.selectedMsgLang = lang;
+    var btnAr = document.getElementById('waBtnLangAr');
+    var btnFr = document.getElementById('waBtnLangFr');
+    if (lang === 'ar') {
+      btnAr.style.background = '#1f6feb'; btnAr.style.color = '#fff';
+      btnFr.style.background = '#f1f5f9'; btnFr.style.color = '#475569';
+    } else {
+      btnFr.style.background = '#1f6feb'; btnFr.style.color = '#fff';
+      btnAr.style.background = '#f1f5f9'; btnAr.style.color = '#475569';
+    }
+    updateWaMessageTemplate();
+  }
+
+  function updateWaMessageTemplate() {
+    var txt = (waState.selectedMsgLang === 'ar') ? waState.msg_ar : waState.msg_fr;
+    if (txt) document.getElementById('waMessageText').value = txt;
+  }
+
+  /* ── Capture & Save Timetable to Desktop (Promise) ── */
+  function captureAndSaveTimetable(courseObj) {
+    return new Promise(function(resolve, reject) {
+      var cid = courseObj.id;
+      if (waState.cachedBlobs[cid]) {
+        try {
+          if (navigator.clipboard && navigator.clipboard.write) {
+            navigator.clipboard.write([new ClipboardItem({'image/png': waState.cachedBlobs[cid]})]);
+          }
+        } catch(e) {}
+        resolve({ file_name: waState.cachedFileNames[cid], blob: waState.cachedBlobs[cid] });
+        return;
+      }
+
+      renderTimetableCards(courseObj);
+
+      var hdCard = document.getElementById('waHdCard');
+      html2canvas(hdCard, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false
+      }).then(function(canvas) {
+        var dataUrl = canvas.toDataURL('image/png');
+
+        canvas.toBlob(function(blob) {
+          waState.cachedBlobs[cid] = blob;
+          try {
+            if (navigator.clipboard && navigator.clipboard.write) {
+              navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+            }
+          } catch(e) {}
+
+          var cName = courseObj.name || courseObj.display_name;
+          fetch('/schedule/save_timetable_image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image_base64: dataUrl, group_name: cName })
+          })
+          .then(function(res) { return res.json(); })
+          .then(function(result) {
+            if (result.success) {
+              waState.cachedFileNames[cid] = result.file_name;
+              resolve({ file_name: result.file_name, blob: blob });
+            } else {
+              reject(result.error);
+            }
+          })
+          .catch(reject);
+        });
+      }).catch(reject);
+    });
+  }
+
+  /* ── Step 1 to Step 2: Start Broadcast ── */
+  function startWhatsAppBroadcast() {
+    var selected = waState.allStudents.filter(function(s) {
+      return waState.selectedStudentIds.has(s.id);
+    });
+
+    if (selected.length === 0) {
+      alert('Veuillez cocher au moins un élève.');
+      return;
+    }
+
+    selected.sort(keyCompareCourseAndName);
+    waState.queue = selected;
+    waState.currentQueueIndex = 0;
+    waState.statuses = {};
+    selected.forEach(function(s) { waState.statuses[s.id] = 'pending'; });
+
+    var btn = document.getElementById('btnStartBroadcast');
+    var origText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.innerHTML = '<span>⏳</span> <span>Préparation de l\'emploi du temps...</span>';
+      btn.disabled = true;
+    }
+
+    var firstStu = waState.queue[0];
+    var firstCourse = (firstStu && waState.coursesMap) ? waState.coursesMap[firstStu.course_id] : null;
+    if (!firstCourse && waState.coursesList && waState.coursesList.length > 0) {
+      firstCourse = waState.coursesList[0];
+    }
+
+    function proceedToDispatch(fileName) {
+      if (btn) {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+      }
+      setElText('waSavedFileName', fileName || 'Emploi.png');
+      var cfg = document.getElementById('waStepConfig');
+      if (cfg) cfg.style.display = 'none';
+      var dsp = document.getElementById('waStepDispatch');
+      if (dsp) dsp.style.display = 'block';
+
+      renderDispatchTable();
+      processQueueAt(0);
+    }
+
+    if (firstCourse) {
+      captureAndSaveTimetable(firstCourse)
+        .then(function(res) {
+          proceedToDispatch(res.file_name);
+        })
+        .catch(function(err) {
+          if (btn) {
+            btn.innerHTML = origText;
+            btn.disabled = false;
+          }
+          console.warn('Capture warning:', err);
+          proceedToDispatch('Emploi.png');
+        });
+    } else {
+      proceedToDispatch('Emploi.png');
+    }
+  }
+
+  function keyCompareCourseAndName(a, b) {
+    if (a.course_id !== b.course_id) return a.course_id - b.course_id;
+    return (a.full_name || '').localeCompare(b.full_name || '');
+  }
+
+  function processQueueAt(index) {
+    waState.currentQueueIndex = index;
+    displayCurrentStudent();
+
+    if (index >= waState.queue.length) return;
+
+    var stu = waState.queue[index];
+    var courseObj = (stu && waState.coursesMap) ? waState.coursesMap[stu.course_id] : null;
+
+    if (courseObj && !waState.cachedBlobs[stu.course_id]) {
+      setElText('waCurrentStudentName', '⏳ Génération de l\'image de ' + (stu.course_name || 'la classe') + '...');
+
+      captureAndSaveTimetable(courseObj).then(function(res) {
+        setElText('waSavedFileName', res.file_name);
+        displayCurrentStudent();
+        triggerCurrentStudentWhatsApp();
+      }).catch(function() {
+        displayCurrentStudent();
+        triggerCurrentStudentWhatsApp();
+      });
+    } else {
+      if (courseObj && waState.cachedBlobs[stu.course_id]) {
+        try {
+          if (navigator.clipboard && navigator.clipboard.write) {
+            navigator.clipboard.write([new ClipboardItem({'image/png': waState.cachedBlobs[stu.course_id]})]);
+          }
+        } catch(e) {}
+      }
+      setElText('waSavedFileName', (courseObj && waState.cachedFileNames[stu.course_id]) || 'Emploi.png');
+      triggerCurrentStudentWhatsApp();
+    }
+  }
+
+  function displayCurrentStudent() {
+    var idx = waState.currentQueueIndex;
+    var total = waState.queue.length;
+
+    var contentEl = document.getElementById('waCurrentStudentContent');
+    var finishEl = document.getElementById('waFinishCard');
+    var emptyEl = document.getElementById('waEmptyCard');
+
+    if (total === 0) {
+      if (contentEl) contentEl.style.display = 'none';
+      if (finishEl) finishEl.style.display = 'none';
+      if (emptyEl) emptyEl.style.display = 'block';
+      return;
+    }
+
+    var completed = Object.values(waState.statuses).filter(function(st) { return st === 'sent'; }).length;
+    var pct = Math.round((completed / total) * 100);
+    setElText('waProgressTitle', 'Progression : Élève ' + (Math.min(idx + 1, total)) + ' sur ' + total);
+    setElText('waProgressPercent', pct + '%');
+    var barFill = document.getElementById('waProgressBarFill');
+    if (barFill) barFill.style.width = pct + '%';
+    setElText('waProgressCompleted', completed + ' envoyé(s) ✅');
+    setElText('waProgressRemaining', (total - completed) + ' restant(s)');
+
+    if (idx >= total) {
+      if (contentEl) contentEl.style.display = 'none';
+      if (emptyEl) emptyEl.style.display = 'none';
+      if (finishEl) finishEl.style.display = 'block';
+      renderDispatchTable();
+      return;
+    }
+
+    if (finishEl) finishEl.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (contentEl) contentEl.style.display = 'block';
+
+    var s = waState.queue[idx];
+    setElHtml('waCurrentStudentName', (s.full_name || '') + ' <span class="chip chip-blue" style="font-size:10.5px; font-weight:700;">' + (s.course_name || '') + '</span>');
+    setElText('waCurrentStudentAvatar', (s.first_name ? s.first_name.charAt(0) : '?'));
+
+    var targetMode = document.getElementById('waRecipientTarget') ? document.getElementById('waRecipientTarget').value : 'parent_pref';
+    var chosenPhone = getStudentTargetPhone(s, targetMode);
+
+    var phoneDisplay = '';
+    if (chosenPhone) {
+      phoneDisplay = '📱 Destinataire : <strong>' + formatPhoneDisplay(chosenPhone) + '</strong>';
+      if (s.parent_phone && s.phone && s.parent_phone !== s.phone) {
+        phoneDisplay += ' <span style="font-size:11px; color:#64748b;">(Parent: ' + s.parent_phone + ' · Élève: ' + s.phone + ')</span>';
+      }
+    } else {
+      phoneDisplay = '⚠️ <span style="color:#ef4444; font-weight:700;">Aucun numéro WhatsApp enregistré pour cet élève</span>';
+    }
+    setElHtml('waCurrentStudentPhone', phoneDisplay);
+
+    var secBtn = document.getElementById('btnOpenSecondaryWa');
+    if (secBtn) {
+      if (s.parent_phone && s.phone && s.parent_phone !== s.phone) {
+        secBtn.style.display = 'inline-flex';
+        var isTargetParent = (chosenPhone === s.clean_parent_phone);
+        var secLabel = isTargetParent ? 'Tél Élève (' + s.phone + ')' : 'Tél Parent (' + s.parent_phone + ')';
+        setElText('btnOpenSecondaryWaLabel', secLabel);
+      } else {
+        secBtn.style.display = 'none';
+      }
+    }
+
+    var st = waState.statuses[s.id] || 'pending';
+    var badgeHtml = '';
+    if (st === 'sent') badgeHtml = '<span class="chip chip-green" style="font-size:11px; font-weight:800;">Envoyé ✅</span>';
+    else if (st === 'skipped') badgeHtml = '<span class="chip chip-amber" style="font-size:11px; font-weight:800;">Ignoré ⏭️</span>';
+    else badgeHtml = '<span class="chip chip-blue" style="font-size:11px; font-weight:800;">En cours 💬</span>';
+    setElHtml('waCurrentStudentStatusBadge', badgeHtml);
+
+    var isLast = (idx === total - 1);
+    setElHtml('btnNextStudent', isLast ? '<span>Terminer la liste ✅</span>' : '<span>Suivant ➡️</span>');
+
+    renderDispatchTable();
+  }
+
+  function triggerCurrentStudentWhatsApp(mode) {
+    var idx = waState.currentQueueIndex;
+    if (idx >= waState.queue.length) return;
+    var s = waState.queue[idx];
+
+    var targetMode = document.getElementById('waRecipientTarget').value;
+    var phone = getStudentTargetPhone(s, targetMode);
+
+    if (!phone) {
+      alert('Aucun numéro de téléphone WhatsApp disponible pour ' + s.full_name + '. Cliquez sur "Suivant ➡️" pour passer à l\'élève suivant.');
+      return;
+    }
+
+    var msg = buildPersonalizedMessage(s);
+    launchWhatsAppUrl(phone, msg, mode);
+  }
+
+  function triggerSecondaryWhatsApp() {
+    var idx = waState.currentQueueIndex;
+    if (idx >= waState.queue.length) return;
+    var s = waState.queue[idx];
+    var targetMode = document.getElementById('waRecipientTarget').value;
+    var primaryPhone = getStudentTargetPhone(s, targetMode);
+    var secPhone = (primaryPhone === s.clean_parent_phone) ? s.clean_student_phone : s.clean_parent_phone;
+    if (!secPhone) return;
+
+    var msg = buildPersonalizedMessage(s);
+    launchWhatsAppUrl(secPhone, msg);
+  }
+
+  function advanceToNextStudent() {
+    var idx = waState.currentQueueIndex;
+    if (idx < waState.queue.length) {
+      var cur = waState.queue[idx];
+      waState.statuses[cur.id] = 'sent';
+    }
+
+    processQueueAt(idx + 1);
+  }
+
+  function skipCurrentStudent() {
+    var idx = waState.currentQueueIndex;
+    if (idx < waState.queue.length) {
+      var cur = waState.queue[idx];
+      waState.statuses[cur.id] = 'skipped';
+    }
+    processQueueAt(idx + 1);
+  }
+
+  function backToWaConfig() {
+    document.getElementById('waStepConfig').style.display = 'block';
+    document.getElementById('waStepDispatch').style.display = 'none';
+  }
+
+  /* ── Send to Single Student Directly (1-Click Instant Action) ── */
+  function sendSingleStudentDirect(studentId, courseId) {
+    var s = waState.allStudents.find(function(item) { return item.id === studentId; });
+    if (!s) return;
+
+    var courseObj = waState.coursesMap[courseId];
+    if (!courseObj) return;
+
+    var targetMode = document.getElementById('waRecipientTarget').value;
+    var phone = getStudentTargetPhone(s, targetMode);
+
+    if (!phone) {
+      alert('Aucun numéro de téléphone WhatsApp pour ' + s.full_name);
+      return;
+    }
+
+    captureAndSaveTimetable(courseObj).then(function(res) {
+      var msg = buildPersonalizedMessage(s);
+      launchWhatsAppUrl(phone, msg);
+      alert('✅ WhatsApp ouvert pour ' + s.full_name + ' !\nL\'emploi du temps de ' + (courseObj.name || '') + ' est sur votre Bureau (' + res.file_name + ') et copié dans le presse-papiers (Ctrl + V).');
+    }).catch(function(err) {
+      alert('Erreur capture : ' + err);
+    });
+  }
+
+  function sendSingleStudentFromTable(studentId) {
+    var s = waState.queue.find(function(item) { return item.id === studentId; });
+    if (!s) return;
+    sendSingleStudentDirect(s.id, s.course_id);
+    waState.statuses[s.id] = 'sent';
+    displayCurrentStudent();
+  }
+
+  function renderDispatchTable() {
+    var tbody = document.getElementById('waStudentsTableBody');
+    if (!tbody) return;
+
+    document.getElementById('waTableCount').innerText = waState.queue.length;
+
+    var targetMode = document.getElementById('waRecipientTarget') ? document.getElementById('waRecipientTarget').value : 'parent_pref';
+    var html = '';
+
+    waState.queue.forEach(function(s, idx) {
+      var phone = getStudentTargetPhone(s, targetMode);
+      var st = waState.statuses[s.id] || 'pending';
+      var isCurrent = (idx === waState.currentQueueIndex);
+
+      var statusChip = '';
+      if (st === 'sent') {
+        statusChip = '<span class="chip chip-green" style="font-size:10px; font-weight:800;">✅ Envoyé</span>';
+      } else if (st === 'skipped') {
+        statusChip = '<span class="chip chip-amber" style="font-size:10px; font-weight:800;">⏭️ Ignoré</span>';
+      } else if (isCurrent) {
+        statusChip = '<span class="chip chip-blue" style="font-size:10px; font-weight:800;">💬 En cours</span>';
+      } else {
+        statusChip = '<span class="chip chip-gray" style="font-size:10px; font-weight:700;">⏳ En attente</span>';
+      }
+
+      var rowBg = isCurrent ? '#eff6ff' : (idx % 2 === 0 ? '#ffffff' : '#f8fafc');
+
+      html += '<tr style="background:' + rowBg + '; border-bottom:1px solid #e2e8f0;">' +
+        '<td style="padding:6px 10px; text-align:center; font-weight:700; color:#64748b;">' + (idx + 1) + '</td>' +
+        '<td style="padding:6px 10px; font-weight:800; color:#0B3D6E;">' + s.full_name + ' <span class="chip chip-blue" style="font-size:9px; padding:1px 5px;">' + s.course_name + '</span></td>' +
+        '<td style="padding:6px 10px; font-size:11.5px; color:#334155;">' + (phone ? formatPhoneDisplay(phone) : '<span style="color:#ef4444;">Aucun</span>') + '</td>' +
+        '<td style="padding:6px 10px; text-align:center;">' + statusChip + '</td>' +
+        '<td style="padding:6px 10px; text-align:right;">' +
+          '<button type="button" onclick="sendSingleStudentFromTable(' + s.id + ')" class="btn btn-xs btn-outline" style="border-color:#16a34a; color:#15803d; font-weight:800; background:#f0fdf4; padding:3px 8px; border-radius:6px;" title="Envoyer à cet élève uniquement">' +
+            '💬 Envoyer' +
+          '</button>' +
+        '</td>' +
+      '</tr>';
+    });
+
+    tbody.innerHTML = html;
+  }
+
+  function exportCurrentTimetableToDesktopManual() {
+    var cToPreview = null;
+    if (waState.groupScope === 'single' && waGroupFilter.selectedCourseId && waState.coursesMap[waGroupFilter.selectedCourseId]) {
+      cToPreview = waState.coursesMap[waGroupFilter.selectedCourseId];
+    } else if (waState.coursesList && waState.coursesList.length > 0) {
+      cToPreview = waState.coursesList[0];
+    }
+    if (!cToPreview) {
+      alert('Veuillez d\'abord sélectionner une classe.');
+      return;
+    }
+    captureAndSaveTimetable(cToPreview).then(function(res) {
+      alert('✅ Emploi du temps enregistré avec succès sur votre Bureau :\n' + res.file_name + '\n\nEt copié dans le presse-papiers (Ctrl + V dans WhatsApp) !');
+    }).catch(function(err) {
+      alert('Erreur lors de l\'enregistrement : ' + err);
+    });
+  }
+
+  function copyImageAgainToClipboard() {
+    var curStu = (waState.queue && waState.queue[waState.currentQueueIndex]) ? waState.queue[waState.currentQueueIndex] : null;
+    var cid = curStu ? curStu.course_id : (waState.allStudents[0] ? waState.allStudents[0].course_id : null);
+    var blob = cid ? waState.cachedBlobs[cid] : null;
+
+    if (blob && navigator.clipboard && navigator.clipboard.write) {
+      navigator.clipboard.write([new ClipboardItem({'image/png': blob})])
+        .then(function() { alert('✅ Image re-copiée dans le presse-papiers ! Vous pouvez faire Ctrl + V dans WhatsApp.'); })
+        .catch(function(e) { alert('Presse-papiers indisponible. Vous pouvez glisser l\'image depuis le Bureau.'); });
+    } else {
+      alert('L\'image est disponible sur votre Bureau.');
+    }
+  }
+
+  function getStudentTargetPhone(s, targetMode) {
+    if (targetMode === 'parent_only') return s.clean_parent_phone || '';
+    if (targetMode === 'student_only') return s.clean_student_phone || '';
+    return s.clean_parent_phone || s.clean_student_phone || '';
+  }
+
+  function formatPhoneDisplay(num) {
+    if (!num) return '-';
+    if (num.startsWith('212') && num.length === 12) {
+      return '0' + num.slice(3, 4) + ' ' + num.slice(4, 6) + ' ' + num.slice(6, 8) + ' ' + num.slice(8, 10) + ' ' + num.slice(10, 12);
+    }
+    return num;
+  }
+
+  function buildPersonalizedMessage(student) {
+    var template = document.getElementById('waMessageText').value || '';
+    var cName = student.course_name || 'Classe';
+
+    return template
+      .replace(/{nom_eleve}/g, student.full_name)
+      .replace(/{classe}/g, cName);
+  }
+
+  function launchWhatsAppUrl(phone, message, forceMode) {
+    var appMode = forceMode || 'desktop';
+    if (!forceMode) {
+      var radios = document.getElementsByName('waAppMode');
+      for (var i = 0; i < radios.length; i++) {
+        if (radios[i].checked) { appMode = radios[i].value; break; }
+      }
+    }
+
+    var cleanNum = (phone || '').replace(/[^0-9]/g, '');
+    var encodedMsg = encodeURIComponent(message || '');
+
+    if (appMode === 'desktop') {
+      var link = document.createElement('a');
+      link.href = 'whatsapp://send?phone=' + cleanNum + '&text=' + encodedMsg;
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(function() {
+        if (link.parentNode) link.parentNode.removeChild(link);
+      }, 500);
+    } else {
+      window.open('https://web.whatsapp.com/send?phone=' + cleanNum + '&text=' + encodedMsg, '_blank');
+    }
+  }
+</script>
+
+{% endblock %}

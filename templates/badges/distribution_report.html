@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feuille de Tournée — {{ batch.batch_code }} — Institut ILAS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+<style>
+  :root {
+    --navy: #0b3d6e;
+    --blue: #1f6feb;
+    --emerald: #10b981;
+    --emerald-dark: #047857;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #cbd5e1;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background: #f1f5f9;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    color: var(--text-dark);
+    line-height: 1.4;
+    padding-bottom: 60px;
+  }
+
+  /* Screen Top Control Bar (Hidden on print) */
+  .screen-bar {
+    background: #ffffff;
+    border-bottom: 1.5px solid #e2e8f0;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+
+  .screen-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .screen-bar-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--navy);
+  }
+
+  .screen-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-print {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    border: none;
+    padding: 9px 20px;
+    font-size: 14px;
+    font-weight: 800;
+    border-radius: 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.35);
+    transition: all 0.2s;
+  }
+  .btn-print:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(16, 185, 129, 0.45);
+  }
+
+  .btn-back {
+    background: #ffffff;
+    color: #475569;
+    border: 1.5px solid #cbd5e1;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 10px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-back:hover {
+    background: #f8fafc;
+  }
+
+  /* Printable Sheet Container */
+  .sheet-container {
+    max-width: 960px;
+    margin: 24px auto;
+    background: #ffffff;
+    padding: 32px 36px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e2e8f0;
+  }
+
+  /* Official Header */
+  .sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2.5px solid #0f172a;
+    padding-bottom: 18px;
+    margin-bottom: 18px;
+  }
+
+  .sheet-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .sheet-logo-badge {
+    width: 48px;
+    height: 48px;
+    background: var(--navy);
+    color: #ffffff;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 900;
+    box-shadow: 0 4px 10px rgba(11, 61, 110, 0.25);
+  }
+
+  .sheet-title-text h1 {
+    font-size: 21px;
+    font-weight: 900;
+    color: var(--navy);
+    letter-spacing: -0.3px;
+    margin-bottom: 2px;
+  }
+
+  .sheet-title-text p {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .sheet-meta-right {
+    text-align: right;
+  }
+
+  .batch-code-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 800;
+    background: #f1f5f9;
+    color: #0b3d6e;
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    display: inline-block;
+  }
+
+  .batch-date-text {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* Summary KPI Bar */
+  .sheet-kpi-bar {
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  .kpi-item strong {
+    font-size: 15px;
+    color: #0f172a;
+  }
+
+  /* Live Delivery Progress Pill */
+  .delivery-progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #047857;
+  }
+
+  .progress-mini-bar {
+    width: 60px;
+    height: 8px;
+    background: #d1fae5;
+    border-radius: 999px;
+    overflow: hidden;
+    display: inline-block;
+  }
+  .progress-mini-fill {
+    height: 100%;
+    background: #10b981;
+    transition: width 0.3s;
+  }
+
+  /* Section Heading */
+  .section-heading {
+    font-size: 15px;
+    font-weight: 900;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 22px 0 10px 0;
+  }
+
+  /* Class Group Block */
+  .class-group-block {
+    border: 2px solid #0f172a;
+    border-radius: 12px;
+    margin-bottom: 18px;
+    overflow: hidden;
+    page-break-inside: avoid;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  }
+
+  .class-group-header {
+    background: #0f172a;
+    color: #ffffff;
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .class-title-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .class-name-badge {
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.2px;
+  }
+
+  .class-room-badge {
+    background: #0ea5e9;
+    color: #082f49;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .class-time-badge {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 6px;
+  }
+
+  .class-count-badge {
+    background: rgba(255, 255, 255, 0.18);
+    font-size: 12px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+
+  .class-group-sub {
+    background: #f8fafc;
+    border-bottom: 1.5px solid #e2e8f0;
+    padding: 7px 16px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #334155;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* Table */
+  .students-class-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .students-class-table th {
+    background: #ffffff;
+    border-bottom: 1.5px solid #e2e8f0;
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: left;
+  }
+
+  .students-class-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #0f172a;
+    vertical-align: middle;
+  }
+
+  .students-class-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .students-class-table tr.row-delivered {
+    background: #f0fdf4;
+  }
+
+  /* Checkbox column */
+  .check-box-square {
+    width: 22px;
+    height: 22px;
+    border: 2px solid #0f172a;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    vertical-align: middle;
+    font-weight: 900;
+    font-size: 14px;
+    color: #ffffff;
+    background: #ffffff;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .check-box-square:hover {
+    border-color: #10b981;
+    transform: scale(1.08);
+  }
+
+  .check-box-square.checked {
+    background: #10b981;
+    border-color: #059669;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
+  }
+
+  .stu-id-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 800;
+    color: #0b3d6e;
+    background: #eff6ff;
+    padding: 2px 7px;
+    border-radius: 6px;
+    border: 1px solid #bfdbfe;
+    display: inline-block;
+  }
+
+  .stu-name-strong {
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 13.5px;
+  }
+
+  .stu-level-text {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+  }
+
+  .delivery-tag {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .delivery-tag.delivered {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+  }
+  .delivery-tag.pending {
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+  }
+
+  /* Signatures Footer */
+  .sheet-footer {
+    margin-top: 36px;
+    padding-top: 18px;
+    border-top: 2px dashed #cbd5e1;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #475569;
+    page-break-inside: avoid;
+  }
+
+  .signature-box {
+    width: 240px;
+    border-top: 1.5px solid #0f172a;
+    padding-top: 8px;
+    text-align: center;
+    font-weight: 700;
+    margin-top: 45px;
+  }
+
+  /* ============================================================
+     PRINT CSS RULES (@media print)
+     ============================================================ */
+  @media print {
+    body {
+      background: #ffffff !important;
+      padding: 0 !important;
+    }
+
+    .screen-bar {
+      display: none !important;
+    }
+
+    .sheet-container {
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+    }
+
+    .class-group-block {
+      border: 1.5px solid #000000 !important;
+      margin-bottom: 12px !important;
+    }
+
+    .class-group-header {
+      background: #000000 !important;
+      color: #ffffff !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .class-group-sub {
+      background: #f1f5f9 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .check-box-square {
+      border: 2px solid #000000 !important;
+      background: #ffffff !important;
+      color: #000000 !important;
+      width: 18px !important;
+      height: 18px !important;
+    }
+    .check-box-square.checked {
+      background: #f1f5f9 !important;
+    }
+
+    .students-class-table tr.row-delivered {
+      background: transparent !important;
+    }
+
+    @page {
+      margin: 10mm 12mm;
+      size: A4 portrait;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Screen Top Control Bar (Hidden when printing) -->
+  <div class="screen-bar">
+    <div class="screen-bar-left">
+      <a href="{{ url_for('badge_distribution') }}" class="btn-back">
+        ← Retour aux Lots de Distribution
+      </a>
+      <span class="screen-bar-title">Feuille de Tournée : {{ batch.batch_code }}</span>
+    </div>
+
+    <div class="screen-bar-actions">
+      <!-- Live Progress Badge -->
+      <div class="delivery-progress-wrap" id="headerProgressWrap">
+        <span>Remis :</span>
+        <span id="headerDeliveredCount">{{ total_delivered }}</span> / <span>{{ total_present }}</span>
+        <div class="progress-mini-bar">
+          <div class="progress-mini-fill" id="headerProgressFill" style="width: {{ (total_delivered / total_present * 100)|round|int if total_present else 0 }}%;"></div>
+        </div>
+        <span id="headerProgressPct">({{ (total_delivered / total_present * 100)|round|int if total_present else 0 }}%)</span>
+      </div>
+
+      <button type="button" class="btn-print" onclick="window.print()">
+        <span>🖨️</span>
+        <span>Imprimer la Feuille A4</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- A4 Printable Sheet -->
+  <div class="sheet-container">
+
+    <!-- Header -->
+    <div class="sheet-header">
+      <div class="sheet-brand">
+        <div class="sheet-logo-badge">ILAS</div>
+        <div class="sheet-title-text">
+          <h1>FEUILLE DE TOURNÉE & ÉMARGEMENT — DISTRIBUTION BADGES</h1>
+          <p>Institut des Langues & Sciences Appliquées &bull; Distribution en Classe par Groupe & Salle</p>
+        </div>
+      </div>
+
+      <div class="sheet-meta-right">
+        <span class="batch-code-badge">{{ batch.batch_code }}</span>
+        <div class="batch-date-text">
+          Édité le {{ batch.created_at.strftime('%d/%m/%Y à %H:%M') if batch.created_at else '' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary KPI Bar -->
+    <div class="sheet-kpi-bar">
+      <div class="kpi-item">
+        <span>Titre :</span>
+        <strong>{{ batch.title or 'Lot de distribution' }}</strong>
+      </div>
+      <div class="kpi-item">
+        <span>Total badges dans le lot :</span>
+        <strong>{{ batch.total_scanned }}</strong>
+      </div>
+      <div class="kpi-item">
+        <span>En classe aujourd'hui :</span>
+        <strong style="color:#047857;">{{ total_present }}</strong>
+      </div>
+      <div class="kpi-item">
+        <span>Classes concernées :</span>
+        <strong>{{ classes_list|length }} classe{{ 's' if classes_list|length > 1 else '' }} ({{ distinct_rooms|join(', ') if distinct_rooms else 'Aucune' }})</strong>
+      </div>
+      <div class="kpi-item">
+        <span>Sans cours aujourd'hui :</span>
+        <strong style="color:#64748b;">{{ total_no_class }}</strong>
+      </div>
+    </div>
+
+    {% if batch.notes %}
+    <div style="font-size:12px; background:#fffbeb; border:1px solid #fef3c7; border-radius:8px; padding:6px 12px; margin-bottom:16px; color:#92400e;">
+      <strong>Note :</strong> {{ batch.notes }}
+    </div>
+    {% endif %}
+
+    <!-- 1. DISTRIBUTION EN CLASSE (GROUPÉ PAR CLASSE / COURS) -->
+    <div class="section-heading">
+      <span>📚</span>
+      <span>1. Badges à Distribuer en Classe Aujourd'hui ({{ total_present }})</span>
+    </div>
+
+    {% if classes_list %}
+      {% for cl in classes_list %}
+        <div class="class-group-block">
+          <div class="class-group-header">
+            <div class="class-title-left">
+              <span class="class-name-badge">📚 {{ cl.course_name }}</span>
+              <span class="class-room-badge">🚪 {{ cl.room_name }}</span>
+              <span class="class-time-badge">⏰ {{ cl.time_slot }}</span>
+            </div>
+            <span class="class-count-badge">{{ cl.badge_items|length }} badge{{ 's' if cl.badge_items|length > 1 else '' }}</span>
+          </div>
+
+          <div class="class-group-sub">
+            <span>👨‍🏫 Enseignant : <strong>{{ cl.teacher_name }}</strong></span>
+            <span>🚪 Emplacement : <strong>{{ cl.room_name }}</strong> (Horaire : {{ cl.time_slot }})</span>
+          </div>
+
+          <table class="students-class-table">
+            <thead>
+              <tr>
+                <th style="width:40px; text-align:center;">✓</th>
+                <th style="width:130px;">ID & Code Élève</th>
+                <th>Nom & Prénom de l'Élève</th>
+                <th>Téléphone (Contact)</th>
+                <th style="text-align:right;">Statut de Remise</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for it in cl.badge_items %}
+              <tr id="row-item-{{ it.id }}" class="{{ 'row-delivered' if it.is_delivered else '' }}">
+                <td style="text-align:center;">
+                  <div class="check-box-square {{ 'checked' if it.is_delivered else '' }}"
+                       id="chk-box-{{ it.id }}"
+                       onclick="toggleItemDelivered({{ it.id }})"
+                       title="Cliquer pour cocher/décocher comme remis">
+                    {{ '✓' if it.is_delivered else '' }}
+                  </div>
+                </td>
+                <td>
+                  <span class="stu-id-tag">
+                    {{ it.student.code if it.student else ('ETU%04d' % it.student_id) }}
+                  </span>
+                  <span style="font-size:10px; color:#94a3b8; margin-left:4px;">#{{ it.student_id }}</span>
+                </td>
+                <td>
+                  <span class="stu-name-strong">{{ it.student.full_name if it.student else 'Élève inconnu' }}</span>
+                  {% if it.student and it.student.school_level %}
+                    <div class="stu-level-text">Niveau : {{ it.student.school_level }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if it.student and it.student.phone %}
+                    <strong>{{ it.student.phone }}</strong>
+                  {% elif it.student and it.student.parent_phone %}
+                    {{ it.student.parent_phone }} <span style="font-size:11px; color:#64748b;">(Parent)</span>
+                  {% else %}
+                    <span style="color:#94a3b8;">—</span>
+                  {% endif %}
+                </td>
+                <td style="text-align:right;">
+                  <span id="deliv-tag-{{ it.id }}" class="delivery-tag {{ 'delivered' if it.is_delivered else 'pending' }}">
+                    {% if it.is_delivered %}
+                      ✅ Remis {{ ('à ' + it.delivered_at.strftime('%H:%M')) if it.delivered_at else '' }}
+                    {% else %}
+                      ⏳ En attente
+                    {% endif %}
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div style="padding:20px; text-align:center; background:#f8fafc; border-radius:12px; color:#94a3b8; margin-bottom:16px;">
+        Aucun élève de ce lot n'a cours aujourd'hui.
+      </div>
+    {% endif %}
+
+    <!-- 2. SANS COURS AUJOURD'HUI (À CONSERVER À L'ACCUEIL) -->
+    <div class="section-heading" style="margin-top:28px;">
+      <span>🏠</span>
+      <span>2. Badges Sans Cours Aujourd'hui — À Conserver à la Réception ({{ total_no_class }})</span>
+    </div>
+
+    {% if no_class_items %}
+      <div class="class-group-block" style="border-color:#cbd5e1;">
+        <div class="class-group-header" style="background:#475569;">
+          <div class="class-title-left">
+            <span class="class-name-badge">🏠 Badges en attente de leur prochain passage</span>
+          </div>
+          <span class="class-count-badge">{{ no_class_items|length }} badge{{ 's' if no_class_items|length > 1 else '' }}</span>
+        </div>
+
+        <div class="class-group-sub">
+          <span>⚠️ Ces élèves n'ont pas cours aujourd'hui. Conserver leurs badges au secrétariat.</span>
+          <span>Tiroir Accueil / Boîte Badges</span>
+        </div>
+
+        <table class="students-class-table">
+          <thead>
+            <tr>
+              <th style="width:36px; text-align:center;">N°</th>
+              <th style="width:130px;">ID & Code Élève</th>
+              <th>Nom & Prénom</th>
+              <th>Téléphone</th>
+              <th>Prochain Cours Prévu</th>
+              <th style="text-align:right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for it in no_class_items %}
+            <tr>
+              <td style="text-align:center; color:#94a3b8; font-weight:700;">{{ loop.index }}</td>
+              <td>
+                <span class="stu-id-tag">
+                  {{ it.student.code if it.student else ('ETU%04d' % it.student_id) }}
+                </span>
+                <span style="font-size:10px; color:#94a3b8; margin-left:4px;">#{{ it.student_id }}</span>
+              </td>
+              <td>
+                <span class="stu-name-strong">{{ it.student.full_name if it.student else 'Élève inconnu' }}</span>
+              </td>
+              <td>
+                {{ (it.student.phone or it.student.parent_phone) if it.student else '—' }}
+              </td>
+              <td style="font-weight:700; color:#1e293b;">
+                📅 {{ it.next_class_info or 'Non programmé cette semaine' }}
+              </td>
+              <td style="text-align:right; font-weight:700; color:#64748b;">
+                À garder au bureau
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="padding:16px; text-align:center; background:#f8fafc; border-radius:10px; color:#94a3b8; margin-bottom:16px;">
+        Tous les élèves de ce lot ont cours aujourd'hui !
+      </div>
+    {% endif %}
+
+    <!-- Footer Signatures -->
+    <div class="sheet-footer">
+      <div>
+        Institut ILAS &bull; Tournée de distribution des badges PVC<br>
+        <span style="font-size:10px; color:#94a3b8;">Document généré automatiquement le {{ batch.created_at.strftime('%d/%m/%Y à %H:%M:%S') if batch.created_at else '' }}</span>
+      </div>
+
+      <div class="signature-box">
+        Visa Responsable de Tournée / Émargement
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Toggle delivered status via AJAX with live progress update
+    async function toggleItemDelivered(itemId) {
+      try {
+        const resp = await fetch('{{ url_for("api_badge_distribution_toggle_delivered") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ item_id: itemId })
+        });
+        const data = await resp.json();
+        if (data.success) {
+          const chk = document.getElementById(`chk-box-${itemId}`);
+          const row = document.getElementById(`row-item-${itemId}`);
+          const tag = document.getElementById(`deliv-tag-${itemId}`);
+
+          if (data.is_delivered) {
+            chk.classList.add('checked');
+            chk.textContent = '✓';
+            if (row) row.classList.add('row-delivered');
+            if (tag) {
+              tag.className = 'delivery-tag delivered';
+              tag.textContent = `✅ Remis ${data.delivered_time_str ? 'à ' + data.delivered_time_str : ''}`;
+            }
+          } else {
+            chk.classList.remove('checked');
+            chk.textContent = '';
+            if (row) row.classList.remove('row-delivered');
+            if (tag) {
+              tag.className = 'delivery-tag pending';
+              tag.textContent = '⏳ En attente';
+            }
+          }
+
+          // Update header counter & progress bar
+          document.getElementById('headerDeliveredCount').textContent = data.total_delivered;
+          document.getElementById('headerProgressFill').style.width = `${data.delivery_pct}%`;
+          document.getElementById('headerProgressPct').textContent = `(${data.delivery_pct}%)`;
+        }
+      } catch (err) {
+        console.error('Toggle error:', err);
+      }
+    }
+  </script>
+</body>
+</html>

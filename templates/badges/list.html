@@ -1,0 +1,2334 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+/* ============================================================
+   BADGES STUDIO MODERN SAAS STYLING
+   ============================================================ */
+.badge-studio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+/* KPI Cards Grid */
+.badge-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.badge-kpi-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1.5px solid #e2e8f0;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.badge-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+  border-color: #cbd5e1;
+}
+.badge-kpi-card.active-filter {
+  border-color: #1f6feb;
+  background: #f8fafc;
+  box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.2);
+}
+.badge-kpi-ico {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.badge-kpi-info h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+.badge-kpi-info p {
+  margin: 2px 0 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* Search & Filter Toolbar */
+.badge-toolbar {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1.5px solid #e2e8f0;
+  padding: 14px 18px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.badge-toolbar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.badge-type-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+}
+.badge-type-tab {
+  padding: 7px 14px;
+  border-radius: 9px;
+  font-weight: 800;
+  font-size: 13px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.18s ease;
+  user-select: none;
+}
+.badge-type-tab:hover {
+  color: #0f172a;
+  background: #ffffff;
+}
+.badge-type-tab .tab-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1.5px 7px;
+  border-radius: 6px;
+  background: #e2e8f0;
+  color: #475569;
+  transition: all 0.18s ease;
+}
+.badge-type-tab.active-all {
+  background: #0B3D6E !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(11, 61, 110, 0.25);
+}
+.badge-type-tab.active-lang {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.28);
+}
+.badge-type-tab.active-tutor {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.28);
+}
+.badge-type-tab.active-all .tab-badge,
+.badge-type-tab.active-lang .tab-badge,
+.badge-type-tab.active-tutor .tab-badge {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+.badge-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.badge-search-wrap {
+  flex: 1;
+  min-width: 260px;
+  position: relative;
+}
+.badge-search-input {
+  width: 100%;
+  height: 40px;
+  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  padding: 0 36px 0 38px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  background: #ffffff;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+.badge-search-input:focus {
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.15);
+}
+.badge-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+.badge-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 14px;
+  cursor: pointer;
+  display: none;
+  padding: 2px 6px;
+}
+body.rtl .badge-search-input {
+  padding: 0 38px 0 36px;
+}
+body.rtl .badge-search-icon {
+  left: auto;
+  right: 12px;
+}
+body.rtl .badge-search-clear {
+  right: auto;
+  left: 10px;
+}
+
+.badge-select {
+  height: 40px;
+  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+  min-width: 150px;
+}
+.badge-select:focus {
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.15);
+}
+
+/* View Switcher */
+.view-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 3px;
+  border: 1px solid #cbd5e1;
+}
+.view-btn {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.16s ease;
+}
+.view-btn.active {
+  background: #ffffff;
+  color: #1f6feb;
+  font-weight: 800;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.08);
+}
+
+/* Floating Batch Action Bar */
+.batch-bar {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99999;
+  background: linear-gradient(135deg, #061e38 0%, #0B3D6E 60%, #1e3a8a 100%);
+  color: #ffffff;
+  border-radius: 16px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  box-shadow: 0 12px 36px rgba(11, 61, 110, 0.45), 0 0 0 1.5px rgba(56, 189, 248, 0.4);
+  animation: slideUpFloat 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: min(960px, 95vw);
+  width: max-content;
+  backdrop-filter: blur(10px);
+}
+@keyframes slideUpFloat {
+  from { opacity: 0; transform: translate(-50%, 20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* Status Pills for Badges (Printed vs Unprinted) */
+.badge-status-pill {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2.5px 7px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.badge-status-pill.printed {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+.badge-status-pill.printed:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+.badge-status-pill.unprinted {
+  background: #fffdf5;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.badge-status-pill.unprinted:hover {
+  background: #fef3c7;
+  border-color: #fcd34d;
+}
+
+.badge-type-tab.active-selected {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%) !important;
+  color: #ffffff !important;
+  border-color: #d97706 !important;
+  box-shadow: 0 2px 10px rgba(217, 119, 6, 0.3) !important;
+}
+.badge-type-tab.active-selected .tab-badge {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+/* Grid Cards View */
+.badge-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
+.badge-mini-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.badge-mini-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.09);
+  border-color: #93c5fd;
+}
+.badge-mini-card.selected {
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.3);
+}
+
+/* Tricolor Top Stripe on ID Card */
+.badge-stripe {
+  height: 4px;
+  width: 100%;
+  background: linear-gradient(90deg, #0B3D6E 0%, #0B3D6E 40%, #c59b27 40%, #c59b27 75%, #c0292b 75%, #c0292b 100%);
+}
+.badge-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 6px 14px;
+}
+.badge-checkbox-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.badge-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #1f6feb;
+}
+
+.badge-card-body {
+  padding: 8px 14px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+}
+.badge-photo-box {
+  width: 72px;
+  height: 86px;
+  border-radius: 10px;
+  border: 2px solid #c59b27;
+  background: #f1f5f9;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 10px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+.badge-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.badge-no-photo {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  color: #94a3b8;
+  font-size: 24px;
+}
+.badge-card-name {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #0B3D6E;
+  margin: 0 0 3px 0;
+  line-height: 1.25;
+}
+.badge-card-level {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+.badge-courses-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  margin-bottom: 12px;
+  min-height: 24px;
+}
+.badge-course-chip {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.badge-card-footer {
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  gap: 8px;
+}
+.badge-card-footer button,
+.badge-card-footer a {
+  flex: 1;
+  text-align: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+/* ============================================================
+   MODAL REALISTIC BADGE PREVIEW
+   ============================================================ */
+.badge-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.badge-modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.badge-modal-card {
+  background: #ffffff;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 580px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: modalScale 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalScale {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.badge-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+}
+.badge-modal-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0B3D6E;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.badge-modal-close {
+  background: #e2e8f0;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  color: #475569;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+.badge-modal-close:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.badge-modal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f1f5f9;
+}
+
+/* Realistic PVC Landscape Card Preview (CR80 proportions: 440px x 277px) */
+.id-realistic-preview {
+  width: 440px;
+  height: 277px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(15, 23, 42, 0.08);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+.id-preview-stripe {
+  height: 4px;
+  width: 100%;
+  background: linear-gradient(90deg, #0B3D6E 0%, #0B3D6E 42%, #c59b27 42%, #c59b27 72%, #c0292b 72%, #c0292b 100%);
+  flex-shrink: 0;
+}
+.modal-face-toggle-bar {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.modal-face-toggle-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0b1a30;
+  transition: all 0.15s;
+}
+.modal-face-toggle-btn.active {
+  background: #0B3D6E;
+  color: #ffffff;
+  border-color: #0B3D6E;
+}
+.modal-course-card {
+  background: #f8fafc;
+  border: 0.8px solid #e2e8f0;
+  border-left: 2.5px solid #081426;
+  border-radius: 6px;
+  padding: 5px 8px;
+  margin-top: 4px;
+}
+
+.badge-modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+}
+</style>
+
+<!-- PAGE HEADER -->
+<div class="badge-studio-header">
+  <div>
+    <div class="muted" style="font-size:12px; margin-bottom:4px;">
+      <a href="{{ url_for('dashboard') }}" style="color:#64748b; text-decoration:none;">← {{ t('dashboard') }}</a>
+    </div>
+    <h2 style="margin:0; font-size:24px; color:#0B3D6E; font-weight:800; display:flex; align-items:center; gap:8px;">
+      <span>🪪</span>
+      <span>{{ 'استوديو بطاقات وشارات التلاميذ' if lang=='ar' else 'Studio des Badges Scolaires' }}</span>
+    </h2>
+    <p style="margin:4px 0 0 0; color:#64748b; font-size:13px;">
+      {{ 'توليد، معاينة وطباعة بطاقات الهوية المدرسية (Format CR80 & 80mm QR)' if lang=='ar' else 'Génération, aperçu réaliste et impression des badges scolaires format CR80 & 80mm' }}
+    </p>
+  </div>
+
+  <div style="display:flex; align-items:center; gap:10px;">
+    <!-- View Switcher -->
+    <div class="view-switcher">
+      <button type="button" class="view-btn active" id="btnViewGrid" onclick="switchBadgeView('grid')">
+        <span>🖼️</span><span>{{ 'بطاقات' if lang=='ar' else 'Cartes' }}</span>
+      </button>
+      <button type="button" class="view-btn" id="btnViewTable" onclick="switchBadgeView('table')">
+        <span>📋</span><span>{{ 'جدول' if lang=='ar' else 'Tableau' }}</span>
+      </button>
+    </div>
+
+    <!-- Print All Direct Actions: A4 Sheet vs CR80 PVC -->
+    <a href="{{ url_for('badges_print', all=1, mode='a4') }}" target="_blank" class="btn btn-primary" style="background:linear-gradient(135deg, #059669 0%, #10b981 100%); border:none; padding:9px 15px; font-weight:800; border-radius:10px; box-shadow:0 3px 12px rgba(16,185,129,0.3); display:inline-flex; align-items:center; gap:6px; color:#fff; text-decoration:none;" title="Imprimer tous les élèves en planches A4 (9 badges par page, espacement 10mm plastification)">
+      <span>📄</span>
+      <span>{{ 'طباعة الكل A4' if lang=='ar' else 'Tout en A4 (9/page)' }}</span>
+    </a>
+    <a href="{{ url_for('badges_print', all=1, mode='cr80') }}" target="_blank" class="btn btn-secondary" style="background:#0B3D6E; border:none; padding:9px 14px; font-weight:800; border-radius:10px; box-shadow:0 3px 12px rgba(11,61,110,0.3); display:inline-flex; align-items:center; gap:6px; color:#fff; text-decoration:none;" title="Imprimer tous les élèves sur imprimante badges PVC CR80">
+      <span>🪪</span>
+      <span>{{ 'طباعة PVC' if lang=='ar' else 'Tout en CR80' }}</span>
+    </a>
+    <!-- NFC / RFID Badge Pairing Station Button -->
+    <a href="{{ url_for('badges_nfc_pairing') }}" class="btn" style="background:linear-gradient(135deg, #7c3aed 0%, #6366f1 100%); border:none; padding:9px 15px; font-weight:800; border-radius:10px; box-shadow:0 3px 12px rgba(99,102,241,0.35); display:inline-flex; align-items:center; gap:7px; color:#fff; text-decoration:none;" title="Associer rapidement les badges physiques NFC/RFID par simple bip">
+      <span style="font-size:16px;">📡</span>
+      <span>{{ 'ربط البطاقات NFC' if lang=='ar' else 'Associer Badges NFC' }}</span>
+    </a>
+    <!-- Badge Distribution in Classrooms (Admin Only) -->
+    <a href="{{ url_for('badge_distribution') }}" class="btn" style="background:linear-gradient(135deg, #0b3d6e 0%, #06b6d4 100%); border:none; padding:9px 15px; font-weight:800; border-radius:10px; box-shadow:0 3px 12px rgba(6,182,212,0.35); display:inline-flex; align-items:center; gap:7px; color:#fff; text-decoration:none;" title="Tournée de distribution des badges imprimés par salle et créneau">
+      <span style="font-size:16px;">🚀</span>
+      <span>{{ 'توزيع بالقسم' if lang=='ar' else 'Distribution en Salle' }}</span>
+    </a>
+    <!-- Pre-printed Verso A4 Button -->
+    <a href="{{ url_for('badges_print_verso') }}" target="_blank" class="btn" style="background:#fffdf5; border:1.5px solid #c59b27; color:#92400e; padding:9px 14px; font-weight:800; border-radius:10px; box-shadow:0 2px 8px rgba(197,155,39,0.15); display:inline-flex; align-items:center; gap:6px; text-decoration:none;" title="Imprimer les planches Verso A4 standard (Règlement 20 DH, 9 badges/page)">
+      <span>📜</span>
+      <span>{{ 'طباعة ظهر A4 (20 درهم)' if lang=='ar' else 'Verso A4 (20 DH)' }}</span>
+    </a>
+  </div>
+</div>
+
+<!-- KPI SUMMARY CARDS -->
+<div class="badge-kpi-grid">
+  <!-- Card 1: Total Active -->
+  <div class="badge-kpi-card" onclick="resetAllBadgeFilters()" title="Afficher tous les élèves actifs">
+    <div class="badge-kpi-ico" style="background:#eff6ff; color:#1f6feb;">👥</div>
+    <div class="badge-kpi-info">
+      <h3>{{ total_active }}</h3>
+      <p>{{ 'إجمالي التلاميذ النشطين' if lang=='ar' else 'Élèves actifs éligibles' }}</p>
+    </div>
+  </div>
+
+  <!-- Card 2: Printed Badges (New!) -->
+  <div class="badge-kpi-card" onclick="filterByPrintStatus('printed')" title="Filtrer sur les badges déjà imprimés">
+    <div class="badge-kpi-ico" style="background:#f0fdf4; color:#16a34a;">🖨️</div>
+    <div class="badge-kpi-info">
+      <h3 style="color:#16a34a;" id="kpiCountPrinted">{{ total_printed }}</h3>
+      <p>{{ 'شهدت الطباعة' if lang=='ar' else 'Badges déjà imprimés' }}</p>
+    </div>
+  </div>
+
+  <!-- Card 3: Unprinted Badges (New!) -->
+  <div class="badge-kpi-card" onclick="filterByPrintStatus('unprinted')" title="Filtrer sur les badges non encore imprimés (À imprimer)">
+    <div class="badge-kpi-ico" style="background:#fffdf5; color:#d97706;">⏳</div>
+    <div class="badge-kpi-info">
+      <h3 style="color:#d97706;" id="kpiCountUnprinted">{{ total_unprinted }}</h3>
+      <p>{{ 'في انتظار الطباعة' if lang=='ar' else 'Non encore imprimés' }}</p>
+    </div>
+  </div>
+
+  <!-- Card 4: With Photo -->
+  <div class="badge-kpi-card" onclick="filterByPhotoStatus('with')" title="Filtrer avec photo">
+    <div class="badge-kpi-ico" style="background:#f0fdf4; color:#16a34a;">📸</div>
+    <div class="badge-kpi-info">
+      <h3 style="color:#16a34a;">{{ with_photo }}</h3>
+      <p>{{ 'بطاقات بالصورة' if lang=='ar' else 'Avec photo identité' }}</p>
+    </div>
+  </div>
+
+  <!-- Card 5: Without Photo -->
+  <div class="badge-kpi-card" onclick="filterByPhotoStatus('without')" title="Filtrer sans photo">
+    <div class="badge-kpi-ico" style="background:#fffbeb; color:#ea580c;">⚠️</div>
+    <div class="badge-kpi-info">
+      <h3 style="color:#ea580c;">{{ without_photo }}</h3>
+      <p>{{ 'بدون صورة' if lang=='ar' else 'Sans photo' }}</p>
+    </div>
+  </div>
+</div>
+
+<!-- SMART SEARCH & FILTER TOOLBAR -->
+<div class="badge-toolbar">
+  <!-- TIER 1: Activity Type Segmented Switcher (Quick Filter) -->
+  <div class="badge-toolbar-top">
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <span style="font-size:12px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">
+        🎯 {{ 'نوع النشاط' if lang=='ar' else 'Activité' }} :
+      </span>
+      <div class="badge-type-tabs" role="tablist">
+        <button type="button" class="badge-type-tab active-all" id="tabTypeAll" onclick="selectActivityType('all')">
+          <span>👥</span>
+          <span>{{ 'جميع التلاميذ' if lang=='ar' else 'Tous les élèves' }}</span>
+          <span class="tab-badge" id="tabCountAll">{{ total_active }}</span>
+        </button>
+        <button type="button" class="badge-type-tab" id="tabTypeLang" onclick="selectActivityType('language')">
+          <span>🌍</span>
+          <span>{{ 'اللغات الحية' if lang=='ar' else 'Langues Vivantes' }}</span>
+          <span class="tab-badge" id="tabCountLang">{{ total_langues }}</span>
+        </button>
+        <button type="button" class="badge-type-tab" id="tabTypeTutor" onclick="selectActivityType('tutoring')">
+          <span>📐</span>
+          <span>{{ 'الدعم المدرسي' if lang=='ar' else 'Soutien Scolaire' }}</span>
+          <span class="tab-badge" id="tabCountTutor">{{ total_tutoring }}</span>
+        </button>
+        <!-- Persistent Multi-Class Selection Basket Tab -->
+        <button type="button" class="badge-type-tab" id="tabTypeSelected" onclick="toggleOnlySelectedFilter()" style="display:none; border:1.5px dashed #f59e0b; color:#d97706; background:#fffbeb;">
+          <span>⭐</span>
+          <span>{{ 'المحددين' if lang=='ar' else 'Sélectionnés' }}</span>
+          <span class="tab-badge" id="tabCountSelected" style="background:#f59e0b; color:#fff;">0</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Counters & Indicators -->
+    <div style="display:flex; align-items:center; gap:10px; font-size:12.5px; font-weight:700; color:#64748b;">
+      <div id="filterNotice" style="display:none; color:#1f6feb; background:#eff6ff; padding:3px 8px; border-radius:6px; border:1px solid #bfdbfe;">
+        ⚡ {{ 'فلترة نشطة' if lang=='ar' else 'Filtre actif' }}
+      </div>
+      <div>
+        {{ 'عرض' if lang=='ar' else 'Affichage' }} : 
+        <strong id="badgeVisibleCount" style="color:#0B3D6E; font-size:14px;">{{ total_active }}</strong> 
+        / <strong>{{ total_active }}</strong> {{ 'تلميذ' if lang=='ar' else 'élèves' }}
+      </div>
+    </div>
+  </div>
+
+  <!-- TIER 2: Secondary Multi-Criteria Filter Controls -->
+  <div class="badge-filter-row">
+    <!-- Live Search -->
+    <div class="badge-search-wrap">
+      <span class="badge-search-icon">🔍</span>
+      <input type="text" id="badgeSearch" class="badge-search-input" 
+             placeholder="{{ 'بحث سريع بالاسم، الكود، الهاتف أو المستوى...' if lang=='ar' else 'Rechercher par nom, prénom, code élève, téléphone...' }}"
+             oninput="applyAllBadgeFilters()" autocomplete="off">
+      <button type="button" id="badgeSearchClear" class="badge-search-clear" onclick="clearBadgeSearch()">✕</button>
+    </div>
+
+    <!-- Filter by Matiere / Langue (Dynamic Cascading) -->
+    <select id="filterMatiere" class="badge-select" data-no-tomselect="true" onchange="onMatiereFilterChange()" style="font-weight:700; min-width:180px; flex:1;">
+      <option value="">🌍 {{ 'جميع اللغات والمواد' if lang=='ar' else 'Toutes les langues & matières' }}</option>
+    </select>
+
+    <!-- Filter by Teacher (Cascades dynamically with Course) -->
+    <select id="filterTeacher" class="badge-select" data-no-tomselect="true" onchange="onTeacherFilterChange()" style="font-weight:700; min-width:180px; flex:1;">
+      <option value="">👨‍🏫 {{ 'جميع الأساتذة' if lang=='ar' else 'Tous les enseignants' }} ({{ teachers|length }})</option>
+      {% for t in teachers %}
+        <option value="{{ t.id }}">{{ t.full_name }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Filter by Course / Group (Cascades dynamically with Teacher & Matiere) -->
+    <select id="filterCourse" class="badge-select" data-no-tomselect="true" onchange="onCourseFilterChange()" style="font-weight:700; min-width:210px; flex:1.2;">
+      <option value="">📚 {{ 'جميع الأفواج والمجموعات' if lang=='ar' else 'Tous les cours / groupes' }} ({{ courses|length }})</option>
+      {% for c in courses %}
+        {% set c_matiere = get_course_matiere(c) %}
+        <option value="{{ c.id }}" data-teacher-id="{{ c.teacher_id or '' }}" data-matiere="{{ c_matiere }}" data-category="{{ (c.category or '')|lower }}">
+          📚 {{ c_matiere }} · {{ c.display_name }}{% if c.teacher %} ({{ c.teacher.last_name or c.teacher.full_name }}){% endif %}
+        </option>
+      {% endfor %}
+    </select>
+
+    <!-- Filter by School Level -->
+    {% if levels %}
+    <select id="filterLevel" class="badge-select" data-no-tomselect="true" onchange="applyAllBadgeFilters()" style="min-width:120px; flex:0.7;">
+      <option value="">🎓 {{ 'المستوى' if lang=='ar' else 'Tous niveaux' }}</option>
+      {% for l in levels %}
+        <option value="{{ l }}">{{ l }}</option>
+      {% endfor %}
+    </select>
+    {% endif %}
+
+    <!-- Filter by Printed Status (New!) -->
+    <select id="filterPrintStatus" class="badge-select" data-no-tomselect="true" onchange="applyAllBadgeFilters()" style="min-width:145px; flex:0.85; font-weight:800;">
+      <option value="all">🖨️ {{ 'الطباعة: الكل' if lang=='ar' else 'Impression : Tous' }}</option>
+      <option value="unprinted">⏳ {{ 'غير مطبوع بعد' if lang=='ar' else '⏳ Non imprimés' }} ({{ total_unprinted }})</option>
+      <option value="printed">✓ {{ 'تمت طباعته' if lang=='ar' else '✓ Déjà imprimés' }} ({{ total_printed }})</option>
+    </select>
+
+    <!-- Filter by Photo -->
+    <select id="filterPhoto" class="badge-select" data-no-tomselect="true" onchange="applyAllBadgeFilters()" style="min-width:120px; flex:0.7;">
+      <option value="all">{{ 'الصورة: الكل' if lang=='ar' else 'Photo : Tous' }}</option>
+      <option value="with">📸 {{ 'مع صورة' if lang=='ar' else 'Avec photo' }}</option>
+      <option value="without">⚠️ {{ 'بدون صورة' if lang=='ar' else 'Sans photo' }}</option>
+    </select>
+
+    <!-- Reset Filters -->
+    <button type="button" class="btn btn-sm btn-outline" onclick="resetAllBadgeFilters()" title="Réinitialiser tous les filtres" style="height:40px; border-radius:10px; font-weight:800; padding:0 14px; border-color:#cbd5e1; color:#64748b; flex-shrink:0;">
+      ↺ {{ 'إعادة ضبط' if lang=='ar' else 'Effacer' }}
+    </button>
+  </div>
+
+  <!-- DYNAMIC GROUP ACTION BANNER (Shown when teacher/course/matiere filter is active) -->
+  <div id="groupActionBar" style="display:none; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1.5px solid #86efac; border-radius: 12px; padding: 10px 16px; margin-top: 4px; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 2px 8px rgba(16,185,129,0.12);">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="font-size:22px;">🎯</span>
+      <div>
+        <div style="font-weight:900; color:#14532d; font-size:13.5px;" id="groupActionTitle">Groupe filtré</div>
+        <div style="font-size:11.5px; color:#166534; font-weight:700;"><span id="groupActionCount">0</span> {{ 'تلميذ في هذه المجموعة' if lang=='ar' else 'élève(s) dans cette sélection' }}</div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <button type="button" class="btn btn-sm" onclick="selectAllVisibleBadges(true)" style="background:#ffffff; color:#14532d; border:1px solid #86efac; font-weight:700; border-radius:8px;">
+        ✓ {{ 'تحديد الكل' if lang=='ar' else 'Tout cocher' }}
+      </button>
+      <button type="button" class="btn btn-sm btn-success" onclick="printFilteredGroup('a4')" style="background:#059669; color:#ffffff; border:none; font-weight:800; border-radius:8px; padding:7px 14px; box-shadow:0 2px 8px rgba(5,150,105,0.3); display:inline-flex; align-items:center; gap:6px;">
+        <span>📄</span><span>{{ 'طباعة الفوج في A4 (بلاستيك 10mm)' if lang=='ar' else 'Imprimer ce Groupe en A4 (Plastification 10mm)' }}</span>
+      </button>
+      <button type="button" class="btn btn-sm btn-primary" onclick="printFilteredGroup('cr80')" style="background:#0B3D6E; color:#ffffff; border:none; font-weight:800; border-radius:8px; padding:7px 14px; display:inline-flex; align-items:center; gap:6px;">
+        <span>🪪</span><span>{{ 'طباعة شارات PVC (CR80)' if lang=='ar' else 'Imprimer en Badges CR80 (PVC)' }}</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- FIXED FLOATING BATCH ACTIONS BAR (Revealed when >= 1 student selected across any classes) -->
+<div id="batchActionBar" class="batch-bar" style="display:none;">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <span style="font-size:24px;">⭐</span>
+    <div>
+      <div style="font-weight:900; font-size:14px; display:flex; align-items:center; gap:6px;">
+        <span id="batchCountBadge" style="color:#38bdf8; font-size:16px;">0</span> 
+        <span>{{ 'تلميذ محدد (من مختلف الأقسام)' if lang=='ar' else 'élève(s) sélectionné(s) (multi-classes)' }}</span>
+      </div>
+      <div style="font-size:11px; opacity:0.85;">
+        {{ 'التحديدات محفوظة دائماً حتى عند تغيير الأستاذ أو المادة' if lang=='ar' else 'Sélection conservée même si vous changez d\'enseignant ou de matière' }}
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+    <!-- Toggle View Only Selected Students -->
+    <button type="button" class="btn btn-sm" id="btnFloatingViewSelected" onclick="toggleOnlySelectedFilter()" style="background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.35); color:#fff; font-weight:800; border-radius:8px; padding:7px 12px; cursor:pointer;">
+      <span>👁️</span> <span id="lblBtnViewSelected">{{ 'عرض المحددين فقط' if lang=='ar' else 'Voir la sélection' }}</span>
+    </button>
+    
+    <!-- Deselect All -->
+    <button type="button" class="btn btn-sm" onclick="deselectAllBadges()" style="background:transparent; border:none; color:#cbd5e1; font-weight:700; padding:7px 10px; cursor:pointer;" title="Vider le panier de sélection">
+      ✕ {{ 'إلغاء الكل' if lang=='ar' else 'Effacer panier' }}
+    </button>
+
+    <!-- Print Selected in A4 10mm -->
+    <button type="button" class="btn btn-sm btn-success" onclick="printSelectedBadges('a4')" style="background:#10b981; color:#ffffff; border:none; font-weight:900; border-radius:8px; padding:8px 16px; box-shadow:0 3px 10px rgba(16,185,129,0.4); display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="Imprimer tous les élèves sélectionnés en planches A4 de 9 badges">
+      <span>📄</span><span>{{ 'طباعة المحددين في A4 (10mm للپلاستيك)' if lang=='ar' else 'Imprimer Sélection en A4 (10mm)' }}</span>
+    </button>
+
+    <!-- Print Selected in CR80 PVC -->
+    <button type="button" class="btn btn-sm" onclick="printSelectedBadges('cr80')" style="background:#081426; color:#fcd34d; border:1.5px solid #c59b27; font-weight:900; border-radius:8px; padding:8px 16px; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="Imprimer tous les élèves sélectionnés en cartes PVC CR80">
+      <span>🪪</span><span>{{ 'طباعة شارات PVC (CR80)' if lang=='ar' else 'Imprimer Sélection en CR80' }}</span>
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================
+     VIEW A: GRID CARDS VIEW
+     ============================================================ -->
+<div id="badgeGridView" class="badge-cards-grid">
+  {% for s in students %}
+  {% set enrolls = s.enrollments|selectattr("status", "equalto", "active")|list %}
+  {% set stu_teacher_ids = [] %}
+  {% set stu_course_ids = [] %}
+  {% set stu_categories = [] %}
+  {% set stu_matieres = [] %}
+  {% set stu_cat_mats = [] %}
+  {% for e in enrolls %}
+    {% if e.course %}
+      {% set _ = stu_course_ids.append(e.course.id|string) %}
+      {% set cat = (e.course.category or '')|lower %}
+      {% if cat %}
+        {% set _ = stu_categories.append(cat) %}
+      {% endif %}
+      {% set mat = get_course_matiere(e.course) %}
+      {% if mat %}
+        {% set mat_lower = mat|lower %}
+        {% set _ = stu_matieres.append(mat_lower) %}
+        {% if cat %}
+          {% set _ = stu_cat_mats.append(cat ~ ':' ~ mat_lower) %}
+        {% endif %}
+      {% endif %}
+      {% if e.course.teacher_id %}
+        {% set _ = stu_teacher_ids.append(e.course.teacher_id|string) %}
+      {% endif %}
+      {% for ta in e.course.teacher_assignments %}
+        {% if ta.teacher_id and ta.is_active %}
+          {% set _ = stu_teacher_ids.append(ta.teacher_id|string) %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
+  <div class="badge-mini-card badge-item" 
+       id="card-student-{{ s.id }}"
+       data-id="{{ s.id }}"
+       data-name="{{ s.full_name|lower }}"
+       data-code="{{ (s.code or '')|lower }}"
+       data-level="{{ (s.school_level or '')|lower }}"
+       data-phone="{{ (s.phone or '') ~ ' ' ~ (s.parent_phone or '') }}"
+       data-has-photo="{{ 'yes' if s.photo else 'no' }}"
+       data-printed="{{ 'yes' if s.id in printed_student_ids else 'no' }}"
+       data-print-date="{{ printed_student_ids[s.id].issue_date if s.id in printed_student_ids else '' }}"
+       data-categories="{{ stu_categories|unique|join(' ') }}"
+       data-matieres="|{% for m in stu_matieres|unique %}{{ m }}|{% endfor %}"
+       data-cat-mats="|{% for cm in stu_cat_mats|unique %}{{ cm }}|{% endfor %}"
+       data-courses="{% for e in enrolls %}{% if e.course %}{{ e.course.display_name|lower }} {% endif %}{% endfor %}"
+       data-teacher-ids="{% for tid in stu_teacher_ids|unique %}{{ tid }} {% endfor %}"
+       data-course-ids="{% for cid in stu_course_ids|unique %}{{ cid }} {% endfor %}">
+    
+    <!-- Tricolor Top Stripe -->
+    <div class="badge-stripe"></div>
+
+    <div class="badge-card-top">
+      <div class="badge-checkbox-wrap">
+        <input type="checkbox" class="badge-checkbox" value="{{ s.id }}" onchange="handleCheckboxChange(this)">
+        <span class="chip chip-blue" style="font-size:10.5px; padding:2px 7px; font-weight:800;">
+          {{ s.code or ('ILAS-' ~ s.id) }}
+        </span>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:5px;">
+        <!-- Printed Status Pill -->
+        {% if s.id in printed_student_ids %}
+          <span class="badge-status-pill printed" id="print-pill-grid-{{ s.id }}" onclick="toggleStudentPrintStatus(event, {{ s.id }})" title="Badge imprimé le {{ printed_student_ids[s.id].issue_date }}. Cliquez pour modifier">
+            ✓ {{ 'مطبوع' if lang=='ar' else 'Imprimé' }}
+          </span>
+        {% else %}
+          <span class="badge-status-pill unprinted" id="print-pill-grid-{{ s.id }}" onclick="toggleStudentPrintStatus(event, {{ s.id }})" title="Non encore imprimé. Cliquez pour marquer comme imprimé">
+            ⏳ {{ 'غير مطبوع' if lang=='ar' else 'Non imprimé' }}
+          </span>
+        {% endif %}
+
+        {% if s.photo %}
+          <span style="font-size:10.5px; font-weight:800; color:#16a34a; background:#f0fdf4; padding:2px 6px; border-radius:6px; border:1px solid #bbf7d0;">
+            ✓ Photo
+          </span>
+        {% else %}
+          <span style="font-size:10.5px; font-weight:800; color:#d97706; background:#fffbeb; padding:2px 6px; border-radius:6px; border:1px solid #fde68a;">
+            ⚠️ Sans photo
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="badge-card-body">
+      <!-- Photo Frame -->
+      <div class="badge-photo-box">
+        {% if s.photo %}
+          <img src="{{ url_for('static', filename='uploads/' ~ s.photo) }}" class="badge-photo-img" alt="{{ s.full_name }}" loading="lazy">
+        {% else %}
+          <div class="badge-no-photo">
+            <span>📷</span>
+            <span style="font-size:8px; font-weight:800; margin-top:2px; color:#94a3b8;">NO PHOTO</span>
+          </div>
+        {% endif %}
+      </div>
+
+      <h4 class="badge-card-name">{{ s.full_name }}</h4>
+      <div class="badge-card-level">{{ s.school_level or 'Formation Générale' }}</div>
+
+      <!-- Active Courses -->
+      <div class="badge-courses-list">
+        {% if enrolls %}
+          {% for e in enrolls[:2] %}
+            {% if e.course %}
+              <span class="badge-course-chip" title="{% if e.course.teacher %}Prof: {{ e.course.teacher.full_name }}{% endif %}">
+                {{ e.course.display_name }}
+                {% if e.course.teacher %}
+                  <span style="color:#0284c7; font-weight:800;">· {{ e.course.teacher.last_name or e.course.teacher.full_name }}</span>
+                {% endif %}
+              </span>
+            {% endif %}
+          {% endfor %}
+          {% if enrolls|length > 2 %}
+            <span class="badge-course-chip" style="background:#e0f2fe; color:#0369a1;">+{{ enrolls|length - 2 }}</span>
+          {% endif %}
+        {% else %}
+          <span class="muted" style="font-size:10.5px;">{{ 'بدون أفواج نشطة' if lang=='ar' else 'Aucun cours actif' }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="badge-card-footer">
+      <button type="button" class="btn btn-outline" onclick="openBadgePreviewModal({{ s.id }})" style="color:#0B3D6E; border-color:#cbd5e1;">
+        <span>👁️</span><span>{{ 'معاينة' if lang=='ar' else 'Aperçu' }}</span>
+      </button>
+      <a href="{{ url_for('badges_print', student_id=s.id) }}" target="_blank" class="btn btn-primary" style="background:#0B3D6E; border:none; color:#fff;">
+        <span>🖨️</span><span>{{ 'طباعة' if lang=='ar' else 'Imprimer' }}</span>
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ============================================================
+     VIEW B: MODERN TABLE VIEW
+     ============================================================ -->
+<div id="badgeTableView" class="card" style="display:none;">
+  <div class="table-wrap">
+    <table id="badgeTable">
+      <thead>
+        <tr>
+          <th style="width:40px; text-align:center;">
+            <input type="checkbox" id="selectAllHeader" onchange="toggleSelectAllTable(this)" class="badge-checkbox">
+          </th>
+          <th>{{ 'التلميذ والكود' if lang=='ar' else 'Élève & Code' }}</th>
+          <th>{{ 'المستوى الدراسي' if lang=='ar' else 'Niveau scolaire' }}</th>
+          <th>{{ 'الهاتف' if lang=='ar' else 'Téléphone' }}</th>
+          <th>{{ 'الأفواج المسجل فيها' if lang=='ar' else 'Cours actifs' }}</th>
+          <th style="text-align:center;">{{ 'الصورة' if lang=='ar' else 'Statut Photo' }}</th>
+          <th style="text-align:center;">{{ 'الطباعة' if lang=='ar' else 'Impression' }}</th>
+          <th style="text-align:right;">{{ 'الإجراءات' if lang=='ar' else 'Actions' }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+        {% set enrolls = s.enrollments|selectattr("status", "equalto", "active")|list %}
+        {% set stu_teacher_ids = [] %}
+        {% set stu_course_ids = [] %}
+        {% set stu_categories = [] %}
+        {% set stu_matieres = [] %}
+        {% set stu_cat_mats = [] %}
+        {% for e in enrolls %}
+          {% if e.course %}
+            {% set _ = stu_course_ids.append(e.course.id|string) %}
+            {% set cat = (e.course.category or '')|lower %}
+            {% if cat %}
+              {% set _ = stu_categories.append(cat) %}
+            {% endif %}
+            {% set mat = get_course_matiere(e.course) %}
+            {% if mat %}
+              {% set mat_lower = mat|lower %}
+              {% set _ = stu_matieres.append(mat_lower) %}
+              {% if cat %}
+                {% set _ = stu_cat_mats.append(cat ~ ':' ~ mat_lower) %}
+              {% endif %}
+            {% endif %}
+            {% if e.course.teacher_id %}
+              {% set _ = stu_teacher_ids.append(e.course.teacher_id|string) %}
+            {% endif %}
+            {% for ta in e.course.teacher_assignments %}
+              {% if ta.teacher_id and ta.is_active %}
+                {% set _ = stu_teacher_ids.append(ta.teacher_id|string) %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+        <tr class="badge-row badge-item"
+            id="row-student-{{ s.id }}"
+            data-id="{{ s.id }}"
+            data-name="{{ s.full_name|lower }}"
+            data-code="{{ (s.code or '')|lower }}"
+            data-level="{{ (s.school_level or '')|lower }}"
+            data-phone="{{ (s.phone or '') ~ ' ' ~ (s.parent_phone or '') }}"
+            data-has-photo="{{ 'yes' if s.photo else 'no' }}"
+            data-printed="{{ 'yes' if s.id in printed_student_ids else 'no' }}"
+            data-print-date="{{ printed_student_ids[s.id].issue_date if s.id in printed_student_ids else '' }}"
+            data-categories="{{ stu_categories|unique|join(' ') }}"
+            data-matieres="|{% for m in stu_matieres|unique %}{{ m }}|{% endfor %}"
+            data-cat-mats="|{% for cm in stu_cat_mats|unique %}{{ cm }}|{% endfor %}"
+            data-courses="{% for e in enrolls %}{% if e.course %}{{ e.course.display_name|lower }} {% endif %}{% endfor %}"
+            data-teacher-ids="{% for tid in stu_teacher_ids|unique %}{{ tid }} {% endfor %}"
+            data-course-ids="{% for cid in stu_course_ids|unique %}{{ cid }} {% endfor %}">
+          <td style="text-align:center;">
+            <input type="checkbox" class="badge-checkbox" value="{{ s.id }}" onchange="handleCheckboxChange(this)">
+          </td>
+          <td>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div class="avatar" style="width:38px; height:38px; border-radius:8px; overflow:hidden; background:#0B3D6E; color:#fff; font-weight:800; border:1px solid #cbd5e1; flex-shrink:0;">
+                {% if s.photo %}
+                  <img src="{{ url_for('static', filename='uploads/' ~ s.photo) }}" style="width:100%; height:100%; object-fit:cover;">
+                {% else %}
+                  {{ s.first_name[0]|upper if s.first_name else 'S' }}
+                {% endif %}
+              </div>
+              <div>
+                <strong style="color:#0B3D6E; font-size:14px; display:block;">{{ s.full_name }}</strong>
+                <span class="chip chip-blue" style="font-size:10px; padding:1px 6px;">{{ s.code or ('ILAS-' ~ s.id) }}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <strong style="color:#334155; font-size:13px;">{{ s.school_level or '—' }}</strong>
+          </td>
+          <td>
+            <div style="font-size:12px; color:#475569;">
+              {% if s.phone %}<div>📱 {{ s.phone }}</div>{% endif %}
+              {% if s.parent_phone %}<div class="muted" style="font-size:11px;">👨‍👩‍👧 {{ s.parent_phone }}</div>{% endif %}
+              {% if not s.phone and not s.parent_phone %}<span class="muted">—</span>{% endif %}
+            </div>
+          </td>
+          <td>
+            {% if enrolls %}
+              <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                {% for e in enrolls %}
+                  {% if e.course %}
+                    <span class="badge-course-chip" style="font-size:11px;" title="{% if e.course.teacher %}Prof: {{ e.course.teacher.full_name }}{% endif %}">
+                      {{ e.course.display_name }}
+                      {% if e.course.teacher %}
+                        <span style="color:#0284c7; font-weight:800;">· {{ e.course.teacher.last_name or e.course.teacher.full_name }}</span>
+                      {% endif %}
+                    </span>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            {% else %}
+              <span class="muted" style="font-size:11px;">{{ 'غير مسجل بدورة' if lang=='ar' else 'Aucun cours actif' }}</span>
+            {% endif %}
+          </td>
+          <td style="text-align:center;">
+            {% if s.photo %}
+              <span class="chip chip-green" style="font-size:10.5px;">✓ Avec photo</span>
+            {% else %}
+              <span class="chip chip-yellow" style="font-size:10.5px;">⚠️ Sans photo</span>
+            {% endif %}
+          </td>
+          <td style="text-align:center;">
+            {% if s.id in printed_student_ids %}
+              <span class="badge-status-pill printed" id="print-pill-table-{{ s.id }}" onclick="toggleStudentPrintStatus(event, {{ s.id }})" title="Badge imprimé le {{ printed_student_ids[s.id].issue_date }}. Cliquez pour modifier">
+                ✓ {{ 'مطبوع' if lang=='ar' else 'Imprimé' }}
+              </span>
+            {% else %}
+              <span class="badge-status-pill unprinted" id="print-pill-table-{{ s.id }}" onclick="toggleStudentPrintStatus(event, {{ s.id }})" title="Non encore imprimé. Cliquez pour marquer comme imprimé">
+                ⏳ {{ 'غير مطبوع' if lang=='ar' else 'Non imprimé' }}
+              </span>
+            {% endif %}
+          </td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex; gap:6px;">
+              <button type="button" class="btn btn-xs btn-outline" onclick="openBadgePreviewModal({{ s.id }})" style="color:#0B3D6E; border-color:#cbd5e1; font-weight:700;">
+                <span>👁️</span><span>Aperçu</span>
+              </button>
+              <a href="{{ url_for('badges_print', student_id=s.id) }}" target="_blank" class="btn btn-xs btn-primary" style="background:#0B3D6E; border:none; font-weight:700;">
+                <span>🖨️</span><span>Imprimer</span>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- EMPTY STATE WHEN SEARCH HAS NO MATCHES -->
+<div id="badgeNoResults" style="display:none; text-align:center; padding:48px 20px; background:#ffffff; border-radius:14px; border:1.5px dashed #cbd5e1; margin-top:16px;">
+  <div style="font-size:36px; margin-bottom:10px;">🔍</div>
+  <h3 style="margin:0 0 6px 0; font-size:16px; color:#0f172a; font-weight:800;">
+    {{ 'لا توجد نتائج مطابقة' if lang=='ar' else 'Aucun élève trouvé' }}
+  </h3>
+  <p style="margin:0 0 16px 0; font-size:13px; color:#64748b;">
+    {{ 'تحقق من الكلمات المدخلة أو الفلاتر المختارة' if lang=='ar' else 'Modifiez votre recherche ou réinitialisez les filtres sélectionnés.' }}
+  </p>
+  <button type="button" class="btn btn-sm btn-primary" onclick="resetAllBadgeFilters()" style="font-weight:700; border-radius:8px;">
+    ↺ {{ 'إلغاء الفلاتر والبحث' if lang=='ar' else 'Réinitialiser les filtres' }}
+  </button>
+</div>
+
+<!-- ============================================================
+     INTERACTIVE REALISTIC BADGE PREVIEW MODAL
+     ============================================================ -->
+<div id="badgePreviewModal" class="badge-modal-backdrop" onclick="closeBadgeModalOnBackdrop(event)">
+  <div class="badge-modal-card">
+    <div class="badge-modal-header">
+      <div class="badge-modal-title">
+        <span>🪪</span>
+        <span>{{ 'معاينة البطاقة المدرسية (CR80 Paysage)' if lang=='ar' else 'Aperçu Réaliste de la Carte (CR80 Paysage)' }}</span>
+      </div>
+      <button type="button" class="badge-modal-close" onclick="closeBadgePreviewModal()" title="Fermer">✕</button>
+    </div>
+
+    <div class="badge-modal-body">
+      <!-- Badge Format Tag -->
+      <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+        <span id="modalVariantPill" style="font-size:11.5px; font-weight:800; padding:4px 12px; border-radius:20px; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe;">
+          Format Standard CR80 · Paysage (1 Face)
+        </span>
+      </div>
+
+      <!-- Card Realistic Preview (CR80 Landscape: 440px x 277px) -->
+      <div class="id-realistic-preview" id="modalCardContainer" style="background:#ffffff; border:1px solid #cbd5e1; box-shadow:0 15px 35px rgba(11,61,110,0.18);">
+        
+        <!-- Tricolor Stripe -->
+        <div class="id-preview-stripe" style="height:4px; background:linear-gradient(90deg, #0B3D6E 0%, #0B3D6E 44%, #C59B27 44%, #C59B27 74%, #C0292B 74%, #C0292B 100%);"></div>
+        
+        <!-- Card Header -->
+        <div style="height:48px; background:#ffffff; display:flex; align-items:center; justify-content:space-between; padding:0 14px; border-bottom:1px solid #e2e8f0;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:34px; height:34px; display:flex; align-items:center; justify-content:center;">
+              <img src="{{ url_for('static', filename='uploads/logo-ilas.png') }}" alt="Logo" style="max-width:100%; max-height:100%; object-fit:contain;" onerror="this.src='{{ url_for('static', filename='uploads/logo-ilas-bw.png') }}';">
+            </div>
+            <div>
+              <div style="color:#0B3D6E; font-size:12px; font-weight:900; text-transform:uppercase; line-height:1.15;" id="modalInstName">{{ settings.inst_name|default('INSTITUT ILAS') }}</div>
+              <div style="color:#C59B27; font-size:8.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Langues & Soutien Scolaire</div>
+            </div>
+          </div>
+          <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:3px 10px; color:#0B3D6E; font-size:9.5px; font-weight:800; display:flex; gap:6px;">
+            <span>CARTE ÉTUDIANT</span>
+            <span style="color:#C59B27; border-left:1px solid #cbd5e1; padding-left:6px;" id="modalYear">{{ settings.school_year|default('2025/2026') }}</span>
+          </div>
+        </div>
+
+        <!-- ==============================================
+             LAYOUT A: WITH PHOTO
+             ============================================== -->
+        <div id="modalLayoutWithPhoto" style="flex:1; display:flex; padding:10px 14px 6px 14px; gap:12px; min-height:0; background:#ffffff;">
+          <!-- Left: Photo & Code -->
+          <div style="width:96px; display:flex; flex-direction:column; align-items:center; flex-shrink:0;">
+            <div style="width:96px; height:116px; border-radius:8px; border:1.8px solid #C59B27; background:#f8fafc; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.08);">
+              <img id="modalPhoto" src="" alt="Photo" style="width:100%; height:100%; object-fit:cover;">
+            </div>
+            <div style="width:96px; margin-top:5px; background:#0B3D6E; border-radius:5px; padding:3px 0; text-align:center;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:800; color:#fcd34d;" id="modalCodeVal">ILAS-0000</div>
+            </div>
+          </div>
+
+          <!-- Right: Info, Courses, QR, NFC -->
+          <div style="flex:1; display:flex; flex-direction:column; justify-content:space-between; min-width:0;">
+            <div>
+              <div style="font-size:14px; font-weight:900; color:#0B3D6E; text-transform:uppercase; line-height:1.15; border-bottom:1px solid #f1f5f9; padding-bottom:4px; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="modalName">NOM PRÉNOM</div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                <span style="background:#f1f5f9; color:#334155; border:0.8px solid #cbd5e1; font-size:9px; font-weight:800; text-transform:uppercase; padding:2px 8px; border-radius:4px;" id="modalLevel">NIVEAU</span>
+                <span style="background:#f0fdf4; color:#166534; border:0.8px solid #bbf7d0; font-size:9px; font-weight:800; text-transform:uppercase; padding:2px 8px; border-radius:4px;">● ACTIF</span>
+              </div>
+              <div id="modalCoursesContainer" style="display:flex; flex-direction:column; gap:4px;"></div>
+            </div>
+
+            <!-- Bottom Scan Row: QR + NFC Target -->
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:auto; padding-top:4px;">
+              <!-- QR Code -->
+              <div style="display:flex; align-items:center; gap:6px; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:3px 6px;">
+                <img id="modalQR" src="" alt="QR" style="width:48px; height:48px; object-fit:contain;">
+                <div style="display:flex; flex-direction:column;">
+                  <span style="font-size:8px; font-weight:900; color:#0B3D6E; text-transform:uppercase;">Vérification</span>
+                  <span style="font-size:7px; font-weight:700; color:#64748b;">Scanner QR</span>
+                </div>
+              </div>
+
+              <!-- NFC Target Zone -->
+              <div style="width:68px; height:54px; border:1.5px dashed #0B3D6E; border-radius:8px; background:rgba(11,61,110,0.03); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0B3D6E" stroke-width="2.3" stroke-linecap="round">
+                  <path d="M8.5 16.5a6 6 0 0 1 0-9"/>
+                  <path d="M12 19a9.5 9.5 0 0 1 0-14"/>
+                  <path d="M15.5 21.5a13 13 0 0 1 0-19"/>
+                  <circle cx="5" cy="12" r="1.5" fill="#0B3D6E"/>
+                </svg>
+                <span style="font-size:7px; font-weight:900; color:#0B3D6E; text-transform:uppercase; line-height:1; margin-top:2px;">POINTAGE</span>
+                <span style="font-size:6.5px; font-weight:800; color:#C59B27; text-transform:uppercase; line-height:1;">NFC TAG</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==============================================
+             LAYOUT B: WITHOUT PHOTO (FULL-WIDTH MODERN)
+             ============================================== -->
+        <div id="modalLayoutNoPhoto" style="display:none; flex-direction:column; justify-content:space-between; flex:1; padding:12px 14px 6px 14px; background:#ffffff;">
+          <!-- Top Row -->
+          <div style="border-bottom:1px solid #f1f5f9; padding-bottom:6px;">
+            <div style="font-size:16px; font-weight:900; color:#0B3D6E; text-transform:uppercase; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="modalNoPhotoName">NOM PRÉNOM</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:800; color:#0B3D6E; background:#f1f5f9; border:1px solid #cbd5e1; padding:2px 8px; border-radius:5px;" id="modalNoPhotoCode">ILAS-0000</span>
+              <span style="font-size:9.5px; font-weight:800; color:#0B3D6E; background:rgba(197,155,39,0.12); border:1px solid #C59B27; padding:2px 8px; border-radius:5px; text-transform:uppercase;" id="modalNoPhotoLevel">NIVEAU</span>
+            </div>
+          </div>
+
+          <!-- Courses Grid -->
+          <div id="modalNoPhotoCourses" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin:6px 0;"></div>
+
+          <!-- Bottom Row: QR + Center Note + NFC -->
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:auto; padding-top:4px;">
+            <!-- QR Code -->
+            <div style="display:flex; align-items:center; gap:6px; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:3px 6px;">
+              <img id="modalNoPhotoQR" src="" alt="QR" style="width:48px; height:48px; object-fit:contain;">
+              <div style="display:flex; flex-direction:column;">
+                <span style="font-size:8px; font-weight:900; color:#0B3D6E; text-transform:uppercase;">Vérification</span>
+                <span style="font-size:7px; font-weight:700; color:#64748b;">Scanner QR</span>
+              </div>
+            </div>
+
+            <!-- Center Note -->
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+              <span style="font-size:8px; font-weight:900; color:#10b981; text-transform:uppercase; letter-spacing:0.4px;">● Badge Authentifié</span>
+              <span style="font-size:7.5px; font-weight:700; color:#64748b; margin-top:2px;">Suivi & Pointage NFC</span>
+            </div>
+
+            <!-- NFC Target Zone -->
+            <div style="width:68px; height:54px; border:1.5px dashed #0B3D6E; border-radius:8px; background:rgba(11,61,110,0.03); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0B3D6E" stroke-width="2.3" stroke-linecap="round">
+                <path d="M8.5 16.5a6 6 0 0 1 0-9"/>
+                <path d="M12 19a9.5 9.5 0 0 1 0-14"/>
+                <path d="M15.5 21.5a13 13 0 0 1 0-19"/>
+                <circle cx="5" cy="12" r="1.5" fill="#0B3D6E"/>
+              </svg>
+              <span style="font-size:7px; font-weight:900; color:#0B3D6E; text-transform:uppercase; line-height:1; margin-top:2px;">POINTAGE</span>
+              <span style="font-size:6.5px; font-weight:800; color:#C59B27; text-transform:uppercase; line-height:1;">NFC TAG</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="height:20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; align-items:center; justify-content:space-between; padding:0 14px; font-size:8px; font-weight:800; color:#0B3D6E;">
+          <span>● INSTITUT ILAS · CASABLANCA</span>
+          <span style="color:#64748b;">Tél: {{ settings.inst_phone|default('+212 5 22 89 40 12') }} · www.institutilas.com</span>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="badge-modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeBadgePreviewModal()" style="border-radius:8px; font-weight:700;">
+        {{ 'إغلاق' if lang=='ar' else 'Fermer' }}
+      </button>
+
+      <a id="modalPrintBtn" href="#" target="_blank" class="btn btn-primary" style="background:#0B3D6E; border:none; font-weight:800; display:inline-flex; align-items:center; gap:6px; border-radius:8px;">
+        <span>🖨️</span><span>{{ 'طباعة هذه البطاقة' if lang=='ar' else 'Imprimer ce Badge' }}</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- SCRIPT: ADVANCED FILTERING, BATCH SELECTION & PREVIEW MODAL -->
+<script>
+var selectedStudentIds = new Set();
+var currentView = 'grid';
+
+// --- View Switcher ---
+function switchBadgeView(view) {
+  currentView = view;
+  var btnGrid = document.getElementById('btnViewGrid');
+  var btnTable = document.getElementById('btnViewTable');
+  var viewGrid = document.getElementById('badgeGridView');
+  var viewTable = document.getElementById('badgeTableView');
+
+  if (view === 'grid') {
+    btnGrid.classList.add('active');
+    btnTable.classList.remove('active');
+    viewGrid.style.display = 'grid';
+    viewTable.style.display = 'none';
+  } else {
+    btnTable.classList.add('active');
+    btnGrid.classList.remove('active');
+    viewGrid.style.display = 'none';
+    viewTable.style.display = 'block';
+  }
+}
+
+// --- Cascading Teacher <-> Course Dynamic Filter ---
+var ALL_COURSES = [
+  {% for c in courses %}
+  {% set c_tids = [] %}
+  {% if c.teacher_id %}
+    {% set _ = c_tids.append(c.teacher_id|string) %}
+  {% endif %}
+  {% for ta in c.teacher_assignments %}
+    {% if ta.teacher_id and ta.is_active %}
+      {% set _ = c_tids.append(ta.teacher_id|string) %}
+    {% endif %}
+  {% endfor %}
+  {% set c_mat = get_course_matiere(c) or 'Général' %}
+  {
+    id: "{{ c.id }}",
+    name: {{ (c.display_name or c.name)|tojson }},
+    category: {{ (c.category or '')|lower|tojson }},
+    matiere: {{ c_mat|tojson }},
+    matiereKey: {{ c_mat|lower|tojson }},
+    teacherId: "{{ c.teacher_id or '' }}",
+    allTeacherIds: {{ c_tids|unique|list|tojson }},
+    teacherName: {{ (c.teacher.full_name if c.teacher else '')|tojson }}
+  }{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+var ALL_TEACHERS = [
+  {% for t in teachers %}
+  {
+    id: "{{ t.id }}",
+    name: {{ t.full_name|tojson }}
+  }{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+// Helper: Matiere Emoji
+function getMatiereEmoji(mat) {
+  var m = (mat || '').toLowerCase();
+  if (m.indexOf('anglais') !== -1 || m.indexOf('english') !== -1) return '🇬🇧';
+  if (m.indexOf('français') !== -1 || m.indexOf('francais') !== -1) return '🇫🇷';
+  if (m.indexOf('allemand') !== -1 || m.indexOf('deutsch') !== -1) return '🇩🇪';
+  if (m.indexOf('espagnol') !== -1 || m.indexOf('spanish') !== -1) return '🇪🇸';
+  if (m.indexOf('math') !== -1) return '📐';
+  if (m.indexOf('phys') !== -1 || m.indexOf('chim') !== -1) return '⚗️';
+  if (m.indexOf('svt') !== -1 || m.indexOf('bio') !== -1) return '🧬';
+  if (m.indexOf('arabe') !== -1) return '🇲🇦';
+  if (m.indexOf('info') !== -1 || m.indexOf('code') !== -1) return '💻';
+  return '📚';
+}
+
+// Global active category state
+var currentCategoryFilter = 'all'; // 'all', 'language', 'tutoring'
+var filterOnlySelected = false; // Persistent selection filter toggle
+
+// Switch Activity Type (Segmented Switcher)
+function selectActivityType(category) {
+  if (filterOnlySelected) {
+    filterOnlySelected = false;
+    var tabSel = document.getElementById('tabTypeSelected');
+    if (tabSel) tabSel.className = 'badge-type-tab';
+    var lblViewSel = document.getElementById('lblBtnViewSelected');
+    if (lblViewSel) lblViewSel.textContent = document.documentElement.lang === 'ar' ? 'عرض المحددين فقط' : 'Voir la sélection';
+  }
+
+  currentCategoryFilter = category;
+
+  var tabAll = document.getElementById('tabTypeAll');
+  var tabLang = document.getElementById('tabTypeLang');
+  var tabTutor = document.getElementById('tabTypeTutor');
+
+  if (tabAll) tabAll.className = 'badge-type-tab' + (category === 'all' ? ' active-all' : '');
+  if (tabLang) tabLang.className = 'badge-type-tab' + (category === 'language' ? ' active-lang' : '');
+  if (tabTutor) tabTutor.className = 'badge-type-tab' + (category === 'tutoring' ? ' active-tutor' : '');
+
+  var matSelect = document.getElementById('filterMatiere');
+  var currentMat = matSelect ? matSelect.value : '';
+
+  // Validate currentMat in the newly selected category
+  if (category !== 'all' && currentMat) {
+    var validInCat = ALL_COURSES.some(function(c) {
+      return c.category === category && c.matiereKey === currentMat.toLowerCase();
+    });
+    if (!validInCat) currentMat = '';
+  }
+
+  rebuildMatiereOptions(category, currentMat);
+  rebuildTeacherOptions(category, currentMat, document.getElementById('filterTeacher').value);
+  rebuildCourseOptions(document.getElementById('filterTeacher').value, document.getElementById('filterCourse').value, category, currentMat);
+
+  applyAllBadgeFilters();
+}
+
+// Helper: Rebuild Matiere / Language dropdown options
+function rebuildMatiereOptions(selectedCategory, keepMatiereValue) {
+  var matSelect = document.getElementById('filterMatiere');
+  if (!matSelect) return;
+
+  var currentVal = keepMatiereValue !== undefined ? keepMatiereValue : matSelect.value;
+  matSelect.innerHTML = '';
+
+  var matchingCourses = ALL_COURSES.filter(function(c) {
+    if (!selectedCategory || selectedCategory === 'all') return true;
+    return c.category === selectedCategory;
+  });
+
+  var matMap = {};
+  matchingCourses.forEach(function(c) {
+    var key = c.matiereKey;
+    if (!matMap[key]) {
+      matMap[key] = { name: c.matiere, key: key, count: 0 };
+    }
+    matMap[key].count++;
+  });
+
+  var matList = Object.keys(matMap).map(function(k) { return matMap[k]; }).sort(function(a, b) {
+    return a.name.localeCompare(b.name);
+  });
+
+  var defaultOpt = document.createElement('option');
+  defaultOpt.value = '';
+  if (selectedCategory === 'language') {
+    defaultOpt.textContent = '🌍 {{ "جميع اللغات" if lang=="ar" else "Toutes les langues" }} (' + matList.length + ')';
+  } else if (selectedCategory === 'tutoring') {
+    defaultOpt.textContent = '📐 {{ "جميع مواد الدعم" if lang=="ar" else "Toutes les matières de soutien" }} (' + matList.length + ')';
+  } else {
+    defaultOpt.textContent = '📚 {{ "جميع اللغات والمواد" if lang=="ar" else "Toutes les langues & matières" }} (' + matList.length + ')';
+  }
+  matSelect.appendChild(defaultOpt);
+
+  var hasKeptVal = false;
+  matList.forEach(function(m) {
+    var opt = document.createElement('option');
+    opt.value = m.key;
+    opt.textContent = getMatiereEmoji(m.name) + ' ' + m.name + ' (' + m.count + ' ' + (m.count > 1 ? 'cours' : 'cours') + ')';
+    if (currentVal && currentVal.toLowerCase() === m.key) {
+      opt.selected = true;
+      hasKeptVal = true;
+    }
+    matSelect.appendChild(opt);
+  });
+
+  if (!hasKeptVal && currentVal) {
+    matSelect.value = '';
+  }
+}
+
+// Helper: Rebuild Teacher dropdown options
+function rebuildTeacherOptions(selectedCategory, selectedMatiere, keepTeacherValue) {
+  var teacherSelect = document.getElementById('filterTeacher');
+  if (!teacherSelect) return;
+
+  var currentVal = keepTeacherValue !== undefined ? String(keepTeacherValue) : String(teacherSelect.value || '');
+  teacherSelect.innerHTML = '';
+
+  var matchingTeacherIds = new Set();
+  var teacherCourseCounts = {};
+
+  ALL_COURSES.forEach(function(c) {
+    var matchCat = (!selectedCategory || selectedCategory === 'all' || c.category === selectedCategory);
+    var matchMat = (!selectedMatiere || c.matiereKey === selectedMatiere.toLowerCase());
+
+    if (matchCat && matchMat) {
+      if (c.teacherId) {
+        matchingTeacherIds.add(c.teacherId);
+        teacherCourseCounts[c.teacherId] = (teacherCourseCounts[c.teacherId] || 0) + 1;
+      }
+      if (c.allTeacherIds) {
+        c.allTeacherIds.forEach(function(tid) {
+          matchingTeacherIds.add(tid);
+          teacherCourseCounts[tid] = (teacherCourseCounts[tid] || 0) + 1;
+        });
+      }
+    }
+  });
+
+  var matchingTeachers = ALL_TEACHERS.filter(function(t) {
+    return matchingTeacherIds.has(t.id);
+  });
+
+  var defaultOpt = document.createElement('option');
+  defaultOpt.value = '';
+  if (selectedCategory === 'language') {
+    defaultOpt.textContent = '👨‍🏫 {{ "جميع أساتذة اللغات" if lang=="ar" else "Tous les enseignants de langues" }} (' + matchingTeachers.length + ')';
+  } else if (selectedCategory === 'tutoring') {
+    defaultOpt.textContent = '👨‍🏫 {{ "جميع أساتذة الدعم" if lang=="ar" else "Tous les enseignants de soutien" }} (' + matchingTeachers.length + ')';
+  } else {
+    defaultOpt.textContent = '👨‍🏫 {{ "جميع الأساتذة" if lang=="ar" else "Tous les enseignants" }} (' + matchingTeachers.length + ')';
+  }
+  teacherSelect.appendChild(defaultOpt);
+
+  var hasKeptVal = false;
+  matchingTeachers.forEach(function(t) {
+    var opt = document.createElement('option');
+    opt.value = t.id;
+    var count = teacherCourseCounts[t.id] || 0;
+    opt.textContent = t.name + (count > 0 ? ' (' + count + ' ' + (count > 1 ? 'cours' : 'cours') + ')' : '');
+    if (currentVal && currentVal === String(t.id)) {
+      opt.selected = true;
+      hasKeptVal = true;
+    }
+    teacherSelect.appendChild(opt);
+  });
+
+  if (!hasKeptVal && currentVal) {
+    teacherSelect.value = '';
+  }
+}
+
+// Helper: Rebuild Course dropdown options
+function rebuildCourseOptions(selectedTeacherId, selectedCourseIdToKeep, selectedCategory, selectedMatiere) {
+  var courseSelect = document.getElementById('filterCourse');
+  if (!courseSelect) return;
+
+  var currentVal = selectedCourseIdToKeep !== undefined ? String(selectedCourseIdToKeep) : String(courseSelect.value || '');
+  courseSelect.innerHTML = '';
+
+  var matchingCourses = ALL_COURSES.filter(function(c) {
+    if (selectedCategory && selectedCategory !== 'all' && c.category !== selectedCategory) return false;
+    if (selectedMatiere && c.matiereKey !== selectedMatiere.toLowerCase()) return false;
+    if (selectedTeacherId) {
+      var matchT = (c.teacherId === selectedTeacherId || (c.allTeacherIds && c.allTeacherIds.indexOf(selectedTeacherId) !== -1));
+      if (!matchT) return false;
+    }
+    return true;
+  });
+
+  var defaultOpt = document.createElement('option');
+  defaultOpt.value = '';
+  if (selectedTeacherId) {
+    defaultOpt.textContent = '📚 {{ "أفواج هذا الأستاذ" if lang=="ar" else "Cours de cet enseignant" }} (' + matchingCourses.length + ')';
+  } else if (selectedMatiere) {
+    defaultOpt.textContent = '📚 {{ "أفواج هذه المادة" if lang=="ar" else "Tous les cours de cette matière" }} (' + matchingCourses.length + ')';
+  } else if (selectedCategory && selectedCategory !== 'all') {
+    defaultOpt.textContent = '📚 {{ "جميع الأفواج" if lang=="ar" else "Tous les cours" }} ' + (selectedCategory === 'language' ? '{{ "للغات" if lang=="ar" else "de langues" }}' : '{{ "للدعم" if lang=="ar" else "de soutien" }}') + ' (' + matchingCourses.length + ')';
+  } else {
+    defaultOpt.textContent = '📚 {{ "جميع الأفواج والمجموعات" if lang=="ar" else "Tous les cours / groupes" }} (' + matchingCourses.length + ')';
+  }
+  courseSelect.appendChild(defaultOpt);
+
+  var hasKeptVal = false;
+  matchingCourses.forEach(function(c) {
+    var opt = document.createElement('option');
+    opt.value = c.id;
+    opt.setAttribute('data-teacher-id', c.teacherId);
+    opt.setAttribute('data-matiere', c.matiere);
+    opt.setAttribute('data-category', c.category);
+
+    var label = getMatiereEmoji(c.matiere) + ' ' + c.matiere + ' · ' + c.name;
+    if (!selectedTeacherId && c.teacherName) {
+      label += ' (' + c.teacherName + ')';
+    }
+    opt.textContent = label;
+
+    if (currentVal && currentVal === String(c.id)) {
+      opt.selected = true;
+      hasKeptVal = true;
+    }
+    courseSelect.appendChild(opt);
+  });
+
+  if (!hasKeptVal && currentVal) {
+    courseSelect.value = '';
+  }
+}
+
+// When Matiere / Language dropdown changes:
+function onMatiereFilterChange() {
+  var matSelect = document.getElementById('filterMatiere');
+  var selectedMatiere = (matSelect.value || '').trim();
+
+  // If selected on 'all', check if exclusively language or tutoring
+  if (selectedMatiere && currentCategoryFilter === 'all') {
+    var inLang = ALL_COURSES.some(function(c) { return c.category === 'language' && c.matiereKey === selectedMatiere.toLowerCase(); });
+    var inTutor = ALL_COURSES.some(function(c) { return c.category === 'tutoring' && c.matiereKey === selectedMatiere.toLowerCase(); });
+    if (inLang && !inTutor) {
+      selectActivityType('language');
+      return;
+    } else if (inTutor && !inLang) {
+      selectActivityType('tutoring');
+      return;
+    }
+  }
+
+  rebuildTeacherOptions(currentCategoryFilter, selectedMatiere, document.getElementById('filterTeacher').value);
+  rebuildCourseOptions(document.getElementById('filterTeacher').value, document.getElementById('filterCourse').value, currentCategoryFilter, selectedMatiere);
+
+  applyAllBadgeFilters();
+}
+
+// When Teacher dropdown changes:
+function onTeacherFilterChange() {
+  var teacherSelect = document.getElementById('filterTeacher');
+  var courseSelect = document.getElementById('filterCourse');
+  var matSelect = document.getElementById('filterMatiere');
+  var selectedTeacherId = (teacherSelect.value || '').trim();
+
+  // If teacher selected, auto-sync category if teacher teaches only one category
+  if (selectedTeacherId) {
+    var teacherCourses = ALL_COURSES.filter(function(c) {
+      return c.teacherId === selectedTeacherId || (c.allTeacherIds && c.allTeacherIds.indexOf(selectedTeacherId) !== -1);
+    });
+    var teacherCats = new Set(teacherCourses.map(function(c) { return c.category; }));
+    if (teacherCats.size === 1 && currentCategoryFilter === 'all') {
+      var onlyCat = Array.from(teacherCats)[0];
+      if (onlyCat) {
+        currentCategoryFilter = onlyCat;
+        var tabAll = document.getElementById('tabTypeAll');
+        var tabLang = document.getElementById('tabTypeLang');
+        var tabTutor = document.getElementById('tabTypeTutor');
+        if (tabAll) tabAll.className = 'badge-type-tab' + (onlyCat === 'all' ? ' active-all' : '');
+        if (tabLang) tabLang.className = 'badge-type-tab' + (onlyCat === 'language' ? ' active-lang' : '');
+        if (tabTutor) tabTutor.className = 'badge-type-tab' + (onlyCat === 'tutoring' ? ' active-tutor' : '');
+        rebuildMatiereOptions(onlyCat, matSelect.value);
+      }
+    }
+  }
+
+  var currentMatiere = matSelect ? matSelect.value : '';
+  rebuildCourseOptions(selectedTeacherId, courseSelect.value, currentCategoryFilter, currentMatiere);
+  applyAllBadgeFilters();
+}
+
+// When Course / Group dropdown changes:
+function onCourseFilterChange() {
+  var courseSelect = document.getElementById('filterCourse');
+  var selectedCourseId = (courseSelect.value || '').trim();
+
+  if (selectedCourseId) {
+    var foundCourse = ALL_COURSES.find(function(c) { return String(c.id) === selectedCourseId; });
+    if (foundCourse) {
+      // 1. Sync Category if different
+      if (foundCourse.category && currentCategoryFilter !== foundCourse.category) {
+        currentCategoryFilter = foundCourse.category;
+        var tabAll = document.getElementById('tabTypeAll');
+        var tabLang = document.getElementById('tabTypeLang');
+        var tabTutor = document.getElementById('tabTypeTutor');
+        if (tabAll) tabAll.className = 'badge-type-tab' + (foundCourse.category === 'all' ? ' active-all' : '');
+        if (tabLang) tabLang.className = 'badge-type-tab' + (foundCourse.category === 'language' ? ' active-lang' : '');
+        if (tabTutor) tabTutor.className = 'badge-type-tab' + (foundCourse.category === 'tutoring' ? ' active-tutor' : '');
+      }
+
+      // 2. Sync Matiere
+      rebuildMatiereOptions(currentCategoryFilter, foundCourse.matiereKey);
+
+      // 3. Sync Teacher
+      var courseTeacherId = foundCourse.teacherId || (foundCourse.allTeacherIds && foundCourse.allTeacherIds[0]) || '';
+      rebuildTeacherOptions(currentCategoryFilter, foundCourse.matiereKey, courseTeacherId);
+
+      // 4. Rebuild Course Options keeping this course selected
+      rebuildCourseOptions(courseTeacherId, selectedCourseId, currentCategoryFilter, foundCourse.matiereKey);
+    }
+  }
+
+  applyAllBadgeFilters();
+}
+
+// --- Multi-Criteria Filtering ---
+function applyAllBadgeFilters() {
+  var searchInput = document.getElementById('badgeSearch');
+  var clearBtn = document.getElementById('badgeSearchClear');
+  var q = (searchInput.value || '').trim().toLowerCase();
+  clearBtn.style.display = q.length > 0 ? 'block' : 'none';
+
+  var matiereFilter = document.getElementById('filterMatiere') ? (document.getElementById('filterMatiere').value || '').trim().toLowerCase() : '';
+  var teacherFilter = (document.getElementById('filterTeacher').value || '').trim();
+  var courseFilter = (document.getElementById('filterCourse').value || '').trim();
+  var levelFilter = document.getElementById('filterLevel') ? (document.getElementById('filterLevel').value || '').trim().toLowerCase() : '';
+  var photoFilter = document.getElementById('filterPhoto').value;
+  var printFilter = document.getElementById('filterPrintStatus') ? document.getElementById('filterPrintStatus').value : 'all';
+
+  var filterActive = (filterOnlySelected || currentCategoryFilter !== 'all' || matiereFilter || teacherFilter || courseFilter || levelFilter || photoFilter !== 'all' || printFilter !== 'all' || q);
+  var filterNotice = document.getElementById('filterNotice');
+  if (filterNotice) filterNotice.style.display = filterActive ? 'inline-block' : 'none';
+
+  var items = document.querySelectorAll('.badge-item');
+  var visibleCount = 0;
+
+  items.forEach(function(el) {
+    var sid = el.getAttribute('data-id') || '';
+    var sidInt = parseInt(sid);
+    var name = el.getAttribute('data-name') || '';
+    var code = el.getAttribute('data-code') || '';
+    var level = el.getAttribute('data-level') || '';
+    var phone = el.getAttribute('data-phone') || '';
+    var hasPhoto = el.getAttribute('data-has-photo') || '';
+    var printed = el.getAttribute('data-printed') || 'no';
+    var courses = el.getAttribute('data-courses') || '';
+    var categories = el.getAttribute('data-categories') || '';
+    var matieres = el.getAttribute('data-matieres') || '';
+    var catMats = el.getAttribute('data-cat-mats') || '';
+    var teacherIds = (el.getAttribute('data-teacher-ids') || '').trim().split(/\s+/).filter(Boolean);
+    var courseIds = (el.getAttribute('data-course-ids') || '').trim().split(/\s+/).filter(Boolean);
+
+    // 0. Only Selected Filter Mode
+    var matchesSelected = true;
+    if (filterOnlySelected) {
+      matchesSelected = selectedStudentIds.has(sidInt);
+    }
+
+    // 1. Search Query Check
+    var matchesSearch = true;
+    if (q) {
+      matchesSearch = (name.indexOf(q) !== -1 || 
+                       code.indexOf(q) !== -1 || 
+                       level.indexOf(q) !== -1 || 
+                       phone.indexOf(q) !== -1 || 
+                       courses.indexOf(q) !== -1);
+    }
+
+    // 2. Activity Type (Category) Check
+    var matchesCategory = true;
+    if (currentCategoryFilter === 'language') {
+      matchesCategory = (categories.indexOf('language') !== -1);
+    } else if (currentCategoryFilter === 'tutoring') {
+      matchesCategory = (categories.indexOf('tutoring') !== -1);
+    }
+
+    // 3. Matiere / Language Check
+    var matchesMatiere = true;
+    if (matiereFilter) {
+      if (currentCategoryFilter !== 'all') {
+        matchesMatiere = (catMats.indexOf('|' + currentCategoryFilter + ':' + matiereFilter + '|') !== -1);
+      } else {
+        matchesMatiere = (matieres.indexOf('|' + matiereFilter + '|') !== -1);
+      }
+    }
+
+    // 4. Teacher Check
+    var matchesTeacher = true;
+    if (teacherFilter) {
+      matchesTeacher = (teacherIds.indexOf(teacherFilter) !== -1);
+    }
+
+    // 5. Course / Group Check
+    var matchesCourse = true;
+    if (courseFilter) {
+      matchesCourse = (courseIds.indexOf(courseFilter) !== -1);
+    }
+
+    // 6. Level Check
+    var matchesLevel = true;
+    if (levelFilter) {
+      matchesLevel = (level.indexOf(levelFilter) !== -1);
+    }
+
+    // 7. Photo Check
+    var matchesPhoto = true;
+    if (photoFilter === 'with') {
+      matchesPhoto = (hasPhoto === 'yes');
+    } else if (photoFilter === 'without') {
+      matchesPhoto = (hasPhoto === 'no');
+    }
+
+    // 8. Print Status Check (Printed vs Unprinted)
+    var matchesPrint = true;
+    if (printFilter === 'printed') {
+      matchesPrint = (printed === 'yes');
+    } else if (printFilter === 'unprinted') {
+      matchesPrint = (printed === 'no');
+    }
+
+    var isVisible = (matchesSelected && matchesSearch && matchesCategory && matchesMatiere && matchesTeacher && matchesCourse && matchesLevel && matchesPhoto && matchesPrint);
+    el.style.display = isVisible ? '' : 'none';
+
+    if (isVisible && el.classList.contains('badge-mini-card')) {
+      visibleCount++;
+    }
+  });
+
+  document.getElementById('badgeVisibleCount').textContent = visibleCount;
+  var noResults = document.getElementById('badgeNoResults');
+  if (noResults) {
+    noResults.style.display = (visibleCount === 0) ? 'block' : 'none';
+  }
+
+  // --- Dynamic Group Action Banner ---
+  var groupBanner = document.getElementById('groupActionBar');
+  if (groupBanner) {
+    if (filterActive && visibleCount > 0) {
+      groupBanner.style.display = 'flex';
+      var titleParts = [];
+      if (filterOnlySelected) {
+        titleParts.push('⭐ ' + (document.documentElement.lang === 'ar' ? 'التلاميذ المحددين' : 'Élèves sélectionnés'));
+      }
+      if (currentCategoryFilter === 'language') titleParts.push('🌍 Langues Vivantes');
+      else if (currentCategoryFilter === 'tutoring') titleParts.push('📐 Soutien Scolaire');
+
+      var mSelect = document.getElementById('filterMatiere');
+      if (mSelect && mSelect.value && mSelect.options[mSelect.selectedIndex]) {
+        titleParts.push(mSelect.options[mSelect.selectedIndex].textContent.trim());
+      }
+      var tSelect = document.getElementById('filterTeacher');
+      if (tSelect && tSelect.value && tSelect.options[tSelect.selectedIndex]) {
+        titleParts.push(tSelect.options[tSelect.selectedIndex].textContent.trim());
+      }
+      var cSelect = document.getElementById('filterCourse');
+      if (cSelect && cSelect.value && cSelect.options[cSelect.selectedIndex]) {
+        titleParts.push(cSelect.options[cSelect.selectedIndex].textContent.trim());
+      }
+      if (printFilter === 'unprinted') {
+        titleParts.push('⏳ ' + (document.documentElement.lang === 'ar' ? 'غير مطبوع بعد' : 'Non encore imprimés'));
+      } else if (printFilter === 'printed') {
+        titleParts.push('✓ ' + (document.documentElement.lang === 'ar' ? 'مطبوع' : 'Déjà imprimés'));
+      }
+      if (q) titleParts.push('"' + q + '"');
+
+      document.getElementById('groupActionTitle').textContent = titleParts.length > 0 ? titleParts.join(' · ') : 'Sélection filtrée';
+      document.getElementById('groupActionCount').textContent = visibleCount;
+    } else {
+      groupBanner.style.display = 'none';
+    }
+  }
+}
+
+function clearBadgeSearch() {
+  var inp = document.getElementById('badgeSearch');
+  inp.value = '';
+  applyAllBadgeFilters();
+  inp.focus();
+}
+
+function filterByPhotoStatus(status) {
+  var sel = document.getElementById('filterPhoto');
+  sel.value = status;
+  applyAllBadgeFilters();
+}
+
+function filterByPrintStatus(status) {
+  var sel = document.getElementById('filterPrintStatus');
+  if (sel) {
+    sel.value = status;
+    applyAllBadgeFilters();
+  }
+}
+
+// Toggle View Only Selected Students across all classes
+function toggleOnlySelectedFilter() {
+  if (!filterOnlySelected && selectedStudentIds.size === 0) {
+    alert(document.documentElement.lang === 'ar' ? 'لم تقم بتحديد أي تلميذ بعد! قم بتحديد التلاميذ أولاً.' : 'Aucun élève sélectionné. Cochez les élèves de vos différentes classes d\'abord !');
+    return;
+  }
+
+  filterOnlySelected = !filterOnlySelected;
+
+  var tabSel = document.getElementById('tabTypeSelected');
+  var tabAll = document.getElementById('tabTypeAll');
+  var tabLang = document.getElementById('tabTypeLang');
+  var tabTutor = document.getElementById('tabTypeTutor');
+  var lblViewSel = document.getElementById('lblBtnViewSelected');
+
+  if (filterOnlySelected) {
+    if (tabSel) tabSel.className = 'badge-type-tab active-selected';
+    if (tabAll) tabAll.className = 'badge-type-tab';
+    if (tabLang) tabLang.className = 'badge-type-tab';
+    if (tabTutor) tabTutor.className = 'badge-type-tab';
+    if (lblViewSel) lblViewSel.textContent = document.documentElement.lang === 'ar' ? 'عرض الكل' : 'Afficher tout';
+  } else {
+    if (tabSel) tabSel.className = 'badge-type-tab';
+    if (tabAll) tabAll.className = 'badge-type-tab' + (currentCategoryFilter === 'all' ? ' active-all' : '');
+    if (tabLang) tabLang.className = 'badge-type-tab' + (currentCategoryFilter === 'language' ? ' active-lang' : '');
+    if (tabTutor) tabTutor.className = 'badge-type-tab' + (currentCategoryFilter === 'tutoring' ? ' active-tutor' : '');
+    if (lblViewSel) lblViewSel.textContent = document.documentElement.lang === 'ar' ? 'عرض المحددين فقط' : 'Voir la sélection';
+  }
+
+  applyAllBadgeFilters();
+}
+
+function resetAllBadgeFilters() {
+  currentCategoryFilter = 'all';
+  filterOnlySelected = false;
+
+  var tabAll = document.getElementById('tabTypeAll');
+  var tabLang = document.getElementById('tabTypeLang');
+  var tabTutor = document.getElementById('tabTypeTutor');
+  var tabSel = document.getElementById('tabTypeSelected');
+  var lblViewSel = document.getElementById('lblBtnViewSelected');
+
+  if (tabAll) tabAll.className = 'badge-type-tab active-all';
+  if (tabLang) tabLang.className = 'badge-type-tab';
+  if (tabTutor) tabTutor.className = 'badge-type-tab';
+  if (tabSel) tabSel.className = 'badge-type-tab';
+  if (lblViewSel) lblViewSel.textContent = document.documentElement.lang === 'ar' ? 'عرض المحددين فقط' : 'Voir la sélection';
+
+  document.getElementById('badgeSearch').value = '';
+
+  rebuildMatiereOptions('all', '');
+  rebuildTeacherOptions('all', '', '');
+  rebuildCourseOptions('', '', 'all', '');
+
+  if (document.getElementById('filterLevel')) {
+    document.getElementById('filterLevel').value = '';
+  }
+  if (document.getElementById('filterPrintStatus')) {
+    document.getElementById('filterPrintStatus').value = 'all';
+  }
+  document.getElementById('filterPhoto').value = 'all';
+
+  applyAllBadgeFilters();
+}
+
+// Toggle Student Printed Status via AJAX
+function toggleStudentPrintStatus(event, studentId) {
+  if (event) event.stopPropagation();
+
+  var card = document.getElementById('card-student-' + studentId);
+  var row = document.getElementById('row-student-' + studentId);
+
+  var fd = new FormData();
+  fd.append('student_id', studentId);
+
+  fetch('/api/badge/toggle_printed', {
+    method: 'POST',
+    body: fd
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.success) {
+      var isPrinted = data.printed;
+      var newAttr = isPrinted ? 'yes' : 'no';
+      if (card) {
+        card.setAttribute('data-printed', newAttr);
+        card.setAttribute('data-print-date', data.issue_date || '');
+      }
+      if (row) {
+        row.setAttribute('data-printed', newAttr);
+        row.setAttribute('data-print-date', data.issue_date || '');
+      }
+
+      var pills = [
+        document.getElementById('print-pill-grid-' + studentId),
+        document.getElementById('print-pill-table-' + studentId)
+      ];
+      pills.forEach(function(pill) {
+        if (pill) {
+          if (isPrinted) {
+            pill.className = 'badge-status-pill printed';
+            pill.textContent = '✓ ' + (document.documentElement.lang === 'ar' ? 'مطبوع' : 'Imprimé');
+            pill.title = 'Badge imprimé le ' + (data.issue_date || '') + '. Cliquez pour modifier';
+          } else {
+            pill.className = 'badge-status-pill unprinted';
+            pill.textContent = '⏳ ' + (document.documentElement.lang === 'ar' ? 'غير مطبوع' : 'Non imprimé');
+            pill.title = 'Non encore imprimé. Cliquez pour marquer comme imprimé';
+          }
+        }
+      });
+
+      // Recalculate printed & unprinted counts dynamically
+      var allCards = document.querySelectorAll('.badge-mini-card');
+      var pCount = 0;
+      allCards.forEach(function(c) {
+        if (c.getAttribute('data-printed') === 'yes') pCount++;
+      });
+      var unCount = allCards.length - pCount;
+
+      var kpiP = document.getElementById('kpiCountPrinted');
+      var kpiU = document.getElementById('kpiCountUnprinted');
+      if (kpiP) kpiP.textContent = pCount;
+      if (kpiU) kpiU.textContent = unCount;
+
+      var selPrint = document.getElementById('filterPrintStatus');
+      if (selPrint && selPrint.options) {
+        for (var i = 0; i < selPrint.options.length; i++) {
+          var opt = selPrint.options[i];
+          if (opt.value === 'printed') {
+            opt.textContent = '✓ ' + (document.documentElement.lang === 'ar' ? 'تمت طباعته' : 'Déjà imprimés') + ' (' + pCount + ')';
+          } else if (opt.value === 'unprinted') {
+            opt.textContent = '⏳ ' + (document.documentElement.lang === 'ar' ? 'غير مطبوع بعد' : 'Non imprimés') + ' (' + unCount + ')';
+          }
+        }
+      }
+
+      // Re-apply filters if currently filtered by print status
+      if (document.getElementById('filterPrintStatus') && document.getElementById('filterPrintStatus').value !== 'all') {
+        applyAllBadgeFilters();
+      }
+    }
+  })
+  .catch(function(err) {
+    console.error('Error toggling print status:', err);
+  });
+}
+
+// Initialize dynamic options on page load
+document.addEventListener('DOMContentLoaded', function() {
+  rebuildMatiereOptions('all', '');
+  rebuildTeacherOptions('all', '', '');
+  rebuildCourseOptions('', '', 'all', '');
+});
+
+// --- Batch Selection (Persistent Multi-Class Panier) ---
+function handleCheckboxChange(cb) {
+  var sid = parseInt(cb.value);
+  if (cb.checked) {
+    selectedStudentIds.add(sid);
+  } else {
+    selectedStudentIds.delete(sid);
+  }
+
+  // Sync both grid and table checkboxes
+  syncCheckboxUI(sid, cb.checked);
+  updateBatchActionBar();
+}
+
+function syncCheckboxUI(studentId, isChecked) {
+  var cbs = document.querySelectorAll('input[type="checkbox"][value="' + studentId + '"]');
+  cbs.forEach(function(c) { c.checked = isChecked; });
+
+  var card = document.getElementById('card-student-' + studentId);
+  if (card) {
+    if (isChecked) card.classList.add('selected');
+    else card.classList.remove('selected');
+  }
+
+  var row = document.getElementById('row-student-' + studentId);
+  if (row) {
+    if (isChecked) row.classList.add('selected');
+    else row.classList.remove('selected');
+  }
+}
+
+// Table View Header Checkbox Toggle
+function toggleSelectAllTable(masterCheckbox) {
+  var isChecked = masterCheckbox.checked;
+  var tableRows = document.querySelectorAll('#badgeTableView .badge-item');
+  tableRows.forEach(function(el) {
+    if (el.style.display !== 'none') {
+      var sid = parseInt(el.getAttribute('data-id'));
+      if (isChecked) {
+        selectedStudentIds.add(sid);
+      } else {
+        selectedStudentIds.delete(sid);
+      }
+      syncCheckboxUI(sid, isChecked);
+    }
+  });
+  updateBatchActionBar();
+}
+
+function selectAllVisibleBadges(state) {
+  var activeContainer = (currentView === 'grid') ? document.getElementById('badgeGridView') : document.getElementById('badgeTableView');
+  var allItems = activeContainer.querySelectorAll('.badge-item');
+
+  allItems.forEach(function(el) {
+    if (el.style.display !== 'none') {
+      var sid = parseInt(el.getAttribute('data-id'));
+      if (sid) {
+        if (state) selectedStudentIds.add(sid);
+        else selectedStudentIds.delete(sid);
+        syncCheckboxUI(sid, state);
+      }
+    }
+  });
+
+  updateBatchActionBar();
+}
+
+function deselectAllBadges() {
+  selectedStudentIds.clear();
+  document.querySelectorAll('.badge-checkbox').forEach(function(cb) {
+    cb.checked = false;
+  });
+  document.querySelectorAll('.badge-mini-card.selected').forEach(function(c) {
+    c.classList.remove('selected');
+  });
+  document.querySelectorAll('.badge-row.selected').forEach(function(r) {
+    r.classList.remove('selected');
+  });
+  var masterCb = document.getElementById('selectAllHeader');
+  if (masterCb) masterCb.checked = false;
+
+  updateBatchActionBar();
+
+  if (filterOnlySelected) {
+    toggleOnlySelectedFilter();
+  }
+}
+
+function updateBatchActionBar() {
+  var bar = document.getElementById('batchActionBar');
+  var count = selectedStudentIds.size;
+  var countBadge = document.getElementById('batchCountBadge');
+  if (countBadge) countBadge.textContent = count;
+
+  var tabSel = document.getElementById('tabTypeSelected');
+  var countSel = document.getElementById('tabCountSelected');
+
+  if (count > 0) {
+    if (bar) bar.style.display = 'flex';
+    if (tabSel) {
+      tabSel.style.display = 'inline-flex';
+      if (countSel) countSel.textContent = count;
+    }
+  } else {
+    if (bar) bar.style.display = 'none';
+    if (tabSel) tabSel.style.display = 'none';
+  }
+}
+
+// --- Print Selected (Multi-select) in A4 or CR80 ---
+function printSelectedBadges(mode) {
+  if (selectedStudentIds.size === 0) {
+    alert("Aucun élève sélectionné. Cochez les élèves de différentes classes d'abord.");
+    return;
+  }
+  var ids = Array.from(selectedStudentIds).join(',');
+  var url = "{{ url_for('badges_print') }}?student_ids=" + ids;
+  if (mode === 'a4') {
+    url += '&mode=a4';
+  }
+  window.open(url, '_blank');
+}
+
+// --- Print Entire Filtered Group in A4 or CR80 in 1 Click ---
+function printFilteredGroup(mode) {
+  var activeContainer = (currentView === 'grid') ? document.getElementById('badgeGridView') : document.getElementById('badgeTableView');
+  var allItems = activeContainer.querySelectorAll('.badge-item');
+  var ids = [];
+  allItems.forEach(function(el) {
+    if (el.style.display !== 'none') {
+      var sid = el.getAttribute('data-id');
+      if (sid && ids.indexOf(sid) === -1) {
+        ids.push(sid);
+      }
+    }
+  });
+
+  if (ids.length === 0) {
+    alert("Aucun élève trouvé avec les filtres actuels.");
+    return;
+  }
+
+  var url = "{{ url_for('badges_print') }}?student_ids=" + ids.join(',');
+  if (mode === 'a4') {
+    url += '&mode=a4';
+  }
+  window.open(url, '_blank');
+}
+
+
+function switchModalFace(face) {
+  var front = document.getElementById('modalFrontFace');
+  var back = document.getElementById('modalBackFace');
+  var btnFront = document.getElementById('btnModalFaceFront');
+  var btnBack = document.getElementById('btnModalFaceBack');
+
+  if (face === 'back') {
+    front.style.display = 'none';
+    back.style.display = 'flex';
+    btnBack.classList.add('active');
+    btnFront.classList.remove('active');
+  } else {
+    front.style.display = 'flex';
+    back.style.display = 'none';
+    btnFront.classList.add('active');
+    btnBack.classList.remove('active');
+  }
+}
+
+function openBadgePreviewModal(studentId) {
+  var modal = document.getElementById('badgePreviewModal');
+  modal.classList.add('open');
+
+  fetch('/api/student_badge_data/' + studentId)
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      var withPhotoLayout = document.getElementById('modalLayoutWithPhoto');
+      var noPhotoLayout = document.getElementById('modalLayoutNoPhoto');
+      var variantPill = document.getElementById('modalVariantPill');
+
+      if (data.photo_url) {
+        // Mode A: With Photo
+        withPhotoLayout.style.display = 'flex';
+        noPhotoLayout.style.display = 'none';
+        variantPill.textContent = "📸 Avec photo d'identité · CR80 Paysage";
+        variantPill.style.background = '#f0fdf4';
+        variantPill.style.color = '#166534';
+        variantPill.style.borderColor = '#bbf7d0';
+
+        document.getElementById('modalName').textContent = data.full_name;
+        document.getElementById('modalCodeVal').textContent = data.code;
+        document.getElementById('modalLevel').textContent = data.school_level || 'Formation Générale';
+        document.getElementById('modalPhoto').src = data.photo_url;
+        document.getElementById('modalQR').src = data.qr_data_uri;
+
+        var cContainer = document.getElementById('modalCoursesContainer');
+        cContainer.innerHTML = '';
+        if (data.courses_details && data.courses_details.length > 0) {
+          var c = data.courses_details[0];
+          var card = document.createElement('div');
+          card.style.background = '#f8fafc';
+          card.style.border = '1px solid #e2e8f0';
+          card.style.borderLeft = '3px solid #C59B27';
+          card.style.borderRadius = '5px';
+          card.style.padding = '4px 8px';
+          card.style.display = 'flex';
+          card.style.justifyContent = 'space-between';
+          card.style.alignItems = 'center';
+          card.innerHTML = '<span style="font-size:10px; font-weight:800; color:#0f172a;">' + c.name + ' · ' + c.sub + '</span>' +
+                            '<span style="font-size:9px; font-weight:700; color:#64748b;">' + c.schedule + '</span>';
+          cContainer.appendChild(card);
+        }
+      } else {
+        // Mode B: Without Photo (Adaptive Full-Width Layout)
+        withPhotoLayout.style.display = 'none';
+        noPhotoLayout.style.display = 'flex';
+        variantPill.textContent = '⚡ Format Adapté Sans Photo · CR80 Paysage';
+        variantPill.style.background = '#fffbeb';
+        variantPill.style.color = '#b45309';
+        variantPill.style.borderColor = '#fde68a';
+
+        document.getElementById('modalNoPhotoName').textContent = data.full_name;
+        document.getElementById('modalNoPhotoCode').textContent = data.code;
+        document.getElementById('modalNoPhotoLevel').textContent = data.school_level || 'Formation Générale';
+        document.getElementById('modalNoPhotoQR').src = data.qr_data_uri;
+
+        var npContainer = document.getElementById('modalNoPhotoCourses');
+        npContainer.innerHTML = '';
+        if (data.courses_details && data.courses_details.length > 0) {
+          data.courses_details.slice(0, 2).forEach(function(c) {
+            var card = document.createElement('div');
+            card.style.background = '#f8fafc';
+            card.style.border = '1px solid #e2e8f0';
+            card.style.borderLeft = '3px solid #0B3D6E';
+            card.style.borderRadius = '5px';
+            card.style.padding = '4px 8px';
+            card.innerHTML = '<div style="font-size:10px; font-weight:800; color:#0f172a;">' + c.name + '</div>' +
+                             '<div style="font-size:8.5px; font-weight:600; color:#64748b;">' + c.sub + ' · ' + c.schedule + '</div>';
+            npContainer.appendChild(card);
+          });
+        } else {
+          npContainer.innerHTML = '<div style="grid-column:span 2; background:#f8fafc; border:1px solid #e2e8f0; border-radius:5px; padding:6px; font-size:10px; color:#64748b; text-align:center;">Formation Continue · Institut ILAS</div>';
+        }
+      }
+
+      document.getElementById('modalPrintBtn').href = data.print_url;
+    })
+    .catch(function(err) {
+      console.error("Erreur lors de la récupération du badge:", err);
+    });
+}
+function closeBadgePreviewModal() {
+  var modal = document.getElementById('badgePreviewModal');
+  modal.classList.remove('open');
+}
+
+function closeBadgeModalOnBackdrop(e) {
+  if (e.target.id === 'badgePreviewModal') {
+    closeBadgePreviewModal();
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeBadgePreviewModal();
+  }
+});
+</script>
+
+{% endblock %}

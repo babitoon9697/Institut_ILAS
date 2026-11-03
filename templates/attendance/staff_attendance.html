@@ -1,0 +1,644 @@
+{% extends 'base.html' %}
+{% set title = "Pointage Enseignants & Personnel — Institut ILAS" %}
+{% block content %}
+
+<style>
+  :root {
+    --navy-dark: #0B3D6E;
+    --navy-light: #1f6feb;
+    --emerald-dark: #059669;
+    --emerald-light: #10b981;
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
+  }
+
+  .staff-att-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .staff-att-title-group h2 {
+    font-size: 24px;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+  }
+  .staff-att-title-group p {
+    font-size: 13.5px;
+    color: #64748b;
+    margin: 4px 0 0 0;
+  }
+
+  /* KPI Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .kpi-card {
+    background: #ffffff;
+    border: 1.5px solid var(--border-color);
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 14px rgba(15,23,42,0.03);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: transform 0.15s ease;
+  }
+  .kpi-card:hover {
+    transform: translateY(-2px);
+  }
+  .kpi-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .kpi-val {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
+  }
+  .kpi-lbl {
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 3px;
+  }
+
+  /* Filter Hub */
+  .filter-hub {
+    background: #ffffff;
+    border: 1.5px solid var(--border-color);
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 14px rgba(15,23,42,0.03);
+    margin-bottom: 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .date-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .date-btn {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    padding: 7px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .date-btn:hover {
+    background: #e2e8f0;
+  }
+  .date-input {
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .role-tabs {
+    display: flex;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 12px;
+    gap: 4px;
+  }
+  .role-tab {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #64748b;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .role-tab.active {
+    background: #ffffff;
+    color: var(--navy-dark);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+
+  /* Main Table */
+  .staff-table-wrap {
+    background: #ffffff;
+    border: 1.5px solid var(--border-color);
+    border-radius: 18px;
+    box-shadow: 0 4px 20px rgba(15,23,42,0.04);
+    overflow: hidden;
+  }
+  .staff-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+  .staff-table th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 14px 18px;
+    border-bottom: 1.5px solid #e2e8f0;
+  }
+  .staff-table td {
+    padding: 14px 18px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    font-size: 13.5px;
+  }
+  .staff-table tr:hover {
+    background: #f8fafc;
+  }
+
+  .person-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .person-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 1.5px solid #cbd5e1;
+  }
+  .person-info-name {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 14.5px;
+  }
+  .person-info-sub {
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .badge-teacher {
+    background: #e0f2fe;
+    color: #0369a1;
+  }
+  .badge-staff {
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  .punch-time-badge {
+    font-family: 'JetBrains Mono', monospace, monospace;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+  .punch-time-in {
+    background: #dcfce7;
+    color: #15803d;
+  }
+  .punch-time-out {
+    background: #e0e7ff;
+    color: #4338ca;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .status-present {
+    background: #dcfce7;
+    color: #166534;
+  }
+  .status-left {
+    background: #f1f5f9;
+    color: #475569;
+  }
+
+  .punches-chip-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-width: 380px;
+  }
+  .punch-chip {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    position: relative;
+  }
+  .punch-chip.in {
+    border-color: #86efac;
+    color: #166534;
+    background: #f0fdf4;
+  }
+  .punch-chip.out {
+    border-color: #bfdbfe;
+    color: #1e40af;
+    background: #eff6ff;
+  }
+  .punch-chip-del {
+    color: #ef4444;
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 3px;
+    font-size: 10px;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-box {
+    background: #ffffff;
+    border-radius: 20px;
+    max-width: 480px;
+    width: 100%;
+    padding: 24px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  }
+
+  @media print {
+    body * { visibility: hidden; }
+    .print-zone, .print-zone * { visibility: visible; }
+    .print-zone {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      padding: 20px;
+    }
+    .no-print { display: none !important; }
+    .staff-table th, .staff-table td { border: 1px solid #000 !important; }
+  }
+</style>
+
+<div class="container-fluid px-3 py-3">
+
+  <!-- Header -->
+  <div class="staff-att-header no-print">
+    <div class="staff-att-title-group">
+      <h2><span>👨‍🏫</span> Pointage Enseignants & Personnel ILAS</h2>
+      <p>Suivi en direct des heures de présence, entrées et sorties enregistrées à la Borne Express</p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <a href="{{ url_for('kiosk_page') }}" target="_blank" class="btn btn-primary" style="font-weight:700; border-radius:12px; padding:9px 16px; background:#0B3D6E; border:none;">
+        ⚡ Borne Kiosk Directe
+      </a>
+      <button onclick="window.print()" class="btn btn-outline-secondary" style="font-weight:700; border-radius:12px; padding:9px 16px;">
+        🖨️ Imprimer Feuille de Présence
+      </button>
+      <button onclick="openManualPunchModal()" class="btn btn-success" style="font-weight:700; border-radius:12px; padding:9px 16px; background:#059669; border:none;">
+        ➕ Pointage Manuel
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid no-print">
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#e0f2fe; color:#0284c7;">👥</div>
+      <div>
+        <div class="kpi-val">{{ total_teachers_present + total_staff_present }}</div>
+        <div class="kpi-lbl">Présents ce jour</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#fef3c7; color:#d97706;">👨‍🏫</div>
+      <div>
+        <div class="kpi-val">{{ total_teachers_present }}</div>
+        <div class="kpi-lbl">Professeurs</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#dcfce7; color:#16a34a;">👔</div>
+      <div>
+        <div class="kpi-val">{{ total_staff_present }}</div>
+        <div class="kpi-lbl">Personnel / Staff</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#ede9fe; color:#7c3aed;">⏱️</div>
+      <div>
+        <div class="kpi-val">{{ total_hours_all }} h</div>
+        <div class="kpi-lbl">Heures cumulées</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#f1f5f9; color:#475569;">🏷️</div>
+      <div>
+        <div class="kpi-val">{{ total_punches }}</div>
+        <div class="kpi-lbl">Passages enregistrés</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Toolbar -->
+  <div class="filter-hub no-print">
+    <!-- Date picker with prev/today/next -->
+    <div class="date-nav">
+      <label style="font-weight:700; font-size:13px; color:#475569; margin:0;">Date :</label>
+      <input type="date"
+             id="filterDateInput"
+             class="date-input"
+             value="{{ date_str }}"
+             onchange="changeDate(this.value)">
+      <a href="{{ url_for('staff_attendance', date=selected_date.__class__.today()) }}" class="date-btn">Aujourd'hui</a>
+    </div>
+
+    <!-- Role Tabs -->
+    <div class="role-tabs">
+      <a href="{{ url_for('staff_attendance', date=date_str, role='all') }}" class="role-tab {% if filter_role == 'all' %}active{% endif %}">Tous ({{ total_teachers_present + total_staff_present }})</a>
+      <a href="{{ url_for('staff_attendance', date=date_str, role='teacher') }}" class="role-tab {% if filter_role == 'teacher' %}active{% endif %}">👨‍🏫 Professeurs ({{ total_teachers_present }})</a>
+      <a href="{{ url_for('staff_attendance', date=date_str, role='employee') }}" class="role-tab {% if filter_role == 'employee' %}active{% endif %}">👔 Personnel ({{ total_staff_present }})</a>
+    </div>
+
+    <!-- Live Search -->
+    <div style="position:relative; width:220px;">
+      <input type="text"
+             id="tableSearchInput"
+             placeholder="Filtrer un nom..."
+             oninput="filterTableRows(this.value)"
+             style="width:100%; border:1.5px solid #cbd5e1; border-radius:10px; padding:6px 12px; font-size:13px;">
+    </div>
+  </div>
+
+  <!-- Printable & Screen Table -->
+  <div class="staff-table-wrap print-zone">
+    <!-- Official Print Header -->
+    <div class="d-none d-print-block mb-4 text-center">
+      <h3 style="font-weight:900; margin:0; text-transform:uppercase;">Institut Les Sages (ILAS)</h3>
+      <h5 style="margin:4px 0 0 0; color:#475569;">Feuille Quotidienne de Présence & d'Émargement — Enseignants & Personnel</h5>
+      <p style="margin:2px 0 0 0; font-size:14px; font-weight:700;">Date : {{ selected_date.strftime('%d/%m/%Y') }}</p>
+      <hr style="border-top:1.5px solid #000; margin:10px 0;">
+    </div>
+
+    {% if records %}
+    <table class="staff-table" id="staffAttendanceTable">
+      <thead>
+        <tr>
+          <th>Personne</th>
+          <th>Rôle / Poste</th>
+          <th>1ère Entrée</th>
+          <th>Dernière Sortie</th>
+          <th>Temps Travaillé</th>
+          <th>État Actuel</th>
+          <th class="no-print">Historique des Pointages (Aujourd'hui)</th>
+          <th class="d-none d-print-table-cell">Émargement / Signature</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr class="staff-row" data-name="{{ r.person_name|lower }}">
+          <td>
+            <div class="person-cell">
+              <img src="{{ r.photo_url or 'https://ui-avatars.com/api/?name=' + r.person_name }}" class="person-avatar" alt="Photo">
+              <div>
+                <div class="person-info-name">{{ r.person_name }}</div>
+                <div class="person-info-sub">Code : {{ r.person_code }} {% if r.phone %}• {{ r.phone }}{% endif %}</div>
+              </div>
+            </div>
+          </td>
+
+          <td>
+            {% if r.person_type == 'teacher' %}
+              <span class="badge-pill badge-teacher">👨‍🏫 Professeur</span>
+              <div style="font-size:11.5px; color:#64748b; margin-top:2px;">{{ r.person_role.replace('Professeur (', '').replace(')', '') }}</div>
+            {% else %}
+              <span class="badge-pill badge-staff">👔 {{ r.person_role }}</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if r.first_in %}
+              <span class="punch-time-badge punch-time-in">🟢 {{ r.first_in }}</span>
+            {% else %}
+              <span style="color:#94a3b8;">—</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if r.last_out %}
+              <span class="punch-time-badge punch-time-out">🔵 {{ r.last_out }}</span>
+            {% else %}
+              <span style="color:#94a3b8; font-style:italic;">En cours</span>
+            {% endif %}
+          </td>
+
+          <td>
+            <span style="font-weight:800; color:#0f172a; font-family:'JetBrains Mono', monospace;">
+              {{ r.total_worked_str }}
+            </span>
+          </td>
+
+          <td>
+            {% if r.current_status == 'in' %}
+              <span class="status-badge status-present">🟢 Présent(e)</span>
+            {% else %}
+              <span class="status-badge status-left">🔵 Sorti(e)</span>
+            {% endif %}
+          </td>
+
+          <td class="no-print">
+            <div class="punches-chip-container">
+              {% for p in r.punches %}
+                <span class="punch-chip {{ p.punch_type }}" title="Pointage #{{ p.id }} ({{ p.device }})">
+                  {{ '🟢' if p.punch_type == 'in' else '🔵' }} {{ p.formatted_time }}
+                  <form method="POST" action="{{ url_for('staff_attendance_delete_punch', log_id=p.id) }}" style="display:inline;" onsubmit="return confirm('Supprimer ce pointage de {{ p.formatted_time }} ?');">
+                    <button type="submit" class="punch-chip-del" style="background:none; border:none; padding:0;">✕</button>
+                  </form>
+                </span>
+              {% endfor %}
+            </div>
+          </td>
+
+          <!-- Signature for print -->
+          <td class="d-none d-print-table-cell" style="width:140px; height:45px; border-bottom:1px solid #000;">
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:48px 24px; text-align:center; color:#64748b;">
+      <div style="font-size:36px; margin-bottom:10px;">🕒</div>
+      <div style="font-weight:700; font-size:16px; color:#1e293b;">Aucun pointage enregistré pour cette date ({{ selected_date.strftime('%d/%m/%Y') }})</div>
+      <p style="font-size:13px; margin-top:6px;">Les pointages enregistrés à la borne apparaîtront automatiquement ici en temps réel.</p>
+      <button onclick="openManualPunchModal()" class="btn btn-outline-primary mt-2" style="border-radius:10px; font-weight:700;">
+        ➕ Enregistrer un pointage manuel
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Modal Manual Punch Entry -->
+<div id="manualPunchModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 style="font-weight:800; margin:0;">➕ Enregistrer un pointage manuel</h5>
+      <button type="button" onclick="closeManualPunchModal()" style="background:none; border:none; font-size:20px; color:#64748b; cursor:pointer;">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('staff_attendance_manual_punch') }}">
+      <div class="mb-3">
+        <label style="font-weight:700; font-size:13px; color:#334155;">Type de Personne</label>
+        <select name="person_type" id="manualPersonType" class="form-select" onchange="togglePersonList(this.value)" required>
+          <option value="teacher">👨‍🏫 Professeur</option>
+          <option value="employee">👔 Personnel / Employé</option>
+        </select>
+      </div>
+
+      <div class="mb-3" id="teacherSelectGroup">
+        <label style="font-weight:700; font-size:13px; color:#334155;">Sélectionner le Professeur</label>
+        <select name="person_id" id="teacherSelect" class="form-select">
+          {% for t in all_teachers %}
+            <option value="{{ t.id }}">{{ t.full_name }} ({{ t.code or 'PRF-' + t.id|string }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3" id="employeeSelectGroup" style="display:none;">
+        <label style="font-weight:700; font-size:13px; color:#334155;">Sélectionner le Personnel</label>
+        <select id="employeeSelect" class="form-select">
+          {% for e in all_employees %}
+            <option value="{{ e.id }}">{{ e.full_name }} ({{ e.job_title }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="row g-2 mb-3">
+        <div class="col-6">
+          <label style="font-weight:700; font-size:13px; color:#334155;">Action</label>
+          <select name="punch_type" class="form-select" required>
+            <option value="in">🟢 Entrée (Arrivée)</option>
+            <option value="out">🔵 Sortie (Départ)</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label style="font-weight:700; font-size:13px; color:#334155;">Heure</label>
+          <input type="time" name="punch_time" class="form-control" value="08:30" required>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label style="font-weight:700; font-size:13px; color:#334155;">Date</label>
+        <input type="date" name="punch_date" class="form-control" value="{{ date_str }}" required>
+      </div>
+
+      <div class="mb-3">
+        <label style="font-weight:700; font-size:13px; color:#334155;">Remarque (Optionnelle)</label>
+        <input type="text" name="notes" class="form-control" placeholder="Ex: Oubli de badge, arrivée décalée...">
+      </div>
+
+      <div class="d-flex justify-content-end gap-2 mt-4">
+        <button type="button" onclick="closeManualPunchModal()" class="btn btn-secondary" style="border-radius:10px;">Annuler</button>
+        <button type="submit" class="btn btn-primary" style="background:#0B3D6E; border:none; border-radius:10px; font-weight:700;">Enregistrer le Pointage</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function changeDate(newDate) {
+    if (!newDate) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('date', newDate);
+    window.location.href = url.toString();
+  }
+
+  function filterTableRows(q) {
+    q = (q || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('.staff-row');
+    rows.forEach(r => {
+      const name = r.getAttribute('data-name') || '';
+      r.style.display = (!q || name.includes(q)) ? '' : 'none';
+    });
+  }
+
+  function openManualPunchModal() {
+    document.getElementById('manualPunchModal').style.display = 'flex';
+  }
+  function closeManualPunchModal() {
+    document.getElementById('manualPunchModal').style.display = 'none';
+  }
+
+  function togglePersonList(type) {
+    const tGroup = document.getElementById('teacherSelectGroup');
+    const eGroup = document.getElementById('employeeSelectGroup');
+    const tSel = document.getElementById('teacherSelect');
+    const eSel = document.getElementById('employeeSelect');
+
+    if (type === 'teacher') {
+      tGroup.style.display = 'block';
+      eGroup.style.display = 'none';
+      tSel.setAttribute('name', 'person_id');
+      eSel.removeAttribute('name');
+    } else {
+      tGroup.style.display = 'none';
+      eGroup.style.display = 'block';
+      eSel.setAttribute('name', 'person_id');
+      tSel.removeAttribute('name');
+    }
+  }
+</script>
+
+{% endblock %}

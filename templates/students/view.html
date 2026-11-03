@@ -1,0 +1,783 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- BREADCRUMB & STUDENT HERO DOSSIER -->
+<div class="card card-pad mb-3" style="padding:20px 24px; border-top:4.5px solid #1f6feb; background:#ffffff;">
+  <div class="flex between wrap" style="align-items:center; gap:16px;">
+    
+    <!-- Student Avatar & Primary Details -->
+    <div style="display:flex; align-items:center; gap:16px;">
+      {% if stu.photo %}
+        <div style="width:72px; height:72px; border-radius:50%; overflow:hidden; border:3px solid #1f6feb; box-shadow:0 4px 14px rgba(31,111,235,0.25); flex-shrink:0;">
+          <img src="{{ url_for('static', filename='uploads/'+stu.photo) }}" style="width:100%; height:100%; object-fit:cover;">
+        </div>
+      {% else %}
+        <div style="width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg, #1f6feb 0%, #1d4ed8 100%); color:#fff; font-size:28px; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(31,111,235,0.25); flex-shrink:0;">
+          {{ stu.first_name[0]|upper }}
+        </div>
+      {% endif %}
+
+      <div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <h2 style="margin:0; font-size:22px; color:#0B3D6E; font-weight:800;">{{ stu.full_name }}</h2>
+          <span class="chip chip-blue" style="font-size:12px; font-weight:800;">{{ stu.code }}</span>
+          <span class="chip {{ 'chip-green' if stu.status=='active' else 'chip-red' }}" style="font-size:11px; font-weight:700;">
+            {{ '🟢 Actif' if stu.status=='active' else '🔴 Inactif' }}
+          </span>
+          {% if stu.school_level %}
+            <span class="chip chip-gray" style="font-size:11px; font-weight:700;">🎓 {{ stu.school_level }}</span>
+          {% endif %}
+          {% if stu.age is not none %}
+            <span class="chip chip-blue" style="font-size:11px; font-weight:700;">🎂 {{ stu.age }} ans</span>
+          {% endif %}
+        </div>
+
+        <div style="font-size:12.5px; color:#64748b; margin-top:4px; display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+          {% if stu.phone %}<span>📞 Élève: <strong>{{ stu.phone }}</strong></span>{% endif %}
+          {% if stu.parent_phone %}
+            <div style="display:flex; align-items:center; gap:4px;">
+              <span>👨‍👩‍👧 Parent: <strong>{{ stu.parent_phone }}</strong> ({{ stu.parent_name or 'Tuteur' }})</span>
+              <a href="https://wa.me/212{{ stu.parent_phone|replace(' ', '')|replace('-', '')|replace('+212', '')|replace('0', '', 1) if stu.parent_phone.startswith('0') else stu.parent_phone }}?text=Bonjour,%20Institut%20ILAS%20concernant%20{{ stu.first_name }}" target="_blank" style="text-decoration:none; font-size:11px; background:#dcfce7; color:#15803d; padding:1px 6px; border-radius:4px; font-weight:800;">
+                💬 WhatsApp
+              </a>
+            </div>
+          {% endif %}
+          <span>📍 {{ stu.city or 'Deroua' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons Cluster -->
+    <div class="flex wrap" style="gap:8px;">
+      {% if enrolls|length > 1 %}
+      <a class="btn btn-primary" href="{{ url_for('student_renew_batch', sid=stu.id) }}" style="background:#059669; border-color:#059669; font-weight:800; font-size:13px; padding:7px 14px; box-shadow:0 2px 6px rgba(5,150,105,0.25);">
+        ⚡ Renouvellement Groupé
+      </a>
+      {% elif stu.active_enrollment %}
+      <a class="btn btn-primary" href="{{ url_for('enrollment_renew', eid=stu.active_enrollment.id) }}" style="background:#10b981; border-color:#10b981; font-weight:800; font-size:13px; padding:7px 14px;">
+        🔄 Renouveler
+      </a>
+      {% endif %}
+      <a class="btn btn-primary" href="{{ url_for('express_enrollment') }}" style="background:#1f6feb; border-color:#1f6feb; font-weight:800; font-size:13px; padding:7px 14px;">
+        ⚡ Inscription Express
+      </a>
+      <button type="button" class="btn btn-outline" onclick="openMultiPayModal({{ stu.id }}, '{{ stu.full_name|replace('\'', '\\\'') }}')" style="font-weight:800; font-size:13px; padding:7px 14px; border-color:#10b981; color:#047857; background:#f0fdf4;" title="Encaisser un paiement ou solder les classes">
+        💳 + Paiement / Encaisser
+      </button>
+      <a class="btn btn-outline" href="{{ url_for('student_form', sid=stu.id) }}" style="font-weight:700; font-size:13px; padding:7px 12px;">
+        ✏️ Modifier
+      </a>
+      <a class="btn btn-outline" href="{{ url_for('badges') }}" style="font-weight:700; font-size:13px; padding:7px 12px; border-color:#8b5cf6; color:#7c3aed;">
+        🪪 Badge QR
+      </a>
+      <a class="btn btn-outline" href="javascript:void(0)" onclick="openStudentTimetableModal({{ stu.id }});" style="font-weight:800; font-size:13px; padding:7px 14px; border-color:#059669; color:#059669; background:#ecfdf5; cursor:pointer;" title="Imprimer ou envoyer l'emploi du temps par WhatsApp">
+        📅 Emploi du Temps
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<!-- LEVEL MISMATCH ALERT (IF ANY) -->
+{% if stu.level_mismatch_test %}
+{% set mm_test = stu.level_mismatch_test %}
+<div class="card mb-3" style="background: linear-gradient(135deg, #fff1f2 0%, #fee2e2 100%); border: 2px solid #ef4444; padding: 16px 20px; border-radius: 12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; box-shadow: 0 4px 14px rgba(239,68,68,0.15);">
+  <div style="display:flex; align-items:flex-start; gap:14px;">
+    <div style="font-size:28px; line-height:1;">⚠️</div>
+    <div>
+      <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#b91c1c; letter-spacing:0.5px;">
+        ALERTE RÉORIENTATION : INCOHÉRENCE DE NIVEAU DÉTECTÉE (تنبيه عدم تطابق المستوى)
+      </div>
+      <div style="font-size:15px; font-weight:800; color:#991b1b; margin-top:3px;">
+        Le test de niveau donne : <span style="background:#fee2e2; border:1px solid #f87171; padding:2px 8px; border-radius:6px; color:#7f1d1d;">{{ mm_test.recommended_level }}</span>
+        mais l'élève est inscrit en : <span style="background:#fef3c7; border:1px solid #f59e0b; padding:2px 8px; border-radius:6px; color:#92400e;">{{ mm_test.target_enrolled_course.level or mm_test.target_enrolled_course.name if mm_test.target_enrolled_course else 'Classe actuelle' }}</span>
+      </div>
+      <div style="font-size:12px; color:#7f1d1d; margin-top:4px;">
+        Score au test : <strong>{{ mm_test.score|int }}/{{ mm_test.max_score|int }} ({{ mm_test.percentage }}%)</strong> · Matière : <strong>{{ mm_test.language }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+    <a class="btn btn-primary btn-sm" href="{{ url_for('placement_test_view', test_id=mm_test.id) }}" style="background:#dc2626; border-color:#dc2626; font-weight:800; font-size:12px; padding:7px 14px;">
+      🔄 Voir Test & Réorienter
+    </a>
+
+    <form method="post" action="{{ url_for('placement_test_dismiss_mismatch', test_id=mm_test.id) }}" style="margin:0;" onsubmit="return confirm('Confirmez-vous que l\'élève conserve sa classe actuelle et que l\'alerte doit être levée ?');">
+      <input type="hidden" name="redirect_to" value="{{ url_for('student_view', sid=stu.id) }}">
+      <button class="btn btn-outline btn-sm" type="submit" style="background:#fff; color:#475569; font-weight:700; font-size:12px; padding:7px 12px; border-color:#cbd5e1;">
+        ✓ Marquer comme traité (Garder cette classe)
+      </button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- CREDIT BALANCE BANNER (IF ANY) -->
+{% if stu.dynamic_credit_balance > 0 %}
+<div class="card mb-3" style="background:linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border:1.5px solid #10b981; padding:14px 20px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <div style="font-size:26px;">💰</div>
+    <div>
+      <div style="font-size:11px; font-weight:800; text-transform:uppercase; color:#047857; letter-spacing:0.5px;">SOLDE CRÉDIT & AVOIR ÉLÈVE DISPONIBLE (رصيد موجب لصالح التلميذ)</div>
+      <div style="font-size:20px; font-weight:800; color:#064e3b; margin-top:2px;">
+        +{{ '%.2f'|format(stu.dynamic_credit_balance) }} {{ settings.currency }}
+        <span style="font-size:12px; font-weight:600; color:#047857; margin-left:6px;">(Déductible automatiquement des prochains renouvellements)</span>
+      </div>
+    </div>
+  </div>
+  <a class="btn btn-success btn-sm" href="{{ url_for('express_enrollment') }}" style="background:#10b981; border:none; font-weight:800;">
+    ⚡ Utiliser ce crédit
+  </a>
+</div>
+{% endif %}
+
+<!-- PROFILE SUMMARY KPIS -->
+<div class="grid grid-4 mb-3" style="gap:12px;">
+  <div class="card stat" style="border-left:4px solid #1f6feb; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">TOTAL PAYÉ À CE JOUR</div>
+    <div class="value" style="font-size:20px; font-weight:800; color:#0B3D6E; margin:2px 0;">{{ '%.0f'|format(total_spent) }} <span style="font-size:12px;">{{ settings.currency }}</span></div>
+    <div class="sub" style="font-size:11px; color:#1f6feb; font-weight:600;">{{ payments|length }} paiements reçus</div>
+  </div>
+
+  <div class="card stat" style="border-left:4px solid #10b981; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">INSCRIPTIONS / COURS</div>
+    <div class="value" style="font-size:20px; font-weight:800; color:#047857; margin:2px 0;">{{ enrolls|length }}</div>
+    <div class="sub" style="font-size:11px; color:#047857; font-weight:600;">Matières suivies</div>
+  </div>
+
+  <div class="card stat" style="border-left:4px solid #8b5cf6; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">TAUX D'ASSIDUITÉ ({{ att_total|default(0) }} séances)</div>
+    <div class="value" style="font-size:20px; font-weight:800; color:#6d28d9; margin:2px 0;">{{ att_rate }}%</div>
+    <div class="sub" style="font-size:11px; font-weight:700; display:flex; gap:10px; flex-wrap:wrap; margin-top:2px;">
+      <span style="color:#15803d;">🟢 {{ att_present }} présent{{ 's' if att_present != 1 else '' }}</span>
+      <span style="color:#dc2626;">🔴 {{ att_absent }} absent{{ 's' if att_absent != 1 else '' }}</span>
+      <span style="color:#d97706;">⚠️ {{ att_late }} retard{{ 's' if att_late != 1 else '' }}</span>
+    </div>
+  </div>
+
+  <div class="card stat" style="border-left:4px solid {% if stu.has_pack and not stu.end_date %}#8b5cf6{% elif stu.days_remaining and stu.days_remaining <= 5 %}#ef4444{% else %}#0ea5e9{% endif %}; padding:12px 14px;">
+    <div class="label" style="font-size:10.5px; font-weight:700; color:#64748b;">
+      {% if stu.has_pack and not stu.end_date %}SÉANCES RESTANTES (PACK){% else %}PROCHAINE ÉCHÉANCE{% endif %}
+    </div>
+    <div class="value" style="font-size:17px; font-weight:800; color:{% if stu.has_pack and not stu.end_date %}#6d28d9{% elif stu.days_remaining and stu.days_remaining <= 5 %}#b91c1c{% else %}#0369a1{% endif %}; margin:4px 0;">
+      {% if stu.has_pack and not stu.end_date %}
+        📦 {{ stu.pack_remaining_sessions }} séance{{ 's' if stu.pack_remaining_sessions > 1 else '' }}
+      {% elif stu.end_date %}
+        {{ stu.end_date.strftime('%d/%m/%Y') if stu.end_date else stu.end_date }}
+      {% else %}
+        —
+      {% endif %}
+    </div>
+    <div class="sub" style="font-size:11px; font-weight:700;">
+      {% if stu.has_pack and not stu.end_date %}
+        <span style="color:#7c3aed;">⚡ Forfait Pack / Cours Particulier</span>
+      {% elif stu.days_remaining is not none %}
+        {% if stu.days_remaining > 5 %}<span style="color:#047857;">🟢 Reste {{ stu.days_remaining }} jours</span>
+        {% elif stu.days_remaining >= 0 %}<span style="color:#b45309;">⚠️ Expire sous {{ stu.days_remaining }} jours</span>
+        {% else %}<span style="color:#ef4444;">🔴 Expiré depuis {{ stu.days_remaining|abs }} j</span>{% endif %}
+      {% else %}
+        Sans date de fin
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- TABBED STUDENT PROFILE WORKSPACE -->
+<div class="card card-pad" style="padding:18px 20px;">
+  
+  <!-- Tabs Navigation Header -->
+  <div style="display:flex; gap:8px; border-bottom:1.5px solid #f1f5f9; padding-bottom:10px; margin-bottom:16px; overflow-x:auto;">
+    <button type="button" id="tabBtnEnrolls" onclick="switchStuTab('enrolls')" style="padding:6px 14px; border-radius:8px; font-weight:800; font-size:12.5px; border:none; cursor:pointer; background:#1f6feb; color:#fff;">
+      📋 Inscriptions & Cours ({{ enrolls|length }})
+    </button>
+    <button type="button" id="tabBtnPayments" onclick="switchStuTab('payments')" style="padding:6px 14px; border-radius:8px; font-weight:700; font-size:12.5px; border:1px solid #cbd5e1; cursor:pointer; background:#fff; color:#475569;">
+      💳 Paiements & Reçus ({{ payments|length }})
+    </button>
+    <button type="button" id="tabBtnAttendance" onclick="switchStuTab('attendance')" style="padding:6px 14px; border-radius:8px; font-weight:700; font-size:12.5px; border:1px solid #cbd5e1; cursor:pointer; background:#fff; color:#475569;">
+      📍 Présence & Assiduité ({{ attendances|length }})
+    </button>
+    <button type="button" id="tabBtnGrades" onclick="switchStuTab('grades')" style="padding:6px 14px; border-radius:8px; font-weight:700; font-size:12.5px; border:1px solid #cbd5e1; cursor:pointer; background:#fff; color:#475569;">
+      📝 Notes & Évaluations ({{ grades|length }})
+    </button>
+    <button type="button" id="tabBtnInfo" onclick="switchStuTab('info')" style="padding:6px 14px; border-radius:8px; font-weight:700; font-size:12.5px; border:1px solid #cbd5e1; cursor:pointer; background:#fff; color:#475569;">
+      👤 Fiche Complète
+    </button>
+  </div>
+
+  <!-- TAB 1 : ENROLLMENTS -->
+  <div id="stuTabEnrolls">
+    {% if enrolls %}
+    {% if enrolls|length > 1 %}
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; background:#f0fdf4; border:1.5px solid #86efac; border-radius:10px; padding:12px 16px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:20px;">⚡</span>
+        <div>
+          <div style="font-size:13px; font-weight:800; color:#166534;">
+            Cet élève est inscrit dans plusieurs classes ({{ enrolls|length }} inscriptions enregistrées).
+          </div>
+          <div style="font-size:11.5px; color:#15803d;">
+            Vous pouvez effectuer un renouvellement simultané de plusieurs matières sur un seul et même reçu de paiement.
+          </div>
+        </div>
+      </div>
+      <a class="btn btn-primary btn-sm" href="{{ url_for('student_renew_batch', sid=stu.id) }}" style="background:#059669; border-color:#059669; font-weight:800; padding:6px 14px; font-size:12.5px;">
+        ⚡ Renouvellement Groupé Multi-Classes →
+      </a>
+    </div>
+    {% endif %}
+    <div class="table-wrap">
+      <table style="font-size:13px;">
+        <thead>
+          <tr style="background:#f8fafc; font-size:11.5px; color:#64748b;">
+            <th>Matière / Groupe</th>
+            <th>Date Début</th>
+            <th>{{ 'تاريخ الانتهاء / الحصص المتبقية' if lang=='ar' else "Date d'Échéance / Séances" }}</th>
+            <th style="text-align:right;">{{ 'الواجب الشهري' if lang=='ar' else 'Tarif Mensuel' }}</th>
+            <th style="text-align:right;">Total Payé</th>
+            <th style="text-align:center;">État de fin</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in enrolls %}
+          <tr>
+            <td>
+              <strong style="color:#0B3D6E;">{{ e.course_name_display }}</strong>
+              {% if e.notes and 'Transféré' in e.notes %}
+                <div style="font-size:10.5px; color:#0284c7; margin-top:2px; font-weight:600;">ℹ️ {{ e.notes }}</div>
+              {% endif %}
+              {% if e.is_pending %}
+                <div style="font-size:10.5px; color:#d97706; margin-top:2px;">
+                  <span class="chip chip-amber" style="font-size:9.5px; padding:1px 5px; font-weight:800;">⏳ En attente de groupe</span>
+                </div>
+              {% elif e.course and e.course.teacher %}
+                <div style="font-size:11px; color:#64748b;">👨‍🏫 Prof : {{ e.course.teacher.full_name }}</div>
+              {% endif %}
+            </td>
+            <td style="color:#475569;">{{ e.enroll_date.strftime('%d/%m/%Y') if e.enroll_date else '' }}</td>
+            <td>
+              {% if e.is_pack %}
+                <strong style="color:#7c3aed; font-size:13px;">📦 {{ e.remaining_sessions }} séance{{ 's' if e.remaining_sessions > 1 else '' }} restante{{ 's' if e.remaining_sessions > 1 else '' }}</strong>
+                <div style="font-size:10.5px; color:#64748b; margin-top:2px;">(Total : {{ e.total_sessions_month or 1 }} séance{{ 's' if (e.total_sessions_month or 1) > 1 else '' }})</div>
+              {% else %}
+                <strong style="color:#0f172a;">{{ e.end_date.strftime('%d/%m/%Y') if e.end_date else '—' }}</strong>
+              {% endif %}
+            </td>
+            <td style="text-align:right;">
+              <div style="font-weight:800; color:#0B3D6E;">
+                {% if e.payment_plan == 'pack' or (e.course and e.course.billing_cycle == 'pack') or (e.course and 'particulier' in (e.course.name or '')|lower) %}
+                  {{ '%.0f'|format(e.calculated_price or e.monthly_price or (e.course.price if e.course else 0)) }} <span style="font-size:10px; font-weight:800; color:#7c3aed; background:#ede9fe; padding:2px 6px; border-radius:4px; display:inline-block; margin-left:2px;">FORFAIT PACK</span>
+                {% elif e.monthly_price and e.monthly_price > 0 %}
+                  {{ '%.0f'|format(e.monthly_price) }} <span style="font-size:10.5px; font-weight:600; color:#64748b;">DH/mois</span>
+                {% elif e.course and e.course.price %}
+                  {{ '%.0f'|format(e.course.price_per_month or (e.course.price / 3.0 if e.course.billing_cycle in ('3months', 'trimestriel', '3 mois') else e.course.price)) }} <span style="font-size:10.5px; font-weight:600; color:#64748b;">DH/mois</span>
+                {% else %}
+                  {{ '%.0f'|format(e.calculated_price or 0) }} <span style="font-size:10.5px; font-weight:600; color:#64748b;">DH</span>
+                {% endif %}
+              </div>
+              {% if (e.payment_plan != 'pack' and (not e.course or e.course.billing_cycle != 'pack') and (not e.course or 'particulier' not in (e.course.name or '')|lower)) and e.calculated_price and e.monthly_price and (e.calculated_price != e.monthly_price) %}
+                <div style="font-size:10px; color:#64748b; font-weight:600;" title="Montant réglé pour cette période de cours">
+                  Période : {{ '%.0f'|format(e.calculated_price) }} DH
+                </div>
+              {% endif %}
+            </td>
+            <td style="text-align:right; font-weight:800; color:#047857;">{{ '%.2f'|format(e.total_paid) }} DH</td>
+            <td style="text-align:center;">
+              {% if e.is_pending %}
+                <span class="chip chip-amber" style="font-weight:800;">⏳ En attente</span>
+              {% elif e.status == 'trial' %}
+                <span class="chip" style="font-weight:800; background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:10px;">🧪 Séance d'essai</span>
+              {% elif e.status == 'transferred' %}
+                <span class="chip" style="font-weight:800; background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-size:10px;">🔀 Transféré</span>
+              {% elif e.status == 'completed' %}
+                <span class="chip chip-gray" style="font-weight:700; font-size:10px;">✅ Terminé</span>
+              {% elif e.status == 'paused' %}
+                <span class="chip chip-amber">Gelé (Pause)</span>
+              {% elif e.has_active_promise %}
+                <span class="chip" style="background:#e0e7ff; color:#3730a3; border:1.5px solid #a5b4fc; font-weight:800; font-size:10px;" title="{{ e.rest_promise_note or 'Accord actif' }}">🛡️ Accord : {{ e.rest_promise_date.strftime('%d/%m/%Y') }}</span>
+              {% elif e.is_partial_payment %}
+                <span class="chip" style="background:#fef3c7; color:#92400e; border:1px solid #fcd34d; font-weight:800; font-size:10px;" title="Avance versée : {{ '%.0f'|format(e.total_paid) }} DH">🟠 Avance (Reste: {{ '%.0f'|format(e.balance) }} DH)</span>
+              {% elif e.total_paid <= 0 and e.balance > 0 %}
+                <span class="chip" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; font-size:10px; font-weight:800;">🔴 {{ 'غير مؤدى' if lang=='ar' else 'Non payé' }}</span>
+              {% elif e.is_pack %}
+                {% if e.remaining_sessions > 0 %}
+                  <span class="chip chip-purple" style="font-weight:800; font-size:10px;">📦 Reste {{ e.remaining_sessions }} séance{{ 's' if e.remaining_sessions > 1 else '' }}</span>
+                {% else %}
+                  <span class="chip chip-gray" style="font-weight:700; font-size:10px;">✅ Pack Épuisé</span>
+                {% endif %}
+              {% elif e.end_date %}
+                {% set rem = e.days_remaining %}
+                {% if rem is not none and rem > 5 %}
+                  <span class="chip chip-green" style="font-size:10px;">🟢 Reste {{ rem }}j</span>
+                {% elif rem is not none and rem >= 0 %}
+                  <span class="chip chip-amber" style="font-size:10px;">⚠️ Expire ({{ rem }}j)</span>
+                {% else %}
+                  <span class="chip chip-red" style="font-size:10px;">🔴 Expiré</span>
+                {% endif %}
+              {% else %}
+                <span class="chip chip-green">Actif</span>
+              {% endif %}
+            </td>
+            <td style="text-align:right;">
+              <div class="flex" style="justify-content:flex-end; gap:5px;">
+                {% if e.status == 'trial' %}
+                  <a class="btn btn-xs btn-primary" href="{{ url_for('enrollments', status='trial') }}" style="background:#10b981; border-color:#10b981; font-weight:700; font-size:11px;" title="Valider dans la liste des inscriptions">
+                    ✅ Valider
+                  </a>
+                  <form method="post" action="{{ url_for('enrollment_cancel_trial', eid=e.id) }}" onsubmit="return confirm('Annuler cette séance d\'essai ?');" style="margin:0;">
+                    <button type="submit" class="btn btn-xs btn-outline" style="color:#dc2626; border-color:#fca5a5; padding:2px 6px; font-size:11px; font-weight:700;">
+                      ❌ Annuler
+                    </button>
+                  </form>
+                {% elif e.is_pending %}
+                  <button type="button" class="btn btn-xs btn-primary" style="background:#f59e0b; border-color:#d97706; font-weight:800; padding:2px 8px;" onclick="openAssignModal({{ e.id }}, '{{ stu.full_name|replace("'", "\\'") }}', '{{ (e.tariff.name if e.tariff else e.course_name_display)|replace("'", "\\'") }}')">
+                    ⚡ Affecter
+                  </button>
+                {% elif e.status == 'active' %}
+                  {% if e.balance > 0 %}
+                  <button type="button" class="btn btn-xs btn-primary" onclick="openMultiPayModal({{ stu.id }}, '{{ stu.full_name|replace('\'', '\\\'') }}', {{ e.id }})" style="background:#10b981; border-color:#10b981; font-weight:800; font-size:11px;" title="Encaisser le solde restant ({{ '%.2f'|format(e.balance) }} DH)">
+                    💵 Payer ({{ '%.0f'|format(e.balance) }} DH)
+                  </button>
+                  <button type="button" class="btn btn-xs btn-outline" onclick="openPromiseModal({{ e.id }}, '{{ e.rest_promise_date.strftime('%Y-%m-%d') if e.rest_promise_date else '' }}', '{{ (e.rest_promise_note or '')|replace('\'', '\\\'') }}', '{{ stu.full_name|replace('\'', '\\\'') }}', {{ e.balance }})" style="color:#4f46e5; border-color:#a5b4fc; font-weight:700; font-size:11px;" title="Accord de promesse pour le solde restant (Date X)">
+                    🤝 Date X
+                  </button>
+                  {% endif %}
+                  <button type="button" class="btn btn-xs btn-outline" style="color:#d97706; border-color:#f59e0b; padding:2px 6px; font-size:11px; font-weight:700;" onclick="openPauseModal({{ e.id }}, '{{ stu.full_name|replace('\'', '\\\'') }}', '{{ (e.course.display_name if e.course else '')|replace('\'', '\\\'') }}', '{{ e.enroll_date.strftime('%Y-%m-%d') if e.enroll_date else '' }}')" title="Geler l'abonnement">
+                    ⏸️ Geler
+                  </button>
+                  <a class="btn btn-xs btn-primary" href="{{ url_for('enrollment_renew', eid=e.id) }}" style="background:#0284c7; border-color:#0284c7; font-weight:700;">
+                    🔄 Renouveler
+                  </a>
+                {% elif e.status == 'paused' %}
+                  <button type="button" class="btn btn-xs btn-outline" style="color:#16a34a; border-color:#22c55e; padding:2px 6px; font-weight:800; font-size:11px;" onclick="openResumeModal({{ e.id }}, '{{ stu.full_name|replace("'", "\\'") }}', '{{ (e.course.display_name if e.course else '')|replace("'", "\\'") }}', '{{ e.pause_date.strftime('%Y-%m-%d') if e.pause_date else '' }}', {{ e.paused_sessions_remaining or 0 }})" title="Reprendre les cours">
+                    ▶️ Reprendre
+                  </button>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty" style="padding:24px;">Aucune inscription enregistrée. <a href="{{ url_for('express_enrollment') }}">+ Inscription Express</a></div>
+    {% endif %}
+  </div>
+
+  <!-- TAB 2 : PAYMENTS LEDGER -->
+  <div id="stuTabPayments" style="display:none;">
+    {% if payments %}
+    <div class="table-wrap">
+      <table style="font-size:13px;">
+        <thead>
+          <tr style="background:#f8fafc; font-size:11.5px; color:#64748b;">
+            <th>Reçu N°</th>
+            <th>Date</th>
+            <th>Objet & Cours</th>
+            <th>Mode</th>
+            <th style="text-align:right;">Montant Réglé</th>
+            <th style="text-align:right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in payments %}
+          <tr>
+            <td><strong style="color:#1f6feb;">{{ p.receipt }}</strong></td>
+            <td style="color:#64748b;">{{ p.date.strftime('%d/%m/%Y') if p.date else '' }}</td>
+            <td style="font-weight:600; color:#0B3D6E;">
+              <div>{{ p.courses_description or p.note or 'Paiement de scolarité' }}</div>
+              {% if p.note and p.courses_description and p.note != p.courses_description %}
+                <div style="font-size:11px; color:#64748b; font-weight:normal;">Note : {{ p.note }}</div>
+              {% endif %}
+            </td>
+            <td><span class="chip chip-gray" style="font-size:10px;">{{ p.method }}</span></td>
+            <td style="text-align:right; font-weight:800; color:#047857; font-size:14px;">
+              {{ '%.2f'|format(p.amount) }} {{ settings.currency }}
+            </td>
+            <td style="text-align:right;">
+              <a class="btn btn-xs btn-outline" href="{{ url_for('payment_receipt', pid=p.id) }}" style="padding:2px 8px;" title="Imprimer le reçu thermique 80mm">
+                🖨️ Reçu
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty" style="padding:24px;">Aucun paiement enregistré.</div>
+    {% endif %}
+  </div>
+
+  <!-- TAB 3 : ATTENDANCE & WHATSAPP LOGS -->
+  <div id="stuTabAttendance" style="display:none;">
+    <!-- Attendance Summary Strip -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-bottom:16px;">
+      <div style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:12px; padding:12px 14px; text-align:center;">
+        <div style="font-size:10px; font-weight:800; color:#475569; text-transform:uppercase;">Total Séances</div>
+        <div style="font-size:22px; font-weight:900; color:#0B3D6E; margin:4px 0;">{{ att_total|default(0) }}</div>
+        <div style="font-size:10.5px; font-weight:700; color:#64748b;">Assiduité: {{ att_rate }}%</div>
+      </div>
+      <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:12px 14px; text-align:center;">
+        <div style="font-size:10px; font-weight:800; color:#15803d; text-transform:uppercase;">🟢 Présent</div>
+        <div style="font-size:22px; font-weight:900; color:#15803d; margin:4px 0;">{{ att_present }}</div>
+        <div style="font-size:10.5px; font-weight:700; color:#15803d;">séance{{ 's' if att_present != 1 else '' }}</div>
+      </div>
+      <div style="background:#fef2f2; border:1.5px solid #fca5a5; border-radius:12px; padding:12px 14px; text-align:center;">
+        <div style="font-size:10px; font-weight:800; color:#dc2626; text-transform:uppercase;">🔴 Absent</div>
+        <div style="font-size:22px; font-weight:900; color:#dc2626; margin:4px 0;">{{ att_absent }}</div>
+        <div style="font-size:10.5px; font-weight:700; color:#dc2626;">séance{{ 's' if att_absent != 1 else '' }}</div>
+      </div>
+      <div style="background:#fffbeb; border:1.5px solid #fcd34d; border-radius:12px; padding:12px 14px; text-align:center;">
+        <div style="font-size:10px; font-weight:800; color:#d97706; text-transform:uppercase;">⚠️ Retard</div>
+        <div style="font-size:22px; font-weight:900; color:#d97706; margin:4px 0;">{{ att_late }}</div>
+        <div style="font-size:10.5px; font-weight:700; color:#d97706;">séance{{ 's' if att_late != 1 else '' }}</div>
+      </div>
+    </div>
+    {% if attendances %}
+    <div class="table-wrap">
+      <table style="font-size:13px;">
+        <thead>
+          <tr style="background:#f8fafc; font-size:11.5px; color:#64748b;">
+            <th>Date de la séance</th>
+            <th>Cours / Matière</th>
+            <th>Présence</th>
+            <th>Remarques</th>
+            <th style="text-align:right;">Alerte WhatsApp</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in attendances %}
+          <tr>
+            <td style="font-weight:700; color:#0B3D6E;">{{ a.date.strftime('%d/%m/%Y') if a.date else '' }}</td>
+            <td>{{ a.course.display_name if a.course else '-' }}</td>
+            <td>
+              {% if a.status == 'present' %}
+                <span class="chip chip-green">🟢 Présent</span>
+              {% elif a.status == 'absent' %}
+                <span class="chip chip-red">🔴 Absent</span>
+              {% elif a.status == 'late' %}
+                <span class="chip chip-amber">⚠️ En retard</span>
+              {% else %}
+                <span class="chip chip-gray">{{ a.status }}</span>
+              {% endif %}
+            </td>
+            <td style="font-size:11.5px; color:#64748b;">{{ a.notes or '—' }}</td>
+            <td style="text-align:right;">
+              {% if a.status == 'absent' and stu.parent_phone %}
+              <a class="btn btn-xs btn-outline" href="https://wa.me/212{{ stu.parent_phone|replace(' ', '')|replace('-', '')|replace('+212', '')|replace('0', '', 1) if stu.parent_phone.startswith('0') else stu.parent_phone }}?text=Bonjour,%20nous%20vous%20informons%20que%20{{ stu.first_name }}%20etait%20absent(e)%20au%20cours%20de%20{{ a.course.name if a.course else '' }}%20le%20{{ a.date }}" target="_blank" style="background:#dcfce7; border-color:#86efac; color:#15803d; font-weight:700;">
+                📲 Relancer Parent
+              </a>
+              {% else %}
+              <span class="muted" style="font-size:11px;">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty" style="padding:24px;">Aucun pointage de présence enregistré.</div>
+    {% endif %}
+  </div>
+
+  <!-- TAB 4 : GRADES & EVALUATIONS -->
+  <div id="stuTabGrades" style="display:none;">
+    {% if grades %}
+    <div class="table-wrap">
+      <table style="font-size:13px;">
+        <thead>
+          <tr style="background:#f8fafc; font-size:11.5px; color:#64748b;">
+            <th>Examen / Évaluation</th>
+            <th>Date</th>
+            <th style="text-align:center;">Note Obtenue</th>
+            <th>Remarques</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for g in grades %}
+          <tr>
+            <td style="font-weight:700; color:#0B3D6E;">{{ g.exam_name }}</td>
+            <td>{{ g.date }}</td>
+            <td style="text-align:center; font-size:14px; font-weight:800; color:#1f6feb;">
+              {{ g.score }} / {{ g.max_score }}
+            </td>
+            <td style="color:#64748b; font-size:11.5px;">{{ g.comments or '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty" style="padding:24px;">Aucune évaluation enregistrée pour cet élève.</div>
+    {% endif %}
+  </div>
+
+  <!-- TAB 5 : PERSONAL INFO -->
+  <div id="stuTabInfo" style="display:none;">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; font-size:13px;">
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
+        <h4 style="margin:0 0 10px 0; color:#0B3D6E;">Identité & Scolarité</h4>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div><span class="muted">Code Élève :</span> <strong>{{ stu.code }}</strong></div>
+          <div><span class="muted">Date de naissance :</span> <strong>{{ stu.birth_date.strftime('%d/%m/%Y') if stu.birth_date else 'Non renseignée' }}{% if stu.age is not none %} <span class="chip chip-blue" style="font-size:11px; padding:1px 6px; font-weight:700;">🎂 {{ stu.age }} ans</span>{% endif %}</strong></div>
+          <div><span class="muted">CIN :</span> <strong>{{ stu.cin or '—' }}</strong></div>
+          <div><span class="muted">Sexe :</span> <strong>{{ 'Masculin' if stu.gender=='M' else ('Féminin' if stu.gender=='F' else '—') }}</strong></div>
+          <div><span class="muted">Niveau scolaire :</span> <strong>{{ stu.school_level or '—' }}</strong></div>
+          <div><span class="muted">Établissement d'origine :</span> <strong>{{ stu.school_name or '—' }}</strong></div>
+        </div>
+      </div>
+
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
+        <h4 style="margin:0 0 10px 0; color:#0B3D6E;">Coordonnées & Famille</h4>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div><span class="muted">Téléphone Élève :</span> <strong>{{ stu.phone or '—' }}</strong></div>
+          <div><span class="muted">Parent / Tuteur :</span> <strong>{{ stu.parent_name or '—' }}</strong></div>
+          <div><span class="muted">Téléphone Parent :</span> <strong>{{ stu.parent_phone or '—' }}</strong></div>
+          <div><span class="muted">Ville :</span> <strong>{{ stu.city or 'Deroua' }}</strong></div>
+          <div><span class="muted">Adresse :</span> <strong>{{ stu.address or '—' }}</strong></div>
+          <div><span class="muted">Remarques :</span> <em>{{ stu.notes or 'Aucune observation' }}</em></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 1. SESSION-BASED PAUSE MODAL -->
+<div id="pauseModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+  <div style="background:#fff; width:90%; max-width:460px; padding:22px; border-radius:14px; box-shadow:0 12px 35px rgba(0,0,0,0.25);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="margin:0; color:#d97706; font-size:16px; font-weight:800; display:flex; align-items:center; gap:6px;">
+        <span>⏸️</span><span>{{ 'تجميد الاشتراك وحفظ الحصص المتبقية' if lang=='ar' else 'Geler l\'Abonnement & Reporter les Séances' }}</span>
+      </h3>
+      <button type="button" onclick="closePauseModal()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#64748b;">✕</button>
+    </div>
+
+    <form id="pauseForm" method="post" action="">
+      <div style="background:#fef3c7; border:1px solid #fde68a; border-radius:8px; padding:10px 12px; margin-bottom:14px;">
+        <div style="font-weight:800; color:#92400e; font-size:13px;" id="pauseStudentTitle">Élève</div>
+        <div style="font-size:11.5px; color:#b45309;" id="pauseCourseTitle">Classe</div>
+      </div>
+
+      <!-- Pause Date (Allows Past Dates) -->
+      <div class="field mb-3">
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+          📅 {{ 'تاريخ بداية التوقف (يمكن اختيار تاريخ سابق)' if lang=='ar' else 'Date d\'effet de la pause (Date passée autorisée) :' }}
+        </label>
+        <input type="date" name="pause_date" id="pauseDateInput" required class="form-control" onchange="fetchPausePreview()" style="font-weight:700; color:#0B3D6E; padding:7px 10px; width:100%; border-radius:8px; border:1.5px solid #cbd5e1;">
+      </div>
+
+      <!-- Live Calculated Sessions Breakdown -->
+      <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:10px; padding:12px; margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; font-size:11.5px; color:#475569; margin-bottom:6px;">
+          <span>{{ 'إجمالي حصص الدورة :' if lang=='ar' else 'Total séances du cycle :' }}</span>
+          <strong id="pauseTotalSessions" style="color:#0B3D6E;">—</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:11.5px; color:#475569; margin-bottom:6px;">
+          <span>{{ 'الحصص المستهلكة قبل التوقف :' if lang=='ar' else 'Séances consommées avant pause :' }}</span>
+          <strong id="pauseConsumedSessions" style="color:#64748b;">—</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed #cbd5e1; padding-top:8px; margin-top:6px;">
+          <span style="font-weight:800; color:#047857; font-size:12.5px;">{{ 'الحصص المتبقية للترحيل :' if lang=='ar' else 'Séances restantes à reporter :' }}</span>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <input type="number" name="remaining_sessions" id="pauseRemainingSessions" min="0" max="60" required style="width:70px; font-size:14px; font-weight:900; color:#047857; text-align:center; padding:3px 6px; border-radius:6px; border:1.5px solid #10b981;">
+            <span style="font-size:11px; font-weight:700; color:#047857;">{{ 'حصة' if lang=='ar' else 'séances' }}</span>
+          </div>
+        </div>
+        <div style="font-size:10.5px; color:#64748b; margin-top:6px;" id="pauseDaysText"></div>
+      </div>
+
+      <!-- Note / Reason -->
+      <div class="field mb-3">
+        <label style="font-size:11.5px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">{{ 'سبب التوقف (اختياري) :' if lang=='ar' else 'Motif / Remarque (Optionnel) :' }}</label>
+        <input type="text" name="notes" placeholder="{{ 'مثال: سفر، امتحانات، ظروف صحية...' if lang=='ar' else 'Ex: Voyage, examens, raisons personnelles...' }}" style="width:100%; padding:6px 10px; font-size:12px; border-radius:8px; border:1px solid #cbd5e1;">
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="closePauseModal()">{{ 'إلغاء' if lang=='ar' else 'Annuler' }}</button>
+        <button type="submit" class="btn btn-primary btn-sm" style="background:#d97706; border-color:#d97706; font-weight:800; padding:6px 14px;">
+          ⏸️ {{ 'تأكيد التجميد والترحيل' if lang=='ar' else 'Confirmer la Pause' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 2. SESSION-BASED RESUME MODAL -->
+<div id="resumeModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+  <div style="background:#fff; width:90%; max-width:460px; padding:22px; border-radius:14px; box-shadow:0 12px 35px rgba(0,0,0,0.25);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="margin:0; color:#15803d; font-size:16px; font-weight:800; display:flex; align-items:center; gap:6px;">
+        <span>▶️</span><span>{{ 'استئناف الدراسة وإعادة جدولة الحصص' if lang=='ar' else 'Reprendre les Cours & Réactiver' }}</span>
+      </h3>
+      <button type="button" onclick="closeResumeModal()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#64748b;">✕</button>
+    </div>
+
+    <form id="resumeForm" method="post" action="">
+      <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px 12px; margin-bottom:14px;">
+        <div style="font-weight:800; color:#166534; font-size:13px;" id="resumeStudentTitle">Élève</div>
+        <div style="font-size:11.5px; color:#15803d;" id="resumeCourseTitle">Classe</div>
+        <div style="font-size:11px; color:#166534; margin-top:2px;" id="resumePauseDateText"></div>
+      </div>
+
+      <!-- Resume Date -->
+      <div class="field mb-3">
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+          📅 {{ 'تاريخ استئناف الحضور بالمعهد :' if lang=='ar' else 'Date effective de reprise :' }}
+        </label>
+        <input type="date" name="resume_date" id="resumeDateInput" required class="form-control" onchange="fetchResumePreview()" style="font-weight:700; color:#0B3D6E; padding:7px 10px; width:100%; border-radius:8px; border:1.5px solid #cbd5e1;">
+      </div>
+
+      <!-- Remaining Sessions Input -->
+      <div class="field mb-3">
+        <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+          🔢 {{ 'عدد الحصص المتبقية المعتمدة للجدولة :' if lang=='ar' else 'Nombre de séances restantes à planifier :' }}
+        </label>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <input type="number" name="remaining_sessions" id="resumeRemainingSessionsInput" min="1" max="60" required onchange="fetchResumePreview()" onkeyup="fetchResumePreview()" style="width:90px; font-size:15px; font-weight:900; color:#0B3D6E; text-align:center; padding:5px 8px; border-radius:8px; border:1.5px solid #cbd5e1;">
+          <span style="font-size:12px; font-weight:700; color:#475569;">{{ 'حصة متبقية' if lang=='ar' else 'séance(s) en réserve' }}</span>
+        </div>
+      </div>
+
+      <!-- Live Calculation Result Box -->
+      <div style="background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:10px; padding:12px; margin-bottom:14px;">
+        <div style="font-size:11px; font-weight:800; color:#1e40af; text-transform:uppercase;">
+          📅 {{ 'تاريخ نهاية الاشتراك الجديد المحسوب :' if lang=='ar' else 'Nouvelle date d\'échéance calculée :' }}
+        </div>
+        <div style="font-size:18px; font-weight:900; color:#1e3a8a; margin-top:2px;" id="resumeNewEndDate">
+          Calcul en cours...
+        </div>
+        <div style="font-size:11px; color:#3b82f6; margin-top:4px;" id="resumeScheduleDaysText"></div>
+      </div>
+
+      <!-- Note -->
+      <div class="field mb-3">
+        <label style="font-size:11.5px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">{{ 'ملاحظة (اختياري) :' if lang=='ar' else 'Remarque (Optionnel) :' }}</label>
+        <input type="text" name="notes" placeholder="{{ 'مثال: عودة بعد العطلة الصيفية...' if lang=='ar' else 'Ex: Retour de vacances, reprise normale...' }}" style="width:100%; padding:6px 10px; font-size:12px; border-radius:8px; border:1px solid #cbd5e1;">
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeResumeModal()">{{ 'إلغاء' if lang=='ar' else 'Annuler' }}</button>
+        <button type="submit" class="btn btn-primary btn-sm" style="background:#16a34a; border-color:#16a34a; font-weight:800; padding:6px 14px;">
+          ▶️ {{ 'تأكيد الاستئناف والتمديد' if lang=='ar' else 'Confirmer la Reprise' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function switchStuTab(tabName) {
+    document.getElementById('stuTabEnrolls').style.display = (tabName === 'enrolls') ? 'block' : 'none';
+    document.getElementById('stuTabPayments').style.display = (tabName === 'payments') ? 'block' : 'none';
+    document.getElementById('stuTabAttendance').style.display = (tabName === 'attendance') ? 'block' : 'none';
+    document.getElementById('stuTabGrades').style.display = (tabName === 'grades') ? 'block' : 'none';
+    document.getElementById('stuTabInfo').style.display = (tabName === 'info') ? 'block' : 'none';
+
+    var tabs = ['enrolls', 'payments', 'attendance', 'grades', 'info'];
+    var btnMap = {
+      'enrolls': 'tabBtnEnrolls',
+      'payments': 'tabBtnPayments',
+      'attendance': 'tabBtnAttendance',
+      'grades': 'tabBtnGrades',
+      'info': 'tabBtnInfo'
+    };
+
+    tabs.forEach(function(t) {
+      var btn = document.getElementById(btnMap[t]);
+      if (btn) {
+        if (t === tabName) {
+          btn.style.background = '#1f6feb';
+          btn.style.color = '#fff';
+          btn.style.borderColor = '#1f6feb';
+        } else {
+          btn.style.background = '#fff';
+          btn.style.color = '#475569';
+          btn.style.borderColor = '#cbd5e1';
+        }
+      }
+    });
+  }
+
+  let currentPauseEid = null;
+  let currentResumeEid = null;
+
+  // --- PAUSE MODAL HANDLERS ---
+  function openPauseModal(eid, studentName, courseName, enrollDate) {
+    currentPauseEid = eid;
+    document.getElementById('pauseForm').action = '/enrollments/' + eid + '/pause';
+    document.getElementById('pauseStudentTitle').innerText = '👤 ' + (studentName || 'Élève #' + eid);
+    document.getElementById('pauseCourseTitle').innerText = '📚 ' + (courseName || 'Classe');
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('pauseDateInput').value = todayStr;
+    
+    document.getElementById('pauseModal').style.display = 'flex';
+    fetchPausePreview();
+  }
+
+  function closePauseModal() {
+    document.getElementById('pauseModal').style.display = 'none';
+  }
+
+  function fetchPausePreview() {
+    if (!currentPauseEid) return;
+    const pDate = document.getElementById('pauseDateInput').value;
+    fetch(`/api/enrollments/${currentPauseEid}/preview-pause?pause_date=${pDate}`)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('pauseTotalSessions').innerText = `${data.total_sessions} séances`;
+        document.getElementById('pauseConsumedSessions').innerText = `${data.consumed_sessions} séances`;
+        document.getElementById('pauseRemainingSessions').value = data.remaining_sessions;
+        document.getElementById('pauseDaysText').innerText = `Planning : ${data.scheduled_days_text}`;
+      })
+      .catch(err => console.error('Error fetching pause preview:', err));
+  }
+
+  // --- RESUME MODAL HANDLERS ---
+  function openResumeModal(eid, studentName, courseName, pauseDate, pausedSessions) {
+    currentResumeEid = eid;
+    document.getElementById('resumeForm').action = '/enrollments/' + eid + '/resume';
+    document.getElementById('resumeStudentTitle').innerText = '👤 ' + (studentName || 'Élève #' + eid);
+    document.getElementById('resumeCourseTitle').innerText = '📚 ' + (courseName || 'Classe');
+    document.getElementById('resumePauseDateText').innerText = pauseDate ? `⏸️ En pause depuis le : ${pauseDate}` : '';
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('resumeDateInput').value = todayStr;
+    document.getElementById('resumeRemainingSessionsInput').value = pausedSessions > 0 ? pausedSessions : 5;
+    
+    document.getElementById('resumeModal').style.display = 'flex';
+    fetchResumePreview();
+  }
+
+  function closeResumeModal() {
+    document.getElementById('resumeModal').style.display = 'none';
+  }
+
+  function fetchResumePreview() {
+    if (!currentResumeEid) return;
+    const rDate = document.getElementById('resumeDateInput').value;
+    const remSessions = document.getElementById('resumeRemainingSessionsInput').value || 1;
+    
+    fetch(`/api/enrollments/${currentResumeEid}/preview-resume?resume_date=${rDate}&remaining_sessions=${remSessions}`)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('resumeNewEndDate').innerText = `📅 ${data.new_end_date_formatted}`;
+        document.getElementById('resumeScheduleDaysText').innerText = `Planning : ${data.remaining_sessions} séances sur ${data.scheduled_days_text}`;
+      })
+      .catch(err => console.error('Error fetching resume preview:', err));
+  }
+</script>
+
+{% include 'enrollments/_assign_course_modal.html' %}
+
+{% include 'students/_timetable_whatsapp_modal.html' %}
+
+{% include 'payments/_multi_pay_modal.html' %}
+{% include 'enrollments/_promise_modal.html' %}
+
+{% endblock %}

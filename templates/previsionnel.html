@@ -1,0 +1,1387 @@
+{% extends 'base.html' %}
+{% block title %}Trésorerie Réelle & Engagements Futurs{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --prev-navy: #0B3D6E;
+    --prev-navy-dark: #072545;
+    --prev-navy-light: #e8f0fe;
+    --prev-green: #059669;
+    --prev-green-light: #ecfdf5;
+    --prev-amber: #d97706;
+    --prev-amber-light: #fffbeb;
+    --prev-red: #dc2626;
+    --prev-red-light: #fef2f2;
+    --prev-purple: #7c3aed;
+    --prev-purple-light: #f5f3ff;
+    --prev-border: #cbd5e1;
+    --prev-border-light: #e2e8f0;
+    --prev-text: #0f172a;
+    --prev-muted: #64748b;
+  }
+
+  .prev-wrap {
+    padding: 16px 20px 40px 20px;
+    max-width: 1500px;
+    margin: 0 auto;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--prev-text);
+  }
+
+  /* ----------------------------------------------------
+     HEADER & CONTROLS
+     ---------------------------------------------------- */
+  .prev-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 16px;
+    background: #ffffff;
+    padding: 14px 20px;
+    border-radius: 12px;
+    border: 1.5px solid var(--prev-border-light);
+    box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+  }
+
+  .prev-title-box h1 {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 0;
+    color: var(--prev-navy);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: -0.3px;
+  }
+
+  .prev-title-box p {
+    margin: 3px 0 0 0;
+    font-size: 12px;
+    color: var(--prev-muted);
+  }
+
+  .horizon-select-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    border: 1.5px solid var(--prev-border);
+    border-radius: 8px;
+    padding: 4px 10px;
+  }
+
+  .horizon-select-wrap label {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #475569;
+    margin: 0;
+  }
+
+  .horizon-select {
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--prev-navy);
+    cursor: pointer;
+    outline: none;
+  }
+
+  /* ----------------------------------------------------
+     3-PILLAR EXECUTIVE DASHBOARD (LA RÉALITÉ FINANCIÈRE)
+     ---------------------------------------------------- */
+  .exec-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .exec-pillar {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1.5px solid var(--prev-border-light);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .exec-pillar.pillar-green { border-top: 4px solid var(--prev-green); }
+  .exec-pillar.pillar-amber { border-top: 4px solid var(--prev-amber); }
+  .exec-pillar.pillar-purple { border-top: 4px solid var(--prev-purple); }
+
+  .pillar-header {
+    padding: 10px 14px;
+    background: #f8fafc;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 800;
+    color: #1e293b;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .pillar-tag {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+
+  .pillar-body {
+    padding: 14px 16px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .pillar-main-stat {
+    border-bottom: 1px dashed var(--prev-border-light);
+    padding-bottom: 9px;
+    margin-bottom: 4px;
+  }
+
+  .pillar-main-stat .p-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--prev-muted);
+    text-transform: uppercase;
+  }
+
+  .pillar-main-stat .p-val {
+    font-size: 23px;
+    font-weight: 900;
+    margin: 2px 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pillar-main-stat .p-sub {
+    font-size: 11px;
+    color: var(--prev-muted);
+    font-weight: 500;
+  }
+
+  .pillar-mini-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11.5px;
+    color: #475569;
+  }
+
+  .pillar-mini-row strong {
+    font-family: monospace;
+    font-size: 12px;
+  }
+
+  /* ----------------------------------------------------
+     POINTAGE CAISSE PHYSIQUE BAR (VISIBLE & PROÉMINENTE)
+     ---------------------------------------------------- */
+  .cash-pointage-bar {
+    background: #ffffff;
+    border: 1.5px solid var(--prev-border);
+    border-radius: 12px;
+    padding: 12px 18px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+  }
+
+  .cp-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .cp-badge {
+    background: var(--prev-green-light);
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .cp-stats {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 12px;
+  }
+
+  .cp-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .cp-stat-item .lbl { color: var(--prev-muted); font-size: 11px; }
+  .cp-stat-item .val { font-weight: 800; font-family: monospace; }
+
+  .cp-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    flex-wrap: wrap;
+  }
+
+  .cp-form input[type="number"] {
+    padding: 6px 10px;
+    border: 1.5px solid var(--prev-border);
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 800;
+    width: 140px;
+    outline: none;
+  }
+
+  .cp-form input[type="text"] {
+    width: 130px;
+    padding: 6px 10px;
+    border: 1.5px solid var(--prev-border);
+    border-radius: 8px;
+    font-size: 11.5px;
+    outline: none;
+  }
+
+  .cp-form button {
+    padding: 6px 14px;
+    background: var(--prev-green);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .cp-form button:hover { background: #047857; }
+
+  /* ----------------------------------------------------
+     TABLEAU SYNTHÉTIQUE EXÉCUTIF (FAL BADYA)
+     (RÉSUMÉ MAKHTAZAL MAIS AVEC TOUTES LES CHARGES MFERRQA)
+     ---------------------------------------------------- */
+  .table-container-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1.5px solid var(--prev-border);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+
+  .table-card-header {
+    background: var(--prev-navy);
+    color: #ffffff;
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .table-card-title {
+    font-size: 13.5px;
+    font-weight: 900;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+
+  .table-responsive-box {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .main-recap-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .main-recap-table th {
+    background: #f1f5f9;
+    color: #334155;
+    font-weight: 800;
+    padding: 9px 10px;
+    border-bottom: 2px solid var(--prev-border);
+    border-right: 1px solid var(--prev-border-light);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+  }
+
+  .main-recap-table th:last-child { border-right: none; }
+
+  .main-recap-table td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--prev-border-light);
+    border-right: 1px solid #f8fafc;
+    color: #1e293b;
+    vertical-align: middle;
+  }
+
+  .main-recap-table td:last-child { border-right: none; }
+
+  .main-recap-table tbody tr {
+    transition: background-color 0.12s ease;
+  }
+
+  .main-recap-table tbody tr:hover {
+    background-color: #f8fafc;
+  }
+
+  .main-recap-table tr.current-row td {
+    background: #f0fdf4 !important;
+  }
+
+  .main-recap-table tr.current-row:hover td {
+    background: #e6f9ee !important;
+  }
+
+  .main-recap-table tr.total-row td {
+    background: #f8fafc !important;
+    font-weight: 900;
+    border-top: 2.5px solid var(--prev-navy);
+    font-size: 12px;
+    padding: 11px 10px;
+  }
+
+  .num-col {
+    text-align: right;
+    font-family: monospace;
+    font-weight: 800;
+  }
+
+  .badge-tag {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 9.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .btn-details-jump {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: #ffffff;
+    border: 1px solid var(--prev-border);
+    border-radius: 6px;
+    font-size: 10.5px;
+    font-weight: 800;
+    color: var(--prev-navy);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .btn-details-jump:hover {
+    background: var(--prev-navy);
+    color: #ffffff;
+    border-color: var(--prev-navy);
+  }
+
+  /* ----------------------------------------------------
+     SECTION DÉTAILS NOMINATIFS (BOTTOM OF PAGE)
+     ---------------------------------------------------- */
+  .month-section-title {
+    font-size: 14.5px;
+    font-weight: 900;
+    color: var(--prev-navy);
+    margin: 24px 0 12px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--prev-border-light);
+    padding-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Month Tabs Bar */
+  .month-tabs-bar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .month-tabs-bar::-webkit-scrollbar { display: none; }
+
+  .tab-pill {
+    padding: 7px 14px;
+    border-radius: 10px;
+    border: 1.5px solid var(--prev-border-light);
+    background: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+    color: #475569;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .tab-pill:hover {
+    background: #f8fafc;
+    color: var(--prev-navy);
+  }
+
+  .tab-pill.active {
+    background: var(--prev-navy);
+    color: #ffffff;
+    border-color: var(--prev-navy);
+    box-shadow: 0 2px 8px rgba(11,61,110,0.18);
+  }
+
+  .tab-pill.active .tab-badge {
+    background: rgba(255,255,255,0.22);
+    color: #ffffff;
+  }
+
+  .tab-badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 5px;
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  /* Month Detail Pane */
+  .month-detail-pane {
+    display: none;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .month-detail-pane.active { display: block; }
+
+  .detail-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .sub-box {
+    border: 1.5px solid var(--prev-border-light);
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: #fff;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  }
+
+  .sub-box-title {
+    font-size: 11.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--prev-navy);
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1.5px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .compact-sub-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+  }
+
+  .compact-sub-table th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 700;
+    padding: 6px 8px;
+    text-align: left;
+    border-bottom: 1px solid var(--prev-border);
+    font-size: 10.5px;
+  }
+
+  .compact-sub-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+  }
+
+  .compact-sub-table tr:last-child td { border-bottom: none; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 1024px) {
+    .exec-grid { grid-template-columns: 1fr; }
+    .detail-2col { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="prev-wrap">
+
+  <!-- ==========================================
+       TOP BAR & HORIZON
+       ========================================== -->
+  <div class="prev-topbar">
+    <div class="prev-title-box">
+      <h1>📅 Trésorerie Réelle &amp; <span>Engagements Futurs</span></h1>
+      <p>Pilotage de la Caisse Réelle face aux Dépenses &amp; Dettes Futures · Date : {{ today.strftime('%d/%m/%Y') }}</p>
+    </div>
+
+    <form method="GET" action="{{ url_for('finance_previsionnel') }}" class="horizon-select-wrap">
+      <label>Horizon d'analyse :</label>
+      <select name="months" class="horizon-select" onchange="this.form.submit()">
+        {% for n in [3, 6, 9, 12] %}
+          <option value="{{ n }}" {{ 'selected' if nb_months==n else '' }}>{{ n }} mois suivants</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+
+  <!-- ==========================================
+       BANNIÈRE PRINCIPALE : L'3AJZ RÉEL EN CAISSE
+       ========================================== -->
+  {% if free_cash_flow < 0 %}
+  <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border: 2.5px solid #ef4444; border-radius: 14px; padding: 16px 22px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; box-shadow: 0 4px 16px rgba(220, 38, 38, 0.15);">
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <div style="font-size: 36px; line-height: 1;">🚨</div>
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span style="font-size: 11px; font-weight: 900; background: #dc2626; color: #fff; padding: 2px 8px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.5px;">
+            Alerte Trésorerie
+          </span>
+          <span style="font-size: 13px; font-weight: 800; color: #991b1b;">
+            Dkhalna f flouss chhoura jayin !
+          </span>
+        </div>
+        <div style="font-size: 18px; font-weight: 900; color: #b91c1c; margin-top: 4px;">
+          L'3ajz Réel en Caisse : <span style="font-family: monospace; font-size: 22px; color: #dc2626; text-decoration: underline;">{{ '{:,.0f}'.format(free_cash_flow) }} DH</span>
+        </div>
+        <div style="font-size: 12.5px; color: #7f1d1d; margin-top: 4px; line-height: 1.45;">
+          Cash Réel en Main (<strong>{{ '{:,.0f}'.format(cur_effective_cash) }} DH</strong>) − Charges restantes d'Octobre (<strong>{{ '{:,.0f}'.format(pending_cash_outflows) }} DH</strong>) − Dettes salaires profs futurs déjà encaissés en packs (<strong>{{ '{:,.0f}'.format(future_payroll) }} DH</strong>) = <strong style="color:#b91c1c; font-size:13px;">L'3ajz Net dyal {{ '{:,.0f}'.format(free_cash_flow|abs) }} DH</strong>.
+        </div>
+      </div>
+    </div>
+    <div style="text-align: right; background: #ffffff; padding: 12px 20px; border-radius: 12px; border: 2px solid #fca5a5; min-width: 190px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+      <div style="font-size: 10.5px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px;">Montant de L'3ajz</div>
+      <div style="font-size: 26px; font-weight: 900; color: #dc2626; font-family: monospace; margin: 2px 0;">{{ '{:,.0f}'.format(free_cash_flow) }} DH</div>
+      <span class="badge-tag" style="background: #fee2e2; color: #b91c1c; font-weight: 800; font-size: 10px;">🔴 Déficit à combler</span>
+    </div>
+  </div>
+  {% else %}
+  <div style="background: #f0fdf4; border: 2px solid #86efac; border-radius: 14px; padding: 14px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="font-size: 30px;">🟢</div>
+      <div>
+        <div style="font-size: 11px; font-weight: 800; color: #166534; text-transform: uppercase;">Trésorerie Équilibrée</div>
+        <div style="font-size: 16px; font-weight: 900; color: #15803d;">Excédent Réel de Trésorerie : +{{ '{:,.0f}'.format(free_cash_flow) }} DH</div>
+      </div>
+    </div>
+    <div style="font-size: 22px; font-weight: 900; color: #15803d; font-family: monospace;">+{{ '{:,.0f}'.format(free_cash_flow) }} DH</div>
+  </div>
+  {% endif %}
+
+  <!-- ==========================================
+       3-PILLAR EXECUTIVE DASHBOARD (LA RÉALITÉ FINANCIÈRE)
+       ========================================== -->
+  <div class="exec-grid">
+    
+    <!-- PILIER 1 : Caisse & Encaissements -->
+    <div class="exec-pillar pillar-green">
+      <div class="pillar-header">
+        <span>🟢 1. Recettes &amp; Caisse Disponible</span>
+        <span class="pillar-tag" style="background:#dcfce7; color:#15803d;">En Caisse</span>
+      </div>
+      <div class="pillar-body">
+        <div class="pillar-main-stat">
+          <div class="p-label">Cash Réel Effectif (En Main)</div>
+          <div class="p-val" style="color:var(--prev-green);">{{ '{:,.0f}'.format(cur_effective_cash) }} <span style="font-size:13px; font-weight:700;">DH</span></div>
+          <div class="p-sub">Après déduction charges sorties non notées (-{{ '{:,.0f}'.format(ecart_charges) }} DH)</div>
+        </div>
+        <div class="pillar-mini-row">
+          <span>Total Encaissé en Caisse (Octobre) :</span>
+          <strong style="color:var(--prev-green);">{{ '{:,.0f}'.format(cur_revenue or 0.0) }} DH</strong>
+        </div>
+        <div class="pillar-mini-row">
+          <span>Cours d'Octobre Réels :</span>
+          <strong style="color:var(--prev-navy);">{{ '{:,.0f}'.format(cur_course_revenue or 0.0) }} DH</strong>
+        </div>
+        <div class="pillar-mini-row">
+          <span>Dépenses Réglées Saisies :</span>
+          <strong style="color:#b45309;">-{{ '{:,.0f}'.format(cur_entered_expenses or 0.0) }} DH</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- PILIER 2 : Charges & Salaires d'Octobre -->
+    <div class="exec-pillar pillar-amber">
+      <div class="pillar-header">
+        <span>🟡 2. Charges &amp; Engagements d'Octobre</span>
+        <span class="pillar-tag" style="background:#fef3c7; color:#92400e;">Ce Mois</span>
+      </div>
+      <div class="pillar-body">
+        <div class="pillar-main-stat">
+          <div class="p-label">Charges Restantes à Régler</div>
+          <div class="p-val" style="color:var(--prev-amber);">-{{ '{:,.0f}'.format(pending_cash_outflows or 0.0) }} <span style="font-size:13px; font-weight:700;">DH</span></div>
+          <div class="p-sub">Profs Net ({{ '{:,.0f}'.format(cur_payroll_net or 0.0) }}) + Staff Net &amp; Primes ({{ '{:,.0f}'.format(cur_staff_remaining_total or 0.0) }}) + Locaux ({{ '{:,.0f}'.format(pending_operating_amount or 0.0) }})</div>
+        </div>
+        <div class="pillar-mini-row">
+          <span>Salaires Profs (Net restant à donner) :</span>
+          <strong style="color:var(--prev-red);">-{{ '{:,.0f}'.format(cur_payroll_net or 0.0) }} DH</strong>
+        </div>
+        <div class="pillar-mini-row" style="font-size:10px; color:#64748b; margin-top:-2px;">
+          <span>(Brut réel: {{ '{:,.0f}'.format(cur_payroll or 0.0) }} | Avances déduites: -{{ '{:,.0f}'.format(cur_teacher_advances or 0.0) }}{% if cur_teacher_paid and cur_teacher_paid > 0 %} | Déjà versé: -{{ '{:,.0f}'.format(cur_teacher_paid) }} DH{% endif %})</span>
+        </div>
+        <div class="pillar-mini-row">
+          <span>Salaires Employés &amp; Primes Staff (Reste) :</span>
+          <strong style="color:var(--prev-purple);">-{{ '{:,.0f}'.format(cur_staff_remaining_total or 0.0) }} DH</strong>
+        </div>
+        <div class="pillar-mini-row" style="font-size:10px; color:#64748b; margin-top:-2px;">
+          <span>(Base restante: {{ '{:,.0f}'.format(cur_staff_net_remaining or 0.0) }} + Primes: {{ '{:,.0f}'.format(cur_primes or 0.0) }} | Avances: -{{ '{:,.0f}'.format(cur_staff_advances or 0.0) }} | Déjà versé: -{{ '{:,.0f}'.format(cur_staff_paid or 0.0) }})</span>
+        </div>
+        <div class="pillar-mini-row">
+          <span>Charges Fixes Locaux (Reste à régler) :</span>
+          <strong style="color:var(--prev-amber);">-{{ '{:,.0f}'.format(pending_operating_amount or 0.0) }} DH</strong>
+        </div>
+        <div class="pillar-mini-row" style="font-size:10px; color:#64748b; margin-top:-2px;">
+          <span>(Budget initial: {{ '{:,.0f}'.format(cur_operating_fixes or 0.0) }} | Déjà décaissé ce mois: -{{ '{:,.0f}'.format(validated_operating_amount or 0.0) }})</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PILIER 3 : L'3AJZ RÉEL (DÉFICIT DE TRÉSORERIE) -->
+    <div class="exec-pillar" style="background:#ffffff; border: 2px solid {{ '#ef4444' if free_cash_flow < 0 else '#10b981' }}; border-radius: 12px; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.12);">
+      <div class="pillar-header" style="background: {{ '#fef2f2' if free_cash_flow < 0 else '#ecfdf5' }}; border-bottom: 1.5px solid {{ '#fee2e2' if free_cash_flow < 0 else '#d1fae5' }};">
+        <span style="color: {{ '#b91c1c' if free_cash_flow < 0 else '#047857' }}; font-weight: 900;">
+          {{ '🚨 3. L\'3ajz Réel (Déficit Caisse)' if free_cash_flow < 0 else '🟢 3. Trésorerie Positive' }}
+        </span>
+        <span class="pillar-tag" style="background: {{ '#fee2e2' if free_cash_flow < 0 else '#dcfce7' }}; color: {{ '#dc2626' if free_cash_flow < 0 else '#15803d' }}; font-weight: 900;">
+          {{ '🔴 DÉFICIT RÉEL' if free_cash_flow < 0 else '🟢 EXCÉDENT' }}
+        </span>
+      </div>
+      <div class="pillar-body">
+        <div class="pillar-main-stat">
+          <div class="p-label" style="color: {{ '#991b1b' if free_cash_flow < 0 else '#065f46' }}; font-weight: 800;">
+            {{ 'L\'3ajz Net en Caisse (Le Moins)' if free_cash_flow < 0 else 'Excédent Réel en Caisse' }}
+          </div>
+          <div class="p-val" style="color: {{ '#dc2626' if free_cash_flow < 0 else '#059669' }}; font-size: 26px;">
+            {{ '{:,.0f}'.format(free_cash_flow) }} <span style="font-size:13px; font-weight:700;">DH</span>
+          </div>
+          <div class="p-sub" style="color: {{ '#b91c1c' if free_cash_flow < 0 else '#047857' }}; font-weight: 700;">
+            {% if free_cash_flow < 0 %}
+              ⚠️ Dkhalna f flouss chhoura jayin b {{ '{:,.0f}'.format(free_cash_flow|abs) }} DH !
+            {% else %}
+              ✓ Caisse couvre toutes les dettes présentes et futures
+            {% endif %}
+          </div>
+        </div>
+        <div class="pillar-mini-row">
+          <span>Cash Réel Disponible en Main :</span>
+          <strong style="color:var(--prev-green);">+{{ '{:,.0f}'.format(cur_effective_cash or 0.0) }} DH</strong>
+        </div>
+        <div class="pillar-mini-row">
+          <span>Charges Octobre Restantes :</span>
+          <strong style="color:var(--prev-amber);">-{{ '{:,.0f}'.format(pending_cash_outflows or 0.0) }} DH</strong>
+        </div>
+        <div class="pillar-mini-row">
+          <span>Dettes Profs Futurs (Packs déjà encaissés) :</span>
+          <strong style="color:var(--prev-red);">-{{ '{:,.0f}'.format(future_payroll or 0.0) }} DH</strong>
+        </div>
+        <div class="pillar-mini-row" style="background:#f8fafc; border-top:1px dashed #cbd5e1; padding-top:4px; margin-top:4px;">
+          <span>Marge Théorique Packs (Sur papier) :</span>
+          <strong style="color:var(--prev-green); font-weight:800;">+{{ '{:,.0f}'.format((future_advances or 0.0) - (future_payroll or 0.0)) }} DH</strong>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==========================================
+       POINTAGE CAISSE PHYSIQUE (VISIBLE & DIRECT)
+       ========================================== -->
+  <div class="cash-pointage-bar">
+    <div class="cp-left">
+      {% if real_cash_data.is_used %}
+        <span class="cp-badge">✓ Pointage actif : {{ real_cash_data.date }} ({{ real_cash_data.by }})</span>
+      {% else %}
+        <span class="cp-badge" style="background:#fef3c7; color:#92400e; border-color:#fde68a;">⚠️ Calcul sur caisse théorique pure</span>
+      {% endif %}
+      
+      <div class="cp-stats">
+        <div class="cp-stat-item">
+          <span class="lbl">Caisse Théorique :</span>
+          <span class="val" style="color:#64748b;">{{ '{:,.0f}'.format(real_cash_data.theoretical_cash) }} DH</span>
+        </div>
+        <div class="cp-stat-item">
+          <span class="lbl">Écart Non Noté (Sorties réelles) :</span>
+          <span class="val" style="color:#ef4444;">-{{ '{:,.0f}'.format(real_cash_data.fixed_ecart) }} DH</span>
+        </div>
+        <div class="cp-stat-item">
+          <span class="lbl">Cash Réel en Main :</span>
+          <span class="val" style="color:var(--prev-green); font-size:14px;">{{ '{:,.0f}'.format(cur_effective_cash) }} DH</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Form -->
+    <form method="POST" action="{{ url_for('expense_real_cash_save') }}" class="cp-form">
+      <input type="hidden" name="month" value="{{ cur_month_key }}">
+      <input type="hidden" name="next" value="{{ url_for('finance_previsionnel', months=nb_months) }}">
+      <label style="font-size:11.5px; font-weight:800; color:#334155;">💰 Relever Cash Réel :</label>
+      <input type="number" step="any" name="amount" value="{{ '{:.0f}'.format(cur_effective_cash) }}" placeholder="Ex: 65000" required>
+      <input type="text" name="note" placeholder="Note (optionnel)">
+      <button type="submit">⚡ Enregistrer</button>
+    </form>
+  </div>
+
+  <!-- ==========================================
+       TABLEAU FAL BADYA : MAKHTAZAL AU MAX
+       AVEC TOUTES LES CHARGES MFERRQA SANS DÉTAILS NOISY
+       ========================================== -->
+  <div class="table-container-card">
+    <div class="table-card-header">
+      <h3 class="table-card-title">
+        📊 Tableau Synthétique Prévisionnel (Toutes Charges &amp; Dettes Déduites)
+      </h3>
+      <span style="font-size:11px; font-weight:700; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:4px;">
+        {{ months_data|length }} Mois Analysés
+      </span>
+    </div>
+
+    <div class="table-responsive-box">
+      <table class="main-recap-table">
+        <thead>
+          <tr>
+            <th style="min-width:140px;">Période / Mois</th>
+            <th style="text-align:center; width:65px;">Élèves</th>
+            <th class="num-col" style="width:115px;">Recettes</th>
+            <th class="num-col" style="width:115px;">Salaires Profs</th>
+            <th class="num-col" style="width:125px;">Salaires Staff</th>
+            <th class="num-col" style="width:125px;">Charges Fixes</th>
+            <th class="num-col" style="width:130px;">Dépenses &amp; Écart</th>
+            <th class="num-col" style="width:115px;">Total Charges</th>
+            <th class="num-col" style="width:130px;">Résultat / L'3ajz</th>
+            <th class="num-col" style="width:115px;">Cash Réel</th>
+            <th style="text-align:center; width:140px;">Diagnostic</th>
+            <th style="text-align:center; width:80px;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in months_data %}
+          <tr class="{{ 'current-row' if m.is_current else '' }}">
+            
+            <!-- Mois & Statut -->
+            <td>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span>{{ '🟢' if m.is_current else '📆' }}</span>
+                <strong style="color:{{ '#059669' if m.is_current else '#0f172a' }}; font-size:12px;">{{ m.label }}</strong>
+              </div>
+              <div style="margin-top:2px;">
+                {% if m.is_current %}
+                  <span class="badge-tag" style="background:#dcfce7; color:#15803d;">Mois en cours</span>
+                {% else %}
+                  <span class="badge-tag" style="background:#fee2e2; color:#b91c1c;">Dette cours futurs</span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- Élèves -->
+            <td style="text-align:center;">
+              <span class="badge-tag" style="background:#e0f2fe; color:#0369a1; font-size:10px;">
+                {{ m.students_count }} él.
+              </span>
+            </td>
+
+            <!-- Recettes -->
+            <td class="num-col" style="color:{{ '#059669' if m.guaranteed_revenue > 0 else '#94a3b8' }};">
+              {% if m.is_current %}
+                {{ '{:,.0f}'.format(m.guaranteed_revenue or 0.0) }} DH
+                <div style="font-size:9.5px; color:var(--prev-muted); font-weight:normal;" title="Total encaissé en caisse avec les avances futures">(Encaissé : {{ '{:,.0f}'.format(cur_revenue or 0.0) }})</div>
+              {% else %}
+                {% if m.guaranteed_revenue > 0 %}
+                  {{ '{:,.0f}'.format(m.guaranteed_revenue or 0.0) }} DH
+                  <div style="font-size:9.5px; color:var(--prev-green); font-weight:700;">(Déjà payé)</div>
+                {% else %}
+                  <span style="color:#cbd5e1; font-weight:normal;">0 DH</span>
+                {% endif %}
+              {% endif %}
+            </td>
+
+            <!-- 1. Salaires Professeurs -->
+            <td class="num-col" style="color:var(--prev-red);">
+              {% if (m.teacher_payroll or 0) > 0 %}
+                -{{ '{:,.0f}'.format(m.teacher_payroll_net if m.teacher_payroll_net is defined else m.teacher_payroll) }} DH
+                {% if m.teacher_advances and m.teacher_advances > 0 %}
+                  <div style="font-size:9.5px; color:#64748b; font-weight:normal;">Brut: {{ '{:,.0f}'.format(m.teacher_payroll) }} | Avance: -{{ '{:,.0f}'.format(m.teacher_advances) }}</div>
+                {% endif %}
+              {% else %}
+                <span style="color:#cbd5e1; font-weight:normal;">0 DH</span>
+              {% endif %}
+            </td>
+
+            <!-- 2. Salaires Employés / Staff (+ Primes) -->
+            <td class="num-col" style="color:var(--prev-purple);">
+              {% if m.is_current %}
+                -{{ '{:,.0f}'.format(cur_staff_remaining_total or 0.0) }} DH
+                <div style="font-size:9.5px; color:#64748b; font-weight:normal;">
+                  Base: {{ '{:,.0f}'.format(cur_staff_net_remaining or 0.0) }} + Primes: {{ '{:,.0f}'.format(cur_primes or 0.0) }}
+                </div>
+              {% else %}
+                <span style="color:#cbd5e1; font-weight:normal;">—</span>
+              {% endif %}
+            </td>
+
+            <!-- 3. Charges Fixes Locaux (Loyer 9k, élec, etc.) -->
+            <td class="num-col" style="color:var(--prev-amber);">
+              {% if m.is_current %}
+                -{{ '{:,.0f}'.format(pending_operating_amount or 0.0) }} DH
+                <div style="font-size:9.5px; color:#64748b; font-weight:normal;">
+                  Budget: {{ '{:,.0f}'.format(cur_operating_fixes or 0.0) }} | Déjà réglé: -{{ '{:,.0f}'.format(validated_operating_amount or 0.0) }}
+                </div>
+              {% else %}
+                <span style="color:#cbd5e1; font-weight:normal;">—</span>
+              {% endif %}
+            </td>
+
+            <!-- 4. Dépenses Saisies & Écart Caisse -->
+            <td class="num-col" style="color:#b45309;">
+              {% if m.is_current %}
+                -{{ '{:,.0f}'.format(m.entered_expenses) }} DH
+                {% if m.ecart_charges > 0 %}
+                  <div style="font-size:9.5px; color:#dc2626; font-weight:700;">Écart: -{{ '{:,.0f}'.format(m.ecart_charges) }}</div>
+                {% endif %}
+              {% else %}
+                <span style="color:#cbd5e1; font-weight:normal;">—</span>
+              {% endif %}
+            </td>
+
+            <!-- 5. Total Charges Consolidées -->
+            <td class="num-col" style="color:var(--prev-red); font-weight:900;">
+              {% if m.total_charges > 0 %}
+                -{{ '{:,.0f}'.format(m.total_charges) }} DH
+              {% else %}
+                <span style="color:#cbd5e1; font-weight:normal;">0 DH</span>
+              {% endif %}
+            </td>
+
+            <!-- Résultat / L'3ajz -->
+            {% if m.is_current %}
+              <td class="num-col" style="color:{{ '#059669' if m.net_result > 0 else ('#94a3b8' if (m.net_result|abs < 0.001) else '#dc2626') }}; font-weight:900; background:{{ '#fef2f2' if m.net_result < 0 else 'transparent' }}; font-size:12px;">
+                {{ '+' if m.net_result > 0 else '' }}{{ '{:,.0f}'.format(0.0 if m.net_result|abs < 0.001 else m.net_result) }} DH
+                <div style="font-size:9px; color:#64748b; font-weight:normal;">(Solde Octobre)</div>
+              </td>
+            {% else %}
+              <td class="num-col" style="color:var(--prev-red); font-weight:900; background:#fef2f2; font-size:12px;">
+                {% if (m.teacher_payroll or 0) > 0 %}
+                  -{{ '{:,.0f}'.format(m.teacher_payroll) }} DH
+                  {% if (m.course_margin or m.net_result) > 0 %}
+                    <div style="font-size:9.5px; color:#15803d; font-weight:700;">(Marge: +{{ '{:,.0f}'.format(m.course_margin or m.net_result) }})</div>
+                  {% endif %}
+                {% else %}
+                  <span style="color:#cbd5e1; font-weight:normal;">0 DH</span>
+                {% endif %}
+              </td>
+            {% endif %}
+
+            <!-- Cash Réel -->
+            <td class="num-col" style="color:var(--prev-green); font-weight:900; background:{{ '#f0fdf4' if m.is_current else 'transparent' }};">
+              {% if m.is_current %}
+                {{ '{:,.0f}'.format(m.real_effective_cash) }} DH
+              {% else %}
+                <span style="color:#cbd5e1; font-weight:normal;">0 DH</span>
+              {% endif %}
+            </td>
+
+            <!-- Diagnostic Trésorerie -->
+            <td style="text-align:center;">
+              {% if m.is_current %}
+                {% if m.net_result >= 0 %}
+                  <span class="badge-tag" style="background:#dcfce7; color:#15803d; font-size:10px;">🟢 Excédent Octobre</span>
+                {% else %}
+                  <span class="badge-tag" style="background:#fee2e2; color:#dc2626; font-size:10px;">🔴 Déficit Octobre</span>
+                {% endif %}
+              {% else %}
+                {% if (m.teacher_payroll or 0) > 0 %}
+                  <span class="badge-tag" style="background:#fee2e2; color:#b91c1c; font-size:10px;">🔴 Dette Future (-{{ '{:,.0f}'.format(m.teacher_payroll) }})</span>
+                {% else %}
+                  <span class="badge-tag" style="background:#f1f5f9; color:#64748b; font-size:10px;">⚪ Neutre</span>
+                {% endif %}
+              {% endif %}
+            </td>
+
+            <!-- Action -->
+            <td style="text-align:center;">
+              <button type="button" class="btn-details-jump" onclick="selectDetailTab('{{ m.month_key }}', true)">
+                <span>👁️ Détail</span>
+              </button>
+            </td>
+
+          </tr>
+          {% endfor %}
+
+          <!-- TOTAL ROW -->
+          <tr class="total-row">
+            <td>TOTAL ANALYSÉ</td>
+            <td style="text-align:center;">—</td>
+            <td class="num-col" style="color:var(--prev-green);">{{ '{:,.0f}'.format(total_guaranteed or 0.0) }} DH</td>
+            <td class="num-col" style="color:var(--prev-red);">-{{ '{:,.0f}'.format(total_teacher_debts_all or 0.0) }} DH</td>
+            <td class="num-col" style="color:var(--prev-purple);">-{{ '{:,.0f}'.format(cur_staff_total or 0.0) }} DH</td>
+            <td class="num-col" style="color:var(--prev-amber);">-{{ '{:,.0f}'.format(cur_operating_fixes or 0.0) }} DH</td>
+            <td class="num-col" style="color:#b45309;">-{{ '{:,.0f}'.format((total_entered_expenses or 0.0) + (total_ecart_charges or 0.0)) }} DH</td>
+            <td class="num-col" style="color:var(--prev-red);">-{{ '{:,.0f}'.format(total_all_liabilities or 0.0) }} DH</td>
+            
+            <!-- RÉSULTAT GLOBAL / L'3AJZ RÉEL EN CAISSE -->
+            <td class="num-col" style="color:{{ '#dc2626' if free_cash_flow < 0 else '#059669' }}; font-size:14px; font-weight:900; background:{{ '#fee2e2' if free_cash_flow < 0 else '#f0fdf4' }};">
+              {{ '{:,.0f}'.format(free_cash_flow) }} DH
+              {% if free_cash_flow < 0 %}
+                <div style="font-size:9.5px; color:#b91c1c; font-weight:900;">🔴 L'3AJZ RÉEL</div>
+              {% else %}
+                <div style="font-size:9.5px; color:#15803d; font-weight:900;">🟢 EXCÉDENT RÉEL</div>
+              {% endif %}
+              <div style="font-size:9px; color:#15803d; font-weight:normal;">(Marge papier packs: +{{ '{:,.0f}'.format(total_course_margin or total_net or 0.0) }} DH)</div>
+            </td>
+            
+            <!-- CASH RÉEL EN MAIN -->
+            <td class="num-col" style="color:var(--prev-green); font-weight:900; font-size:12.5px; background:#f0fdf4;">
+              {{ '{:,.0f}'.format(cur_effective_cash or 0.0) }} DH
+            </td>
+            
+            <!-- DIAGNOSTIC GLOBAL (L'3AJZ) -->
+            <td style="text-align:center;">
+              {% if free_cash_flow < 0 %}
+                <span class="badge-tag" style="background:#fee2e2; color:#dc2626; font-size:11px; font-weight:900; border:1.5px solid #fca5a5; padding:4px 8px;">
+                  ⚖️ L'3AJZ : {{ '{:,.0f}'.format(free_cash_flow) }} DH
+                </span>
+                <div style="font-size:9px; color:#b91c1c; font-weight:800; margin-top:2px;">(Dkhalna f flouss chhoura jayin)</div>
+              {% else %}
+                <span class="badge-tag" style="background:#dcfce7; color:#15803d; font-size:11px; font-weight:900; border:1.5px solid #86efac; padding:4px 8px;">
+                  🟢 Trésorerie Positive (+{{ '{:,.0f}'.format(free_cash_flow) }} DH)
+                </span>
+              {% endif %}
+            </td>
+            
+            <td style="text-align:center;">
+              <button type="button" class="btn-details-jump" onclick="selectDetailTab('all', true)">
+                <span>📂 Tous</span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       SECTION DÉTAILS NOMINATIFS (BOTTOM OF PAGE)
+       ========================================== -->
+  <div class="month-section-title" id="detailsSection">
+    <div>
+      <span>🔍 Détail Nominatif &amp; Justificatifs par Mois</span>
+      <div style="font-size:11.5px; color:var(--prev-muted); font-weight:normal; margin-top:2px;">
+        Cliquez sur un mois pour consulter les salaires nominatifs des profs, du staff, les charges fixes et les dépenses.
+      </div>
+    </div>
+    <div style="font-size:11.5px; color:var(--prev-muted); font-weight:700;">
+      💡 Onglets de navigation interactifs
+    </div>
+  </div>
+
+  <!-- Month Tabs Bar -->
+  <div class="month-tabs-bar">
+    {% for m in months_data %}
+      <button type="button" 
+              class="tab-pill {{ 'active' if loop.first else '' }}" 
+              id="tab-btn-{{ m.month_key }}" 
+              onclick="selectDetailTab('{{ m.month_key }}', false)">
+        <span>{{ '🟢' if m.is_current else '📆' }} {{ m.label }}</span>
+        <span class="tab-badge">{{ '{:,.0f}'.format(m.net_result) }} DH</span>
+      </button>
+    {% endfor %}
+    <button type="button" 
+            class="tab-pill" 
+            id="tab-btn-all" 
+            onclick="selectDetailTab('all', false)">
+      <span>📂 Voir Tous les Mois</span>
+    </button>
+  </div>
+
+  <!-- Month Detail Panes -->
+  {% for m in months_data %}
+  <div class="month-detail-pane {{ 'active' if loop.first else '' }}" id="pane-{{ m.month_key }}">
+    
+    {% if m.is_current %}
+      <!-- MOIS EN COURS : 2-COLUMN STRUCTURE -->
+      <div class="detail-2col">
+        
+        <!-- Column A : Salaires Staff & Charges Fixes Locaux -->
+        <div>
+          <!-- 1. Salaires Employés & Primes Staff Réel -->
+          <div class="sub-box" style="border-color:#ddd6fe; background:#fdfcff;">
+            <div class="sub-box-title" style="color:var(--prev-purple);">
+              <span>👥 Salaires &amp; Primes Staff (Reste net à régler : -{{ '{:,.0f}'.format(cur_staff_remaining_total or 0.0) }} DH)</span>
+              <span style="font-size:10px; color:var(--prev-purple);">Personnel ILAS</span>
+            </div>
+            <table class="compact-sub-table">
+              <thead>
+                <tr>
+                  <th>Employé / Poste</th>
+                  <th style="text-align:right;">Salaire Base</th>
+                  <th style="text-align:right;">Avances</th>
+                  <th style="text-align:right;">Déjà Versé</th>
+                  <th style="text-align:right;">Net Restant</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for sr in staff_summary_rows %}
+                <tr>
+                  <td>
+                    <div style="font-weight:700;">{{ sr.name }}</div>
+                    <div style="color:var(--prev-muted); font-size:10px;">{{ sr.role }}</div>
+                  </td>
+                  <td style="text-align:right; font-weight:700; font-family:monospace;">{{ '{:,.0f}'.format(sr.base) }} DH</td>
+                  <td style="text-align:right; font-weight:700; color:var(--prev-amber); font-family:monospace;">
+                    {% if sr.advances > 0 %}-{{ '{:,.0f}'.format(sr.advances) }} DH{% else %}—{% endif %}
+                  </td>
+                  <td style="text-align:right; font-weight:700; color:#059669; font-family:monospace;">
+                    {% if sr.is_paid %}
+                      <span style="background:#dcfce7; color:#15803d; font-size:10px; padding:2px 6px; border-radius:4px;">✓ {{ '{:,.0f}'.format(sr.paid_amount) }} DH</span>
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                  <td style="text-align:right; font-weight:800; font-family:monospace;">
+                    {% if sr.is_paid %}
+                      <span style="color:#059669; font-size:11px;">0 DH (Payé)</span>
+                    {% elif sr.net_remaining <= 0 %}
+                      <span style="color:#64748b; font-size:11px;">0 DH (Soldé)</span>
+                    {% else %}
+                      <strong style="color:var(--prev-purple);">-{{ '{:,.0f}'.format(sr.net_remaining) }} DH</strong>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+                {% if cur_primes_detail %}
+                  {% for sp in cur_primes_detail %}
+                  <tr style="background:#f5f3ff;">
+                    <td colspan="4" style="font-weight:700; color:var(--prev-purple);">🏆 Prime Inscriptions : {{ sp.name }} (Commission)</td>
+                    <td style="text-align:right; font-weight:800; color:var(--prev-purple); font-family:monospace;">-{{ '{:,.0f}'.format(sp.amount) }} DH</td>
+                  </tr>
+                  {% endfor %}
+                {% endif %}
+              </tbody>
+              <tfoot>
+                <tr style="background:#ede9fe; font-weight:800; font-size:11px;">
+                  <td>TOTAL PERSONNEL</td>
+                  <td style="text-align:right; font-family:monospace;">{{ '{:,.0f}'.format(cur_staff_base) }} DH</td>
+                  <td style="text-align:right; color:var(--prev-amber); font-family:monospace;">-{{ '{:,.0f}'.format(cur_staff_advances) }} DH</td>
+                  <td style="text-align:right; color:#059669; font-family:monospace;">-{{ '{:,.0f}'.format(cur_staff_paid) }} DH</td>
+                  <td style="text-align:right; color:var(--prev-purple); font-family:monospace;">-{{ '{:,.0f}'.format(cur_staff_remaining_total) }} DH</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- 2. Charges Fixes Locaux (Loyer, etc.) -->
+          <div class="sub-box">
+            <div class="sub-box-title">
+              <span>🏠 Charges Fixes Locaux &amp; Exploitation (-{{ '{:,.0f}'.format(cur_operating_fixes or 0.0) }} DH)</span>
+              <span style="font-size:10px; color:var(--prev-amber);">Loyer &amp; Services</span>
+            </div>
+            <table class="compact-sub-table">
+              <thead>
+                <tr>
+                  <th>Poste de Charge</th>
+                  <th>Catégorie</th>
+                  <th style="text-align:right;">Budget</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for rc in m.active_rcs if not ('salaire' in (rc.category or '').lower() or 'salaire' in (rc.title or '').lower()) %}
+                <tr>
+                  <td style="font-weight:700;">{{ rc.title or rc.name or rc.label or rc.category }}</td>
+                  <td style="color:var(--prev-muted); font-size:10.5px;">{{ rc.category }}</td>
+                  <td style="text-align:right; font-weight:800; color:var(--prev-amber); font-family:monospace;">-{{ '{:,.0f}'.format(rc.amount or 0.0) }} DH</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+        <!-- Column B : Dépenses Saisies & Top Encaissements -->
+        <div>
+          <!-- Dépenses Saisies -->
+          <div class="sub-box">
+            <div class="sub-box-title">
+              <span>🛍️ Dépenses &amp; Achats Saisis (-{{ '{:,.0f}'.format(m.entered_expenses) }} DH)</span>
+              <span style="font-size:10px; color:#b45309;">{{ m.oct_expenses|length }} opérations</span>
+            </div>
+            <div style="max-height:220px; overflow-y:auto;">
+              <table class="compact-sub-table">
+                <thead>
+                  <tr>
+                    <th style="width:65px;">Date</th>
+                    <th>Objet</th>
+                    <th style="text-align:right;">Montant</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for e in m.oct_expenses %}
+                  <tr>
+                    <td style="color:var(--prev-muted); font-size:10.5px;">{{ e.date.strftime('%d/%m') if e.date else '' }}</td>
+                    <td style="font-weight:600; font-size:11px;">{{ e.description }}</td>
+                    <td style="text-align:right; font-weight:800; color:#b45309; font-family:monospace;">-{{ '{:,.0f}'.format(e.amount or 0.0) }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Top Encaissements Élèves -->
+          {% if m.enrollment_details %}
+          <div class="sub-box">
+            <div class="sub-box-title">
+              <span>💳 Principaux Encaissements Élèves</span>
+              <span style="font-size:10px; color:var(--prev-green);">Recettes</span>
+            </div>
+            <div style="max-height:200px; overflow-y:auto;">
+              <table class="compact-sub-table">
+                <thead>
+                  <tr>
+                    <th>Élève</th>
+                    <th>Formation</th>
+                    <th style="text-align:right;">Payé</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for ed in m.enrollment_details[:10] %}
+                  <tr>
+                    <td style="font-weight:700;">{{ ed.student.full_name }}</td>
+                    <td style="color:var(--prev-muted); font-size:10.5px;">{{ ed.course.display_name if ed.course else '—' }}</td>
+                    <td style="text-align:right; font-weight:800; color:var(--prev-green); font-family:monospace;">+{{ '{:,.0f}'.format(ed.rev) }} DH</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+      </div>
+
+      <!-- Salaires Professeurs Full Width -->
+      {% if m.teachers_rows %}
+      <div class="sub-box" style="border-color:#fca5a5; background:#fffafa;">
+        <div class="sub-box-title" style="color:var(--prev-red); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <span>👨‍🏫 Salaires Détaillés des Professeurs (Mois : {{ m.label }})</span>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:11px;">
+            <span class="badge-tag" style="background:#fee2e2; color:#b91c1c;">1. Total Salaire Réel (Brut) : {{ '{:,.2f}'.format(m.teacher_payroll or 0.0) }} DH</span>
+            {% if m.teacher_advances and m.teacher_advances > 0 %}
+            <span class="badge-tag" style="background:#fef3c7; color:#b45309;">2. Avances Déjà Prises : -{{ '{:,.2f}'.format(m.teacher_advances or 0.0) }} DH</span>
+            {% endif %}
+            {% if m.teacher_deductions and m.teacher_deductions > 0 %}
+            <span class="badge-tag" style="background:#f1f5f9; color:#475569;">Photocopies/Déd. : -{{ '{:,.2f}'.format(m.teacher_deductions or 0.0) }} DH</span>
+            {% endif %}
+            <span class="badge-tag" style="background:#dcfce7; color:#15803d; font-weight:800; border:1px solid #86efac; font-size:11.5px;">3. Sh7al a Na3tiw (Net) : {{ '{:,.2f}'.format(m.teacher_payroll_net or m.teacher_payroll or 0.0) }} DH</span>
+          </div>
+        </div>
+        <table class="compact-sub-table">
+          <thead>
+            <tr>
+              <th>Professeur</th>
+              <th>Groupes &amp; Classes Enseignées</th>
+              <th>Taux</th>
+              <th style="text-align:right;">1. Salaire Réel (Brut)</th>
+              <th style="text-align:right;">2. Avance Prise</th>
+              <th style="text-align:right;">3. Sh7al a Na3tiw (Net)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tr in m.teachers_rows %}
+            <tr>
+              <td style="font-weight:800; color:#0f172a;">{{ tr.name }}</td>
+              <td style="color:#475569; font-size:11px;">
+                {% for c in tr.courses %}
+                  <span>{{ c.course_name }} ({{ c.students_count }} él.)</span>{% if not loop.last %} • {% endif %}
+                {% endfor %}
+              </td>
+              <td style="color:var(--prev-muted); font-size:10.5px;">{{ tr.comp_label }}</td>
+              <td style="text-align:right; font-weight:800; color:#1e293b; font-family:monospace;">
+                {{ '{:,.2f}'.format(tr.total_earned or tr.earned or 0.0) }} DH
+              </td>
+              <td style="text-align:right; font-weight:700; font-family:monospace;">
+                {% if (tr.advances or 0) > 0 %}
+                  <span class="badge-tag" style="background:#fef3c7; color:#b45309; font-size:11px; font-weight:800;">
+                    -{{ '{:,.2f}'.format(tr.advances) }} DH
+                  </span>
+                {% else %}
+                  <span style="color:#cbd5e1;">0.00 DH</span>
+                {% endif %}
+                {% if (tr.deductions or 0) > 0 %}
+                  <div style="font-size:9.5px; color:#64748b; font-weight:normal;">(Déd: -{{ '{:,.2f}'.format(tr.deductions) }})</div>
+                {% endif %}
+              </td>
+              <td style="text-align:right; font-weight:900; color:{{ '#15803d' if (tr.net_payable or 0) > 0 else '#94a3b8' }}; font-family:monospace; font-size:12px; background:{{ '#f0fdf4' if (tr.net_payable or 0) > 0 else 'transparent' }};">
+                {% if tr.is_paid %}
+                  <span style="background:#dcfce7; color:#15803d; font-size:11px; padding:2px 8px; border-radius:4px; font-weight:800;">✓ Payé ({{ '{:,.0f}'.format(tr.paid_amount) }} DH)</span>
+                {% else %}
+                  {{ '{:,.2f}'.format(tr.net_payable if tr.net_payable is defined else tr.earned) }} DH
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr style="background:#f8fafc; font-weight:800; border-top:2px solid #cbd5e1;">
+              <td colspan="3" style="text-align:right; text-transform:uppercase; font-size:11px; color:#475569;">Total Salaires Enseignants :</td>
+              <td style="text-align:right; color:#1e293b; font-family:monospace;">{{ '{:,.2f}'.format(m.teacher_payroll or 0.0) }} DH</td>
+              <td style="text-align:right; color:#b45309; font-family:monospace;">{% if m.teacher_advances %}-{{ '{:,.2f}'.format(m.teacher_advances) }} DH{% else %}0.00 DH{% endif %}</td>
+              <td style="text-align:right; color:#15803d; font-family:monospace; font-size:13px; font-weight:900; background:#dcfce7;">{{ '{:,.2f}'.format(m.teacher_payroll_net or m.teacher_payroll or 0.0) }} DH</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      {% endif %}
+
+    {% else %}
+      <!-- MOIS FUTURS : COURS DÉJÀ RÉGLÉS PAR LES ÉLÈVES -->
+      <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:12px 16px; margin-bottom:14px; font-size:12px; color:#166534; line-height:1.5;">
+        <strong>💳 Cours Déjà Réglés par les Élèves :</strong>
+        Les élèves ont déjà payé <strong>+{{ '{:,.0f}'.format(m.guaranteed_revenue or 0.0) }} DH</strong> pour suivre les cours de ce mois ({{ m.label }}).
+        Les rémunérations des enseignants s'élèvent à <strong>-{{ '{:,.0f}'.format(m.teacher_payroll or 0.0) }} DH</strong>, laissant une marge prévisionnelle nette de <strong>{{ '+' if m.net_result >= 0 else '' }}{{ '{:,.0f}'.format(m.net_result or 0.0) }} DH</strong> ({{ m.margin_pct }}%).
+      </div>
+
+      {% if m.teachers_rows %}
+      <div class="sub-box" style="border-color:#fca5a5;">
+        <div class="sub-box-title" style="color:var(--prev-red); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <span>👨‍🏫 Salaires Prévisionnels des Professeurs (Total Engagé : {{ '{:,.0f}'.format(m.teacher_payroll or 0.0) }} DH)</span>
+          <span style="font-size:10px; color:#b91c1c;">{{ m.teachers_rows|length }} enseignants</span>
+        </div>
+        <table class="compact-sub-table">
+          <thead>
+            <tr>
+              <th>Professeur</th>
+              <th>Groupes Prévus</th>
+              <th>Taux</th>
+              <th style="text-align:right;">1. Salaire Réel (Prévu)</th>
+              <th style="text-align:right;">2. Avances</th>
+              <th style="text-align:right;">3. Net à Verser</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tr in m.teachers_rows %}
+            <tr>
+              <td style="font-weight:800; color:#0f172a;">{{ tr.name }}</td>
+              <td style="color:#475569; font-size:11px;">
+                {% for c in tr.courses %}
+                  <span>{{ c.course_name }} ({{ c.students_count }} él.)</span>{% if not loop.last %} • {% endif %}
+                {% endfor %}
+              </td>
+              <td style="color:var(--prev-muted); font-size:10.5px;">{{ tr.comp_label }}</td>
+              <td style="text-align:right; font-weight:800; color:#1e293b; font-family:monospace;">
+                {{ '{:,.2f}'.format(tr.total_earned or tr.earned or 0.0) }} DH
+              </td>
+              <td style="text-align:right; color:#cbd5e1; font-family:monospace;">0.00 DH</td>
+              <td style="text-align:right; font-weight:900; color:#15803d; font-family:monospace; font-size:12px; background:#f0fdf4;">
+                {{ '{:,.2f}'.format(tr.net_payable or tr.earned or 0.0) }} DH
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr style="background:#f8fafc; font-weight:800; border-top:2px solid #cbd5e1;">
+              <td colspan="3" style="text-align:right; text-transform:uppercase; font-size:11px; color:#475569;">Total Salaires Engagés :</td>
+              <td style="text-align:right; color:#1e293b; font-family:monospace;">{{ '{:,.2f}'.format(m.teacher_payroll or 0.0) }} DH</td>
+              <td style="text-align:right; color:#94a3b8; font-family:monospace;">0.00 DH</td>
+              <td style="text-align:right; color:#15803d; font-family:monospace; font-size:13px; font-weight:900; background:#dcfce7;">{{ '{:,.2f}'.format(m.teacher_payroll or 0.0) }} DH</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      {% endif %}
+
+    {% endif %}
+
+  </div>
+  {% endfor %}
+
+</div>
+
+<!-- ==========================================
+     INTERACTIVITY SCRIPT
+     ========================================== -->
+<script>
+  function selectDetailTab(key, shouldScroll) {
+    // 1. Handle tabs styling
+    const allTabBtns = document.querySelectorAll('.tab-pill');
+    allTabBtns.forEach(btn => btn.classList.remove('active'));
+
+    const targetBtn = document.getElementById('tab-btn-' + key);
+    if (targetBtn) {
+      targetBtn.classList.add('active');
+    }
+
+    // 2. Handle panes display
+    const allPanes = document.querySelectorAll('.month-detail-pane');
+    if (key === 'all') {
+      allPanes.forEach(pane => pane.classList.add('active'));
+    } else {
+      allPanes.forEach(pane => pane.classList.remove('active'));
+      const activePane = document.getElementById('pane-' + key);
+      if (activePane) {
+        activePane.classList.add('active');
+      }
+    }
+
+    // 3. Smooth scroll if requested
+    if (shouldScroll) {
+      const section = document.getElementById('detailsSection');
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }
+
+  // Backwards compatibility alias
+  function openMonth(key) {
+    selectDetailTab(key, true);
+  }
+</script>
+{% endblock %}
